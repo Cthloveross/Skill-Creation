@@ -1,0 +1,18 @@
+# Local protected/private experiment inputs
+private/
+data/
+
+# Raw run bundles may contain protected AppWorld text
+runs/
+artifacts/raw/
+
+# Credentials and local environments
+.env
+.env.*
+.venv/
+
+# Generated caches and logs
+__pycache__/
+*.py[cod]
+*.log
+.DS_Store
