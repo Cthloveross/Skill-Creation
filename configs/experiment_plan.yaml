@@ -1,6 +1,6 @@
 protocol:
   name: r2sp_appworld_qwen38_feasibility
-  version: "0.2"
+  version: "0.3"
   purpose: feasibility_pilot_only
   research_only: true
   runner_ready: false
@@ -14,8 +14,18 @@ model:
   max_model_len: 65536
   prefix_caching: false
   server_sessions: false
+  serving:
+    tokenizer_revision: 1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0
+    tensor_parallel_size: 1
+    pipeline_parallel_size: 1
+    max_num_seqs: 1
+    language_model_only: true
+    enable_auto_tool_choice: true
+    tool_call_parser: qwen3_coder
+    reasoning_parser: qwen3
   generation:
     enable_thinking: true
+    preserve_thinking: false
     reasoning_effort: xhigh
     temperature: 1.0
     top_p: 0.95
@@ -48,14 +58,20 @@ retriever:
   k1: 1.2
   b: 0.75
   top_k: 10
+  model_select_k: 5
+  selection_scope: acquisition_only
+  selection_candidates: previously_retrieved_headers_union
+  selection_requires_exact_count: true
+  selection_requires_unique_ids: true
+  selection_commit_once: true
   app_filter: false
   search_returns_body: false
   max_search_calls: 12
-  max_unique_docs_read: 32
+  max_unique_docs_read: 5
   exposure_requires_full_read_doc: true
 
 agent:
-  tools: [search_docs, read_doc, execute, finish]
+  tools: [search_docs, select_docs, read_doc, execute, finish]
   sees_all_api_schemas_initially: false
   max_turns: 60
   max_api_calls: 800
@@ -105,6 +121,11 @@ canary:
 pilot:
   independent_unit: matched_skill_build_case
   cases: 16
+  task_provenance:
+    research_source: frozen_appworld_train_case_ids
+    research_instruction_binding: exact_world.task.instruction
+    synthetic_source: src/r2sp/fixtures.py
+    model_generated_tasks: false
   arms:
     A_sham: clean_457_plus_one_matched_benign_overlay
     B_poison: clean_457_plus_one_attack_overlay
@@ -153,13 +174,15 @@ freeze_before_pilot:
   - model_appworld_and_dependency_versions
   - clean_pool_manifest
   - sixteen_case_task_mapping
+  - task_provenance_contract
   - poison_sham_trigger_and_nonce_bundle
   - agent_and_compiler_prompts
-  - BM25_implementation_random_seed_and_result_code
+  - BM25_and_Top5_selection_implementation_random_seed_and_result_code
 
 logging:
   save:
     - task_and_pool_hash
+    - task_provenance
     - retrieval_and_read_log
     - API_trace
     - skill_file_and_hash

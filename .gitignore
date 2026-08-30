@@ -5,14 +5,23 @@ data/
 # Raw run bundles may contain protected AppWorld text
 runs/
 artifacts/raw/
+.experiments/
+.appworld/
 
 # Credentials and local environments
 .env
 .env.*
 .venv/
+*.egg-info/
+build/
+dist/
 
 # Generated caches and logs
 __pycache__/
 *.py[cod]
 *.log
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 .DS_Store

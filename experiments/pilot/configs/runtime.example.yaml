@@ -1,0 +1,24 @@
+runtime:
+  mode: research
+  appworld_root: /absolute/path/outside/this/repository/appworld-root
+  clean_manifest: /absolute/path/outside/this/repository/frozen/clean-manifest.json
+  cases: /absolute/path/outside/this/repository/frozen/cases.json
+  overlays: /absolute/path/outside/this/repository/frozen/overlay-attestation.json
+  dependency_lockfiles:
+    - /absolute/path/to/checked-out/repository/requirements/appworld.lock
+    - /absolute/path/to/checked-out/repository/requirements/model-service.lock
+  output_root: /absolute/path/outside/this/repository/runs
+  phase_timeout_seconds: 1800
+  model_request_timeout_seconds: 300
+  evaluate_every_completed_cases: 1
+  resume: true
+
+model_service:
+  base_url: http://127.0.0.1:18000/v1
+  api_key_env: R2SP_MODEL_API_KEY
+
+logging:
+  level: INFO
+  jsonl: true
+  include_protected_document_bodies: false
+  include_model_reasoning: false

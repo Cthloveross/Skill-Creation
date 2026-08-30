@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "r2sp-pilot"
+version = "0.1.0"
+description = "Reproducible runner for the Resource-to-Skill Poisoning feasibility pilot"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "PyYAML>=6.0,<7",
+]
+
+[project.optional-dependencies]
+dev = [
+  "jsonschema>=4.23,<5",
+  "pytest>=8,<9",
+  "ruff>=0.8,<1",
+]
+
+[project.scripts]
+r2sp = "r2sp.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

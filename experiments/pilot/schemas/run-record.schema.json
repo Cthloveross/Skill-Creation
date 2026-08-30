@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/r2sp/run-record.schema.json",
+  "title": "R2SP immutable top-level run manifest",
+  "description": "Run identity and provenance. Completion status belongs in complete.json; case and arm outcomes belong in immutable case artifacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "protocol_version",
+    "mode",
+    "research_candidate",
+    "run_id",
+    "seed",
+    "code_hash",
+    "config_hash",
+    "input_hash",
+    "clean_pool_hash",
+    "clean_resource_count"
+  ],
+  "properties": {
+    "schema_version": {"const": "1"},
+    "protocol_version": {"const": "0.3"},
+    "mode": {
+      "enum": ["synthetic_smoke", "synthetic_model_smoke", "injected_test", "research"]
+    },
+    "research_candidate": {
+      "type": "boolean",
+      "description": "Whether the run entered the non-injected research contract path; final eligibility exists only in a completed summary."
+    },
+    "run_id": {"type": "string", "minLength": 1},
+    "seed": {"type": "integer", "minimum": 0},
+    "code_hash": {"$ref": "#/$defs/hash"},
+    "config_hash": {"$ref": "#/$defs/hash"},
+    "input_hash": {"$ref": "#/$defs/hash"},
+    "fingerprint": {"$ref": "#/$defs/hash"},
+    "preflight_hash": {"$ref": "#/$defs/hash"},
+    "clean_pool_hash": {"$ref": "#/$defs/hash"},
+    "clean_resource_count": {"const": 457},
+    "warning": {"type": "string", "minLength": 1},
+    "fixture_provenance": {"$ref": "#/$defs/fixture_provenance"},
+    "frozen_asset_hashes": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/hash"}
+    },
+    "schedule_hash": {"$ref": "#/$defs/hash"},
+    "model_provenance": {"$ref": "#/$defs/provenance"},
+    "appworld_provenance": {"$ref": "#/$defs/provenance"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"mode": {"const": "synthetic_smoke"}}},
+      "then": {"properties": {"research_candidate": {"const": false}}}
+    },
+    {
+      "if": {"properties": {"mode": {"const": "synthetic_model_smoke"}}},
+      "then": {
+        "required": ["fixture_provenance", "model_provenance"],
+        "properties": {"research_candidate": {"const": false}}
+      }
+    },
+    {
+      "if": {"properties": {"mode": {"const": "injected_test"}}},
+      "then": {
+        "required": ["fingerprint", "preflight_hash"],
+        "properties": {"research_candidate": {"const": false}}
+      }
+    },
+    {
+      "if": {"properties": {"mode": {"const": "research"}}},
+      "then": {
+        "required": [
+          "frozen_asset_hashes",
+          "fingerprint",
+          "preflight_hash",
+          "schedule_hash",
+          "model_provenance",
+          "appworld_provenance"
+        ],
+        "properties": {
+          "research_candidate": {"const": true},
+          "frozen_asset_hashes": {
+            "required": [
+              "appworld_runtime_snapshot_hash",
+              "selection_contract_probe_hash"
+            ]
+          },
+          "appworld_provenance": {
+            "required": [
+              "runtime_snapshot_hash",
+              "runtime_snapshot_file_count",
+              "runtime_snapshot_size_bytes",
+              "runtime_snapshot_claim"
+            ],
+            "properties": {
+              "runtime_snapshot_hash": {"$ref": "#/$defs/hash"},
+              "runtime_snapshot_file_count": {"type": "integer", "minimum": 1},
+              "runtime_snapshot_size_bytes": {"type": "integer", "minimum": 1},
+              "runtime_snapshot_claim": {
+                "const": "byte_binding_not_publisher_authentication"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "fixture_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "source_type",
+        "mode",
+        "research_eligible",
+        "purpose"
+      ],
+      "properties": {
+        "schema_version": {"const": "r2sp.fixture-provenance.v1"},
+        "source_type": {"const": "synthetic"},
+        "mode": {"const": "synthetic_smoke"},
+        "research_eligible": {"const": false},
+        "purpose": {"const": "instrumentation_validation_only"}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/json_value"}
+    },
+    "json_value": {
+      "anyOf": [
+        {"type": ["string", "number", "boolean", "null"]},
+        {"type": "array", "items": {"$ref": "#/$defs/json_value"}},
+        {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/json_value"}
+        }
+      ]
+    }
+  }
+}

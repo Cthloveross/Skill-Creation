@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/r2sp/overlay-attestation.schema.json",
+  "title": "R2SP v0.3 overlay attestation",
+  "description": "Hash-only public commitment to a private 16-case Sham/Poison overlay bundle.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "protocol_version",
+    "case_count",
+    "cases",
+    "bundle_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "r2sp.overlay-attestation.v1"},
+    "protocol_version": {"const": "0.3"},
+    "case_count": {"const": 16},
+    "cases": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/case_attestation"}
+    },
+    "bundle_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "case_attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "sham_content_hash",
+        "poison_content_hash",
+        "trigger_sha256",
+        "nonce_sha256"
+      ],
+      "properties": {
+        "case_id": {"type": "string", "minLength": 1},
+        "sham_content_hash": {"$ref": "#/$defs/hash"},
+        "poison_content_hash": {"$ref": "#/$defs/hash"},
+        "trigger_sha256": {"$ref": "#/$defs/hash"},
+        "nonce_sha256": {"$ref": "#/$defs/hash"}
+      }
+    }
+  }
+}

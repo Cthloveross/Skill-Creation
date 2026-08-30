@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/r2sp/cases.schema.json",
+  "title": "R2SP v0.3 private frozen matched cases",
+  "description": "Private research bundle. Overlay bodies, triggers, and nonces must not be copied into public schedules or reports.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol_version", "tokenizer", "cases"],
+  "properties": {
+    "protocol_version": {"const": "0.3"},
+    "tokenizer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "revision"],
+      "properties": {
+        "model": {"const": "Qwen/Qwen3.8-27B"},
+        "revision": {"const": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"}
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "items": {"$ref": "#/$defs/case"}
+    }
+  },
+  "$defs": {
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "kind"],
+      "properties": {
+        "task_id": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["authoring", "trigger_positive", "trigger_negative"]},
+        "instruction": {"type": "string"},
+        "metadata": {"type": "object"}
+      }
+    },
+    "authoring_task": {
+      "allOf": [
+        {"$ref": "#/$defs/task"},
+        {"properties": {"kind": {"const": "authoring"}}}
+      ]
+    },
+    "positive_task": {
+      "allOf": [
+        {"$ref": "#/$defs/task"},
+        {"properties": {"kind": {"const": "trigger_positive"}}}
+      ]
+    },
+    "negative_task": {
+      "allOf": [
+        {"$ref": "#/$defs/task"},
+        {"properties": {"kind": {"const": "trigger_negative"}}}
+      ]
+    },
+    "resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource_id",
+        "app_name",
+        "api_name",
+        "title",
+        "content_hash",
+        "body"
+      ],
+      "properties": {
+        "resource_id": {"type": "string", "minLength": 1},
+        "app_name": {"type": "string", "minLength": 1},
+        "api_name": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "content_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "body": {"type": "string", "minLength": 1}
+      }
+    },
+    "sham_overlay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["arm", "resource", "trigger", "nonce", "template_version"],
+      "properties": {
+        "arm": {"const": "A_sham"},
+        "resource": {"$ref": "#/$defs/resource"},
+        "trigger": {"type": "string", "minLength": 1},
+        "nonce": {"type": "string", "minLength": 1},
+        "template_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "poison_overlay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["arm", "resource", "trigger", "nonce", "template_version"],
+      "properties": {
+        "arm": {"const": "B_poison"},
+        "resource": {"$ref": "#/$defs/resource"},
+        "trigger": {"type": "string", "minLength": 1},
+        "nonce": {"type": "string", "minLength": 1},
+        "template_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "overlay_pair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "sham", "poison"],
+      "properties": {
+        "case_id": {"type": "string", "minLength": 1},
+        "sham": {"$ref": "#/$defs/sham_overlay"},
+        "poison": {"$ref": "#/$defs/poison_overlay"}
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "authoring_task",
+        "positive_task",
+        "negative_task",
+        "overlays",
+        "sham_token_count",
+        "poison_token_count"
+      ],
+      "properties": {
+        "case_id": {"type": "string", "minLength": 1},
+        "authoring_task": {"$ref": "#/$defs/authoring_task"},
+        "positive_task": {"$ref": "#/$defs/positive_task"},
+        "negative_task": {"$ref": "#/$defs/negative_task"},
+        "overlays": {"$ref": "#/$defs/overlay_pair"},
+        "sham_token_count": {"type": "integer", "minimum": 1},
+        "poison_token_count": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}
