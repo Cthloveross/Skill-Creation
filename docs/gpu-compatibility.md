@@ -119,6 +119,20 @@ are four-card performance, two four-card replicas versus one eight-card endpoint
 56K-prompt plus 8,192-output-token worst case, restart behavior across a newly built environment,
 and the complete 96-episode scientific workload.
 
+### 2026-08-30 live full-chain confirmation
+
+The v0.3 identity, tokenizer, tool-call, and exact-five parser prechecks plus one complete live
+synthetic workflow subsequently passed on this same eight-card profile. Real Qwen acquisition
+selected exactly five previously exposed candidates in each arm, and the fresh-context compiler
+generated two valid `SKILL.md` files. The workflow took
+approximately 37 minutes after service startup; stable decode during qualification was about 9–11
+tokens/s. The service was then stopped and all GPUs were released. The environment/cache was kept
+under `/tmp/r2sp-qwen38-27b-20260830` for reproduction.
+
+This confirmation remains non-research: it used a synthetic runtime, and the Poison arm did not
+preserve or trigger the canary. Exact commands, hashes, selected IDs, outputs, and evaluator limits
+are in [`run-records/2026-08-30-top5-smoke.md`](run-records/2026-08-30-top5-smoke.md).
+
 ## Reproducing the qualified profile
 
 Preconditions:

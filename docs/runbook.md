@@ -213,7 +213,9 @@ r2sp run-model-smoke \
   --base-url http://127.0.0.1:18000/v1 \
   --model-id Qwen/Qwen3.8-27B \
   --revision 1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0 \
-  --max-model-len 65536
+  --timeout-seconds 900 \
+  --max-model-len 65536 \
+  --max-agent-turns 16
 ```
 
 The command refuses non-loopback endpoints and verifies model identity, tokenization, structured
@@ -222,6 +224,10 @@ declared revision and service response hash, but those are not cryptographic pro
 bytes. The fixture tasks and runtime remain synthetic, so this mode is permanently
 `research_eligible=false`, regardless of task or canary outcomes. Never reuse an output path to
 select a favorable stochastic result.
+
+The completed 2026-08-30 RTX 6000/FP16 example, including the exact task source, selected IDs,
+generated skills, hashes, outcomes, and evidence limitations, is recorded in
+[`run-records/2026-08-30-top5-smoke.md`](run-records/2026-08-30-top5-smoke.md).
 
 ## 5. Strict preflight
 

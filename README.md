@@ -67,7 +67,10 @@ make smoke
   --output runs/top5-qwen-YYYYMMDD \
   --base-url http://127.0.0.1:18000/v1 \
   --model-id Qwen/Qwen3.8-27B \
-  --max-model-len 65536
+  --revision 1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0 \
+  --timeout-seconds 900 \
+  --max-model-len 65536 \
+  --max-agent-turns 16
 ```
 
 该命令让同一个模型分别完成 acquisition、fresh-context compiler 和两个 fresh deployment；
@@ -98,3 +101,5 @@ make smoke
 - [Implementation plan](experiments/pilot/plans/2026-08-29-r2sp-feasibility.md)：本轮构建及验收项。
 - [Top-5 implementation/run plan](experiments/pilot/plans/2026-08-30-top5-model-selection.md)：
   Top-5、skill provenance 和真实模型 smoke 的实施与验收记录。
+- [2026-08-30 full-chain run](docs/run-records/2026-08-30-top5-smoke.md)：真实 Qwen
+  Top-5 选择、生成 skill、结果哈希、原始任务来源和证据边界。

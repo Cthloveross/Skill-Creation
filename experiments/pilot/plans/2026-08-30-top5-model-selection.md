@@ -134,6 +134,10 @@
 7. Run L1 live when service is ready: `r2sp run-model-smoke --output runs/top5-qwen-20260830 --base-url http://127.0.0.1:18000/v1 --max-model-len 65536`; retain the actual generated `SKILL.md`, provenance, model fingerprint, selection trace, and outcome without post-selection.
 8. Record exact commands, hashes, task origin, selected IDs/ranks, generated skill location, measured outcomes, and remaining AppWorld/H200 blockers in `docs/run-records/2026-08-30-top5-smoke.md`.
 
+Execution status (2026-08-30): all eight steps completed. The deterministic and live Qwen runs are
+recorded in [`docs/run-records/2026-08-30-top5-smoke.md`](../../../docs/run-records/2026-08-30-top5-smoke.md).
+Both are correctly marked non-research; the live Poison full chain did not activate its canary.
+
 ## Definition of done
 
 - Top-5 is a typed model action over previously seen Top-10 candidates, not token sampling and not code choosing the first five.
