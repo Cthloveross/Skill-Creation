@@ -25,3 +25,6 @@ __pycache__/
 .coverage
 htmlcov/
 .DS_Store
+
+# Local paper/reference archives; keep reviews and commitments in Git
+DyMalSkill_*.zip

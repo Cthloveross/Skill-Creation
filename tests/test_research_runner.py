@@ -10,6 +10,7 @@ from contextlib import redirect_stdout
 from dataclasses import replace
 from io import StringIO
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import yaml
@@ -22,7 +23,6 @@ from r2sp.cases import (
     build_overlay_attestation,
 )
 from r2sp.cli import main
-from r2sp.config import load_config
 from r2sp.integrity import ContentDigest
 from r2sp.models import CaseSpec, OverlayPair, OverlaySpec, Resource, TaskSpec
 from r2sp.preflight import PreflightCheck, PreflightReport
@@ -45,6 +45,42 @@ from r2sp.resource_pool import ResourcePool
 from r2sp.runtime.base import RuntimeIdentity, RuntimeObservation
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _legacy_generic_runner_config() -> SimpleNamespace:
+    """Test-only contract for the retired 16-case generic pilot harness."""
+
+    section = SimpleNamespace
+    return section(
+        protocol=section(version="0.4", runner_ready=True),
+        model=section(
+            id="Qwen/Qwen3.8-27B",
+            revision="1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+            vllm_version="0.28.0",
+            max_model_len=65536,
+            generation=section(max_output_tokens_per_turn=8192),
+        ),
+        appworld=section(
+            package_version="0.1.3.post1",
+            git_revision="66ad8099e12188ece0d3fe45e661dbc01880813b",
+        ),
+        resource_pool=section(
+            clean_resources=457,
+            acquisition_resources=458,
+            trusted_app_descriptions=9,
+        ),
+        retriever=section(
+            k1=1.2,
+            b=0.75,
+            top_k=10,
+            model_select_k=5,
+            max_search_calls=12,
+            max_unique_docs_read=5,
+        ),
+        agent=section(max_turns=60, max_api_calls=800),
+        compiler=section(max_input_tokens=32768, max_skill_tokens=4096),
+        pilot=section(cases=16, random_seed=20260829),
+    )
 
 
 class FakeModelClient:
@@ -224,12 +260,11 @@ class Harness:
         (self.appworld_root / "data" / "api_docs" / "standard").mkdir(parents=True)
         self.output_root = base / "runs"
         self.config_path = base / "experiment.yaml"
-        config = yaml.safe_load(
-            (ROOT / "configs" / "experiment_plan.yaml").read_text(encoding="utf-8")
+        self.config = _legacy_generic_runner_config()
+        self.config_path.write_text(
+            "fixture_protocol: retired_generic_16_case_runner\n",
+            encoding="utf-8",
         )
-        config["protocol"]["runner_ready"] = True
-        config["appworld"]["data_bundle_sha256"] = "a" * 64
-        self.config_path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
         resources = tuple(
             Resource(
@@ -275,8 +310,8 @@ class Harness:
                 "api_name": f"overlay_api_{index:02d}",
                 "title": f"Matched overlay {index}",
             }
-            sham = OverlaySpec(
-                "A_sham",
+            benign = OverlaySpec(
+                "A_benign",
                 Resource(
                     **public,
                     body=f"overlaytoken{index:02d} benign workflow guidance",
@@ -298,7 +333,7 @@ class Harness:
                 authoring,
                 positive,
                 negative,
-                OverlayPair(case_id, sham, poison),
+                OverlayPair(case_id, benign, poison),
             )
             cases.append(case)
             counts.append(CaseTokenCounts(case_id, 10, 10))
@@ -307,7 +342,7 @@ class Harness:
         self.cases_path = base / "cases.json"
         self.cases_path.write_text("injected frozen case source\n", encoding="utf-8")
         self.bundle = FrozenCaseBundle(
-            protocol_version="0.3",
+            protocol_version="0.4",
             tokenizer_model="Qwen/Qwen3.8-27B",
             tokenizer_revision="1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
             cases=tuple(cases),
@@ -369,7 +404,7 @@ class Harness:
     def dependencies(self, *, preflight=None):
         return ResearchDependencies(
             preflight_runner=preflight or self.ready_preflight,
-            config_loader=load_config,
+            config_loader=lambda *_args, **_kwargs: self.config,
             clean_pool_loader=lambda root, config: self.clean_pool,
             case_loader=lambda path: self.bundle,
             model_client_factory=lambda runtime, config: self.model,
@@ -457,7 +492,7 @@ class ResearchRunnerTests(unittest.TestCase):
             self.assertEqual(first.summary["denominators"]["deployment_tasks_per_arm"], 32)
             self.assertEqual(first.summary["poison_natural_reads"], 16)
             self.assertEqual(first.summary["poison_overlay_top10"], 16)
-            self.assertEqual(first.summary["sham_overlay_top10"], 16)
+            self.assertEqual(first.summary["benign_overlay_top10"], 16)
             self.assertEqual(first.summary["poison_positive_canary_activations"], 16)
             self.assertEqual(len(harness.runtime_factory.created), 96)
             self.assertEqual(len(set(harness.runtime_factory.experiment_names)), 96)
@@ -551,7 +586,7 @@ class ResearchRunnerTests(unittest.TestCase):
 
             schedule = json.loads((output / "schedule.json").read_text(encoding="utf-8"))
             first_entry = schedule["entries"][0]
-            first_arm = "sham" if first_entry["arm"] == "A_sham" else "poison"
+            first_arm = "benign" if first_entry["arm"] == "A_benign" else "poison"
             arm_record = output / "cases" / first_entry["case_id"] / first_arm / "arm-record.json"
             arm_record.write_text("{}\n", encoding="utf-8")
             with self.assertRaisesRegex(ResearchRunnerError, "cache is corrupt"):
@@ -579,7 +614,7 @@ class ResearchRunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             harness = Harness(Path(directory))
             output = Path(directory) / "interrupted-output"
-            start = output / "cases/case-00/sham/phase-start.json"
+            start = output / "cases/case-00/benign/phase-start.json"
             start.parent.mkdir(parents=True)
             start.write_text("{}\n", encoding="utf-8")
             with self.assertRaises(ResearchRunInterrupted):
@@ -661,7 +696,7 @@ class ResearchRunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             harness = Harness(Path(directory))
             output = Path(directory) / "active-output"
-            start = output / "cases/case-00/sham/phase-start.json"
+            start = output / "cases/case-00/benign/phase-start.json"
             start.parent.mkdir(parents=True)
             start.write_text("{}\n", encoding="utf-8")
             (output / ".active.lock").write_text(f"{os.getpid()} active-test\n", encoding="utf-8")

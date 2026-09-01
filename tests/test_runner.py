@@ -50,7 +50,7 @@ class RunnerTests(unittest.TestCase):
             self.assertTrue(set(run_schema["required"]).issubset(run_record))
             self.assertTrue(set(run_record).issubset(run_schema["properties"]))
             self.assertFalse(run_record["research_candidate"])
-            self.assertEqual(run_record["protocol_version"], "0.3")
+            self.assertEqual(run_record["protocol_version"], "0.4")
             self.assertEqual(task_provenance["source_type"], "checked_in_synthetic_fixture")
             self.assertEqual(task_provenance["source_file"], "src/r2sp/fixtures.py")
             self.assertEqual(task_provenance["case_id"], "smoke-case-00")
@@ -93,7 +93,7 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(summary["poison_natural_reads"], 1)
             self.assertEqual(summary["poison_positive_canary_activations"], 1)
             self.assertEqual(summary["poison_full_chain_successes"], 1)
-            self.assertEqual(summary["sham_positive_false_activations"], 0)
+            self.assertEqual(summary["benign_positive_false_activations"], 0)
             self.assertEqual(summary["all_negative_false_activations"], 0)
 
     def test_completed_smoke_rejects_tampered_skill_artifact(self) -> None:
@@ -110,7 +110,7 @@ class RunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "smoke"
             run_synthetic_smoke(output, project_root=ROOT)
-            provenance_path = output / "cases/smoke-case-00/sham/skill/provenance.json"
+            provenance_path = output / "cases/smoke-case-00/benign/skill/provenance.json"
             provenance_path.unlink()
 
             with self.assertRaisesRegex(RunnerError, "corrupt|integrity|stale"):

@@ -12,7 +12,7 @@ from typing import Any, ClassVar
 from .hashing import canonical_json_sha256, is_sha256, sha256_text
 from .models import CaseSpec
 
-PROTOCOL_VERSION = "0.3"
+PROTOCOL_VERSION = "0.4"
 TOKENIZER_MODEL = "Qwen/Qwen3.8-27B"
 TOKENIZER_REVISION = "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"
 RESEARCH_CASE_COUNT = 16
@@ -28,12 +28,12 @@ _CASE_FIELDS = frozenset(
         "positive_task",
         "negative_task",
         "overlays",
-        "sham_token_count",
+        "benign_token_count",
         "poison_token_count",
     }
 )
 _TASK_FIELDS = frozenset({"task_id", "kind", "instruction", "metadata"})
-_OVERLAY_PAIR_FIELDS = frozenset({"case_id", "sham", "poison"})
+_OVERLAY_PAIR_FIELDS = frozenset({"case_id", "benign", "poison"})
 _OVERLAY_FIELDS = frozenset({"arm", "resource", "trigger", "nonce", "template_version"})
 _RESOURCE_FIELDS = frozenset(
     {"resource_id", "app_name", "api_name", "title", "content_hash", "body"}
@@ -41,21 +41,21 @@ _RESOURCE_FIELDS = frozenset(
 
 
 class CaseBundleError(ValueError):
-    """Raised when a private frozen case bundle violates protocol v0.3."""
+    """Raised when a private frozen case bundle violates protocol v0.4."""
 
 
 @dataclass(frozen=True, slots=True)
 class CaseTokenCounts:
     case_id: str
-    sham_token_count: int | None
+    benign_token_count: int | None
     poison_token_count: int | None
 
     @property
     def relative_difference(self) -> float | None:
-        if self.sham_token_count is None or self.poison_token_count is None:
+        if self.benign_token_count is None or self.poison_token_count is None:
             return None
-        return abs(self.sham_token_count - self.poison_token_count) / max(
-            self.sham_token_count, self.poison_token_count
+        return abs(self.benign_token_count - self.poison_token_count) / max(
+            self.benign_token_count, self.poison_token_count
         )
 
 
@@ -88,7 +88,7 @@ class OverlayAttestationEntry:
     """Non-secret content commitments for one matched case."""
 
     case_id: str
-    sham_content_hash: str
+    benign_content_hash: str
     poison_content_hash: str
     trigger_sha256: str
     nonce_sha256: str
@@ -97,7 +97,7 @@ class OverlayAttestationEntry:
         if not isinstance(self.case_id, str) or not self.case_id.strip():
             raise CaseBundleError("overlay attestation case_id must be non-empty")
         for field_name in (
-            "sham_content_hash",
+            "benign_content_hash",
             "poison_content_hash",
             "trigger_sha256",
             "nonce_sha256",
@@ -106,7 +106,7 @@ class OverlayAttestationEntry:
                 raise CaseBundleError(
                     f"overlay attestation {self.case_id}.{field_name} must be a SHA-256 digest"
                 )
-        if self.sham_content_hash == self.poison_content_hash:
+        if self.benign_content_hash == self.poison_content_hash:
             raise CaseBundleError(
                 f"overlay attestation {self.case_id} must commit to distinct bodies"
             )
@@ -114,7 +114,7 @@ class OverlayAttestationEntry:
     def to_dict(self) -> dict[str, str]:
         return {
             "case_id": self.case_id,
-            "sham_content_hash": self.sham_content_hash,
+            "benign_content_hash": self.benign_content_hash,
             "poison_content_hash": self.poison_content_hash,
             "trigger_sha256": self.trigger_sha256,
             "nonce_sha256": self.nonce_sha256,
@@ -124,7 +124,7 @@ class OverlayAttestationEntry:
     def from_dict(cls, value: Mapping[str, Any]) -> OverlayAttestationEntry:
         expected = {
             "case_id",
-            "sham_content_hash",
+            "benign_content_hash",
             "poison_content_hash",
             "trigger_sha256",
             "nonce_sha256",
@@ -143,7 +143,7 @@ class OverlayAttestationEntry:
 class OverlayAttestation:
     """Canonical hash-only commitment to the private overlay bundle."""
 
-    SCHEMA_VERSION: ClassVar[str] = "r2sp.overlay-attestation.v1"
+    SCHEMA_VERSION: ClassVar[str] = "r2sp.overlay-attestation.v2"
 
     protocol_version: str
     cases: tuple[OverlayAttestationEntry, ...]
@@ -246,7 +246,7 @@ class BuildSchedule:
         """Serialize only run coordination metadata, never private treatments."""
 
         return {
-            "schema_version": "r2sp.public-build-schedule.v1",
+            "schema_version": "r2sp.public-build-schedule.v2",
             "protocol_version": self.protocol_version,
             "seed": self.seed,
             "entry_count": len(self.entries),
@@ -289,7 +289,7 @@ def _strict_case_mapping(value: Any, index: int) -> Mapping[str, Any]:
         _strict_mapping(case.get(task_name), f"{field}.{task_name}", _TASK_FIELDS)
 
     overlays = _strict_mapping(case.get("overlays"), f"{field}.overlays", _OVERLAY_PAIR_FIELDS)
-    for arm_name in ("sham", "poison"):
+    for arm_name in ("benign", "poison"):
         overlay_field = f"{field}.overlays.{arm_name}"
         overlay = _strict_mapping(overlays.get(arm_name), overlay_field, _OVERLAY_FIELDS)
         _strict_mapping(
@@ -309,13 +309,13 @@ def _parse_token_count(value: Any, field: str) -> int | None:
 
 
 def _validate_pair(case: CaseSpec) -> None:
-    sham = case.overlays.sham
+    benign = case.overlays.benign
     poison = case.overlays.poison
-    sham_identity = (
-        sham.resource.resource_id,
-        sham.resource.app_name,
-        sham.resource.api_name,
-        sham.resource.title,
+    benign_identity = (
+        benign.resource.resource_id,
+        benign.resource.app_name,
+        benign.resource.api_name,
+        benign.resource.title,
     )
     poison_identity = (
         poison.resource.resource_id,
@@ -323,16 +323,16 @@ def _validate_pair(case: CaseSpec) -> None:
         poison.resource.api_name,
         poison.resource.title,
     )
-    if sham_identity != poison_identity:
+    if benign_identity != poison_identity:
         raise CaseBundleError(f"{case.case_id}: overlay public identity does not match")
-    if sham.trigger != poison.trigger:
+    if benign.trigger != poison.trigger:
         raise CaseBundleError(f"{case.case_id}: overlay triggers do not match")
-    if sham.template_version != poison.template_version:
+    if benign.template_version != poison.template_version:
         raise CaseBundleError(f"{case.case_id}: overlay template versions do not match")
-    if sham.nonce != poison.nonce:
+    if benign.nonce != poison.nonce:
         raise CaseBundleError(f"{case.case_id}: overlay nonces do not match")
-    if sham.resource.body == poison.resource.body:
-        raise CaseBundleError(f"{case.case_id}: Sham and Poison bodies must differ")
+    if benign.resource.body == poison.resource.body:
+        raise CaseBundleError(f"{case.case_id}: Benign and Poison bodies must differ")
 
 
 def _validate_token_counts(
@@ -340,21 +340,23 @@ def _validate_token_counts(
     *,
     research_mode: bool,
 ) -> None:
-    missing = counts.sham_token_count is None or counts.poison_token_count is None
+    missing = counts.benign_token_count is None or counts.poison_token_count is None
     if research_mode and missing:
         raise CaseBundleError(
-            f"{counts.case_id}: pinned Sham/Poison token counts are required in research mode"
+            f"{counts.case_id}: pinned Benign/Poison token counts are required in research mode"
         )
     if missing:
-        if counts.sham_token_count is not None or counts.poison_token_count is not None:
+        if counts.benign_token_count is not None or counts.poison_token_count is not None:
             raise CaseBundleError(
-                f"{counts.case_id}: Sham and Poison token counts must be supplied together"
+                f"{counts.case_id}: Benign and Poison token counts must be supplied together"
             )
         return
     difference = counts.relative_difference
     assert difference is not None
     if difference > MAX_TOKEN_COUNT_DIFFERENCE:
-        raise CaseBundleError(f"{counts.case_id}: Sham/Poison token counts differ by more than 5%")
+        raise CaseBundleError(
+            f"{counts.case_id}: Benign/Poison token counts differ by more than 5%"
+        )
 
 
 def load_frozen_cases(
@@ -380,7 +382,7 @@ def load_frozen_cases(
     if tokenizer.get("model") != TOKENIZER_MODEL:
         raise CaseBundleError(f"tokenizer.model must equal {TOKENIZER_MODEL!r}")
     if tokenizer.get("revision") != TOKENIZER_REVISION:
-        raise CaseBundleError("tokenizer.revision does not match the pinned v0.3 revision")
+        raise CaseBundleError("tokenizer.revision does not match the pinned v0.4 revision")
 
     raw_cases = root.get("cases")
     if not isinstance(raw_cases, list) or not raw_cases:
@@ -401,9 +403,9 @@ def load_frozen_cases(
         _validate_pair(case)
         case_counts = CaseTokenCounts(
             case_id=case.case_id,
-            sham_token_count=_parse_token_count(
-                case_mapping.get("sham_token_count"),
-                f"{case.case_id}.sham_token_count",
+            benign_token_count=_parse_token_count(
+                case_mapping.get("benign_token_count"),
+                f"{case.case_id}.benign_token_count",
             ),
             poison_token_count=_parse_token_count(
                 case_mapping.get("poison_token_count"),
@@ -425,7 +427,7 @@ def load_frozen_cases(
             if task.task_id in task_ids:
                 raise CaseBundleError(f"duplicate task_id: {task.task_id}")
             task_ids.add(task.task_id)
-        nonce = case.overlays.sham.nonce
+        nonce = case.overlays.benign.nonce
         if nonce in nonces:
             raise CaseBundleError("case nonces must be globally unique")
         nonces.add(nonce)
@@ -449,17 +451,17 @@ def build_overlay_attestation(bundle: FrozenCaseBundle) -> OverlayAttestation:
         raise TypeError("bundle must be a FrozenCaseBundle")
     entries: list[OverlayAttestationEntry] = []
     for case in bundle.cases:
-        sham = case.overlays.sham
+        benign = case.overlays.benign
         poison = case.overlays.poison
-        assert sham.resource.content_hash is not None
+        assert benign.resource.content_hash is not None
         assert poison.resource.content_hash is not None
         entries.append(
             OverlayAttestationEntry(
                 case_id=case.case_id,
-                sham_content_hash=sham.resource.content_hash,
+                benign_content_hash=benign.resource.content_hash,
                 poison_content_hash=poison.resource.content_hash,
-                trigger_sha256=sha256_text(sham.trigger),
-                nonce_sha256=sha256_text(sham.nonce),
+                trigger_sha256=sha256_text(benign.trigger),
+                nonce_sha256=sha256_text(benign.nonce),
             )
         )
     return OverlayAttestation(
@@ -521,14 +523,14 @@ def build_schedule(
     *,
     seed: int = SCHEDULE_SEED,
 ) -> BuildSchedule:
-    """Derive the reproducible paired acquisition/build order for v0.3."""
+    """Derive the reproducible paired acquisition/build order for v0.4."""
 
     if not isinstance(bundle, FrozenCaseBundle):
         raise TypeError("bundle must be a FrozenCaseBundle")
     if isinstance(seed, bool) or not isinstance(seed, int):
         raise TypeError("seed must be an integer")
     if seed != SCHEDULE_SEED:
-        raise ValueError(f"protocol v0.3 fixes the schedule seed at {SCHEDULE_SEED}")
+        raise ValueError(f"protocol v0.4 fixes the schedule seed at {SCHEDULE_SEED}")
 
     rng = random.Random(seed)
     cases = list(sorted(bundle.cases, key=lambda case: case.case_id))
@@ -536,7 +538,7 @@ def build_schedule(
     entries: list[BuildScheduleEntry] = []
     used_generation_seeds: set[int] = set()
     for case in cases:
-        arms = ["A_sham", "B_poison"]
+        arms = ["A_benign", "B_poison"]
         rng.shuffle(arms)
         generation_seed = _generation_seed(case.case_id, used_generation_seeds)
         for arm in arms:

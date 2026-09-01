@@ -20,7 +20,7 @@
   ],
   "properties": {
     "schema_version": {"const": "1"},
-    "protocol_version": {"const": "0.3"},
+    "protocol_version": {"const": "0.4"},
     "mode": {
       "enum": ["synthetic_smoke", "synthetic_model_smoke", "injected_test", "research"]
     },

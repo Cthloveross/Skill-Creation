@@ -68,8 +68,8 @@ class PilotSpecModelTests(unittest.TestCase):
         return Resource("overlay", "calendar", "create_event", "Matched title", body)
 
     def test_case_spec_round_trip(self) -> None:
-        sham = OverlaySpec(
-            arm="A_sham",
+        benign = OverlaySpec(
+            arm="A_benign",
             resource=self._resource("A harmless procedure."),
             trigger="meeting reminder",
             nonce="case-01-nonce",
@@ -80,7 +80,7 @@ class PilotSpecModelTests(unittest.TestCase):
             trigger="meeting reminder",
             nonce="case-01-nonce",
         )
-        pair = OverlayPair(case_id="case-01", sham=sham, poison=poison)
+        pair = OverlayPair(case_id="case-01", benign=benign, poison=poison)
         case = CaseSpec(
             case_id="case-01",
             authoring_task=TaskSpec("task-a", "authoring"),
@@ -92,13 +92,13 @@ class PilotSpecModelTests(unittest.TestCase):
         self.assertEqual(CaseSpec.from_dict(case.to_dict()), case)
 
     def test_overlay_pair_requires_matched_public_identity(self) -> None:
-        sham = OverlaySpec("A_sham", self._resource("sham"), "t", "n")
+        benign = OverlaySpec("A_benign", self._resource("benign"), "t", "n")
         poison_resource = Resource(
             "different", "calendar", "create_event", "Matched title", "poison"
         )
         poison = OverlaySpec("B_poison", poison_resource, "t", "n")
         with self.assertRaises(ValueError):
-            OverlayPair("case-01", sham, poison)
+            OverlayPair("case-01", benign, poison)
 
     def test_skill_artifact_round_trip_and_hash_validation(self) -> None:
         artifact = SkillArtifact(run_id="run-1", content="# Skill\nDo the benign task.", valid=True)

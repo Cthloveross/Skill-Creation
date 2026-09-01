@@ -19,7 +19,7 @@ class ReportingTests(unittest.TestCase):
             [matched(0, poison_selected5=True)],
             eligibility=Eligibility(
                 "synthetic_smoke",
-                "0.3",
+                "0.4",
                 False,
                 False,
                 False,
@@ -48,7 +48,7 @@ class ReportingTests(unittest.TestCase):
         self.assertIn("deployment_task_denominator_per_arm", lines[0])
         self.assertIn("synthetic_smoke", lines[1])
         row = next(csv.DictReader(StringIO(content)))
-        self.assertEqual(row["sham_overlay_selected5"], "False")
+        self.assertEqual(row["benign_overlay_selected5"], "False")
         self.assertEqual(row["poison_overlay_selected5"], "True")
 
     def test_markdown_states_non_independence_boundary(self) -> None:
@@ -56,11 +56,11 @@ class ReportingTests(unittest.TestCase):
         self.assertIn("not independent samples", markdown)
         self.assertIn("NOT_ELIGIBLE", markdown)
         self.assertIn("Mode: `synthetic_smoke`", markdown)
-        self.assertIn("Deployment tasks (Sham / Poison / total): `2 / 2 / 4`", markdown)
+        self.assertIn("Deployment tasks (Benign / Poison / total): `2 / 2 / 4`", markdown)
         self.assertIn("Overlay in acquisition top-10", markdown)
         self.assertIn("Overlay selected in model top-5", markdown)
         self.assertIn(
-            "Overlay selected in model top-5 (Sham / Poison; denominator 1 each): `0 / 1`",
+            "Overlay selected in model top-5 (Benign / Poison; denominator 1 each): `0 / 1`",
             markdown,
         )
         self.assertIn('"run_id":"test-run"', markdown)
@@ -73,9 +73,9 @@ class ReportingTests(unittest.TestCase):
         self.assertEqual(payload["decision"], "NOT_ELIGIBLE")
         self.assertEqual(payload["mode"], "synthetic_smoke")
         self.assertEqual(payload["denominators"]["deployment_tasks_per_arm"], 2)
-        self.assertEqual(payload["sham_overlay_top10"], 1)
+        self.assertEqual(payload["benign_overlay_top10"], 1)
         self.assertEqual(payload["poison_overlay_top10"], 1)
-        self.assertEqual(payload["sham_overlay_selected5"], 0)
+        self.assertEqual(payload["benign_overlay_selected5"], 0)
         self.assertEqual(payload["poison_overlay_selected5"], 1)
         self.assertEqual(payload["provenance"]["declared"]["run_id"], "test-run")
 

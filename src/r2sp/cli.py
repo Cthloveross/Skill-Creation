@@ -1,4 +1,4 @@
-"""Command-line entry points for the R2SP feasibility pilot."""
+"""Command-line entry points for R2SP experiments and the v0.4 assay."""
 
 from __future__ import annotations
 
@@ -26,18 +26,18 @@ class CliError(RuntimeError):
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="r2sp",
-        description="R2SP AppWorld x Qwen3.8 feasibility-pilot runner",
+        description="R2SP AppWorld x Qwen3.8 file-backed assay runner",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     validate = subparsers.add_parser(
-        "validate-config", help="validate the frozen v0.3 experiment contract"
+        "validate-config", help="validate the frozen v0.4 experiment contract"
     )
     validate.add_argument("--config", type=Path, required=True)
     validate.add_argument(
         "--research-ready",
         action="store_true",
-        help="also require runner_ready and a non-placeholder data digest",
+        help="also require the static contract to be execution-ready",
     )
     validate.set_defaults(handler=_validate_config)
 
@@ -112,14 +112,14 @@ def _parser() -> argparse.ArgumentParser:
     model_smoke.add_argument("--config", type=Path, default=Path("configs/experiment_plan.yaml"))
     model_smoke.add_argument("--project-root", type=Path, default=Path.cwd())
     model_smoke.add_argument("--base-url", default="http://127.0.0.1:18000/v1")
-    model_smoke.add_argument("--model-id", default="Qwen/Qwen3.8-27B")
+    model_smoke.add_argument("--model-id", default="Qwen/Qwen3.8-27B-FP8")
     model_smoke.add_argument(
         "--revision",
-        default="1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        default="017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
     )
     model_smoke.add_argument("--api-key-env", default="R2SP_MODEL_API_KEY")
     model_smoke.add_argument("--timeout-seconds", type=float, default=300.0)
-    model_smoke.add_argument("--max-model-len", type=int, default=65536)
+    model_smoke.add_argument("--max-model-len", type=int, default=32768)
     model_smoke.add_argument("--max-agent-turns", type=int, default=16)
     model_smoke.set_defaults(handler=_run_model_smoke)
 
@@ -136,7 +136,7 @@ def _parser() -> argparse.ArgumentParser:
         help="serve a loopback proxy that adds declared R2SP metadata to vLLM",
     )
     gateway.add_argument("--config", type=Path, required=True)
-    gateway.add_argument("--backend-url", default="http://127.0.0.1:18001")
+    gateway.add_argument("--backend-url", default="http://127.0.0.1:18138")
     gateway.add_argument("--host", default="127.0.0.1")
     gateway.add_argument("--port", type=int, default=18000)
     gateway.add_argument("--timeout-seconds", type=float, default=300.0)
@@ -147,14 +147,14 @@ def _parser() -> argparse.ArgumentParser:
         help="run a non-research tokenizer/parser/agent/compiler service probe",
     )
     probe.add_argument("--base-url", default="http://127.0.0.1:18000/v1")
-    probe.add_argument("--model-id", default="Qwen/Qwen3.8-27B")
+    probe.add_argument("--model-id", default="Qwen/Qwen3.8-27B-FP8")
     probe.add_argument(
         "--revision",
-        default="1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        default="017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
     )
     probe.add_argument("--api-key-env", default="R2SP_MODEL_API_KEY")
     probe.add_argument("--timeout-seconds", type=float, default=300.0)
-    probe.add_argument("--max-model-len", type=int, default=16384)
+    probe.add_argument("--max-model-len", type=int, default=32768)
     probe.set_defaults(handler=_probe_model_service)
 
     report = subparsers.add_parser(

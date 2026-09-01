@@ -41,15 +41,18 @@ class ModelClientTests(unittest.TestCase):
 
         self.assertEqual(message["content"], "ok")
         self.assertEqual(seen["request"].full_url, "http://model:8000/v1/chat/completions")
-        self.assertEqual(payload["model"], "Qwen/Qwen3.8-27B")
-        self.assertEqual(payload["temperature"], 1.0)
-        self.assertEqual(payload["top_p"], 0.95)
+        self.assertEqual(payload["model"], "Qwen/Qwen3.8-27B-FP8")
+        self.assertEqual(payload["temperature"], 0.7)
+        self.assertEqual(payload["top_p"], 0.8)
         self.assertEqual(payload["top_k"], 20)
-        self.assertEqual(payload["reasoning_effort"], "xhigh")
+        self.assertNotIn("reasoning_effort", payload)
+        self.assertEqual(payload["min_p"], 0.0)
+        self.assertEqual(payload["presence_penalty"], 1.5)
+        self.assertEqual(payload["repetition_penalty"], 1.0)
         self.assertEqual(payload["max_tokens"], 8192)
         self.assertEqual(payload["seed"], 7)
-        self.assertTrue(payload["chat_template_kwargs"]["enable_thinking"])
-        self.assertFalse(payload["chat_template_kwargs"]["preserve_thinking"])
+        self.assertFalse(payload["chat_template_kwargs"]["enable_thinking"])
+        self.assertNotIn("preserve_thinking", payload["chat_template_kwargs"])
         self.assertEqual(seen["request"].headers["Authorization"], "Bearer secret")
 
     def test_tools_enable_auto_tool_choice(self):
@@ -59,6 +62,28 @@ class ModelClientTests(unittest.TestCase):
             tools=[{"type": "function", "function": {"name": "finish"}}],
         )
         self.assertEqual(payload["tool_choice"], "auto")
+
+    def test_optional_reasoning_effort_is_omitted_for_other_qwen_profiles(self):
+        client = OpenAICompatibleClient(
+            config=QwenGenerationConfig(
+                model="Qwen/Qwen3.5-9B",
+                revision="test-revision",
+                reasoning_effort=None,
+                preserve_thinking=None,
+                min_p=0.0,
+                presence_penalty=1.5,
+                repetition_penalty=1.0,
+            ),
+            opener=lambda *_args, **_kwargs: None,
+        )
+
+        payload = client.build_payload([{"role": "user", "content": "x"}])
+
+        self.assertNotIn("reasoning_effort", payload)
+        self.assertNotIn("preserve_thinking", payload["chat_template_kwargs"])
+        self.assertEqual(payload["min_p"], 0.0)
+        self.assertEqual(payload["presence_penalty"], 1.5)
+        self.assertEqual(payload["repetition_penalty"], 1.0)
 
     def test_client_never_borrows_unrelated_openai_api_key(self):
         seen = {}
@@ -120,6 +145,37 @@ class ModelClientTests(unittest.TestCase):
         client = OpenAICompatibleClient(opener=opener)
         self.assertTrue(client.verify_tool_contract()["arguments_valid"])
 
+    def test_tool_contract_probe_can_use_auto_tool_choice(self):
+        def opener(request, timeout):
+            del timeout
+            payload = json.loads(request.data)
+            self.assertEqual(payload["tool_choice"], "auto")
+            return _Response(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "role": "assistant",
+                                "content": None,
+                                "tool_calls": [
+                                    {
+                                        "id": "probe",
+                                        "type": "function",
+                                        "function": {
+                                            "name": "finish",
+                                            "arguments": '{"status":"probe-ok"}',
+                                        },
+                                    }
+                                ],
+                            }
+                        }
+                    ]
+                }
+            )
+
+        client = OpenAICompatibleClient(opener=opener)
+        self.assertTrue(client.verify_tool_contract(force_tool_choice=False)["arguments_valid"])
+
     def test_selection_contract_probe_requires_exact_unique_resource_ids(self):
         selected = [f"candidate-{index}" for index in range(5)]
 
@@ -158,6 +214,41 @@ class ModelClientTests(unittest.TestCase):
         evidence = client.verify_selection_contract(selection_k=5)
 
         self.assertEqual(evidence["selection_k"], 5)
+        self.assertEqual(evidence["resource_ids"], selected)
+
+    def test_selection_contract_probe_can_use_auto_tool_choice(self):
+        selected = [f"candidate-{index}" for index in range(5)]
+
+        def opener(request, timeout):
+            del timeout
+            payload = json.loads(request.data)
+            self.assertEqual(payload["tool_choice"], "auto")
+            return _Response(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "role": "assistant",
+                                "content": None,
+                                "tool_calls": [
+                                    {
+                                        "id": "selection-probe",
+                                        "type": "function",
+                                        "function": {
+                                            "name": "select_docs",
+                                            "arguments": json.dumps({"resource_ids": selected}),
+                                        },
+                                    }
+                                ],
+                            }
+                        }
+                    ]
+                }
+            )
+
+        client = OpenAICompatibleClient(opener=opener)
+        evidence = client.verify_selection_contract(selection_k=5, force_tool_choice=False)
+
         self.assertEqual(evidence["resource_ids"], selected)
 
     def test_selection_contract_probe_rejects_duplicate_or_wrong_count(self):
@@ -208,7 +299,7 @@ class ModelClientTests(unittest.TestCase):
     def test_revision_constant_matches_protocol(self):
         self.assertEqual(
             QwenGenerationConfig().revision,
-            "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+            "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
         )
 
 

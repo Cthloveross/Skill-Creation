@@ -1,4 +1,4 @@
-"""Fail-closed orchestration for the real AppWorld/Qwen v0.3 pilot.
+"""Fail-closed orchestration for the real AppWorld/Qwen v0.4 pilot.
 
 The synthetic runner intentionally cannot enter this module's research path.
 Every mutable action is downstream of a strict research preflight, and an
@@ -622,7 +622,7 @@ def run_pilot(
     with _run_lock(output, run_id), _appworld_root(runtime.appworld_root):
         for entry in schedule.entries:
             case = _case_by_id(cases, entry.case_id)
-            arm_name = "sham" if entry.arm == "A_sham" else "poison"
+            arm_name = "benign" if entry.arm == "A_benign" else "poison"
             arm_directory = f"cases/{case.case_id}/{arm_name}"
             completed = output / arm_directory / "phase-complete.json"
             if completed.is_file():
@@ -682,7 +682,7 @@ def run_pilot(
                 )
             records.setdefault(case.case_id, {})[arm_name] = record
             case_records = records[case.case_id]
-            if set(case_records) == {"sham", "poison"} and case.case_id not in completed_cases:
+            if set(case_records) == {"benign", "poison"} and case.case_id not in completed_cases:
                 completed_cases.add(case.case_id)
                 if len(completed_cases) % runtime.evaluate_every_completed_cases == 0:
                     _write_interim_evaluation(
@@ -774,9 +774,11 @@ def _finalize_run(
     matched: list[MatchedCaseRecord] = []
     for case in cases.cases:
         arms = records.get(case.case_id, {})
-        if set(arms) != {"sham", "poison"}:
+        if set(arms) != {"benign", "poison"}:
             raise ResearchRunnerError(f"case {case.case_id} is missing an assigned arm")
-        matched.append(MatchedCaseRecord(case.case_id, sham=arms["sham"], poison=arms["poison"]))
+        matched.append(
+            MatchedCaseRecord(case.case_id, benign=arms["benign"], poison=arms["poison"])
+        )
     eligibility = Eligibility(
         mode="research" if research_contract_path else "injected_test",
         protocol_version=str(config.protocol.version),
@@ -837,7 +839,7 @@ def _run_arm(
     output: Path,
 ) -> ArmRecord:
     deadline = dependencies.monotonic() + runtime_config.phase_timeout_seconds
-    overlay = case.overlays.sham if arm_name == "sham" else case.overlays.poison
+    overlay = case.overlays.benign if arm_name == "benign" else case.overlays.poison
     acquisition_pool = clean_pool.with_overlay(overlay.resource)
     if len(acquisition_pool) != int(config.resource_pool.acquisition_resources):
         raise FrozenInputError("acquisition pool does not contain exactly 458 resources")
@@ -1392,7 +1394,7 @@ def _write_interim_evaluation(
         outcome = evaluate_case(
             MatchedCaseRecord(
                 case_id,
-                sham=arms["sham"],
+                benign=arms["benign"],
                 poison=arms["poison"],
             )
         )
@@ -1494,7 +1496,7 @@ def _require_identity(result: AgentResult, expected: RuntimeIdentity) -> None:
 
 
 def _validate_schedule(schedule: BuildSchedule, bundle: FrozenCaseBundle) -> None:
-    expected = {(case.case_id, arm) for case in bundle.cases for arm in ("A_sham", "B_poison")}
+    expected = {(case.case_id, arm) for case in bundle.cases for arm in ("A_benign", "B_poison")}
     observed = {(entry.case_id, entry.arm) for entry in schedule.entries}
     if len(schedule.entries) != 2 * len(bundle.cases) or observed != expected:
         raise FrozenInputError("build schedule is not a complete paired assignment")
@@ -1527,7 +1529,7 @@ def _validate_overlay_absence(pool: ResourcePool, bundle: FrozenCaseBundle) -> N
     resource_ids = {resource.resource_id for resource in pool.resources}
     hashes = {resource.content_hash for resource in pool.resources}
     for case in bundle.cases:
-        for overlay in (case.overlays.sham, case.overlays.poison):
+        for overlay in (case.overlays.benign, case.overlays.poison):
             if overlay.resource.resource_id in resource_ids:
                 raise FrozenInputError(
                     f"overlay resource ID already exists in clean pool: {case.case_id}"
@@ -1623,26 +1625,26 @@ def _verify_case_token_counts(
     records: list[dict[str, Any]] = []
     for case in bundle.cases:
         declared = bundle.counts_for(case.case_id)
-        observed_sham = token_counter(case.overlays.sham.resource.body)
+        observed_benign = token_counter(case.overlays.benign.resource.body)
         observed_poison = token_counter(case.overlays.poison.resource.body)
         if (
-            isinstance(observed_sham, bool)
-            or not isinstance(observed_sham, int)
-            or observed_sham <= 0
+            isinstance(observed_benign, bool)
+            or not isinstance(observed_benign, int)
+            or observed_benign <= 0
             or isinstance(observed_poison, bool)
             or not isinstance(observed_poison, int)
             or observed_poison <= 0
         ):
             raise FrozenInputError("serving tokenizer returned an invalid overlay count")
         if (
-            observed_sham != declared.sham_token_count
+            observed_benign != declared.benign_token_count
             or observed_poison != declared.poison_token_count
         ):
             raise FrozenInputError(f"pinned tokenizer count mismatch for case {case.case_id}")
         records.append(
             {
                 "case_id": case.case_id,
-                "sham_token_count": observed_sham,
+                "benign_token_count": observed_benign,
                 "poison_token_count": observed_poison,
             }
         )

@@ -512,7 +512,7 @@ def _run_arm(
     run_prefix: str,
     max_agent_turns: int | None,
 ) -> ArmRecord:
-    overlay = fixture.case.overlays.sham if arm == "sham" else fixture.case.overlays.poison
+    overlay = fixture.case.overlays.benign if arm == "benign" else fixture.case.overlays.poison
     acquisition_pool = fixture.clean_pool.with_overlay(overlay.resource)
     acquisition_retriever = DeterministicBM25(
         acquisition_pool.resources,
@@ -883,8 +883,8 @@ def _run_smoke(
     store.write_json("inputs/task-provenance.json", _task_provenance(fixture))
     store.write_json("inputs/model-provenance.json", dict(model_provenance))
 
-    sham = _run_arm(
-        "sham",
+    benign = _run_arm(
+        "benign",
         fixture=fixture,
         store=store,
         output=output,
@@ -907,7 +907,7 @@ def _run_smoke(
         run_prefix=run_prefix,
         max_agent_turns=max_agent_turns,
     )
-    matched = MatchedCaseRecord(fixture.case.case_id, sham=sham, poison=poison)
+    matched = MatchedCaseRecord(fixture.case.case_id, benign=benign, poison=poison)
     eligibility = Eligibility(
         mode=mode,
         protocol_version=str(experiment.protocol.version),
@@ -975,11 +975,11 @@ def run_model_backed_synthetic(
     output_directory: str | Path,
     *,
     base_url: str,
-    model_id: str = "Qwen/Qwen3.8-27B",
-    revision: str = "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+    model_id: str = "Qwen/Qwen3.8-27B-FP8",
+    revision: str = "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
     api_key: str | None = None,
     timeout_seconds: float = 300.0,
-    max_model_len: int = 65536,
+    max_model_len: int = 32768,
     max_agent_turns: int = 16,
     config_path: str | Path = "configs/experiment_plan.yaml",
     project_root: str | Path | None = None,

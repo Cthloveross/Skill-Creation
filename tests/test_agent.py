@@ -3,6 +3,7 @@ import unittest
 
 from r2sp.agent import (
     AGENT_TOOLS,
+    SKILL_ONLY_TOOLS,
     TRUSTED_APPWORLD_CONTROL_PLANE,
     AgentBudgets,
     AgentRunner,
@@ -417,6 +418,9 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(result.candidate_resource_ids, tuple(f"doc-{i}" for i in range(1, 11)))
         self.assertEqual(result.selected_resource_ids, tuple(selected))
         self.assertEqual(result.resource_ids, ("doc-7",))
+        self.assertEqual([item["turn"] for item in result.retrieval_trace], [1, 2])
+        self.assertEqual(result.selection_trace[-1]["turn"], 3)
+        self.assertEqual(result.read_trace[-1]["turn"], 4)
         self.assertEqual(result.selection_trace[-1]["accepted"], True)
         self.assertEqual(result.selection_trace[-1]["resource_ids"], selected)
         self.assertEqual(retriever.read_ids, ["doc-7"])
@@ -577,6 +581,141 @@ class AgentTests(unittest.TestCase):
             [tool["function"]["name"] for tool in AGENT_TOOLS],
             ["search_docs", "read_doc", "execute", "finish"],
         )
+
+    def test_skill_only_mode_exposes_only_execute_and_finish_without_retriever(self):
+        client = FakeClient(
+            [
+                {
+                    "tool_calls": [
+                        tool_call(
+                            "execute",
+                            {"app": "notes", "api": "add", "args": {"text": "x"}},
+                            1,
+                        )
+                    ]
+                },
+                {"tool_calls": [tool_call("finish", {"status": "success", "answer": ""}, 2)]},
+            ]
+        )
+        runtime = SyntheticRuntime({("notes", "add"): lambda args: {"saved": args["text"]}})
+
+        result = AgentRunner(client, resource_access=False).run(
+            "Add a note",
+            {"notes": "Create and manage notes"},
+            runtime,
+            None,
+            skill="Workflow guidance",
+        )
+
+        expected_names = ["execute", "finish"]
+        self.assertEqual(
+            [tool["function"]["name"] for tool in SKILL_ONLY_TOOLS],
+            expected_names,
+        )
+        self.assertTrue(result.task_success)
+        self.assertEqual(result.search_calls, 0)
+        self.assertEqual(result.resource_ids, ())
+        self.assertEqual(result.read_documents, ())
+        self.assertEqual(result.retrieval_trace, ())
+        self.assertEqual(result.read_trace, ())
+        self.assertEqual(result.candidate_resource_ids, ())
+        self.assertEqual(result.selected_resource_ids, ())
+        for _, kwargs in client.calls:
+            self.assertEqual(
+                [tool["function"]["name"] for tool in kwargs["tools"]],
+                expected_names,
+            )
+
+    def test_skill_only_mode_rejects_any_retriever_before_runtime_or_model_use(self):
+        class StartTrackingRuntime(SyntheticRuntime):
+            def __init__(self):
+                super().__init__()
+                self.start_calls = 0
+
+            def start(self):
+                self.start_calls += 1
+                return super().start()
+
+        client = FakeClient([])
+        runtime = StartTrackingRuntime()
+        retriever = FakeRetriever()
+
+        with self.assertRaisesRegex(ValueError, "retriever must be None"):
+            AgentRunner(client, resource_access=False).run(
+                "task",
+                {},
+                runtime,
+                retriever,
+            )
+
+        self.assertEqual(runtime.start_calls, 0)
+        self.assertEqual(client.calls, [])
+        self.assertEqual(retriever.read_count, 0)
+
+    def test_skill_only_mode_rejects_unadvertised_resource_calls_without_access(self):
+        client = FakeClient(
+            [
+                {"tool_calls": [tool_call("search_docs", {"query": "hidden"}, 1)]},
+                {"tool_calls": [tool_call("read_doc", {"resource_id": "doc-1"}, 2)]},
+                {"tool_calls": [tool_call("finish", {"status": "success", "answer": ""}, 3)]},
+            ]
+        )
+
+        result = AgentRunner(client, resource_access=False).run(
+            "task",
+            {},
+            SyntheticRuntime(),
+            None,
+        )
+
+        self.assertTrue(result.task_success)
+        self.assertEqual(result.search_calls, 0)
+        self.assertEqual(result.retrieval_trace, ())
+        self.assertEqual(result.read_trace, ())
+        self.assertIn("resource_access_disabled", json.dumps(client.calls[1][0]))
+        self.assertIn("resource_access_disabled", json.dumps(client.calls[2][0]))
+
+    def test_skill_only_mode_is_incompatible_with_document_selection(self):
+        with self.assertRaisesRegex(ValueError, "selection_k requires resource access"):
+            AgentRunner(FakeClient([]), selection_k=5, resource_access=False)
+
+    def test_retrieval_only_mode_omits_execute_and_rejects_hallucinated_calls(self):
+        client = FakeClient(
+            [
+                {
+                    "tool_calls": [
+                        tool_call(
+                            "execute",
+                            {"app": "notes", "api": "add", "args": {"text": "x"}},
+                            1,
+                        )
+                    ]
+                },
+                {"tool_calls": [tool_call("finish", {"status": "fail", "answer": ""}, 2)]},
+            ]
+        )
+
+        result = AgentRunner(
+            client,
+            selection_k=5,
+            execution_access=False,
+        ).run("task", {}, SyntheticRuntime(), CandidateRetriever())
+
+        self.assertEqual(result.api_calls, 0)
+        self.assertEqual(result.finish_status, "fail")
+        self.assertEqual(
+            [tool["function"]["name"] for tool in client.calls[0][1]["tools"]],
+            ["search_docs", "select_docs", "read_doc", "finish"],
+        )
+        self.assertIn("execution_access_disabled", json.dumps(client.calls[1][0]))
+
+    def test_resource_access_flag_must_be_boolean(self):
+        with self.assertRaisesRegex(TypeError, "resource_access must be bool"):
+            AgentRunner(FakeClient([]), resource_access=0)
+
+    def test_execution_access_flag_must_be_boolean(self):
+        with self.assertRaisesRegex(TypeError, "execution_access must be bool"):
+            AgentRunner(FakeClient([]), execution_access=0)
 
 
 if __name__ == "__main__":

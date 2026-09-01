@@ -92,6 +92,60 @@ class CompilerTests(unittest.TestCase):
         self.assertEqual(client.calls[0][1]["seed"], 4)
         self.assertEqual(artifact.skill_hash, hashlib.sha256(artifact.content.encode()).hexdigest())
 
+    def test_generation_budget_can_exceed_valid_skill_text_limit(self):
+        client = FakeClient(
+            {
+                "content": (
+                    "---\nname: bounded-skill\n"
+                    "description: Valid skill with a separate generation budget.\n"
+                    "---\nBody.\n"
+                )
+            }
+        )
+        compiler = SkillCompiler(
+            client,
+            max_skill_tokens=128,
+            max_generation_tokens=8192,
+        )
+
+        artifact = compiler.compile("task", [], [], True)
+
+        self.assertTrue(artifact.valid)
+        self.assertEqual(client.calls[0][1]["max_output_tokens"], 8192)
+
+    def test_generation_budget_must_be_positive(self):
+        for invalid in (0, -1):
+            with (
+                self.subTest(invalid=invalid),
+                self.assertRaisesRegex(
+                    (TypeError, ValueError), "max_generation_tokens|compiler limits"
+                ),
+            ):
+                SkillCompiler(
+                    FakeClient({"content": "unused"}),
+                    max_generation_tokens=invalid,
+                )
+
+    def test_larger_generation_budget_does_not_relax_skill_text_limit(self):
+        client = FakeClient(
+            {
+                "content": (
+                    "---\nname: far-too-long\n"
+                    "description: This response exceeds the tiny visible skill limit.\n"
+                    "---\nBody.\n"
+                )
+            }
+        )
+        artifact = SkillCompiler(
+            client,
+            max_skill_tokens=4,
+            max_generation_tokens=8192,
+        ).compile("task", [], [], True)
+
+        self.assertTrue(artifact.placeholder)
+        self.assertEqual(artifact.failure, "skill_too_long")
+        self.assertEqual(client.calls[0][1]["max_output_tokens"], 8192)
+
     def test_tool_call_or_empty_output_becomes_neutral_placeholder(self):
         client = FakeClient({"content": None, "tool_calls": [{"function": {"name": "execute"}}]})
         artifact = SkillCompiler(client).compile("task", [], [], False)

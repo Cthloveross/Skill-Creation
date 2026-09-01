@@ -128,10 +128,20 @@ AGENT_TOOLS: tuple[dict[str, Any], ...] = (
     },
 )
 
+SKILL_ONLY_TOOLS: tuple[dict[str, Any], ...] = AGENT_TOOLS[2:]
 
-def _agent_tools(selection_k: int | None) -> tuple[dict[str, Any], ...]:
+
+def _agent_tools(
+    selection_k: int | None,
+    *,
+    resource_access: bool,
+    execution_access: bool,
+) -> tuple[dict[str, Any], ...]:
+    if not resource_access:
+        return SKILL_ONLY_TOOLS if execution_access else (AGENT_TOOLS[3],)
+    execution_tools = AGENT_TOOLS[2:] if execution_access else (AGENT_TOOLS[3],)
     if selection_k is None:
-        return AGENT_TOOLS
+        return (*AGENT_TOOLS[:2], *execution_tools)
     selection_tool = {
         "type": "function",
         "function": {
@@ -156,7 +166,7 @@ def _agent_tools(selection_k: int | None) -> tuple[dict[str, Any], ...]:
             },
         },
     }
-    return (AGENT_TOOLS[0], selection_tool, *AGENT_TOOLS[1:])
+    return (AGENT_TOOLS[0], selection_tool, AGENT_TOOLS[1], *execution_tools)
 
 
 TRUSTED_APPWORLD_CONTROL_PLANE: tuple[dict[str, Any], ...] = tuple(
@@ -217,6 +227,8 @@ class AgentRunner:
         budgets: AgentBudgets | None = None,
         top_k: int = 10,
         selection_k: int | None = None,
+        resource_access: bool = True,
+        execution_access: bool = True,
         system_policy: str = _DEFAULT_SYSTEM_POLICY,
         close_runtime: bool = True,
         max_context_tokens: int = 65536,
@@ -229,11 +241,23 @@ class AgentRunner:
             isinstance(selection_k, bool) or not isinstance(selection_k, int) or selection_k <= 0
         ):
             raise ValueError("selection_k must be a positive integer or None")
+        if not isinstance(resource_access, bool):
+            raise TypeError("resource_access must be bool")
+        if not isinstance(execution_access, bool):
+            raise TypeError("execution_access must be bool")
+        if not resource_access and selection_k is not None:
+            raise ValueError("selection_k requires resource access")
         self.client = client
         self.budgets = budgets or AgentBudgets()
         self.top_k = int(top_k)
         self.selection_k = selection_k
-        self._tools = _agent_tools(selection_k)
+        self.resource_access = resource_access
+        self.execution_access = execution_access
+        self._tools = _agent_tools(
+            selection_k,
+            resource_access=resource_access,
+            execution_access=execution_access,
+        )
         self.system_policy = system_policy
         self.close_runtime = close_runtime
         if (
@@ -260,7 +284,7 @@ class AgentRunner:
         task: str,
         app_descriptions: Mapping[str, str],
         runtime: RuntimeAdapter,
-        retriever: Retriever,
+        retriever: Retriever | None = None,
         *,
         skill: str | None = None,
         seed: int | None = None,
@@ -271,6 +295,10 @@ class AgentRunner:
             raise TypeError("app_descriptions must be a mapping")
         if skill is not None and not isinstance(skill, str):
             raise TypeError("skill must be text")
+        if self.resource_access and retriever is None:
+            raise ValueError("retriever is required when resource access is enabled")
+        if not self.resource_access and retriever is not None:
+            raise ValueError("retriever must be None when resource access is disabled")
 
         state = _RunState()
         turns = 0
@@ -367,12 +395,22 @@ class AgentRunner:
                     if parse_error:
                         messages.append(_tool_message(call_id, {"error": parse_error}))
                         continue
-                    if name == "search_docs":
-                        output = self._search(arguments, retriever, state)
+                    if not self.resource_access and name in {
+                        "search_docs",
+                        "select_docs",
+                        "read_doc",
+                    }:
+                        output = {"error": "resource_access_disabled"}
+                    elif name == "search_docs":
+                        assert retriever is not None
+                        output = self._search(arguments, retriever, state, turn=turns)
                     elif name == "select_docs" and self.selection_k is not None:
-                        output = self._select(arguments, state)
+                        output = self._select(arguments, state, turn=turns)
                     elif name == "read_doc":
-                        output = self._read(arguments, retriever, state)
+                        assert retriever is not None
+                        output = self._read(arguments, retriever, state, turn=turns)
+                    elif name == "execute" and not self.execution_access:
+                        output = {"error": "execution_access_disabled"}
                     elif name == "execute":
                         output = self._execute(arguments, runtime, state)
                     elif name == "finish":
@@ -443,7 +481,14 @@ class AgentRunner:
             observed = count()
         return copied
 
-    def _search(self, arguments: Mapping[str, Any], retriever: Retriever, state: _RunState) -> Any:
+    def _search(
+        self,
+        arguments: Mapping[str, Any],
+        retriever: Retriever,
+        state: _RunState,
+        *,
+        turn: int,
+    ) -> Any:
         if self.selection_k is not None and state.selected_resource_ids:
             return {"error": "search_after_selection"}
         query = arguments.get("query")
@@ -470,16 +515,23 @@ class AgentRunner:
                 logged["score"] = float(mapped["score"])
             logged_headers.append(logged)
         state.retrieval_trace.append(
-            {"query": query, "top_k": self.top_k, "results": logged_headers}
+            {"turn": turn, "query": query, "top_k": self.top_k, "results": logged_headers}
         )
         # Scores, snippets and bodies are deliberately not returned to the agent.
         return {"results": visible_headers}
 
-    def _select(self, arguments: Mapping[str, Any], state: _RunState) -> Any:
+    def _select(
+        self,
+        arguments: Mapping[str, Any],
+        state: _RunState,
+        *,
+        turn: int,
+    ) -> Any:
         assert self.selection_k is not None
         raw_resource_ids = arguments.get("resource_ids")
         resource_ids = _selection_resource_ids(raw_resource_ids)
         trace: dict[str, Any] = {
+            "turn": turn,
             "resource_ids": list(resource_ids or ()),
             "candidate_resource_ids": list(state.candidate_resource_ids),
             "accepted": False,
@@ -520,19 +572,32 @@ class AgentRunner:
         state.selection_trace.append(trace)
         return {"accepted": True, "resource_ids": list(resource_ids)}
 
-    def _read(self, arguments: Mapping[str, Any], retriever: Retriever, state: _RunState) -> Any:
+    def _read(
+        self,
+        arguments: Mapping[str, Any],
+        retriever: Retriever,
+        state: _RunState,
+        *,
+        turn: int,
+    ) -> Any:
         resource_id = arguments.get("resource_id")
         if not isinstance(resource_id, str) or not resource_id.strip():
             return {"error": "invalid_resource_id"}
         resource_id = resource_id.strip()[:512]
         if self.selection_k is not None and not state.selected_resource_ids:
             state.read_trace.append(
-                {"resource_id": resource_id, "ok": False, "error": "selection_required"}
+                {
+                    "turn": turn,
+                    "resource_id": resource_id,
+                    "ok": False,
+                    "error": "selection_required",
+                }
             )
             return {"error": "selection_required"}
         if self.selection_k is not None and resource_id not in state.selected_resource_ids:
             state.read_trace.append(
                 {
+                    "turn": turn,
                     "resource_id": resource_id,
                     "ok": False,
                     "error": "resource_not_selected",
@@ -542,14 +607,24 @@ class AgentRunner:
         is_new = resource_id not in state.resource_ids
         if is_new and len(state.resource_ids) >= self.budgets.max_unique_docs_read:
             state.read_trace.append(
-                {"resource_id": resource_id, "ok": False, "error": "read_budget_exceeded"}
+                {
+                    "turn": turn,
+                    "resource_id": resource_id,
+                    "ok": False,
+                    "error": "read_budget_exceeded",
+                }
             )
             return {"error": "read_budget_exceeded"}
         try:
             raw_document = _retriever_read(retriever, resource_id)
         except KeyError:
             state.read_trace.append(
-                {"resource_id": resource_id, "ok": False, "error": "unknown_resource_id"}
+                {
+                    "turn": turn,
+                    "resource_id": resource_id,
+                    "ok": False,
+                    "error": "unknown_resource_id",
+                }
             )
             return {"error": "read_failed"}
         document = _resource_document(_object_mapping(raw_document), resource_id)
@@ -558,6 +633,7 @@ class AgentRunner:
             state.read_documents.append(document)
         state.read_trace.append(
             {
+                "turn": turn,
                 "resource_id": resource_id,
                 "ok": True,
                 "content_hash": document.get("content_hash"),
@@ -768,6 +844,7 @@ def _retriever_read(retriever: Retriever, resource_id: str) -> Any:
 
 __all__ = [
     "AGENT_TOOLS",
+    "SKILL_ONLY_TOOLS",
     "TRUSTED_APPWORLD_CONTROL_PLANE",
     "AgentBudgets",
     "AgentResult",

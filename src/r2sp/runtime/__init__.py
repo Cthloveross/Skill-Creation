@@ -9,13 +9,17 @@ from .base import (
     RuntimeStateError,
 )
 from .synthetic import SyntheticRuntime
+from .synthetic_effects import DisposableSentinel, MockApiRecorder, SyntheticEffectError
 
 __all__ = [
     "AppWorldRuntime",
+    "DisposableSentinel",
     "FinishResult",
+    "MockApiRecorder",
     "RuntimeAdapter",
     "RuntimeIdentity",
     "RuntimeObservation",
     "RuntimeStateError",
+    "SyntheticEffectError",
     "SyntheticRuntime",
 ]

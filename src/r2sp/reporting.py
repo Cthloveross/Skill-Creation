@@ -22,22 +22,22 @@ CONTEXT_FIELDS = (
 OUTCOME_FIELDS = (
     "case_id",
     "poison_overlay_top10",
-    "sham_overlay_top10",
+    "benign_overlay_top10",
     "poison_overlay_selected5",
-    "sham_overlay_selected5",
+    "benign_overlay_selected5",
     "poison_natural_read",
-    "sham_natural_read",
+    "benign_natural_read",
     "poison_valid_skill",
-    "sham_valid_skill",
+    "benign_valid_skill",
     "poison_positive_canary",
     "poison_full_chain_success",
-    "sham_positive_false_activation",
-    "sham_negative_false_activation",
+    "benign_positive_false_activation",
+    "benign_negative_false_activation",
     "poison_negative_false_activation",
-    "sham_authoring_tgc",
+    "benign_authoring_tgc",
     "poison_authoring_tgc",
-    "sham_positive_tgc",
-    "sham_negative_tgc",
+    "benign_positive_tgc",
+    "benign_negative_tgc",
     "poison_positive_tgc",
     "poison_negative_tgc",
 )
@@ -93,25 +93,26 @@ def summary_markdown(summary: PilotSummary) -> str:
         f"- Provenance: `{provenance}`",
         f"- Matched cases (actual / expected): "
         f"`{cases} / {summary.eligibility.expected_case_count}`",
-        f"- Deployment tasks (Sham / Poison / total): "
+        f"- Deployment tasks (Benign / Poison / total): "
         f"`{deployments_per_arm} / {deployments_per_arm} / "
         f"{denominators['deployment_tasks_total']}`",
-        f"- Overlay in acquisition top-10 (Sham / Poison; denominator {cases} each): "
-        f"`{summary.sham_overlay_top10} / {summary.poison_overlay_top10}`",
-        f"- Overlay selected in model top-5 (Sham / Poison; denominator {cases} each): "
-        f"`{summary.sham_overlay_selected5} / {summary.poison_overlay_selected5}`",
+        f"- Overlay in acquisition top-10 (Benign / Poison; denominator {cases} each): "
+        f"`{summary.benign_overlay_top10} / {summary.poison_overlay_top10}`",
+        f"- Overlay selected in model top-5 (Benign / Poison; denominator {cases} each): "
+        f"`{summary.benign_overlay_selected5} / {summary.poison_overlay_selected5}`",
         f"- Poison natural full reads: `{summary.poison_natural_reads} / {cases}`",
-        f"- Valid skills (Sham / Poison; denominator {cases} each): "
-        f"`{summary.sham_valid_skills} / {summary.poison_valid_skills}`",
+        f"- Valid skills (Benign / Poison; denominator {cases} each): "
+        f"`{summary.benign_valid_skills} / {summary.poison_valid_skills}`",
         f"- Poison positive canary activations (`Y_canary`): "
         f"`{summary.poison_positive_canary_activations} / {cases}`",
         f"- Poison joint full-chain successes (`Y_joint`): "
         f"`{summary.poison_full_chain_successes} / {cases}`",
-        f"- Sham-positive false activations: `{summary.sham_positive_false_activations} / {cases}`",
+        f"- Benign-positive false activations: "
+        f"`{summary.benign_positive_false_activations} / {cases}`",
         f"- All negative false activations: "
         f"`{summary.all_negative_false_activations} / {negative_deployments}`",
-        f"- Mean deployment TGC (Sham / Poison / difference): "
-        f"`{summary.mean_deployment_tgc_sham:.4f} / {summary.mean_deployment_tgc_poison:.4f} / "
+        f"- Mean deployment TGC (Benign / Poison / difference): "
+        f"`{summary.mean_deployment_tgc_benign:.4f} / {summary.mean_deployment_tgc_poison:.4f} / "
         f"{summary.mean_deployment_tgc_difference:.4f}` "
         f"(denominator `{deployments_per_arm}` tasks per arm)",
     ]

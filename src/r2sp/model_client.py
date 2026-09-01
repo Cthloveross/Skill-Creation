@@ -38,14 +38,17 @@ class ModelClient(Protocol):
 class QwenGenerationConfig:
     """The generation settings frozen by the current protocol."""
 
-    model: str = "Qwen/Qwen3.8-27B"
-    revision: str = "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0"
-    enable_thinking: bool = True
-    preserve_thinking: bool = False
-    reasoning_effort: str = "xhigh"
-    temperature: float = 1.0
-    top_p: float = 0.95
+    model: str = "Qwen/Qwen3.8-27B-FP8"
+    revision: str = "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"
+    enable_thinking: bool = False
+    preserve_thinking: bool | None = None
+    reasoning_effort: str | None = None
+    temperature: float = 0.7
+    top_p: float = 0.8
     top_k: int = 20
+    min_p: float | None = 0.0
+    presence_penalty: float | None = 1.5
+    repetition_penalty: float | None = 1.0
     max_output_tokens: int = 8192
 
 
@@ -125,6 +128,12 @@ class OpenAICompatibleClient:
         if output_limit <= 0:
             raise ValueError("max_output_tokens must be positive")
 
+        chat_template_kwargs: dict[str, Any] = {
+            "enable_thinking": self.config.enable_thinking,
+        }
+        if self.config.preserve_thinking is not None:
+            chat_template_kwargs["preserve_thinking"] = self.config.preserve_thinking
+
         payload: dict[str, Any] = {
             "model": self.config.model,
             "messages": normalized_messages,
@@ -132,12 +141,14 @@ class OpenAICompatibleClient:
             "top_p": self.config.top_p,
             "top_k": self.config.top_k,
             "max_tokens": output_limit,
-            "reasoning_effort": self.config.reasoning_effort,
-            "chat_template_kwargs": {
-                "enable_thinking": self.config.enable_thinking,
-                "preserve_thinking": self.config.preserve_thinking,
-            },
+            "chat_template_kwargs": chat_template_kwargs,
         }
+        if self.config.reasoning_effort is not None:
+            payload["reasoning_effort"] = self.config.reasoning_effort
+        for name in ("min_p", "presence_penalty", "repetition_penalty"):
+            value = getattr(self.config, name)
+            if value is not None:
+                payload[name] = value
         if seed is not None:
             if isinstance(seed, bool) or not isinstance(seed, int):
                 raise TypeError("seed must be an integer")
@@ -191,8 +202,12 @@ class OpenAICompatibleClient:
             count = len(tokens)
         return count
 
-    def verify_tool_contract(self) -> dict[str, Any]:
-        """Exercise the configured Qwen reasoning/tool parsers before a run."""
+    def verify_tool_contract(self, *, force_tool_choice: bool = True) -> dict[str, Any]:
+        """Exercise the configured Qwen reasoning/tool parsers before a run.
+
+        ``force_tool_choice=False`` mirrors the agent's real auto-selection path.
+        The default remains forced for the pinned Qwen3.8 protocol.
+        """
 
         tool = {
             "type": "function",
@@ -219,10 +234,11 @@ class OpenAICompatibleClient:
             seed=20260829,
             max_output_tokens=128,
         )
-        payload["tool_choice"] = {
-            "type": "function",
-            "function": {"name": "finish"},
-        }
+        if force_tool_choice:
+            payload["tool_choice"] = {
+                "type": "function",
+                "function": {"name": "finish"},
+            }
         decoded = self._post_json(self.endpoint, payload)
         choices = decoded.get("choices")
         message = (
@@ -273,8 +289,14 @@ class OpenAICompatibleClient:
             "reasoning_markup_hidden": True,
         }
 
-    def verify_selection_contract(self, *, selection_k: int = 5) -> dict[str, Any]:
-        """Force and validate the exact-cardinality document-selection tool contract."""
+    def verify_selection_contract(
+        self, *, selection_k: int = 5, force_tool_choice: bool = True
+    ) -> dict[str, Any]:
+        """Validate the exact-cardinality document-selection tool contract.
+
+        ``force_tool_choice=False`` avoids server-side forced JSON grammar while
+        retaining the exact schema and the independent response validation.
+        """
 
         if isinstance(selection_k, bool) or not isinstance(selection_k, int) or selection_k <= 0:
             raise ValueError("selection_k must be a positive integer")
@@ -317,10 +339,11 @@ class OpenAICompatibleClient:
             seed=20260829,
             max_output_tokens=256,
         )
-        payload["tool_choice"] = {
-            "type": "function",
-            "function": {"name": "select_docs"},
-        }
+        if force_tool_choice:
+            payload["tool_choice"] = {
+                "type": "function",
+                "function": {"name": "select_docs"},
+            }
         decoded = self._post_json(self.endpoint, payload)
         choices = decoded.get("choices")
         message = (

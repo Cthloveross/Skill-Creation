@@ -1,18 +1,20 @@
-# GPU compatibility audit
+# Historical GPU qualification evidence
 
-Audit date: 2026-08-29; target-model qualification completed 2026-08-30. This document separates
-the frozen research protocol from a local engineering profile. The target 27B service passed the
-staged RTX qualification, but no RTX result is research-eligible under protocol v0.3.
+This file preserves the measured server inventory and Qwen3.8 capacity results. It is not an
+executable plan or the machine-readable contract. The current v0.4 workflow uses
+`Qwen/Qwen3.8-27B-FP8`, revision `017b9c7af6b5689d5dd426a76e0bc077eb5ca20a`, FP8 weight-only
+Marlin with FP16 compute, physical GPUs `0,6`, TP=2, PP=1, 32,768 context and port 18138. The
+authoritative settings are in
+[`run-records/procedure.md`](run-records/procedure.md#9-模型与-gpu-合同).
 
 ## Verdict
 
 | Target | Status | Reason |
 | --- | --- | --- |
+| Current v0.4: Qwen3.8-27B-FP8, two RTX 6000, TP=2 | **Selected and live-qualified** | The 28.75 GiB checkpoint loaded across GPUs 0/6, used 14.28 GiB model memory per GPU, exposed 32,768 context, and completed the paired acquisition/compiler run. |
 | Protocol v0.3: one H200, BF16, TP=1, 65,536 tokens | **Incompatible** | This server has Turing GPUs with compute capability 7.5 and 24 GiB per card. BF16 requires compute capability 8.0+, and the pinned weights exceed one card. |
-| One-card SM75 kernel smoke (`Qwen3.5-0.8B`) | **Runtime path verified** | vLLM served the hybrid GDN model through FP16, `TRITON_ATTN`, and Triton GDN prefill/decode, and completed real generation and tool calls. This is kernel evidence, not 27B capacity or quality evidence. |
 | Four-card FP16 27B profile | **Memory-feasible, not qualified** | Four cards provide enough aggregate memory to shard the weights, but this topology was not run in this qualification. Do not infer its speed or 65,536-token stability from the eight-card result. |
 | Eight-card FP16 27B profile | **Qualified for non-research engineering use** | The pinned Qwen3.8-27B passed real generation, a 56,012-token prompt, and the complete six-check service contract at `max_model_len=65,536` with TP=2/PP=4. |
-| Core code and synthetic pipeline | **Compatible and tested** | The dependency-light suite and deterministic smoke do not require the production model service. |
 
 Changing H200/BF16/TP=1 to RTX 6000/FP16/multi-GPU changes a frozen experimental factor. Results
 from that profile are instrumentation evidence only and must not be labelled protocol-v0.3 research
@@ -29,8 +31,8 @@ results.
 - `/home`: 176 GiB free but 99% used. `/tmp` had 103 GiB free before the disposable
   qualification environment was created.
 - Python 3.10.12 is installed; Python 3.11 is absent.
-- `torch`, `vllm`, and `appworld` are absent from the project virtual environment. The kernel
-  smoke used a disposable, separate vLLM environment under `/tmp`.
+- `torch`, `vllm`, and `appworld` were absent from the project virtual environment during this
+  historical audit; model serving used a disposable environment under `/tmp`.
 - Docker CLI and NVIDIA container utilities exist, but the current user cannot access the Docker
   daemon socket.
 - Port 8000 is already occupied by an unrelated host-wide Uvicorn process; this trial uses 18000.
@@ -51,30 +53,6 @@ vLLM 0.28 documents compute capability 7.5 as its general NVIDIA minimum, so the
 excluded at the framework level. Qwen3.8-27B has 48 linear-attention layers and 16 full-attention
 layers. The official recipe reports newer GPU families, so the staged local measurements below,
 not aggregate memory alone, are the basis for this server's engineering verdict.
-
-## Measured same-architecture SM75 smoke
-
-The smoke served `Qwen/Qwen3.5-0.8B` on GPU 8 with vLLM 0.28.0, PyTorch 2.13.0+cu130, FP16,
-`TRITON_ATTN`, Triton/FLA GDN prefill, Triton GDN decode, eager execution, FP16 KV cache, and a
-2,048-token limit. Qwen3.5 uses the same hybrid Qwen GDN implementation exercised by Qwen3.8 in
-vLLM; the checkpoint size and model capability are deliberately not treated as equivalent.
-
-Measured results:
-
-- Model load succeeded on compute capability 7.5. vLLM reported 285.31 seconds for engine profile,
-  KV-cache creation, and warmup; first-request shapes caused additional Triton JIT compilation.
-- The server allocated 14,398 MiB at idle with `gpu-memory-utilization=0.60`, including an
-  11.27 GiB KV cache. The loaded model/runtime itself consumed approximately 2.51 GiB before that
-  cache allocation.
-- `/v1/models`, `/tokenize`, ordinary chat completion, and a forced nested function call all
-  returned HTTP 200. The forced `finish` call produced valid JSON arguments.
-- The checked-in model-service probe passed identity, tokenizer, reasoning/tool parser, and the
-  four-tool agent loop. It failed ordinary final content and skill compilation: the 0.8B checkpoint
-  exhausted its reasoning budget without a final answer and produced an empty compiled skill.
-  Those failures show that this small checkpoint is not project-capable; they do not identify a
-  kernel failure or prove that the 27B checkpoint will pass.
-
-Therefore the small-model smoke established the SM75 fallback before loading the target weights.
 
 ## Measured Qwen3.8-27B eight-card qualification
 
@@ -116,22 +94,7 @@ context, and a regression test fixes this contract.
 
 The eight-card profile is therefore a measured working choice for this project. Remaining unknowns
 are four-card performance, two four-card replicas versus one eight-card endpoint, a combined
-56K-prompt plus 8,192-output-token worst case, restart behavior across a newly built environment,
-and the complete 96-episode scientific workload.
-
-### 2026-08-30 live full-chain confirmation
-
-The v0.3 identity, tokenizer, tool-call, and exact-five parser prechecks plus one complete live
-synthetic workflow subsequently passed on this same eight-card profile. Real Qwen acquisition
-selected exactly five previously exposed candidates in each arm, and the fresh-context compiler
-generated two valid `SKILL.md` files. The workflow took
-approximately 37 minutes after service startup; stable decode during qualification was about 9–11
-tokens/s. The service was then stopped and all GPUs were released. The environment/cache was kept
-under `/tmp/r2sp-qwen38-27b-20260830` for reproduction.
-
-This confirmation remains non-research: it used a synthetic runtime, and the Poison arm did not
-preserve or trigger the canary. Exact commands, hashes, selected IDs, outputs, and evaluator limits
-are in [`run-records/2026-08-30-top5-smoke.md`](run-records/2026-08-30-top5-smoke.md).
+56K-prompt plus 8,192-output-token worst case, and restart behavior across a newly built environment.
 
 ## Reproducing the qualified profile
 
@@ -204,8 +167,8 @@ Validation must be incremental:
 
 3. Record peak memory on every rank while the probe runs.
 4. Increase to 32,768 tokens, then 65,536 only if the preceding stage is stable.
-5. Treat a 65,536-token startup as insufficient evidence: the worst-case prompt/output path and all
-   96 isolated episodes still need validation.
+5. Treat a 65,536-token startup as insufficient evidence for any different workflow; validate that
+   workflow's own prompt/output path separately.
 
 This qualification observed 65,536-token serving, a 56,012-token real prompt, and the complete
 service contract. It did not run the scientific episode matrix or the combined maximum prompt plus

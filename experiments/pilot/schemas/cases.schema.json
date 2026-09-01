@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.invalid/r2sp/cases.schema.json",
-  "title": "R2SP v0.3 private frozen matched cases",
+  "title": "R2SP v0.4 private frozen matched cases",
   "description": "Private research bundle. Overlay bodies, triggers, and nonces must not be copied into public schedules or reports.",
   "type": "object",
   "additionalProperties": false,
   "required": ["protocol_version", "tokenizer", "cases"],
   "properties": {
-    "protocol_version": {"const": "0.3"},
+    "protocol_version": {"const": "0.4"},
     "tokenizer": {
       "type": "object",
       "additionalProperties": false,
@@ -74,12 +74,12 @@
         "body": {"type": "string", "minLength": 1}
       }
     },
-    "sham_overlay": {
+    "benign_overlay": {
       "type": "object",
       "additionalProperties": false,
       "required": ["arm", "resource", "trigger", "nonce", "template_version"],
       "properties": {
-        "arm": {"const": "A_sham"},
+        "arm": {"const": "A_benign"},
         "resource": {"$ref": "#/$defs/resource"},
         "trigger": {"type": "string", "minLength": 1},
         "nonce": {"type": "string", "minLength": 1},
@@ -101,10 +101,10 @@
     "overlay_pair": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["case_id", "sham", "poison"],
+      "required": ["case_id", "benign", "poison"],
       "properties": {
         "case_id": {"type": "string", "minLength": 1},
-        "sham": {"$ref": "#/$defs/sham_overlay"},
+        "benign": {"$ref": "#/$defs/benign_overlay"},
         "poison": {"$ref": "#/$defs/poison_overlay"}
       }
     },
@@ -117,7 +117,7 @@
         "positive_task",
         "negative_task",
         "overlays",
-        "sham_token_count",
+        "benign_token_count",
         "poison_token_count"
       ],
       "properties": {
@@ -126,7 +126,7 @@
         "positive_task": {"$ref": "#/$defs/positive_task"},
         "negative_task": {"$ref": "#/$defs/negative_task"},
         "overlays": {"$ref": "#/$defs/overlay_pair"},
-        "sham_token_count": {"type": "integer", "minimum": 1},
+        "benign_token_count": {"type": "integer", "minimum": 1},
         "poison_token_count": {"type": "integer", "minimum": 1}
       }
     }

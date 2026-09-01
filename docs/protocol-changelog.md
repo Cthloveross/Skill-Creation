@@ -1,46 +1,22 @@
-# R2SP Protocol Changelog
+# R2SP Current Protocol
 
-## v0.3 — 2026-08-30
+当前只维护 `v0.4` 正确流程；完整定义见
+[`run-records/procedure.md`](run-records/procedure.md)。
 
-Current authoritative protocol.
+## v0.4 — 2026-09-01
 
-### Changed
-
-- BM25 still returns up to 10 body-free document headers per search.
-- Acquisition adds the structured `select_docs(resource_ids)` model action. Qwen must commit exactly
-  five unique IDs from the ordered union of headers returned by its successful searches.
-- The harness rejects reads before selection, reads outside the selected set, search after selection,
-  repeated selection, and execution or successful completion without a valid selection. Rejected
-  actions must have no retrieval or runtime side effect.
-- The acquisition unique-read cap changes from 32 to 5. Selection is acquisition-only; deployment
-  retains the four-tool compatibility catalog.
-- Runs must record candidate headers/ranks, ordered model selection, reads, task provenance, compiler
-  input commitments, and generated-skill integrity data.
-
-### Task provenance
-
-- Research questions come from frozen AppWorld Train task IDs in the protected case bundle. The
-  frozen instruction must exactly match `world.task.instruction` in the newly created runtime.
-- Synthetic questions come from `src/r2sp/fixtures.py` and are wiring fixtures, not AppWorld evidence.
-- Qwen, BM25, and overlay documents do not create or modify the original task. Every run records the
-  source, task ID, and instruction hash.
-
-### Unchanged
-
-- `Qwen/Qwen3.8-27B` checkpoint and generation profile.
-- Formal H200/BF16 target, deterministic global BM25 parameters, and Top-10 candidate count.
-- 16 matched cases, Sham/Poison treatment definition, compiler boundary, hard reset, local canary,
-  fixed denominators, and go/no-go thresholds.
-
-### Evidence compatibility
-
-v0.2 and v0.3 are different experimental protocols. Existing v0.2 artifacts, skills, smoke runs, and
-reports remain v0.2 and must never be relabeled, merged into a v0.3 denominator, or used to satisfy a
-v0.3 selection trace. A v0.3 run requires a new output root and its own config hash, provenance, and
-artifact manifest.
-
-## v0.2 — 2026-08-29
-
-Initial feasibility protocol. Acquisition exposed `search_docs`, `read_doc`, `execute`, and `finish`;
-an agent could read up to 32 unique documents after searching, with no explicit model-selection
-commit. Historical v0.2 evidence remains immutable under that definition.
+- Arm 只使用 `A_benign` / `B_poison`。
+- Benign 是官方 API-document tree 的字节等价完整副本，无 lead、wrapper、tool 或 nonce。
+- 只有 Poison 在一个注册目标 endpoint `description` 前置 retrieval lead 和 required block。
+- 不做两臂 token 长度匹配。
+- 使用原始 authoring instruction 对完整 447-resource pool 做 canonical BM25 准入。
+- 不 append、boost、白名单或重排检索目标。
+- canonical Poison Top-10 必须 2/2；否则不启动模型。
+- canonical miss 会停止流程；下一步只能版本化 lead、重新 materialize，并从完整 447-resource
+  检索重跑。
+- 两个真实 acquisition 全部完成后统一检查实际 Top-10 → exact-five → full-read；任何 miss 都使
+  compiler 调用数为 0，且不生成任何 `SKILL.md`。
+- deployment 只接受完整 compile gate 2/2，并验证 Skill、source、corpus 和 complete hash。
+- 三个 live 入口绑定同一 `configs/experiment_plan.yaml`；配置、canonical gate 或 deployment gate
+  失败时不访问模型服务，也不构造实际 HTTP provider。
+- 所有输出 write-once；修改 lead 必须创建新 corpus/artifact 版本并从 materialize 重跑。

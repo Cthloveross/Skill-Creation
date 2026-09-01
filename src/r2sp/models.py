@@ -1,4 +1,4 @@
-"""Stable, serializable data contracts for the R2SP v0.3 pilot."""
+"""Stable, serializable data contracts for the R2SP v0.4 pilot."""
 
 from __future__ import annotations
 
@@ -148,7 +148,7 @@ class SearchHit:
         }
 
     def to_agent_dict(self) -> dict[str, str]:
-        """Return exactly the fields exposed by ``search_docs`` in v0.3.
+        """Return exactly the fields exposed by ``search_docs`` in v0.4.
 
         BM25 scores are retained in the evaluator-side retrieval log, but the
         agent sees neither scores nor document text/snippets.
@@ -266,9 +266,9 @@ class OverlaySpec:
     resource: Resource
     trigger: str
     nonce: str
-    template_version: str = "v0.3"
+    template_version: str = "v0.4"
 
-    VALID_ARMS: ClassVar[frozenset[str]] = frozenset({"A_sham", "B_poison"})
+    VALID_ARMS: ClassVar[frozenset[str]] = frozenset({"A_benign", "B_poison"})
 
     def __post_init__(self) -> None:
         if self.arm not in self.VALID_ARMS:
@@ -295,25 +295,25 @@ class OverlaySpec:
             resource=Resource.from_dict(value["resource"]),
             trigger=value["trigger"],
             nonce=value["nonce"],
-            template_version=value.get("template_version", "v0.3"),
+            template_version=value.get("template_version", "v0.4"),
         )
 
 
 @dataclass(frozen=True, slots=True)
 class OverlayPair:
     case_id: str
-    sham: OverlaySpec
+    benign: OverlaySpec
     poison: OverlaySpec
 
     def __post_init__(self) -> None:
         _required_text("case_id", self.case_id)
-        if self.sham.arm != "A_sham" or self.poison.arm != "B_poison":
-            raise ValueError("overlay pair must contain A_sham and B_poison arms")
-        sham_key = (
-            self.sham.resource.resource_id,
-            self.sham.resource.app_name,
-            self.sham.resource.api_name,
-            self.sham.resource.title,
+        if self.benign.arm != "A_benign" or self.poison.arm != "B_poison":
+            raise ValueError("overlay pair must contain A_benign and B_poison arms")
+        benign_key = (
+            self.benign.resource.resource_id,
+            self.benign.resource.app_name,
+            self.benign.resource.api_name,
+            self.benign.resource.title,
         )
         poison_key = (
             self.poison.resource.resource_id,
@@ -321,15 +321,15 @@ class OverlayPair:
             self.poison.resource.api_name,
             self.poison.resource.title,
         )
-        if sham_key != poison_key:
-            raise ValueError("Sham and Poison public resource identity must match")
-        if self.sham.trigger != self.poison.trigger or self.sham.nonce != self.poison.nonce:
-            raise ValueError("Sham and Poison trigger/nonce must match within a case")
+        if benign_key != poison_key:
+            raise ValueError("Benign and Poison public resource identity must match")
+        if self.benign.trigger != self.poison.trigger or self.benign.nonce != self.poison.nonce:
+            raise ValueError("Benign and Poison trigger/nonce must match within a case")
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "case_id": self.case_id,
-            "sham": self.sham.to_dict(),
+            "benign": self.benign.to_dict(),
             "poison": self.poison.to_dict(),
         }
 
@@ -337,7 +337,7 @@ class OverlayPair:
     def from_dict(cls, value: Mapping[str, Any]) -> OverlayPair:
         return cls(
             case_id=value["case_id"],
-            sham=OverlaySpec.from_dict(value["sham"]),
+            benign=OverlaySpec.from_dict(value["benign"]),
             poison=OverlaySpec.from_dict(value["poison"]),
         )
 

@@ -75,15 +75,25 @@ class SkillCompiler:
         *,
         max_input_tokens: int = 32768,
         max_skill_tokens: int = 4096,
+        max_generation_tokens: int | None = None,
         chars_per_token: int = 4,
         system_prompt: str = _DEFAULT_COMPILER_PROMPT,
         token_counter: Callable[[str], int] | None = None,
     ) -> None:
-        if max_input_tokens <= 0 or max_skill_tokens <= 0 or chars_per_token <= 0:
+        generation_tokens = (
+            max_skill_tokens if max_generation_tokens is None else max_generation_tokens
+        )
+        if (
+            max_input_tokens <= 0
+            or max_skill_tokens <= 0
+            or generation_tokens <= 0
+            or chars_per_token <= 0
+        ):
             raise ValueError("compiler limits must be positive")
         self.client = client
         self.max_input_tokens = int(max_input_tokens)
         self.max_skill_tokens = int(max_skill_tokens)
+        self.max_generation_tokens = int(generation_tokens)
         self.chars_per_token = int(chars_per_token)
         if token_counter is not None and not callable(token_counter):
             raise TypeError("token_counter must be callable or None")
@@ -153,7 +163,7 @@ class SkillCompiler:
                 messages,
                 tools=None,
                 seed=seed,
-                max_output_tokens=self.max_skill_tokens,
+                max_output_tokens=self.max_generation_tokens,
             )
         except ModelClientError as exc:
             return _placeholder(source_ids, "model_" + exc.code)

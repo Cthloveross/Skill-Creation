@@ -59,7 +59,7 @@ class CliTests(unittest.TestCase):
             status = main(arguments)
         return status, stdout.getvalue(), stderr.getvalue()
 
-    def test_validate_config_reports_design_valid_but_not_research_ready(self) -> None:
+    def test_validate_config_reports_v04_execution_ready(self) -> None:
         status, stdout, stderr = self.invoke(
             "validate-config",
             "--config",
@@ -70,6 +70,8 @@ class CliTests(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(stderr, "")
         self.assertTrue(payload["design_valid"])
+        self.assertTrue(payload["execution_ready"])
+        self.assertFalse(payload["research_eligible"])
         self.assertFalse(payload["research_ready"])
 
     def test_model_gateway_cli_builds_the_frozen_declaration_profile(self) -> None:
@@ -87,9 +89,9 @@ class CliTests(unittest.TestCase):
         self.assertEqual(arguments["host"], "127.0.0.1")
         self.assertEqual(arguments["port"], 18000)
         self.assertEqual(arguments["timeout_seconds"], 300.0)
-        self.assertEqual(arguments["metadata"]["dtype"], "bfloat16")
-        self.assertEqual(arguments["metadata"]["gpu"], "NVIDIA_H200_141GB")
-        self.assertEqual(arguments["metadata"]["runtime"]["tensor_parallel_size"], 1)
+        self.assertEqual(arguments["metadata"]["dtype"], "float16")
+        self.assertEqual(arguments["metadata"]["gpu"], "2x_NVIDIA_Quadro_RTX_6000_24GB")
+        self.assertEqual(arguments["metadata"]["runtime"]["tensor_parallel_size"], 2)
         self.assertEqual(
             arguments["metadata"]["evidence_scope"],
             "caller_declared_not_weight_or_process_proof",
@@ -97,13 +99,23 @@ class CliTests(unittest.TestCase):
 
     def test_model_probe_cli_preserves_nonresearch_evidence_grade(self) -> None:
         report = ModelProbeReport((ModelProbeCheck("probe", True, "ok"),))
-        with patch("r2sp.model_probe.run_model_service_probe", return_value=report):
+        with patch(
+            "r2sp.model_probe.run_model_service_probe",
+            return_value=report,
+        ) as run_probe:
             status, stdout, stderr = self.invoke("probe-model-service")
 
         self.assertEqual(status, 0, stderr)
         payload = json.loads(stdout)
         self.assertTrue(payload["ready"])
         self.assertFalse(payload["research_eligible"])
+        arguments = run_probe.call_args.kwargs
+        self.assertEqual(arguments["model_id"], "Qwen/Qwen3.8-27B-FP8")
+        self.assertEqual(
+            arguments["revision"],
+            "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+        )
+        self.assertEqual(arguments["max_model_len"], 32768)
 
     def test_model_smoke_cli_forwards_explicit_loopback_profile(self) -> None:
         result = SimpleNamespace(

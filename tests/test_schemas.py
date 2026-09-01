@@ -20,7 +20,7 @@ def _load_schema(name: str) -> dict:
 def _minimal_research_run() -> dict:
     return {
         "schema_version": "1",
-        "protocol_version": "0.3",
+        "protocol_version": "0.4",
         "mode": "research",
         "research_candidate": True,
         "run_id": "research-test",
@@ -51,7 +51,7 @@ def _minimal_research_run() -> dict:
 def _minimal_model_smoke_run() -> dict:
     return {
         "schema_version": "1",
-        "protocol_version": "0.3",
+        "protocol_version": "0.4",
         "mode": "synthetic_model_smoke",
         "research_candidate": False,
         "run_id": "synthetic-model-smoke",
@@ -83,7 +83,7 @@ class SchemaTests(unittest.TestCase):
         for name in ("cases.schema.json", "overlay-attestation.schema.json"):
             with self.subTest(schema=name):
                 schema = _load_schema(name)
-                self.assertEqual(schema["properties"]["protocol_version"]["const"], "0.3")
+                self.assertEqual(schema["properties"]["protocol_version"]["const"], "0.4")
 
     def test_research_run_requires_both_appworld_snapshot_bindings(self) -> None:
         validator = Draft202012Validator(_load_schema("run-record.schema.json"))

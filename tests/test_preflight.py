@@ -4,12 +4,14 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import patch
 
 import yaml
 
 from r2sp.cases import load_frozen_cases
+from r2sp.config import ConfigSection
 from r2sp.hashing import sha256_file
 from r2sp.models import CaseSpec, OverlayPair, OverlaySpec, Resource, TaskSpec
 from r2sp.preflight import (
@@ -25,9 +27,68 @@ CONFIG_PATH = PROJECT_ROOT / "configs" / "experiment_plan.yaml"
 
 
 def _base_config() -> dict[str, Any]:
-    value = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
-    assert isinstance(value, dict)
-    return value
+    """Return the retired generic-pilot contract used only by this harness."""
+
+    return {
+        "protocol": {"version": "0.4", "runner_ready": False},
+        "model": {
+            "id": "Qwen/Qwen3.8-27B",
+            "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+            "dtype": "bfloat16",
+            "gpu": "NVIDIA_H200_141GB",
+            "vllm_version": "0.28.0",
+            "max_model_len": 65536,
+            "prefix_caching": False,
+            "server_sessions": False,
+            "serving": {
+                "tokenizer_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+                "tensor_parallel_size": 1,
+                "pipeline_parallel_size": 1,
+                "max_num_seqs": 1,
+                "language_model_only": True,
+                "enable_auto_tool_choice": True,
+                "tool_call_parser": "qwen3_coder",
+                "reasoning_parser": "qwen3",
+            },
+            "generation": {
+                "enable_thinking": True,
+                "preserve_thinking": False,
+                "reasoning_effort": "xhigh",
+                "temperature": 1.0,
+                "top_p": 0.95,
+                "top_k": 20,
+                "max_output_tokens_per_turn": 8192,
+            },
+        },
+        "appworld": {
+            "package_version": "0.1.3.post1",
+            "git_revision": "66ad8099e12188ece0d3fe45e661dbc01880813b",
+            "data_bundle": "data-0.1.0.bundle",
+            "data_bundle_sha256": "fill_after_download",
+            "train_pilot_cases": 16,
+        },
+        "resource_pool": {
+            "clean_resources": 457,
+            "exclude_helpers": ["ApiDocs", "Supervisor"],
+        },
+        "pilot": {"cases": 16},
+        "safety": {
+            "isolated_local_environment": True,
+            "harmless_canary_only": True,
+            "real_accounts_credentials_or_network_callbacks": False,
+            "public_resource_injection": False,
+            "destructive_or_self_propagating_actions": False,
+        },
+    }
+
+
+def _legacy_loaded_config(value: dict[str, Any]) -> SimpleNamespace:
+    """Adapt legacy test data without weakening the v0.4 production loader."""
+
+    return SimpleNamespace(
+        design_valid=True,
+        **{name: ConfigSection(section) for name, section in value.items()},
+    )
 
 
 def _write_config(project: Path, value: dict[str, Any]) -> Path:
@@ -48,8 +109,8 @@ def _case(index: int) -> CaseSpec:
     nonce = f"nonce-{index:02d}"
     overlays = OverlayPair(
         case_id=case_id,
-        sham=OverlaySpec(
-            "A_sham",
+        benign=OverlaySpec(
+            "A_benign",
             Resource(body=f"Harmless matched body {index:02d}.", **identity),
             trigger,
             nonce,
@@ -74,11 +135,11 @@ def _write_cases(path: Path) -> None:
     cases: list[dict[str, Any]] = []
     for index in range(16):
         encoded = _case(index).to_dict()
-        encoded["sham_token_count"] = 100
+        encoded["benign_token_count"] = 100
         encoded["poison_token_count"] = 104
         cases.append(encoded)
     payload = {
-        "protocol_version": "0.3",
+        "protocol_version": "0.4",
         "tokenizer": {
             "model": "Qwen/Qwen3.8-27B",
             "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
@@ -215,6 +276,10 @@ def _run_fixture(
             "r2sp.preflight._fetch_model_record",
             return_value=(selected_record, "endpoint declarations returned"),
         ),
+        patch(
+            "r2sp.preflight.load_config",
+            return_value=_legacy_loaded_config(fixture["config"]),
+        ),
         gpu_patch,
     ):
         return run_preflight(
@@ -270,7 +335,14 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual({check.name for check in report.failed_required}, {"config_v02_valid"})
 
     def test_instrumentation_and_research_readiness_are_distinct(self) -> None:
-        with patch("r2sp.preflight._gpu_rows", return_value=([], "not available")):
+        legacy = _base_config()
+        with (
+            patch("r2sp.preflight._gpu_rows", return_value=([], "not available")),
+            patch(
+                "r2sp.preflight.load_config",
+                return_value=_legacy_loaded_config(legacy),
+            ),
+        ):
             report = run_preflight(
                 CONFIG_PATH,
                 project_root=PROJECT_ROOT,
@@ -287,7 +359,15 @@ class PreflightTests(unittest.TestCase):
             config = _base_config()
             config["appworld"]["data_bundle_sha256"] = "0" * 64
             path = _write_config(root, config)
-            report = run_preflight(path, project_root=PROJECT_ROOT, require_research_ready=True)
+            with patch(
+                "r2sp.preflight.load_config",
+                return_value=_legacy_loaded_config(config),
+            ):
+                report = run_preflight(
+                    path,
+                    project_root=PROJECT_ROOT,
+                    require_research_ready=True,
+                )
         failures = {check.name for check in report.failed_required}
         self.assertFalse(report.ready)
         self.assertIn("data_bundle_hash_configured", failures)
@@ -336,6 +416,7 @@ class PreflightTests(unittest.TestCase):
                 self.assertIn("protected_inputs_outside_repository", failures)
 
     def test_remote_endpoint_metadata_is_required_and_local_gpu_is_not_queried(self) -> None:
+        legacy = _base_config()
         with (
             patch(
                 "r2sp.preflight._fetch_model_record",
@@ -344,6 +425,10 @@ class PreflightTests(unittest.TestCase):
             patch(
                 "r2sp.preflight._gpu_rows",
                 side_effect=AssertionError("remote endpoint must not use local GPU facts"),
+            ),
+            patch(
+                "r2sp.preflight.load_config",
+                return_value=_legacy_loaded_config(legacy),
             ),
         ):
             report = run_preflight(

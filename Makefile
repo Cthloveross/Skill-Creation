@@ -1,4 +1,4 @@
-.PHONY: setup test lint check smoke preflight clean
+.PHONY: setup test lint check clean
 
 PYTHON ?= python
 VENV ?= .venv
@@ -18,12 +18,6 @@ lint:
 check: test lint
 	$(VENV)/bin/python -m compileall -q src tests
 	$(VENV)/bin/r2sp validate-config --config configs/experiment_plan.yaml
-
-smoke:
-	$(VENV)/bin/r2sp smoke --output runs/smoke
-
-preflight:
-	$(VENV)/bin/r2sp preflight --config configs/experiment_plan.yaml --research-ready
 
 clean:
 	find src tests -type d -name __pycache__ -prune -exec rm -r {} +

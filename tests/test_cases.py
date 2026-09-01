@@ -33,8 +33,8 @@ def make_case(index: int) -> CaseSpec:
     trigger = f"trigger-{index:02d}"
     overlays = OverlayPair(
         case_id=case_id,
-        sham=OverlaySpec(
-            "A_sham",
+        benign=OverlaySpec(
+            "A_benign",
             Resource(body=f"Harmless matched body {index:02d}.", **identity),
             trigger,
             nonce,
@@ -62,11 +62,11 @@ def bundle_payload(count: int, *, include_counts: bool = True) -> dict[str, Any]
     for index in range(count):
         encoded = make_case(index).to_dict()
         if include_counts:
-            encoded["sham_token_count"] = 100
+            encoded["benign_token_count"] = 100
             encoded["poison_token_count"] = 104
         cases.append(encoded)
     return {
-        "protocol_version": "0.3",
+        "protocol_version": "0.4",
         "tokenizer": {"model": MODEL, "revision": REVISION},
         "cases": cases,
     }
@@ -95,7 +95,7 @@ class FrozenCaseLoaderTests(unittest.TestCase):
             bundle = load_frozen_cases(write_payload(directory, bundle_payload(16)))
 
         self.assertEqual(len(bundle.cases), 16)
-        self.assertEqual(bundle.protocol_version, "0.3")
+        self.assertEqual(bundle.protocol_version, "0.4")
         self.assertEqual(bundle.tokenizer_model, MODEL)
         self.assertEqual(bundle.counts_for("case-00").poison_token_count, 104)
 
@@ -113,7 +113,7 @@ class FrozenCaseLoaderTests(unittest.TestCase):
         payload["protocol_version"] = "0.2"
         with (
             tempfile.TemporaryDirectory() as directory,
-            self.assertRaisesRegex(CaseBundleError, "protocol_version must equal '0.3'"),
+            self.assertRaisesRegex(CaseBundleError, "protocol_version must equal '0.4'"),
         ):
             load_frozen_cases(write_payload(directory, payload))
 
@@ -124,7 +124,7 @@ class FrozenCaseLoaderTests(unittest.TestCase):
                 research_mode=False,
             )
         self.assertEqual(len(bundle.cases), 2)
-        self.assertIsNone(bundle.counts_for("case-00").sham_token_count)
+        self.assertIsNone(bundle.counts_for("case-00").benign_token_count)
 
     def test_global_case_task_and_nonce_ids_must_be_unique(self) -> None:
         mutators = {
@@ -133,7 +133,7 @@ class FrozenCaseLoaderTests(unittest.TestCase):
                 "task_id", "task-00-a"
             ),
             "nonce": lambda value: (
-                value["cases"][1]["overlays"]["sham"].__setitem__("nonce", "nonce-00"),
+                value["cases"][1]["overlays"]["benign"].__setitem__("nonce", "nonce-00"),
                 value["cases"][1]["overlays"]["poison"].__setitem__("nonce", "nonce-00"),
             ),
         }
@@ -153,7 +153,7 @@ class FrozenCaseLoaderTests(unittest.TestCase):
         )
         case_schema = schema["$defs"]["case"]
         encoded = make_case(0).to_dict()
-        encoded["sham_token_count"] = 100
+        encoded["benign_token_count"] = 100
         encoded["poison_token_count"] = 104
 
         self.assertEqual(set(schema["properties"]["tokenizer"]["required"]), {"model", "revision"})
@@ -185,10 +185,10 @@ class FrozenCaseLoaderTests(unittest.TestCase):
                 "unexpected", True
             ),
             "overlays": lambda value: value["cases"][0]["overlays"].__setitem__("unexpected", True),
-            "sham": lambda value: value["cases"][0]["overlays"]["sham"].__setitem__(
+            "benign": lambda value: value["cases"][0]["overlays"]["benign"].__setitem__(
                 "unexpected", True
             ),
-            "sham.resource": lambda value: value["cases"][0]["overlays"]["sham"][
+            "benign.resource": lambda value: value["cases"][0]["overlays"]["benign"][
                 "resource"
             ].__setitem__("unexpected", True),
             "poison": lambda value: value["cases"][0]["overlays"]["poison"].__setitem__(
@@ -235,8 +235,8 @@ class FrozenCaseLoaderTests(unittest.TestCase):
             "token_ratio": lambda case: case.__setitem__("poison_token_count", 106),
             "same_body": lambda case: case["overlays"]["poison"]["resource"].update(
                 {
-                    "body": case["overlays"]["sham"]["resource"]["body"],
-                    "content_hash": case["overlays"]["sham"]["resource"]["content_hash"],
+                    "body": case["overlays"]["benign"]["resource"]["body"],
+                    "content_hash": case["overlays"]["benign"]["resource"]["content_hash"],
                 }
             ),
         }
@@ -265,16 +265,16 @@ class BuildScheduleTests(unittest.TestCase):
 
         for case in bundle.cases:
             entries = [entry for entry in first.entries if entry.case_id == case.case_id]
-            self.assertEqual({entry.arm for entry in entries}, {"A_sham", "B_poison"})
+            self.assertEqual({entry.arm for entry in entries}, {"A_benign", "B_poison"})
             self.assertEqual(len({entry.generation_seed for entry in entries}), 1)
 
         public = first.to_public_dict()
         self.assertFalse(contains_forbidden_key(public))
         serialized = json.dumps(public)
         for case in bundle.cases:
-            self.assertNotIn(case.overlays.sham.resource.body, serialized)
-            self.assertNotIn(case.overlays.sham.trigger, serialized)
-            self.assertNotIn(case.overlays.sham.nonce, serialized)
+            self.assertNotIn(case.overlays.benign.resource.body, serialized)
+            self.assertNotIn(case.overlays.benign.trigger, serialized)
+            self.assertNotIn(case.overlays.benign.nonce, serialized)
 
     def test_schedule_rejects_a_nonprotocol_seed(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -299,7 +299,7 @@ class OverlayAttestationTests(unittest.TestCase):
             loaded = load_overlay_attestation(path, expected_bundle=bundle)
 
         self.assertEqual(loaded, attestation)
-        self.assertEqual(payload["schema_version"], "r2sp.overlay-attestation.v1")
+        self.assertEqual(payload["schema_version"], "r2sp.overlay-attestation.v2")
         self.assertEqual(payload["case_count"], 16)
         hash_payload = {key: value for key, value in payload.items() if key != "bundle_hash"}
         self.assertEqual(payload["bundle_hash"], canonical_json_sha256(hash_payload))
@@ -308,19 +308,19 @@ class OverlayAttestationTests(unittest.TestCase):
         for case, commitment in zip(bundle.cases, attestation.cases, strict=True):
             self.assertEqual(commitment.case_id, case.case_id)
             self.assertEqual(
-                commitment.sham_content_hash,
-                case.overlays.sham.resource.content_hash,
+                commitment.benign_content_hash,
+                case.overlays.benign.resource.content_hash,
             )
             self.assertEqual(
                 commitment.poison_content_hash,
                 case.overlays.poison.resource.content_hash,
             )
-            self.assertEqual(commitment.trigger_sha256, sha256_text(case.overlays.sham.trigger))
-            self.assertEqual(commitment.nonce_sha256, sha256_text(case.overlays.sham.nonce))
+            self.assertEqual(commitment.trigger_sha256, sha256_text(case.overlays.benign.trigger))
+            self.assertEqual(commitment.nonce_sha256, sha256_text(case.overlays.benign.nonce))
             serialized = json.dumps(payload, sort_keys=True)
-            self.assertNotIn(case.overlays.sham.resource.body, serialized)
-            self.assertNotIn(case.overlays.sham.trigger, serialized)
-            self.assertNotIn(case.overlays.sham.nonce, serialized)
+            self.assertNotIn(case.overlays.benign.resource.body, serialized)
+            self.assertNotIn(case.overlays.benign.trigger, serialized)
+            self.assertNotIn(case.overlays.benign.nonce, serialized)
 
     def test_tampering_or_source_mismatch_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

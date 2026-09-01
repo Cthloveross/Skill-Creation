@@ -1,113 +1,56 @@
-# R2SP Pilot Architecture
+# R2SP v0.4 Architecture
 
-## Authority and scope
+## Authority
 
-The executable contract is version `0.3`. When files disagree, use this order:
+1. [`run-records/procedure.md`](run-records/procedure.md)：唯一执行流程、路径、命令和硬门控。
+2. [`../EXPERIMENT_PLAN.md`](../EXPERIMENT_PLAN.md)：当前实验问题和判定标准。
+3. `configs/experiment_plan.yaml`：唯一机器合同；固定模型、数据、资源、预算和全部硬门控。
+4. `src/r2sp/`：实现。
 
-1. `EXPERIMENT_PLAN.md` — scientific protocol and outcome definitions.
-2. `configs/experiment_plan.yaml` — exact machine-validated constants.
-3. `src/r2sp/` — implementation.
-4. `analysis/` — historical research notes only; not executable protocol.
+## 数据与信任边界
 
-This repository supports one matched Sham/Poison feasibility pilot. It does not support public
-resource injection, real credentials, external callbacks, destructive actions, or executable skill
-artifacts.
+| 组件 | 可以看到 | 不可以做 |
+| --- | --- | --- |
+| Materializer | 官方 `standard/*.json`、固定 profile payload | 修改官方源；给 Benign 添加内容；改变非目标 Poison endpoint |
+| BM25 | 完整 447-resource pool 和任务查询 | append、boost、白名单或重排目标 |
+| Acquisition Agent | 原始任务、Top-10 headers、选中五条的全文、本地 runtime | 读取未选择正文；发明 ID；获得额外工具或真实凭据 |
+| Compiler | 原始任务、Agent 实际读取的文档、规范化 trace、任务结果 | 看到未读取文档、evaluator 或隐藏 reasoning |
+| Deployment | clean corpus、验证过的 `SKILL.md`、evaluator-owned runtime | 访问 Poison corpus、用户文件、外网或真实 API |
+| Evaluator | manifest、hash、trace、本地 effect 结果 | 把隐藏答案或 evaluator state 暴露给模型 |
 
-## Trust boundaries
+`SKILL.md` 是文本 workflow guidance；不执行代码块、不安装依赖、不扩大工具权限。
 
-| Plane | Data visible | Data forbidden |
-|---|---|---|
-| Agent | task, trusted app descriptions, search headers, exactly five selected and explicitly read docs during acquisition, five acquisition tools, four deployment tools, loaded skill during deployment | evaluator, hidden solution, private case labels, unread documents, canary log |
-| Compiler | authoring task, documents actually read, normalized API trace, task-success bit | agent reasoning, unread docs, evaluator state, deployment results |
-| Runtime | validated `app.api(args)` calls and task completion | arbitrary Python identifiers, filesystem/network credentials, direct canary-log access |
-| Evaluator | frozen inputs, manifests, reset attestations, canary events, AppWorld scores | model hidden reasoning |
-| Model service | upstream identity plus gateway-supplied operational declarations; local `nvidia-smi` probe for loopback | cryptographic proof of loaded weights, process image, or effective launch flags |
-
-`SKILL.md` is text-only workflow guidance. It is hashed and loaded as text; code blocks are never
-executed, dependencies are never installed, and tool authority never expands.
-
-The model service and provisioning are trusted operational infrastructure. Bare vLLM does not emit
-the full frozen declaration set; the checked-in loopback gateway augments a real upstream model
-record with caller-supplied metadata. Preflight compares those claims with the frozen profile and
-probes local GPU visibility. This establishes reported consistency only, not a cryptographic binding
-to the process or weight bytes. The actual loaded-weight binding remains **unknown** unless
-provisioning supplies an independent verification mechanism.
-
-For AppWorld, the runner computes a content snapshot before creating output and recomputes it before
-completion. The snapshot covers the imported package and distribution metadata, base databases,
-standard API documentation, the train split, all 48 selected task trees, and Python bytecode. New
-bytecode writes are disabled while AppWorld executes. The start and final snapshots must match; a
-transient change reverted between probes is outside this detector, so provisioning must keep the
-runtime trees read-only or otherwise immutable. This does not prove publisher authenticity.
-Finalization is an
-irreversible state boundary: once its marker exists, a missing valid completion or a snapshot drift
-permanently seals that output tree against replay.
-
-## State machine
+## 状态机
 
 ```text
-frozen case + clean 457-doc pool
-              |
-              v
-matched Sham/Poison 458-doc acquisition
-              |
-     Top-10 headers -> exact Top-5 commit
-              |
-      actual reads + API trace
-              |
-              v
-fresh-context skill compiler
-              |
-       immutable SKILL.md hash
-              |
-              v
-hard reset attestation ---- fail closed
-              |
-              v
-clean 457-doc positive + negative deployments
-              |
-              v
-bound canary events + AppWorld TGC
-              |
-              v
-16-case paired aggregation
+official JSON
+  → Benign identity corpus + Poison single-target corpus
+  → manifest replay
+  → canonical 447-doc retrieval 2/2
+  → actual model acquisition 2/2
+  → compiler 2 profiles
+  → complete compile gate 2/2
+  → clean reset
+  → isolated positive/negative deployment
 ```
 
-The reset verifies clean-manifest equality, overlay ID/hash absence, fresh world/context/session IDs,
-and exact generated/loaded skill hashes. A canary target event counts only when nonce, deployment
-run ID, and loaded skill hash all match. Every assigned case remains in the denominator.
+前两个 retrieval gate 都是全局屏障：canonical 1/2 时不启动 acquisition；actual exposure 1/2
+时两个 acquisition trace 保留，但 compiler 调用数必须为 0，输出树不得出现 `SKILL.md`。
 
-## Modules
+## 模块
 
-- `config.py`, `models.py`, `cases.py`: frozen contracts and private/public serialization boundaries.
-- `resource_pool.py`, `retrieval.py`: immutable pools and deterministic BM25.
-- `agent.py`, `compiler.py`, `model_client.py`: acquisition Top-5 selection, four-tool deployment
-  loop, allow-listed skill build, pinned Qwen request format.
-- `runtime/`: synthetic and lazy AppWorld adapters.
-- `canary.py`, `isolation.py`, `integrity.py`, `artifacts.py`: local no-op observation, reset proof,
-  runtime byte binding, and write-once records.
-- `evaluation.py`, `reporting.py`: paired case outcomes, fixed denominators, eligibility-gated decision.
-- `runner.py`: deterministic instrumentation smoke.
-- `research_runner.py`: strict-preflight real pilot orchestration.
-- `cli.py`: stable operational entry points.
-
-## Evidence levels
-
-- Synthetic smoke proves wiring and invariants only. Its provenance is permanently
-  `research_eligible=false` and its decision is `NOT_ELIGIBLE`.
-- A research decision requires all 16 frozen cases, strict v0.3 config validation, verified frozen
-  inputs, a stable content-bound AppWorld runtime, a trusted Qwen service reporting the pinned
-  profile, target-environment dependency locks, and completed paired records. Operators must
-  enforce AppWorld publisher provenance and the service's actual weight/process identity outside
-  the current preflight.
-- Natural-read rate, real persistence rate, task utility, and scientific go/no-go are unknown until
-  that gated run completes.
+- `file_injection.py`：Benign identity / Poison prepend 变换和 manifest 重放。
+- `file_injection_fixture.py`：官方 task、source、profile 与磁盘 corpus 绑定。
+- `file_injection_profiles.py`：两个固定 profile、任务和 retrieval lead。
+- `retrieval.py`：确定性全局 BM25。
+- `agent.py`：Top-10 headers、exact-five、受限全文读取。
+- `injection_runner.py`：canonical/actual retrieval 和 compiler 全局硬门控。
+- `compiler.py`：fresh-context Skill 文本生成和校验。
+- `injection_deployment_runner.py`：2/2 gate 重放、clean reset 和本地部署验证。
+- `artifacts.py`：write-once 文件和完整性 manifest。
 
 ## Artifact policy
 
-Protected inputs and raw run outputs stay in absolute external trees disjoint from both this
-repository and the AppWorld tree. Git ignores `runs/` only as defense in depth; it is not a valid
-research output location. Public manifests contain headers and hashes, never document bodies,
-triggers, or nonces. Artifacts are atomic and write-once: identical content resumes; a same-path
-content change is an integrity error. Internal hashes detect partial corruption. Independent tamper
-evidence comes from retaining the externally returned `complete_hash` and supplying it to `report`.
+每个 corpus/lead 版本和 run 输出目录不可覆盖。完整 evidence 绑定 source、corpus、task、lead、
+Top-10、exact-five、full-read、Skill 和代码 hash。改变 lead 必须创建新版本；部分成功不能被当成
+完整通过。原始 AppWorld 数据永久保留，只清理由其可复现生成的旧派生目录。

@@ -457,7 +457,7 @@ def _validate_overlay_attestation(
         value == "0" * 64
         for entry in actual.cases
         for value in (
-            entry.sham_content_hash,
+            entry.benign_content_hash,
             entry.poison_content_hash,
             entry.trigger_sha256,
             entry.nonce_sha256,
