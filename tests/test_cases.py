@@ -149,7 +149,9 @@ class FrozenCaseLoaderTests(unittest.TestCase):
 
     def test_cases_schema_matches_the_loader_wire_format(self) -> None:
         schema = json.loads(
-            (ROOT / "experiments/pilot/schemas/cases.schema.json").read_text(encoding="utf-8")
+            (ROOT / "experiments/appworld/preliminary/schemas/cases.schema.json").read_text(
+                encoding="utf-8"
+            )
         )
         case_schema = schema["$defs"]["case"]
         encoded = make_case(0).to_dict()
@@ -340,9 +342,9 @@ class OverlayAttestationTests(unittest.TestCase):
 
     def test_attestation_schema_matches_builder_output(self) -> None:
         schema = json.loads(
-            (ROOT / "experiments/pilot/schemas/overlay-attestation.schema.json").read_text(
-                encoding="utf-8"
-            )
+            (
+                ROOT / "experiments/appworld/preliminary/schemas/overlay-attestation.schema.json"
+            ).read_text(encoding="utf-8")
         )
         with tempfile.TemporaryDirectory() as directory:
             payload = build_overlay_attestation(self._bundle(directory)).to_dict()

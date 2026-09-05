@@ -14,7 +14,7 @@ from r2sp.qualification_live import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE_CONFIG = ROOT / "configs/experiment_plan.yaml"
+BASE_CONFIG = ROOT / "experiments/appworld/preliminary/configs/experiment_plan.yaml"
 
 
 class QualificationLiveTests(unittest.TestCase):

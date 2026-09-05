@@ -1,9 +1,15 @@
 # Local protected/private experiment inputs
 private/
 data/
+!experiments/*/*/data/
+experiments/*/*/data/*
+!experiments/*/*/data/.gitkeep
 
 # Raw run bundles may contain protected AppWorld text
 runs/
+!experiments/*/*/runs/
+experiments/*/*/runs/*
+!experiments/*/*/runs/.gitkeep
 artifacts/raw/
 .experiments/
 .appworld/

@@ -50,7 +50,7 @@ PHYSICAL_GPU_IDS = (0, 6)
 VLLM_VERSION = "0.21.0+cu129"
 MODEL_MAX_LEN = 32768
 DEFAULT_BASE_URL = "http://127.0.0.1:18138/v1"
-DEFAULT_CONFIG_PATH = "configs/experiment_plan.yaml"
+DEFAULT_CONFIG_PATH = "experiments/appworld/preliminary/configs/experiment_plan.yaml"
 COMPILE_MODE = "file_backed_injection_compile_gate"
 DEPLOYMENT_MODE = "file_backed_poison_deployment_verification"
 SOURCE_TYPE = "appworld_standard_json_file_backed"
@@ -794,6 +794,7 @@ def _parser() -> argparse.ArgumentParser:
     materialize = subparsers.add_parser("materialize")
     materialize.add_argument("--appworld-root", required=True)
     materialize.add_argument("--output", required=True)
+    materialize.add_argument("--payload-directory", required=True)
 
     retrieve = subparsers.add_parser("retrieve")
     retrieve.add_argument("--appworld-root", required=True)
@@ -820,7 +821,11 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.command == "materialize":
-        manifests = materialize_appworld_file_bundles(args.appworld_root, args.output)
+        manifests = materialize_appworld_file_bundles(
+            args.appworld_root,
+            args.output,
+            payload_directory=args.payload_directory,
+        )
         print(
             json.dumps(
                 {

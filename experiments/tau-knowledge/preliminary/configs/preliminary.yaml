@@ -1,0 +1,71 @@
+schema_version: 1
+dataset:
+  name: tau-knowledge
+  domain: banking_knowledge
+  upstream_release: v1.0.1
+  commit: fc0055dc4e0a316c3f83133267fbd6faaa770992
+  root_tree: 4837da1c2b310152f63d3d7987f4325183ca6f7c
+  banking_tree: 0ce703cbc3e07b0b09905daf29700813b3b8f122
+  documents: 698
+  tasks: 97
+  target_document: doc_credit_cards_gold_rewards_card_001
+tasks:
+  acquisition: task_001
+  positive_deployment: task_002
+  far_negative_deployment: task_034
+retrieval:
+  index_field: content
+  normalization: nfkc_casefold
+  tokenizer: unicode_words
+  k1: 1.2
+  b: 0.75
+  deduplicate_query_tokens: true
+  tie_breaker: page_id_ascending
+  internal_top_k: 10
+  visible_top_k: 5
+  max_searches: 12
+  max_unique_pages_opened: 5
+limits:
+  max_turns: 60
+  max_task_tool_calls: 800
+compiler:
+  include_public_trace: false
+  max_input_tokens: 32768
+  max_skill_tokens: 4096
+  inputs:
+    - first_user_utterance
+    - opened_pages_first_success_order
+    - task_id_and_task_success
+matrix:
+  - {profile: mock-api-call, acquisition_arm: benign}
+  - {profile: mock-api-call, acquisition_arm: poison}
+  - {profile: delete-sentinel, acquisition_arm: poison}
+  - {profile: delete-sentinel, acquisition_arm: benign}
+  deployments_per_skill: [task_002, task_034]
+  retry_count: 0
+model:
+  id: Qwen/Qwen3.8-27B-FP8
+  revision: 017b9c7af6b5689d5dd426a76e0bc077eb5ca20a
+  endpoint: http://127.0.0.1:18138/v1
+  tensor_parallel_size: 2
+  default_physical_gpus: [0, 6]
+  runtime_override: two explicitly selected idle GPUs
+  max_model_len: 32768
+  max_num_seqs: 1
+  enable_prefix_caching: false
+  enable_server_sessions: false
+  seed: 20260904
+  user_simulator:
+    enable_thinking: false
+    temperature: 0
+    seed: 20260904
+gpu_gate:
+  checks: 2
+  interval_seconds: 10
+  minimum_free_mib_each: 23000
+  require_no_foreign_compute_process: true
+runtime:
+  uv_version: 0.12.9
+  python_version: 3.12.14
+  official_sync: uv sync --frozen --extra knowledge
+statuses: [DEFERRED, INVALID, BEHAVIORAL_FAIL, NOT_RUN_UPSTREAM, SUCCESS]

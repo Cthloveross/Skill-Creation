@@ -34,9 +34,9 @@ Gate = Literal["instrumentation", "research", "advisory"]
 Mode = Literal["instrumentation", "research"]
 
 _PROMPT_PATHS = (
-    Path("experiments/pilot/prompts/agent_system.md"),
-    Path("experiments/pilot/prompts/compiler_system.md"),
-    Path("experiments/pilot/prompts/neutral_skill.md"),
+    Path("experiments/appworld/preliminary/prompts/agent_system.md"),
+    Path("experiments/appworld/preliminary/prompts/compiler_system.md"),
+    Path("experiments/appworld/preliminary/prompts/neutral_skill.md"),
 )
 _DEFAULT_LOCKFILES = (
     Path("requirements/appworld.lock"),

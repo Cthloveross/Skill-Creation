@@ -130,7 +130,7 @@ def run_strict_skill_deployment(
     expected_compile_complete_sha256: str,
     client_provider: StrictSkillDeploymentClientProvider,
     system_prompt: str,
-    config_path: str | Path = "configs/experiment_plan.yaml",
+    config_path: str | Path = "experiments/appworld/preliminary/configs/experiment_plan.yaml",
     project_root: str | Path | None = None,
     seed: int = DEFAULT_SEED,
     fixtures: Mapping[str, SyntheticFixture] | None = None,

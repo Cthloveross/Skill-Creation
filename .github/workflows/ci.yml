@@ -17,8 +17,8 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: python -m pip install -e '.[dev]'
-      - run: python -m unittest discover -s tests -v
-      - run: ruff check src tests
-      - run: ruff format --check src tests
-      - run: python -m compileall -q src tests
-      - run: r2sp validate-config --config configs/experiment_plan.yaml
+      - run: python -m pytest -q tests experiments/appworld/preliminary/tests experiments/tau-knowledge/preliminary/tests
+      - run: ruff check src tests experiments/appworld/preliminary/tests experiments/tau-knowledge/preliminary/tests
+      - run: ruff format --check src tests experiments/appworld/preliminary/tests experiments/tau-knowledge/preliminary/tests
+      - run: python -m compileall -q src tests experiments/appworld/preliminary/tests experiments/tau-knowledge/preliminary/tests
+      - run: r2sp validate-config --config experiments/appworld/preliminary/configs/experiment_plan.yaml

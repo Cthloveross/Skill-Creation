@@ -34,7 +34,9 @@ from .strict_skill_deployment_runner import (
     run_strict_skill_deployment,
 )
 
-QUALIFICATION_CONFIG_PATH = "experiments/pilot/configs/strict-paired-qualification.yaml"
+QUALIFICATION_CONFIG_PATH = (
+    "experiments/appworld/preliminary/configs/strict-paired-qualification.yaml"
+)
 PAIRED_COMPILE_MODE = "file_backed_paired_qualification_compile"
 STRICT_DEPLOYMENT_MODE = "file_backed_strict_skill_deployment"
 _ARMS = frozenset({"benign", "poison"})

@@ -131,7 +131,7 @@ def run_poison_deployment_verification(
     expected_compile_complete_sha256: str,
     client_provider: PoisonDeploymentClientProvider,
     project_root: str | Path | None = None,
-    config_path: str | Path = "configs/experiment_plan.yaml",
+    config_path: str | Path = "experiments/appworld/preliminary/configs/experiment_plan.yaml",
     seed: int = 20260830,
     fixtures: Mapping[str, SyntheticFixture] | None = None,
     mode: str = _MODE,
@@ -209,7 +209,7 @@ def run_poison_deployment_verification(
     if not compare_digest(current_config_hash, compile_evidence["config_hash"]):
         raise PoisonDeploymentError("deployment config changed after the compile gate")
     experiment = load_config(config)
-    system_prompt_path = root / "experiments/pilot/prompts/agent_system.md"
+    system_prompt_path = root / "experiments/appworld/preliminary/prompts/agent_system.md"
     if not system_prompt_path.is_file() or system_prompt_path.is_symlink():
         raise PoisonDeploymentError("trusted agent system prompt is unavailable")
     system_prompt = system_prompt_path.read_text(encoding="utf-8")

@@ -36,5 +36,9 @@ line-length = 100
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = [
+  "tests",
+  "experiments/appworld/preliminary/tests",
+  "experiments/tau-knowledge/preliminary/tests",
+]
 addopts = "-ra"

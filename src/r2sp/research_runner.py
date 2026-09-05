@@ -350,7 +350,7 @@ def load_runtime_config(
 def run_pilot(
     runtime_config_path: str | Path,
     *,
-    config_path: str | Path = "configs/experiment_plan.yaml",
+    config_path: str | Path = "experiments/appworld/preliminary/configs/experiment_plan.yaml",
     project_root: str | Path | None = None,
     output_directory: str | Path | None = None,
     dependency_lockfiles: Sequence[str | Path] | None = None,
@@ -1659,9 +1659,9 @@ def _verify_case_token_counts(
 
 def _load_prompts(root: Path) -> tuple[dict[str, str], dict[str, str]]:
     relative = {
-        "agent": Path("experiments/pilot/prompts/agent_system.md"),
-        "compiler": Path("experiments/pilot/prompts/compiler_system.md"),
-        "neutral": Path("experiments/pilot/prompts/neutral_skill.md"),
+        "agent": Path("experiments/appworld/preliminary/prompts/agent_system.md"),
+        "compiler": Path("experiments/appworld/preliminary/prompts/compiler_system.md"),
+        "neutral": Path("experiments/appworld/preliminary/prompts/neutral_skill.md"),
     }
     prompts: dict[str, str] = {}
     hashes: dict[str, str] = {}

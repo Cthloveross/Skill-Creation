@@ -139,8 +139,8 @@ def _source_tree_hash(project_root: Path) -> str:
 
 def _load_smoke_prompts(project_root: Path) -> dict[str, str]:
     paths = {
-        "agent": project_root / "experiments/pilot/prompts/agent_system.md",
-        "compiler": project_root / "experiments/pilot/prompts/compiler_system.md",
+        "agent": project_root / "experiments/appworld/preliminary/prompts/agent_system.md",
+        "compiler": project_root / "experiments/appworld/preliminary/prompts/compiler_system.md",
     }
     prompts: dict[str, str] = {}
     for name, path in paths.items():
@@ -759,7 +759,7 @@ def _run_arm(
 def _run_smoke(
     output_directory: str | Path,
     *,
-    config_path: str | Path = "configs/experiment_plan.yaml",
+    config_path: str | Path = "experiments/appworld/preliminary/configs/experiment_plan.yaml",
     project_root: str | Path | None = None,
     client_provider: _SmokeClientProvider,
     mode: str,
@@ -948,7 +948,7 @@ def _run_smoke(
 def run_synthetic_smoke(
     output_directory: str | Path,
     *,
-    config_path: str | Path = "configs/experiment_plan.yaml",
+    config_path: str | Path = "experiments/appworld/preliminary/configs/experiment_plan.yaml",
     project_root: str | Path | None = None,
 ) -> SmokeRunResult:
     """Run the deterministic, scripted, permanently non-research full-chain fixture."""
@@ -981,7 +981,7 @@ def run_model_backed_synthetic(
     timeout_seconds: float = 300.0,
     max_model_len: int = 32768,
     max_agent_turns: int = 16,
-    config_path: str | Path = "configs/experiment_plan.yaml",
+    config_path: str | Path = "experiments/appworld/preliminary/configs/experiment_plan.yaml",
     project_root: str | Path | None = None,
     client: ModelClient | None = None,
     record_fetcher: Any | None = None,

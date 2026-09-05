@@ -7,9 +7,13 @@ from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 
+from r2sp.appworld_payloads import (
+    DEFAULT_APPWORLD_INJECTION_DIRECTORY,
+    AppWorldPayloadError,
+    load_appworld_injection_payloads,
+)
 from r2sp.artifacts import sha256_file
 from r2sp.file_injection_fixture import (
-    FileInjectionFixtureError,
     load_appworld_file_fixtures,
     materialize_appworld_file_bundles,
 )
@@ -115,13 +119,35 @@ def _source_snapshot(root: Path) -> dict[str, bytes]:
 
 
 class FileInjectionFixtureTests(unittest.TestCase):
+    def test_invalid_payload_fails_before_materialization_output_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            appworld = _make_appworld_tree(temporary / "appworld")
+            payloads = temporary / "payloads"
+            payloads.mkdir()
+            (payloads / "mock-api-call.txt").write_bytes(b"\xff")
+            (payloads / "delete-sentinel.txt").write_bytes(b"valid")
+            output = temporary / "bundles"
+
+            with self.assertRaises(AppWorldPayloadError):
+                materialize_appworld_file_bundles(
+                    appworld,
+                    output,
+                    payload_directory=payloads,
+                )
+            self.assertFalse(output.exists())
+
     def test_full_derived_pools_feed_bm25_and_compile_with_bound_disk_bytes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             temporary = Path(directory)
             appworld = _make_appworld_tree(temporary / "appworld")
             before = _source_snapshot(appworld)
             bundle_root = temporary / "bundles"
-            manifest_paths = materialize_appworld_file_bundles(appworld, bundle_root)
+            manifest_paths = materialize_appworld_file_bundles(
+                appworld,
+                bundle_root,
+                payload_directory=DEFAULT_APPWORLD_INJECTION_DIRECTORY,
+            )
             self.assertEqual(_source_snapshot(appworld), before)
             for name, paths in manifest_paths.items():
                 with self.subTest(profile=name, boundary="disk-arms"):
@@ -366,17 +392,12 @@ class FileInjectionFixtureTests(unittest.TestCase):
             self.assertEqual(path_provider.acquisition_calls, 0)
             self.assertEqual(path_provider.compiler_calls, 0)
 
-            with (
-                patch(
-                    "r2sp.file_injection_fixture._poison_injection_body",
-                    return_value="stale poison body",
-                ),
-                self.assertRaisesRegex(
-                    FileInjectionFixtureError,
-                    "current frozen injection body",
-                ),
+            with patch(
+                "r2sp.file_injection_fixture.load_appworld_injection_payloads",
+                side_effect=AssertionError("bundle replay must not read mutable payload files"),
             ):
-                load_appworld_file_fixtures(appworld, bundle_root)
+                replayed = load_appworld_file_fixtures(appworld, bundle_root)
+            self.assertEqual(replayed.source_evidence, loaded.source_evidence)
 
             provider = _Provider()
             with self.assertRaisesRegex(InjectionRunnerError, "synthetic mode rejects"):
@@ -390,9 +411,24 @@ class FileInjectionFixtureTests(unittest.TestCase):
             self.assertEqual(provider.compiler_calls, 0)
 
     def test_current_payload_hashes_are_bound_to_source_evidence(self) -> None:
+        expected = {
+            "mock-api-call": (
+                1346,
+                "5d075bdd23ec1a278346e098ebc4d3b6e53b3ece6de393723353923ff25b8bf5",
+            ),
+            "delete-sentinel": (
+                1395,
+                "dc3724eb9d045466e3a4c0659fbf85e00c4744792a7e83fa083bb862b5e72fdd",
+            ),
+        }
+        payloads = load_appworld_injection_payloads(DEFAULT_APPWORLD_INJECTION_DIRECTORY)
         for name, binding in APPWORLD_FILE_BINDINGS.items():
-            poison = _poison_injection_body(binding.profile)
+            poison = payloads[name]
+            path = DEFAULT_APPWORLD_INJECTION_DIRECTORY / f"{name}.txt"
             self.assertIn(binding.profile.retrieval_lead, poison, name)
+            self.assertEqual(poison, _poison_injection_body(binding.profile))
+            self.assertEqual(len(path.read_bytes()), expected[name][0])
+            self.assertEqual(sha256_file(path), expected[name][1])
             self.assertEqual(binding.source_relative_path, f"{binding.profile.app_name}.json")
             self.assertEqual(
                 binding.profile.resource_id,

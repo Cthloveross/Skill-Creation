@@ -8,7 +8,7 @@ import yaml
 from r2sp.config import ConfigValidationError, ExperimentConfig, load_config, validate_config
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG_PATH = ROOT / "configs" / "experiment_plan.yaml"
+CONFIG_PATH = ROOT / "experiments" / "appworld" / "preliminary" / "configs" / "experiment_plan.yaml"
 
 
 class ConfigTests(unittest.TestCase):

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/tau-knowledge/reset-attestation.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "passed", "checks", "acquisition_runtime", "deployment_runtime"],
+  "properties": {
+    "schema_version": {"const": "r2sp.reset-attestation.v1"},
+    "passed": {"type": "boolean"},
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "passed", "expected", "observed"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "passed": {"type": "boolean"},
+          "expected": {},
+          "observed": {}
+        }
+      }
+    },
+    "acquisition_runtime": {"$ref": "#/$defs/runtime_identity"},
+    "deployment_runtime": {"$ref": "#/$defs/runtime_identity"}
+  },
+  "$defs": {
+    "runtime_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["process_id", "instances"],
+      "properties": {
+        "process_id": {"type": "integer", "minimum": 1},
+        "instances": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

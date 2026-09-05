@@ -23,7 +23,9 @@ from r2sp.preflight import (
 from r2sp.resource_pool import load_standard_api_docs, write_public_manifest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-CONFIG_PATH = PROJECT_ROOT / "configs" / "experiment_plan.yaml"
+CONFIG_PATH = (
+    PROJECT_ROOT / "experiments" / "appworld" / "preliminary" / "configs" / "experiment_plan.yaml"
+)
 
 
 def _base_config() -> dict[str, Any]:
@@ -196,7 +198,7 @@ def _build_research_fixture(base: Path) -> dict[str, Any]:
     source = project / "src" / "r2sp"
     source.mkdir(parents=True)
     (source / "__init__.py").write_text("VALUE = 1\n", encoding="utf-8")
-    prompts = project / "experiments" / "pilot" / "prompts"
+    prompts = project / "experiments" / "appworld" / "preliminary" / "prompts"
     prompts.mkdir(parents=True)
     for name in ("agent_system.md", "compiler_system.md", "neutral_skill.md"):
         (prompts / name).write_text(f"# {name}\nnon-empty\n", encoding="utf-8")

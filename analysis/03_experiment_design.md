@@ -1,7 +1,7 @@
 # 实验设计：正文污染预算与 Full-chain ASR
 
 本文件只保留与当前论文主张直接相关的实验设计。具体命令、模型设置和 artifact 结构见
-[`docs/run-records/procedure.md`](../docs/run-records/procedure.md)。
+[`docs/procedure.md`](../docs/procedure.md)。
 
 ## 1. 研究问题
 
@@ -120,6 +120,6 @@ SHA-256 只证明 artifact identity 和跨阶段绑定，不作为攻击成功�
 effect，两个 negative episode 均无误触。它证明端到端可行性，但使用了已知任务/BM25 反馈、旧
 frozen-query/`sham` 协议，而且 ordinary task 只通过 `1/4`。
 
-当前 v0.4 已完成 byte-identical Benign、Poison-only 正文注入和两个 profile 的自然 Top-10 gate。模型
-acquisition、Skill compilation 和 deployment 尚未按 v0.4 复验。最终 unknown-task/unknown-retriever
-实验必须在 Poison 冻结后再选择 held-out tasks 和运行条件。
+当前 v0.4 已完成 byte-identical Benign、Poison-only 正文注入、自然 Top-10 和 Qwen3.8 paired
+acquisition/compile。两个 Poison 均被选择并全文读取，但 persistence 为 `0/2`，所以 deployment 未
+运行。最终 unknown-task/unknown-retriever 实验必须在 Poison 冻结后再选择 held-out tasks 和运行条件。

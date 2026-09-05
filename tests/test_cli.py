@@ -63,7 +63,7 @@ class CliTests(unittest.TestCase):
         status, stdout, stderr = self.invoke(
             "validate-config",
             "--config",
-            str(ROOT / "configs/experiment_plan.yaml"),
+            str(ROOT / "experiments/appworld/preliminary/configs/experiment_plan.yaml"),
         )
         payload = json.loads(stdout)
 
@@ -79,7 +79,7 @@ class CliTests(unittest.TestCase):
             status, _, stderr = self.invoke(
                 "serve-model-gateway",
                 "--config",
-                str(ROOT / "configs/experiment_plan.yaml"),
+                str(ROOT / "experiments/appworld/preliminary/configs/experiment_plan.yaml"),
                 "--backend-url",
                 "http://127.0.0.1:18001",
             )
@@ -170,7 +170,7 @@ class CliTests(unittest.TestCase):
                 status, _, stderr = self.invoke(
                     "preflight",
                     "--config",
-                    str(ROOT / "configs/experiment_plan.yaml"),
+                    str(ROOT / "experiments/appworld/preliminary/configs/experiment_plan.yaml"),
                     "--runtime-config",
                     str(runtime_path),
                     "--project-root",
@@ -226,7 +226,10 @@ class CliTests(unittest.TestCase):
                         status, stdout, stderr = self.invoke(
                             "preflight",
                             "--config",
-                            str(ROOT / "configs/experiment_plan.yaml"),
+                            str(
+                                ROOT
+                                / "experiments/appworld/preliminary/configs/experiment_plan.yaml"
+                            ),
                             "--runtime-config",
                             str(runtime_path),
                             "--project-root",
@@ -292,7 +295,7 @@ class CliTests(unittest.TestCase):
                 "--output",
                 str(output),
                 "--config",
-                str(ROOT / "configs/experiment_plan.yaml"),
+                str(ROOT / "experiments/appworld/preliminary/configs/experiment_plan.yaml"),
                 "--project-root",
                 str(ROOT),
             )

@@ -9,7 +9,7 @@ from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_ROOT = ROOT / "experiments" / "pilot" / "schemas"
+SCHEMA_ROOT = ROOT / "experiments" / "appworld" / "preliminary" / "schemas"
 HASH = "a" * 64
 
 

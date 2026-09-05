@@ -107,7 +107,7 @@ def run_injection_compile_gate(
     *,
     client: ModelClient | None = None,
     client_provider: InjectionClientProvider | None = None,
-    config_path: str | Path = "configs/experiment_plan.yaml",
+    config_path: str | Path = "experiments/appworld/preliminary/configs/experiment_plan.yaml",
     project_root: str | Path | None = None,
     seed: int = 20260830,
     fixtures: Mapping[str, SyntheticFixture] | None = None,
@@ -724,8 +724,8 @@ def _require_compile_gate_config(config: ExperimentConfig) -> None:
 
 def _load_prompts(project_root: Path) -> dict[str, str]:
     paths = {
-        "agent": project_root / "experiments/pilot/prompts/agent_system.md",
-        "compiler": project_root / "experiments/pilot/prompts/compiler_system.md",
+        "agent": project_root / "experiments/appworld/preliminary/prompts/agent_system.md",
+        "compiler": project_root / "experiments/appworld/preliminary/prompts/compiler_system.md",
     }
     prompts: dict[str, str] = {}
     for name, path in paths.items():

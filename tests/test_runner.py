@@ -40,9 +40,9 @@ class RunnerTests(unittest.TestCase):
                 (output / "artifacts-manifest.json").read_text(encoding="utf-8")
             )
             run_schema = json.loads(
-                (ROOT / "experiments/pilot/schemas/run-record.schema.json").read_text(
-                    encoding="utf-8"
-                )
+                (
+                    ROOT / "experiments/appworld/preliminary/schemas/run-record.schema.json"
+                ).read_text(encoding="utf-8")
             )
 
             self.assertFalse(result.cached)
@@ -136,7 +136,7 @@ class RunnerTests(unittest.TestCase):
             root = Path(directory)
             output = root / "smoke"
             config = root / "config.yaml"
-            original = ROOT / "configs/experiment_plan.yaml"
+            original = ROOT / "experiments/appworld/preliminary/configs/experiment_plan.yaml"
             config.write_text(original.read_text(encoding="utf-8"), encoding="utf-8")
             run_synthetic_smoke(output, project_root=ROOT, config_path=config)
             changed = config.read_text(encoding="utf-8") + "\n# changed\n"

@@ -9,6 +9,7 @@ from types import SimpleNamespace
 from typing import Any
 from unittest.mock import patch
 
+from r2sp.appworld_payloads import DEFAULT_APPWORLD_INJECTION_DIRECTORY
 from r2sp.artifacts import sha256_file, verify_artifact_manifest
 from r2sp.config import load_config
 from r2sp.file_injection_fixture import (
@@ -35,7 +36,7 @@ from r2sp.injection_runner import run_injection_compile_gate
 from tests.test_file_injection_fixture import _make_appworld_tree
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_CONFIG = PROJECT_ROOT / "configs/experiment_plan.yaml"
+DEFAULT_CONFIG = PROJECT_ROOT / "experiments/appworld/preliminary/configs/experiment_plan.yaml"
 
 
 def _official_source_evidence() -> dict[str, object]:
@@ -51,6 +52,31 @@ def _official_source_evidence() -> dict[str, object]:
 
 
 class FileInjectionLiveConfigTests(unittest.TestCase):
+    def test_materialize_cli_requires_explicit_payload_directory(self) -> None:
+        parser = _parser()
+        with self.assertRaises(SystemExit):
+            parser.parse_args(
+                [
+                    "materialize",
+                    "--appworld-root",
+                    "source",
+                    "--output",
+                    "bundles",
+                ]
+            )
+        args = parser.parse_args(
+            [
+                "materialize",
+                "--appworld-root",
+                "source",
+                "--payload-directory",
+                "payloads",
+                "--output",
+                "bundles",
+            ]
+        )
+        self.assertEqual(args.payload_directory, "payloads")
+
     def test_official_source_commitments_are_frozen(self) -> None:
         self.assertEqual(
             APPWORLD_STANDARD_CORPUS_SHA256,
@@ -81,7 +107,12 @@ class FileInjectionLiveConfigTests(unittest.TestCase):
 
     def test_compiler_prompt_requires_closed_yaml_frontmatter(self) -> None:
         prompt = (
-            PROJECT_ROOT / "experiments" / "pilot" / "prompts" / "compiler_system.md"
+            PROJECT_ROOT
+            / "experiments"
+            / "appworld"
+            / "preliminary"
+            / "prompts"
+            / "compiler_system.md"
         ).read_text(encoding="utf-8")
 
         self.assertIn("second standalone `---` delimiter", prompt)
@@ -329,7 +360,11 @@ class FileInjectionLiveConfigTests(unittest.TestCase):
             source_bundle.write_bytes(b"frozen-test-bundle")
 
             pristine_bundles = temporary / "pristine-bundles"
-            materialize_appworld_file_bundles(appworld, pristine_bundles)
+            materialize_appworld_file_bundles(
+                appworld,
+                pristine_bundles,
+                payload_directory=DEFAULT_APPWORLD_INJECTION_DIRECTORY,
+            )
             pristine = load_appworld_file_fixtures(appworld, pristine_bundles)
 
             non_target = appworld / "data/api_docs/standard/benign_catalog.json"
@@ -340,7 +375,11 @@ class FileInjectionLiveConfigTests(unittest.TestCase):
                 encoding="utf-8",
             )
             drifted_bundles = temporary / "drifted-bundles"
-            materialize_appworld_file_bundles(appworld, drifted_bundles)
+            materialize_appworld_file_bundles(
+                appworld,
+                drifted_bundles,
+                payload_directory=DEFAULT_APPWORLD_INJECTION_DIRECTORY,
+            )
 
             constant_patches = (
                 patch(

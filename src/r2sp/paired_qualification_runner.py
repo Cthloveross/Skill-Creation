@@ -168,7 +168,7 @@ def run_paired_qualification_compile(
     output_directory: str | Path,
     *,
     client_provider: PairedQualificationClientProvider,
-    config_path: str | Path = "configs/experiment_plan.yaml",
+    config_path: str | Path = "experiments/appworld/preliminary/configs/experiment_plan.yaml",
     project_root: str | Path | None = None,
     seed: int = DEFAULT_SEED,
     fixtures: Mapping[str, SyntheticFixture] | None = None,

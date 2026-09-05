@@ -1,7 +1,7 @@
 # Threat Model：Resource-to-Skill 跨会话持久化
 
 本文件只定义论文主威胁模型、攻击成功条件和解释边界。可执行协议以
-[`docs/run-records/procedure.md`](../docs/run-records/procedure.md) 为准。
+[`docs/procedure.md`](../docs/procedure.md) 为准。
 
 ## 1. 核心安全问题
 
@@ -132,8 +132,9 @@ Trigger-negative 误触和 ordinary task utility 单独报告。它们用于解�
 2. v4 使用旧 frozen-query/`sham` 协议，没有 matched Benign deployment control；
 3. ordinary task 只通过 `1/4`，所以不能声称两个生成 Skill 的正常功能都在 deployment 成功。
 
-当前 v0.4 已完成 Benign identity corpus、Poison-only 注入和两个 profile 的自然 Top-10 准入，尚未
-复验 model acquisition、Skill compilation 和 deployment。旧 v4 证明 feasibility，不替代当前协议或
+当前 v0.4 已完成 Benign identity corpus、Poison-only 注入、自然 Top-10 和 Qwen3.8 paired
+acquisition/compile。两个 Poison 都被 exact-five 选择并按匹配 hash 全文读取，但均未持久化到
+`SKILL.md`，所以 compile gate 失败且未进入 deployment。旧 v4 证明 feasibility，不替代当前协议或
 最终黑盒实验。
 
 ## 7. 与相邻问题的边界

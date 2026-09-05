@@ -3,7 +3,7 @@ purpose: stage0_mechanism_qualification
 research_eligible: false
 
 base_contract:
-  path: configs/experiment_plan.yaml
+  path: experiments/appworld/preliminary/configs/experiment_plan.yaml
   sha256: 452f1457b6ed26ea5027008d764e23c5cf203747f11f29b0f12ad4a01f95dfe6
   inherited_sections: [model, appworld, resource_pool, retriever, agent, compiler, effects, safety]
 
@@ -56,7 +56,7 @@ deployment:
   resource_pool_attached: false
   tools: [execute, finish]
   inherited_knowledge_artifacts: [generated_skill]
-  system_prompt: experiments/pilot/prompts/strict_deployment_system.md
+  system_prompt: experiments/appworld/preliminary/prompts/strict_deployment_system.md
 
 evaluation:
   full_chain_asr_denominator: all_scheduled_poison_positive_trials

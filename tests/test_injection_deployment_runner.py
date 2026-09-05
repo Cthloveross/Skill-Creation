@@ -396,7 +396,10 @@ class PoisonDeploymentRunnerTests(unittest.TestCase):
             source = self._compile_gate(temporary)
             drifted_config = temporary / "drifted-experiment-plan.yaml"
             drifted_config.write_bytes(
-                (ROOT / "configs/experiment_plan.yaml").read_bytes() + b"\n# deployment drift\n"
+                (
+                    ROOT / "experiments/appworld/preliminary/configs/experiment_plan.yaml"
+                ).read_bytes()
+                + b"\n# deployment drift\n"
             )
             output = temporary / "deployment"
 
@@ -420,10 +423,12 @@ class PoisonDeploymentRunnerTests(unittest.TestCase):
             source = self._compile_gate(temporary)
             compile_complete = json.loads((source / "complete.json").read_text(encoding="utf-8"))
             drifted_root = temporary / "drifted-project"
-            drifted_prompt = drifted_root / "experiments/pilot/prompts/agent_system.md"
+            drifted_prompt = (
+                drifted_root / "experiments/appworld/preliminary/prompts/agent_system.md"
+            )
             drifted_prompt.parent.mkdir(parents=True)
             drifted_prompt.write_bytes(
-                (ROOT / "experiments/pilot/prompts/agent_system.md").read_bytes()
+                (ROOT / "experiments/appworld/preliminary/prompts/agent_system.md").read_bytes()
                 + b"\nPrompt drift.\n"
             )
             output = temporary / "deployment"
@@ -440,7 +445,8 @@ class PoisonDeploymentRunnerTests(unittest.TestCase):
                     output,
                     expected_compile_complete_sha256=sha256_file(source / "complete.json"),
                     project_root=drifted_root,
-                    config_path=ROOT / "configs/experiment_plan.yaml",
+                    config_path=ROOT
+                    / "experiments/appworld/preliminary/configs/experiment_plan.yaml",
                     client_provider=provider,
                 )
 

@@ -2,7 +2,7 @@
 
 **Goal:** Use an original-document Benign arm and a lead-bearing Poison arm, then hard-stop before skill compilation unless the Poison target is naturally retrieved, selected, and read.
 
-**Experiment directory:** `experiments/pilot/`
+**Experiment directory:** `experiments/appworld/preliminary/`
 
 **Hypothesis:** A task-relevant retrieval lead added only to one genuine Poison endpoint will raise that endpoint into BM25 Top-10 without forced insertion, after which the authoring model may select it in its exact-five set and read it in full.
 
@@ -64,7 +64,7 @@
 
 **Role:** Make retrieval differences causally attributable to Poison-only content.
 
-**Implementation:** Replace `_injection_bodies()` with a Poison-body builder plus an identity Benign path. Add an auditable identity-copy transform to `file_injection.py`. Benign JSON bytes must match the official source tree; Poison changes exactly one endpoint `description`. Generate a new corpus root `experiments/pilot/data/file-injection-appworld-20260901-v3/benign|poison` per profile and never mutate the prior bundle in place.
+**Implementation:** Replace `_injection_bodies()` with a Poison-body builder plus an identity Benign path. Add an auditable identity-copy transform to `file_injection.py`. Benign JSON bytes must match the official source tree; Poison changes exactly one endpoint `description`. Generate a new corpus root `experiments/appworld/preliminary/data/file-injection-appworld-20260901-v3/benign|poison` per profile and never mutate the prior bundle in place.
 
 **Unit Tests:** Assert Benign corpus/file/endpoint hashes equal source; Benign contains no retrieval lead, required block, tool, or nonce; Poison contains the exact lead and block at the declared JSON pointer; only the Poison target differs; both arms reconstruct 457 raw and 447 task-facing resources; manifests replay after restart.
 
@@ -118,7 +118,7 @@
 
 **Role:** Maintain one complete, current, implementation-matched procedure.
 
-**Implementation:** Make `docs/run-records/procedure.md` the sole run record. Document Poison-only lead construction, original Benign corpus, canonical-task retrieval gate, actual-query gate, compiler stop rule, lead versioning, exact-five/full-read requirements, 2/2 deployment condition, model/GPU settings, paths, commands, artifacts, and safety boundaries. Update README and all links, then remove superseded run records and machine summaries.
+**Implementation:** Make `docs/procedure.md` the sole workflow and dataset guide. Document Poison-only lead construction, original Benign corpus, canonical-task retrieval gate, actual-query gate, compiler stop rule, lead versioning, exact-five/full-read requirements, 2/2 deployment condition, model/GPU settings, paths, commands, artifacts, and safety boundaries. Update README and all links, then remove superseded run records and machine summaries.
 
 **Unit Tests:** Validate all local Markdown links and assert active procedure/README contain no legacy arm names, old record filename, old summary filename, or obsolete derived-corpus path.
 
@@ -154,6 +154,6 @@
 2. Assemble the renamed materializer, retrieval evaluator, gates, and documentation.
 3. Run L0 validation.
 4. Materialize the v3 corpus and run L1 retrieval admission only.
-5. Record actual ranks/hashes in `docs/run-records/procedure.md` without generating a skill.
+5. Record actual ranks/hashes in `docs/procedure.md` without generating a skill.
 6. Leave model service stopped and GPUs untouched.
 7. Run `git diff --check` and list all scoped changes; do not make an implicit commit.

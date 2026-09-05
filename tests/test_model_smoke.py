@@ -311,9 +311,9 @@ class ModelBackedSmokeTests(unittest.TestCase):
             self.assertGreater(client.complete_calls, 10)
             self.assertNotIn("must-not-persist", serialized)
             run_schema = json.loads(
-                (ROOT / "experiments/pilot/schemas/run-record.schema.json").read_text(
-                    encoding="utf-8"
-                )
+                (
+                    ROOT / "experiments/appworld/preliminary/schemas/run-record.schema.json"
+                ).read_text(encoding="utf-8")
             )
             Draft202012Validator(run_schema).validate(run_record)
 

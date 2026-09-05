@@ -3,7 +3,7 @@
 Date: 2026-08-30
 
 Current R2SP execution details are maintained only in
-[`run-records/procedure.md`](run-records/procedure.md). This document is a static source review, not
+[`procedure.md`](procedure.md). This document is a static source review, not
 an executable workflow.
 
 ## Scope and handling

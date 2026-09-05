@@ -10,6 +10,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any
 
+from .appworld_payloads import load_appworld_injection_payloads
 from .artifacts import sha256_file
 from .file_injection import (
     BENIGN_ARM,
@@ -19,7 +20,7 @@ from .file_injection import (
     materialize_file_injection_bundle,
 )
 from .file_injection_profiles import APPWORLD_FILE_BINDINGS, AppWorldFileBinding
-from .fixtures import SyntheticFixture, _poison_injection_body
+from .fixtures import SyntheticFixture
 from .hashing import canonical_json_sha256, sha256_text
 from .models import CaseSpec, OverlayPair, OverlaySpec, TaskSpec
 from .resource_pool import ResourcePool
@@ -89,8 +90,13 @@ class LoadedFileInjectionFixtures:
 def materialize_appworld_file_bundles(
     appworld_root: str | Path,
     output_directory: str | Path,
+    *,
+    payload_directory: str | Path,
 ) -> Mapping[str, Mapping[str, Path]]:
     """Write two Benign identity copies and two Poison corpora.
+
+    Poison text is snapshotted exactly from ``payload_directory`` before the
+    output root is created. No whitespace normalization is performed.
 
     This phase deliberately returns no Resource or fixture.  Call
     :func:`load_appworld_file_fixtures` in a second phase to reopen the bytes.
@@ -101,13 +107,14 @@ def materialize_appworld_file_bundles(
         root / "data" / "api_docs" / "standard",
         field="standard API-doc source",
     )
+    poison_payloads = load_appworld_injection_payloads(payload_directory)
     output = _new_directory(output_directory)
     manifests: dict[str, Mapping[str, Path]] = {}
     for name in PROFILE_NAMES:
         binding = APPWORLD_FILE_BINDINGS[name]
         profile_root = output / name
         profile_root.mkdir(mode=0o700)
-        poison_payload = _poison_injection_body(binding.profile)
+        poison_payload = poison_payloads[name]
         arm_paths: dict[str, Path] = {}
         for directory_name, arm, payload in (
             ("benign", BENIGN_ARM, None),
@@ -375,7 +382,6 @@ def _validate_benign_poison_bundles(
         raise FileInjectionFixtureError("Benign and Poison use different source corpora")
     if benign.source_pool.manifest.manifest_hash != poison.source_pool.manifest.manifest_hash:
         raise FileInjectionFixtureError("Benign and Poison use different source pools")
-    expected_poison_payload_sha256 = sha256_text(_poison_injection_body(binding.profile))
     for arm, bundle in (("benign", benign), ("poison", poison)):
         if (
             bundle.source_resource.app_name != binding.profile.app_name
@@ -397,12 +403,12 @@ def _validate_benign_poison_bundles(
             if bundle.payload_sha256 is not None or target.get("payload") is not None:
                 raise FileInjectionFixtureError("Benign bundle contains an injection payload")
         elif (
-            bundle.payload_sha256 != expected_poison_payload_sha256
+            bundle.payload_sha256 is None
             or not isinstance(target.get("payload"), Mapping)
-            or target["payload"].get("sha256") != expected_poison_payload_sha256
+            or target["payload"].get("sha256") != bundle.payload_sha256
         ):
             raise FileInjectionFixtureError(
-                "Poison bundle payload differs from the current frozen injection body"
+                "Poison bundle payload commitment is unavailable or inconsistent"
             )
         if len(bundle.source_pool) != EXPECTED_TASK_FACING_COUNT:
             raise FileInjectionFixtureError("bundle clean pool is not exactly 447 resources")

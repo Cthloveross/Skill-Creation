@@ -100,7 +100,11 @@ def _parser() -> argparse.ArgumentParser:
         "smoke", help="run the deterministic non-scientific end-to-end fixture"
     )
     smoke.add_argument("--output", type=Path, required=True)
-    smoke.add_argument("--config", type=Path, default=Path("configs/experiment_plan.yaml"))
+    smoke.add_argument(
+        "--config",
+        type=Path,
+        default=Path("experiments/appworld/preliminary/configs/experiment_plan.yaml"),
+    )
     smoke.add_argument("--project-root", type=Path, default=Path.cwd())
     smoke.set_defaults(handler=_smoke)
 
@@ -109,7 +113,11 @@ def _parser() -> argparse.ArgumentParser:
         help="run the non-research synthetic full chain with a loopback model service",
     )
     model_smoke.add_argument("--output", type=Path, required=True)
-    model_smoke.add_argument("--config", type=Path, default=Path("configs/experiment_plan.yaml"))
+    model_smoke.add_argument(
+        "--config",
+        type=Path,
+        default=Path("experiments/appworld/preliminary/configs/experiment_plan.yaml"),
+    )
     model_smoke.add_argument("--project-root", type=Path, default=Path.cwd())
     model_smoke.add_argument("--base-url", default="http://127.0.0.1:18000/v1")
     model_smoke.add_argument("--model-id", default="Qwen/Qwen3.8-27B-FP8")

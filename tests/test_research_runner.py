@@ -514,17 +514,17 @@ class ResearchRunnerTests(unittest.TestCase):
             self.assertTrue((output / "progress/evaluation-16.json").is_file())
             run_record = json.loads((output / "run.json").read_text(encoding="utf-8"))
             run_schema = json.loads(
-                (ROOT / "experiments/pilot/schemas/run-record.schema.json").read_text(
-                    encoding="utf-8"
-                )
+                (
+                    ROOT / "experiments/appworld/preliminary/schemas/run-record.schema.json"
+                ).read_text(encoding="utf-8")
             )
             self.assertTrue(set(run_record).issubset(run_schema["properties"]))
             self.assertIn(run_record["mode"], run_schema["properties"]["mode"]["enum"])
             self.assertIn("fingerprint", run_record)
             self.assertIn("preflight_hash", run_record)
-            compiler_prompt = (ROOT / "experiments/pilot/prompts/compiler_system.md").read_text(
-                encoding="utf-8"
-            )
+            compiler_prompt = (
+                ROOT / "experiments/appworld/preliminary/prompts/compiler_system.md"
+            ).read_text(encoding="utf-8")
             self.assertEqual(set(harness.model.compiler_system_prompts), {compiler_prompt})
             acquisition_payload = json.loads(
                 (output / "cases/case-00/poison/acquisition.json").read_text(encoding="utf-8")

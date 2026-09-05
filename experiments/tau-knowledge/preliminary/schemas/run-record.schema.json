@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/tau-knowledge/run-record.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "status",
+    "created_at",
+    "commitment_sha256",
+    "code_fingerprint",
+    "cells",
+    "summary"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "status": {"$ref": "#/$defs/status"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "commitment_sha256": {"$ref": "#/$defs/sha256"},
+    "code_fingerprint": {"$ref": "#/$defs/code_fingerprint"},
+    "cells": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"$ref": "#/$defs/cell"}
+    },
+    "summary": {"type": "object"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "status": {
+      "enum": ["SUCCESS", "DEFERRED", "INVALID", "BEHAVIORAL_FAIL", "NOT_RUN_UPSTREAM"]
+    },
+    "runtime_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["process_id", "instances"],
+      "properties": {
+        "process_id": {"type": "integer", "minimum": 1},
+        "instances": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "code_fingerprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "file_count", "digest", "files"],
+      "properties": {
+        "schema_version": {"const": "r2sp.code-fingerprint.v1"},
+        "file_count": {"type": "integer", "minimum": 1},
+        "digest": {"$ref": "#/$defs/sha256"},
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["logical_path", "sha256", "size_bytes"],
+            "properties": {
+              "logical_path": {"type": "string", "minLength": 1},
+              "sha256": {"$ref": "#/$defs/sha256"},
+              "size_bytes": {"type": "integer", "minimum": 0}
+            }
+          }
+        }
+      }
+    },
+    "acquisition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "task_id",
+        "task_success",
+        "first_user_utterance",
+        "opened_pages",
+        "opened_page_ids",
+        "target_page_opened",
+        "official_reward",
+        "runtime_identity",
+        "error"
+      ],
+      "properties": {
+        "status": {"$ref": "#/$defs/status"},
+        "task_id": {"const": "task_001"},
+        "task_success": {"type": "boolean"},
+        "first_user_utterance": {"type": ["string", "null"]},
+        "opened_pages": {"type": "array"},
+        "opened_page_ids": {"type": "array", "items": {"type": "string"}},
+        "target_page_opened": {"type": "boolean"},
+        "official_reward": {"type": ["number", "null"]},
+        "runtime_identity": {"anyOf": [{"$ref": "#/$defs/runtime_identity"}, {"type": "null"}]},
+        "error": {"type": ["string", "null"]}
+      }
+    },
+    "compiler": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "valid", "skill_sha256", "source_page_ids", "error"],
+      "properties": {
+        "status": {"$ref": "#/$defs/status"},
+        "valid": {"type": "boolean"},
+        "skill_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "source_page_ids": {"type": "array", "items": {"type": "string"}},
+        "error": {"type": ["string", "null"]}
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "status", "task_success", "canary_hit", "reset_passed", "error"],
+      "properties": {
+        "task_id": {"enum": ["task_002", "task_034"]},
+        "status": {"$ref": "#/$defs/status"},
+        "task_success": {"type": "boolean"},
+        "official_reward": {"type": ["number", "null"]},
+        "canary_hit": {"type": "boolean"},
+        "canary_events": {"type": "array"},
+        "reset_passed": {"type": "boolean"},
+        "runtime_identity": {"$ref": "#/$defs/runtime_identity"},
+        "exposed_tool_names": {"type": "array", "items": {"type": "string"}},
+        "error": {"type": ["string", "null"]}
+      }
+    },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cell_id",
+        "profile",
+        "acquisition_arm",
+        "payload_sha256",
+        "corpus_sha256",
+        "acquisition",
+        "compiler",
+        "deployments"
+      ],
+      "properties": {
+        "cell_id": {"type": "string", "minLength": 1},
+        "profile": {"enum": ["mock-api-call", "delete-sentinel"]},
+        "acquisition_arm": {"enum": ["benign", "poison"]},
+        "payload_sha256": {"$ref": "#/$defs/sha256"},
+        "corpus_sha256": {"$ref": "#/$defs/sha256"},
+        "acquisition": {"$ref": "#/$defs/acquisition"},
+        "compiler": {"$ref": "#/$defs/compiler"},
+        "deployments": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {"$ref": "#/$defs/deployment"}
+        }
+      }
+    }
+  }
+}

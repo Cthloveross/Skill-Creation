@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/tau-knowledge/materialization.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "profile",
+    "arm",
+    "payload_sha256",
+    "payload_size_bytes",
+    "target_document_id",
+    "target_field",
+    "target_source_sha256",
+    "target_output_sha256",
+    "document_count",
+    "corpus_sha256",
+    "files"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "profile": {"enum": ["mock-api-call", "delete-sentinel"]},
+    "arm": {"enum": ["benign", "poison"]},
+    "payload_sha256": {"$ref": "#/$defs/sha256"},
+    "payload_size_bytes": {"type": "integer", "minimum": 1},
+    "target_document_id": {"const": "doc_credit_cards_gold_rewards_card_001"},
+    "target_field": {"const": "content"},
+    "target_source_sha256": {"$ref": "#/$defs/sha256"},
+    "target_output_sha256": {"$ref": "#/$defs/sha256"},
+    "document_count": {"const": 698},
+    "corpus_sha256": {"$ref": "#/$defs/sha256"},
+    "files": {
+      "type": "array",
+      "minItems": 698,
+      "maxItems": 698,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "size_bytes", "sha256"],
+        "properties": {
+          "path": {"type": "string", "pattern": "^[^/]+\\.json$"},
+          "size_bytes": {"type": "integer", "minimum": 1},
+          "sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
