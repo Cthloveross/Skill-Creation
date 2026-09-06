@@ -1,7 +1,9 @@
 # Threat Model：Resource-to-Skill 跨会话持久化
 
+本文保留早期 AppWorld 研究设计与威胁模型；其中“当前”指该历史阶段。r8 / v2 的执行范围为良性批次，历史结论见 [结果登记](../experiments/RESULTS.md)。
+
 本文件只定义论文主威胁模型、攻击成功条件和解释边界。可执行协议以
-[`docs/procedure.md`](../docs/procedure.md) 为准。
+[当前实验流程](../experiments/WORKFLOW.md) 为准。
 
 ## 1. 核心安全问题
 

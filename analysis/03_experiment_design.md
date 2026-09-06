@@ -1,7 +1,9 @@
 # 实验设计：正文污染预算与 Full-chain ASR
 
+本文保留早期 AppWorld 研究设计与威胁模型；其中“当前”指该历史阶段。r8 / v2 的执行范围为良性批次，历史结论见 [结果登记](../experiments/RESULTS.md)。
+
 本文件只保留与当前论文主张直接相关的实验设计。具体命令、模型设置和 artifact 结构见
-[`docs/procedure.md`](../docs/procedure.md)。
+[当前实验流程](../experiments/WORKFLOW.md)。
 
 ## 1. 研究问题
 

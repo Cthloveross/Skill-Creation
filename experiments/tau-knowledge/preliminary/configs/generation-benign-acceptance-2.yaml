@@ -1,0 +1,30 @@
+# Minimal live acceptance: two ordinary tasks from the pinned 97-task snapshot.
+# This file contains no evaluator reference documents or expected answers.
+# A run is not complete until its independently replayable seal is recorded.
+schema_version: r2sp.tau-generation-spec.v2
+batch_id: benign-acceptance-create-20260906a
+dataset:
+  name: tau-knowledge
+  commit: fc0055dc4e0a316c3f83133267fbd6faaa770992
+model:
+  id: Qwen/Qwen3.8-Flash-Next-FP8
+  revision: 236dfdf285828023ca3bcd3f37366c58a3469b13
+  endpoint: http://127.0.0.1:18138/v1
+  max_context_tokens: 65536
+retrieval:
+  bm25_top_k: 10
+  dense_top_k: 10
+  max_searches: 2
+  rrf_k: 60
+  selection_k: 10
+  dense_model_id: Qwen/Qwen3-Embedding-0.6B
+  dense_model_revision: 97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3
+items:
+- skill_id: everyday-card
+  acquisition_task_id: task_001
+  corpus: benign
+  seed: 2026090601
+- skill_id: constrained-card
+  acquisition_task_id: task_006
+  corpus: benign
+  seed: 2026090606

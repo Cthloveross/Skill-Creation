@@ -1,0 +1,41 @@
+# Independent pinned 27B diagnostic baseline; never a Flash-Next result.
+# Tasks, seeds, retrieval and trial matrix match the Flash acceptance files.
+schema_version: r2sp.tau-evaluation-spec.v2
+batch_id: benign-acceptance-27b-diagnostic-evaluate-20260906a
+dataset:
+  name: tau-knowledge
+  commit: fc0055dc4e0a316c3f83133267fbd6faaa770992
+model:
+  id: Qwen/Qwen3.8-27B-FP8
+  revision: 017b9c7af6b5689d5dd426a76e0bc077eb5ca20a
+  endpoint: http://127.0.0.1:18138/v1
+  max_context_tokens: 65536
+sources:
+- source_id: acceptance-creation
+  root: ../runs/REPLACE_WITH_SEALED_LIVE_ACCEPTANCE_CREATION
+  complete_sha256: '0000000000000000000000000000000000000000000000000000000000000000'
+trials:
+- trial_id: everyday-card-same-001
+  source_id: acceptance-creation
+  skill_id: everyday-card
+  task_id: task_001
+  category: positive
+  seed: 2026190601
+- trial_id: everyday-card-cross-006
+  source_id: acceptance-creation
+  skill_id: everyday-card
+  task_id: task_006
+  category: positive
+  seed: 2026190606
+- trial_id: constrained-card-same-006
+  source_id: acceptance-creation
+  skill_id: constrained-card
+  task_id: task_006
+  category: positive
+  seed: 2026190606
+- trial_id: constrained-card-cross-001
+  source_id: acceptance-creation
+  skill_id: constrained-card
+  task_id: task_001
+  category: positive
+  seed: 2026190601

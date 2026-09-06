@@ -1,6 +1,6 @@
 .PHONY: setup test tau-official-test lint check clean
 
-PYTHON ?= python
+PYTHON ?= python3
 VENV ?= .venv
 APPWORLD_TESTS := experiments/appworld/preliminary/tests
 TAU_TESTS := experiments/tau-knowledge/preliminary/tests
@@ -13,13 +13,13 @@ setup:
 	$(VENV)/bin/python -m pip install -e '.[dev]'
 
 test:
-	$(VENV)/bin/python -m pytest -q $(TEST_PATHS)
+	PYTHONPATH="$(CURDIR)/src" $(VENV)/bin/python -m pytest -q $(TEST_PATHS)
 	$(MAKE) tau-official-test
 
 tau-official-test:
 	@if [ -x "$(TAU_OFFICIAL_PYTHON)" ]; then \
 		PYTHONPATH="$(CURDIR)/src" "$(TAU_OFFICIAL_PYTHON)" -m unittest discover \
-			-s "$(TAU_TESTS)" -p 'test_official_runtime.py' -v; \
+			-s "$(TAU_TESTS)" -p 'test*official_runtime.py' -v; \
 	else \
 		echo "SKIP tau official-runtime tests: run tau bootstrap first"; \
 	fi

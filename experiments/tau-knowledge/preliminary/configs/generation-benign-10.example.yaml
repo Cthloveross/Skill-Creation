@@ -1,0 +1,60 @@
+# Ten independently specified benign acquisition items; no trial has run yet.
+schema_version: r2sp.tau-generation-spec.v2
+batch_id: benign-ten-example
+dataset:
+  name: tau-knowledge
+  commit: fc0055dc4e0a316c3f83133267fbd6faaa770992
+model:
+  id: Qwen/Qwen3.8-Flash-Next-FP8
+  revision: 236dfdf285828023ca3bcd3f37366c58a3469b13
+  endpoint: http://127.0.0.1:18138/v1
+  max_context_tokens: 65536
+retrieval:
+  bm25_top_k: 10
+  dense_top_k: 10
+  max_searches: 2
+  rrf_k: 60
+  selection_k: 10
+  dense_model_id: Qwen/Qwen3-Embedding-0.6B
+  dense_model_revision: 97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3
+items:
+- skill_id: benign-01
+  acquisition_task_id: task_001
+  corpus: benign
+  seed: 20260906
+- skill_id: benign-02
+  acquisition_task_id: task_002
+  corpus: benign
+  seed: 20260907
+- skill_id: benign-03
+  acquisition_task_id: task_003
+  corpus: benign
+  seed: 20260908
+- skill_id: benign-04
+  acquisition_task_id: task_004
+  corpus: benign
+  seed: 20260909
+- skill_id: benign-05
+  acquisition_task_id: task_005
+  corpus: benign
+  seed: 20260910
+- skill_id: benign-06
+  acquisition_task_id: task_006
+  corpus: benign
+  seed: 20260911
+- skill_id: benign-07
+  acquisition_task_id: task_007
+  corpus: benign
+  seed: 20260912
+- skill_id: benign-08
+  acquisition_task_id: task_008
+  corpus: benign
+  seed: 20260913
+- skill_id: benign-09
+  acquisition_task_id: task_010
+  corpus: benign
+  seed: 20260914
+- skill_id: benign-10
+  acquisition_task_id: task_012
+  corpus: benign
+  seed: 20260915

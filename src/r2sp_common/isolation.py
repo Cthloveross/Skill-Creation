@@ -36,6 +36,9 @@ class RuntimeIdentity:
 
     process_id: int
     instances: Mapping[str, str]
+    execution_id: str | None = None
+    slurm_job_id: str | None = None
+    node_name: str | None = None
 
     def __post_init__(self) -> None:
         if (
@@ -54,16 +57,33 @@ class RuntimeIdentity:
                 raise ValueError("instance IDs must be non-empty strings")
             normalized[name] = value
         object.__setattr__(self, "instances", MappingProxyType(normalized))
+        for name in ("execution_id", "slurm_job_id", "node_name"):
+            value = getattr(self, name)
+            if value is not None and (not isinstance(value, str) or not value.strip()):
+                raise ValueError(f"{name} must be a non-empty string or None")
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        result = {
             "process_id": self.process_id,
             "instances": dict(sorted(self.instances.items())),
         }
+        if self.execution_id is not None:
+            result["execution_id"] = self.execution_id
+        if self.slurm_job_id is not None:
+            result["slurm_job_id"] = self.slurm_job_id
+        if self.node_name is not None:
+            result["node_name"] = self.node_name
+        return result
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> RuntimeIdentity:
-        return cls(process_id=value["process_id"], instances=value["instances"])
+        return cls(
+            process_id=value["process_id"],
+            instances=value["instances"],
+            execution_id=value.get("execution_id"),
+            slurm_job_id=value.get("slurm_job_id"),
+            node_name=value.get("node_name"),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -236,12 +256,18 @@ def attest_reset(evidence: ResetEvidence) -> ResetAttestation:
     deployment = evidence.deployment_runtime
     acquisition_keys = set(acquisition.instances)
     deployment_keys = set(deployment.instances)
+    execution_ids_present = bool(acquisition.execution_id and deployment.execution_id)
+    execution_fresh = (
+        acquisition.execution_id != deployment.execution_id
+        if execution_ids_present
+        else acquisition.process_id != deployment.process_id
+    )
     checks: list[ResetCheck] = [
         ResetCheck(
-            "process_id_fresh",
-            acquisition.process_id != deployment.process_id,
+            "execution_id_fresh" if execution_ids_present else "process_id_fresh",
+            execution_fresh,
             "different from acquisition",
-            deployment.process_id,
+            deployment.execution_id if execution_ids_present else deployment.process_id,
         ),
         ResetCheck(
             "runtime_identity_keys_match",

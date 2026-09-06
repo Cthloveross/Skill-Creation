@@ -20,7 +20,26 @@ PRELIMINARY_CHILDREN = {
     "scripts",
     "tests",
 }
-ENTRYPOINTS = {"bootstrap.sh", "materialize.py", "replay.py", "run_preliminary.py"}
+BASE_ENTRYPOINTS = {"bootstrap.sh", "materialize.py", "replay.py", "run_preliminary.py"}
+ENTRYPOINTS = {
+    "appworld": BASE_ENTRYPOINTS,
+    "tau-knowledge": BASE_ENTRYPOINTS
+    | {
+        "build_source_bundle.py",
+        "submit_generation.sh",
+        "submit_evaluation.sh",
+        "diagnose_benign.py",
+        "run_batch.py",
+        "submit_batch.py",
+        "qualify_batch_runtime.py",
+        "stage_flash_sif.sh",
+        "submit_qualification.py",
+    },
+}
+SCRIPT_HELPERS = {
+    "appworld": set(),
+    "tau-knowledge": {"batch_source.py", "validate_runtime_assets.py"},
+}
 APPWORLD_DATA_COMMITMENTS = {
     "appworld-0.1.0": ContentDigest(
         sha256="8c9ae087e4d62855c96f00d25fc72655dce5243c6f30541e6c25b0d0063d9d2d",
@@ -46,7 +65,10 @@ class ExperimentTopologyTests(unittest.TestCase):
             with self.subTest(dataset=dataset):
                 root = EXPERIMENTS / dataset / "preliminary"
                 children = {path.name for path in root.iterdir() if path.is_dir()}
-                self.assertEqual(children, PRELIMINARY_CHILDREN)
+                expected = PRELIMINARY_CHILDREN | (
+                    {"slurm"} if dataset == "tau-knowledge" else set()
+                )
+                self.assertEqual(children, expected)
                 self.assertTrue((root / "data" / ".gitkeep").is_file())
                 self.assertTrue((root / "runs" / ".gitkeep").is_file())
 
@@ -57,17 +79,17 @@ class ExperimentTopologyTests(unittest.TestCase):
         for dataset, root in script_roots.items():
             with self.subTest(dataset=dataset):
                 scripts = {path.name for path in root.iterdir() if path.is_file()}
-                self.assertEqual(scripts, ENTRYPOINTS)
-                for name in ENTRYPOINTS:
+                self.assertEqual(scripts, ENTRYPOINTS[dataset] | SCRIPT_HELPERS[dataset])
+                for name in ENTRYPOINTS[dataset]:
                     self.assertTrue(os.access(root / name, os.X_OK), name)
 
         appworld_text = "\n".join(
             (script_roots["appworld"] / name).read_text(encoding="utf-8")
-            for name in sorted(ENTRYPOINTS)
+            for name in sorted(ENTRYPOINTS["appworld"])
         )
         tau_text = "\n".join(
             (script_roots["tau-knowledge"] / name).read_text(encoding="utf-8")
-            for name in sorted(ENTRYPOINTS)
+            for name in sorted(ENTRYPOINTS["tau-knowledge"])
         )
         self.assertNotIn("r2sp_tau_knowledge", appworld_text)
         self.assertNotIn("from r2sp.", tau_text)

@@ -1,5 +1,7 @@
 # Benign/Poison Retrieval-Gated File-Backed Injection Implementation Plan
 
+Historical implementation plan; current operation and scope are indexed in [WORKFLOW.md](../../../WORKFLOW.md). Outcome records are preserved in [RESULTS.md](../../../RESULTS.md).
+
 **Goal:** Use an original-document Benign arm and a lead-bearing Poison arm, then hard-stop before skill compilation unless the Poison target is naturally retrieved, selected, and read.
 
 **Experiment directory:** `experiments/appworld/preliminary/`
@@ -118,7 +120,7 @@
 
 **Role:** Maintain one complete, current, implementation-matched procedure.
 
-**Implementation:** Make `docs/procedure.md` the sole workflow and dataset guide. Document Poison-only lead construction, original Benign corpus, canonical-task retrieval gate, actual-query gate, compiler stop rule, lead versioning, exact-five/full-read requirements, 2/2 deployment condition, model/GPU settings, paths, commands, artifacts, and safety boundaries. Update README and all links, then remove superseded run records and machine summaries.
+**Implementation:** Make `experiments/WORKFLOW.md` the sole workflow and dataset guide. Document Poison-only lead construction, original Benign corpus, canonical-task retrieval gate, actual-query gate, compiler stop rule, lead versioning, exact-five/full-read requirements, 2/2 deployment condition, model/GPU settings, paths, commands, artifacts, and safety boundaries. Update README and all links, then remove superseded run records and machine summaries.
 
 **Unit Tests:** Validate all local Markdown links and assert active procedure/README contain no legacy arm names, old record filename, old summary filename, or obsolete derived-corpus path.
 
@@ -154,6 +156,6 @@
 2. Assemble the renamed materializer, retrieval evaluator, gates, and documentation.
 3. Run L0 validation.
 4. Materialize the v3 corpus and run L1 retrieval admission only.
-5. Record actual ranks/hashes in `docs/procedure.md` without generating a skill.
+5. Record actual ranks/hashes in `experiments/WORKFLOW.md` without generating a skill.
 6. Leave model service stopped and GPUs untouched.
 7. Run `git diff --check` and list all scoped changes; do not make an implicit commit.

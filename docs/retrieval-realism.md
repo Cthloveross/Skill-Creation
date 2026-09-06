@@ -1,7 +1,7 @@
 # 检索器选择依据
 
 本文只记录为什么论文不能只报告 BM25，以及后续最小检索器矩阵。数据、命令、门控和当前结果统一
-见 [`procedure.md`](procedure.md)。
+见 [当前实验流程](../experiments/WORKFLOW.md)。
 
 ## 结论
 
@@ -23,7 +23,7 @@
 | C | BM25 + Dense | RRF | 模拟常见 hybrid retrieval |
 | D | BM25 + Dense | RRF + cross-encoder | 测试二阶段重排的影响 |
 
-当前只有 447 个 Resources，A/B/C 可以对全库做精确 BM25 和 cosine 排名，不需要 ANN/HNSW。
+早期 AppWorld 设置只有 447 个 Resources，A/B/C 可以对全库做精确 BM25 和 cosine 排名，不需要 ANN/HNSW。
 RRF 固定 `k=60` 并在运行前冻结候选深度。首轮可使用：
 
 - `Qwen/Qwen3-Embedding-0.6B`

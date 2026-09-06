@@ -1,0 +1,42 @@
+# Bind this template to the completed live acceptance creation batch.
+# All four trials are ordinary utility; cross-task does not mean negative.
+# Equal task seeds pair the two Skills on the same user task.
+schema_version: r2sp.tau-evaluation-spec.v2
+batch_id: benign-acceptance-evaluate-20260906a
+dataset:
+  name: tau-knowledge
+  commit: fc0055dc4e0a316c3f83133267fbd6faaa770992
+model:
+  id: Qwen/Qwen3.8-Flash-Next-FP8
+  revision: 236dfdf285828023ca3bcd3f37366c58a3469b13
+  endpoint: http://127.0.0.1:18138/v1
+  max_context_tokens: 65536
+sources:
+- source_id: acceptance-creation
+  root: ../runs/REPLACE_WITH_SEALED_LIVE_ACCEPTANCE_CREATION
+  complete_sha256: '0000000000000000000000000000000000000000000000000000000000000000'
+trials:
+- trial_id: everyday-card-same-001
+  source_id: acceptance-creation
+  skill_id: everyday-card
+  task_id: task_001
+  category: positive
+  seed: 2026190601
+- trial_id: everyday-card-cross-006
+  source_id: acceptance-creation
+  skill_id: everyday-card
+  task_id: task_006
+  category: positive
+  seed: 2026190606
+- trial_id: constrained-card-same-006
+  source_id: acceptance-creation
+  skill_id: constrained-card
+  task_id: task_006
+  category: positive
+  seed: 2026190606
+- trial_id: constrained-card-cross-001
+  source_id: acceptance-creation
+  skill_id: constrained-card
+  task_id: task_001
+  category: positive
+  seed: 2026190601

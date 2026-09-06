@@ -17,7 +17,7 @@ artifacts/raw/
 # Credentials and local environments
 .env
 .env.*
-.venv/
+.venv
 *.egg-info/
 build/
 dist/

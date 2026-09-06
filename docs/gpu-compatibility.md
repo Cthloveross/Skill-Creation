@@ -1,11 +1,9 @@
 # Historical GPU qualification evidence
 
-This file preserves the measured server inventory and Qwen3.8 capacity results. It is not an
-executable plan or the machine-readable contract. The current v0.4 workflow uses
-`Qwen/Qwen3.8-27B-FP8`, revision `017b9c7af6b5689d5dd426a76e0bc077eb5ca20a`, FP8 weight-only
-Marlin with FP16 compute, physical GPUs `0,6`, TP=2, PP=1, 32,768 context and port 18138. The
-authoritative settings are in
-[`run-records/procedure.md`](run-records/procedure.md#9-模型与-gpu-合同).
+This file preserves historical measured server inventory and Qwen3.8 capacity results. Its
+v0.4 model/topology descriptions apply to that earlier qualification, not the current batch
+runtime. Current operations are in [WORKFLOW.md](../experiments/WORKFLOW.md), and measured
+results remain distinguished by protocol in [RESULTS.md](../experiments/RESULTS.md).
 
 ## Verdict
 

@@ -35,6 +35,14 @@ class PageNotExposedError(RetrievalError):
     """Raised when an agent tries to open an ID it was not shown."""
 
 
+class InvalidSelectionError(RetrievalError, ValueError):
+    """Raised when an exact document selection violates the session contract."""
+
+
+class SelectionAlreadyMadeError(RetrievalError):
+    """Raised after the session's one successful exact document selection."""
+
+
 class RetrieverClosedError(RetrievalError):
     """Raised when a destroyed session is reused."""
 
@@ -165,6 +173,8 @@ class SessionWebRetriever:
         visible_k: int = 5,
         max_searches: int = 12,
         max_unique_opens: int = 5,
+        selection_k: int | None = None,
+        include_bodies_in_search_results: bool = False,
     ) -> None:
         if not isinstance(index, DeterministicBM25):
             raise TypeError("index must be DeterministicBM25")
@@ -178,17 +188,33 @@ class SessionWebRetriever:
                 raise ValueError(f"{name} must be a positive integer")
         if visible_k > internal_k:
             raise ValueError("visible_k cannot exceed internal_k")
+        if not isinstance(include_bodies_in_search_results, bool):
+            raise TypeError("include_bodies_in_search_results must be boolean")
+        if selection_k is not None:
+            if (
+                isinstance(selection_k, bool)
+                or not isinstance(selection_k, int)
+                or selection_k <= 0
+            ):
+                raise ValueError("selection_k must be a positive integer or None")
+            if selection_k > visible_k:
+                raise ValueError("selection_k cannot exceed visible_k")
+            if selection_k > max_unique_opens:
+                raise ValueError("selection_k cannot exceed max_unique_opens")
 
         self._index: DeterministicBM25 | None = index
         self.internal_k = internal_k
         self.visible_k = visible_k
         self.max_searches = max_searches
         self.max_unique_opens = max_unique_opens
+        self.selection_k = selection_k
+        self.include_bodies_in_search_results = include_bodies_in_search_results
         self._search_calls = 0
         self._events: list[SearchEvent] = []
         self._exposed_ids: set[str] = set()
         self._opened_ids: set[str] = set()
         self._opened_pages: list[Page] = []
+        self._selection_complete = False
 
     @property
     def closed(self) -> bool:
@@ -210,6 +236,10 @@ class SessionWebRetriever:
     def opened_pages(self) -> tuple[Page, ...]:
         return tuple(self._opened_pages)
 
+    @property
+    def selection_complete(self) -> bool:
+        return self._selection_complete
+
     def _require_open(self) -> DeterministicBM25:
         if self._index is None:
             raise RetrieverClosedError("retrieval session has been closed")
@@ -217,6 +247,8 @@ class SessionWebRetriever:
 
     def search_web(self, query: str) -> dict[str, list[dict[str, str]]]:
         index = self._require_open()
+        if self._selection_complete:
+            raise SelectionAlreadyMadeError("search is closed after select_docs succeeds")
         if self._search_calls >= self.max_searches:
             raise SearchBudgetExceeded(f"search budget exhausted at {self.max_searches} calls")
         # Every invocation consumes budget, including a malformed/tokenless query.
@@ -231,10 +263,18 @@ class SessionWebRetriever:
         )
         self._events.append(event)
         self._exposed_ids.update(event.visible_page_ids)
-        return {"results": [dict(result) for result in event.agent_results]}
+        results: list[dict[str, str]] = []
+        for hit in event.top10[: event.visible_count]:
+            result = hit.to_agent_dict()
+            if self.include_bodies_in_search_results:
+                result["body"] = index.get_page(hit.page_id).body
+            results.append(result)
+        return {"results": results}
 
     def open_page(self, page_id: str) -> dict[str, str]:
         index = self._require_open()
+        if self.selection_k is not None:
+            raise InvalidSelectionError("open_page is disabled; use select_docs")
         if not isinstance(page_id, str) or not page_id.strip():
             raise PageNotExposedError("page_id was not exposed by search_web")
         if page_id not in self._exposed_ids:
@@ -252,6 +292,34 @@ class SessionWebRetriever:
             page = index.get_page(page_id)
         return page.to_open_dict()
 
+    def select_docs(self, page_ids: list[str]) -> dict[str, list[dict[str, str]]]:
+        """Read one exact ordered selection from IDs exposed by prior searches."""
+
+        index = self._require_open()
+        if self.selection_k is None:
+            raise InvalidSelectionError("select_docs is not enabled for this session")
+        if self._selection_complete:
+            raise SelectionAlreadyMadeError("select_docs already succeeded for this session")
+        if (
+            not isinstance(page_ids, list)
+            or len(page_ids) != self.selection_k
+            or any(not isinstance(page_id, str) or not page_id.strip() for page_id in page_ids)
+            or len(set(page_ids)) != self.selection_k
+        ):
+            raise InvalidSelectionError(
+                f"select_docs requires exactly {self.selection_k} unique non-empty page IDs"
+            )
+        if any(page_id not in self._exposed_ids for page_id in page_ids):
+            raise InvalidSelectionError(
+                "every selected page_id must have been exposed by search_web in this session"
+            )
+
+        pages = [index.get_page(page_id) for page_id in page_ids]
+        self._opened_ids.update(page_ids)
+        self._opened_pages.extend(pages)
+        self._selection_complete = True
+        return {"documents": [page.to_open_dict() for page in pages]}
+
     def close(self) -> None:
         """Drop every session-held corpus, trace, authorization, and open-page reference."""
 
@@ -261,6 +329,7 @@ class SessionWebRetriever:
         self._exposed_ids.clear()
         self._opened_ids.clear()
         self._opened_pages.clear()
+        self._selection_complete = False
 
     def __enter__(self) -> SessionWebRetriever:
         self._require_open()

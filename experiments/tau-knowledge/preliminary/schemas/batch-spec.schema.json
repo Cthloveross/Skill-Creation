@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://r2sp.local/schemas/tau-batch-spec-v2",
+  "title": "Independent benign Tau creation or utility evaluation batch",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/creation"
+    },
+    {
+      "$ref": "#/$defs/evaluation"
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "task": {
+      "type": "string",
+      "pattern": "^task_[0-9]{3}$"
+    },
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "commit"
+      ],
+      "properties": {
+        "name": {
+          "const": "tau-knowledge"
+        },
+        "commit": {
+          "const": "fc0055dc4e0a316c3f83133267fbd6faaa770992"
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "revision",
+        "endpoint",
+        "max_context_tokens"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "Qwen/Qwen3.8-Flash-Next-FP8",
+            "Qwen/Qwen3.8-27B-FP8"
+          ]
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "endpoint": {
+          "type": "string",
+          "pattern": "^http://(127\\.0\\.0\\.1|localhost):[0-9]+/v1/?$"
+        },
+        "max_context_tokens": {
+          "const": 65536
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "Qwen/Qwen3.8-Flash-Next-FP8"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "revision": {
+                "const": "236dfdf285828023ca3bcd3f37366c58a3469b13"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "revision": {
+                "const": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skill_id",
+        "acquisition_task_id",
+        "corpus",
+        "seed"
+      ],
+      "properties": {
+        "skill_id": {
+          "$ref": "#/$defs/id"
+        },
+        "acquisition_task_id": {
+          "$ref": "#/$defs/task"
+        },
+        "corpus": {
+          "const": "benign"
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "root",
+        "complete_sha256"
+      ],
+      "properties": {
+        "source_id": {
+          "$ref": "#/$defs/id"
+        },
+        "root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "complete_sha256": {
+          "$ref": "#/$defs/hash"
+        }
+      }
+    },
+    "trial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trial_id",
+        "source_id",
+        "skill_id",
+        "task_id",
+        "category",
+        "seed"
+      ],
+      "properties": {
+        "trial_id": {
+          "$ref": "#/$defs/id"
+        },
+        "source_id": {
+          "$ref": "#/$defs/id"
+        },
+        "skill_id": {
+          "$ref": "#/$defs/id"
+        },
+        "task_id": {
+          "$ref": "#/$defs/task"
+        },
+        "category": {
+          "enum": [
+            "positive",
+            "negative"
+          ]
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "creation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "batch_id",
+        "dataset",
+        "model",
+        "items"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "r2sp.tau-generation-spec.v2"
+        },
+        "batch_id": {
+          "$ref": "#/$defs/id"
+        },
+        "dataset": {
+          "$ref": "#/$defs/dataset"
+        },
+        "model": {
+          "$ref": "#/$defs/model"
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/item"
+          }
+        },
+        "retrieval": {
+          "const": {
+            "bm25_top_k": 10,
+            "dense_top_k": 10,
+            "max_searches": 2,
+            "rrf_k": 60,
+            "selection_k": 10,
+            "dense_model_id": "Qwen/Qwen3-Embedding-0.6B",
+            "dense_model_revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3"
+          }
+        }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "batch_id",
+        "dataset",
+        "model",
+        "sources",
+        "trials"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "r2sp.tau-evaluation-spec.v2"
+        },
+        "batch_id": {
+          "$ref": "#/$defs/id"
+        },
+        "dataset": {
+          "$ref": "#/$defs/dataset"
+        },
+        "model": {
+          "$ref": "#/$defs/model"
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        },
+        "trials": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/trial"
+          }
+        }
+      }
+    }
+  }
+}

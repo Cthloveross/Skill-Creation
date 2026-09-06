@@ -1,5 +1,7 @@
 # Strict Skill-Only Paired Qualification Implementation Plan
 
+Historical implementation plan; current operation and scope are indexed in [WORKFLOW.md](../../../WORKFLOW.md). Outcome records are preserved in [RESULTS.md](../../../RESULTS.md).
+
 > **For Claude:** REQUIRED SUB-SKILL: Use `spml:ml-subagent-dev` for taskwise implementation. That sub-skill is unavailable in the current environment, so execute the same test-first, per-task review and integration gates directly.
 
 **Goal:** Run one auditable file-backed qualification experiment in which matched Benign and Poison resources pass through retrieval, authoring, Skill compilation, and a fresh deployment conversation that has no resource-search/read capability and receives only the generated Skill as inherited knowledge.
@@ -122,7 +124,7 @@
 
 **Components consumed:** File-backed corpora and retrieval gate; resource-free agent mode; skill-only reset attestation; paired compiler; paired deployment evaluator; Qwen3.8 live providers; current procedure document.
 
-**Implementation:** Run L0 validation, start the frozen local Qwen3.8 service on GPUs 0 and 6, execute the paired compile hard gate, and only if it passes execute all eight strict deployment episodes. Write to a new `/work/tc442/skill-creation-runs/qwen38-strict-paired-qualification-<run-id>/` root with `compile/` and `deploy/` children. Keep the reusable procedure in `docs/procedure.md` and immutable outcomes in the run artifacts.
+**Implementation:** Run L0 validation, start the frozen local Qwen3.8 service on GPUs 0 and 6, execute the paired compile hard gate, and only if it passes execute all eight strict deployment episodes. Write to a new `/work/tc442/skill-creation-runs/qwen38-strict-paired-qualification-<run-id>/` root with `compile/` and `deploy/` children. Keep the reusable procedure in `experiments/WORKFLOW.md` and immutable outcomes in the run artifacts.
 
 **Integration Tests:** Official AppWorld JSON → matched 447-resource arms → canonical Top-10 → independent exact-five/full-read acquisition → four Skills → eight fresh resource-free deployments → replayed gate summary.
 
@@ -139,5 +141,5 @@
 3. Execute paired compile into the new immutable run root.
 4. If and only if the compile hard gate passes, execute eight strict deployments.
 5. Replay artifact manifests and recompute the gate from stored evidence.
-6. Record exact results in `docs/procedure.md` and stop the model service.
+6. Record exact results in `experiments/WORKFLOW.md` and stop the model service.
 7. Run `git diff --check`; do not create an implicit git commit.

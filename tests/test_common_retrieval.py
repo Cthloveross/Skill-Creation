@@ -7,11 +7,13 @@ import pytest
 from r2sp_common import (
     DeterministicBM25,
     InvalidQueryError,
+    InvalidSelectionError,
     OpenBudgetExceeded,
     Page,
     PageNotExposedError,
     RetrieverClosedError,
     SearchBudgetExceeded,
+    SelectionAlreadyMadeError,
     SessionWebRetriever,
     tokenize,
 )
@@ -114,6 +116,90 @@ def test_open_page_requires_prior_visible_exposure_and_tracks_unique_first_open_
     assert second["body"]
 
 
+def test_exact_selection_reads_five_exposed_documents_once_and_closes_search() -> None:
+    session = SessionWebRetriever(
+        DeterministicBM25(_pages()),
+        visible_k=10,
+        max_unique_opens=5,
+        selection_k=5,
+    )
+    visible = session.search_web("gold rewards")["results"]
+    page_ids = [item["page_id"] for item in visible[:5]]
+
+    assert len(visible) == 10
+    with pytest.raises(InvalidSelectionError):
+        session.select_docs(page_ids[:4])
+    with pytest.raises(InvalidSelectionError):
+        session.select_docs([*page_ids[:4], page_ids[0]])
+    with pytest.raises(InvalidSelectionError):
+        session.select_docs([*page_ids[:4], "not-exposed"])
+    with pytest.raises(InvalidSelectionError):
+        session.open_page(page_ids[0])
+
+    selected = session.select_docs(page_ids)
+
+    assert session.selection_complete
+    assert [item["page_id"] for item in selected["documents"]] == page_ids
+    assert all(
+        set(item) == {"page_id", "title", "body", "content_sha256"}
+        for item in selected["documents"]
+    )
+    assert [page.page_id for page in session.opened_pages] == page_ids
+    with pytest.raises(SelectionAlreadyMadeError):
+        session.search_web("benefits")
+    with pytest.raises(SelectionAlreadyMadeError):
+        session.select_docs(page_ids)
+
+
+def test_search_can_return_full_bodies_for_evidence_aware_selection() -> None:
+    session = SessionWebRetriever(
+        DeterministicBM25(_pages()),
+        visible_k=10,
+        selection_k=5,
+        include_bodies_in_search_results=True,
+    )
+
+    results = session.search_web("gold rewards")["results"]
+
+    assert len(results) == 10
+    assert all(set(item) == {"page_id", "title", "body"} for item in results)
+    assert all(item["body"] for item in results)
+    assert "score" not in results[0]
+    assert "content_sha256" not in results[0]
+
+
+def test_exact_selection_can_combine_ids_from_all_prior_search_results() -> None:
+    pages = tuple(
+        Page(
+            page_id=f"alpha-{index}",
+            title=f"Alpha {index}",
+            body=f"alpha marker {index}",
+        )
+        for index in range(5)
+    ) + tuple(
+        Page(
+            page_id=f"beta-{index}",
+            title=f"Beta {index}",
+            body=f"beta marker {index}",
+        )
+        for index in range(5)
+    )
+    session = SessionWebRetriever(
+        DeterministicBM25(pages),
+        internal_k=5,
+        visible_k=5,
+        max_unique_opens=5,
+        selection_k=5,
+    )
+    first_ids = [item["page_id"] for item in session.search_web("alpha")["results"]]
+    latest_ids = [item["page_id"] for item in session.search_web("beta")["results"]]
+
+    assert set(first_ids).isdisjoint(latest_ids)
+    selected_ids = [*first_ids[:3], *latest_ids[:2]]
+    selected = session.select_docs(selected_ids)
+    assert [item["page_id"] for item in selected["documents"]] == selected_ids
+
+
 def test_search_and_unique_open_budgets_are_fail_closed_and_configurable() -> None:
     session = SessionWebRetriever(
         DeterministicBM25(_pages()),
@@ -147,6 +233,7 @@ def test_invalid_search_attempt_consumes_budget_and_close_destroys_session_state
     assert session.closed
     assert session.search_events == ()
     assert session.opened_pages == ()
+    assert not session.selection_complete
     assert session.exposed_page_ids == frozenset()
     with pytest.raises(RetrieverClosedError):
         session.search_web("gold")
