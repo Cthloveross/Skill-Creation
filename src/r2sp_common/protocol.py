@@ -192,6 +192,184 @@ class SearchEvent:
 
 
 @dataclass(frozen=True, slots=True)
+class PageSnippet:
+    """A tokenizer-derived page prefix kept separate from the full page body."""
+
+    text: str
+    truncated: bool
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.text, str) or not self.text:
+            raise ValueError("snippet text must be a non-empty string")
+        if not isinstance(self.truncated, bool):
+            raise TypeError("snippet truncated must be a boolean")
+
+
+@dataclass(frozen=True, slots=True)
+class HybridCandidate:
+    """The complete score-free candidate view exposed to an acquisition agent."""
+
+    page_id: str
+    title: str
+    snippet: str
+    snippet_truncated: bool
+
+    def __post_init__(self) -> None:
+        _required_text("page_id", self.page_id)
+        _required_text("title", self.title)
+        if not isinstance(self.snippet, str) or not self.snippet:
+            raise ValueError("snippet must be a non-empty string")
+        if not isinstance(self.snippet_truncated, bool):
+            raise TypeError("snippet_truncated must be a boolean")
+
+    def to_agent_dict(self) -> dict[str, Any]:
+        return {
+            "page_id": self.page_id,
+            "title": self.title,
+            "snippet": self.snippet,
+            "snippet_truncated": self.snippet_truncated,
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        return self.to_agent_dict()
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> HybridCandidate:
+        if not isinstance(value, Mapping):
+            raise TypeError("hybrid candidate must be a mapping")
+        return cls(
+            page_id=value["page_id"],
+            title=value["title"],
+            snippet=value["snippet"],
+            snippet_truncated=value["snippet_truncated"],
+        )
+
+
+def _validate_ranked_hits(name: str, values: tuple[SearchHit, ...]) -> None:
+    if len(values) != 10:
+        raise ValueError(f"{name} must contain exactly ten hits")
+    if any(not isinstance(hit, SearchHit) for hit in values):
+        raise TypeError(f"{name} must contain only SearchHit values")
+    if [hit.rank for hit in values] != list(range(1, 11)):
+        raise ValueError(f"{name} ranks must be contiguous from one through ten")
+    page_ids = [hit.page_id for hit in values]
+    if len(page_ids) != len(set(page_ids)):
+        raise ValueError(f"{name} page IDs must be unique")
+
+
+def _rrf_page_ids(
+    bm25_top10: tuple[SearchHit, ...],
+    dense_top10: tuple[SearchHit, ...],
+    *,
+    k: int,
+) -> tuple[str, ...]:
+    scores: dict[str, float] = {}
+    for ranking in (bm25_top10, dense_top10):
+        for hit in ranking:
+            scores[hit.page_id] = scores.get(hit.page_id, 0.0) + 1.0 / (k + hit.rank)
+    return tuple(sorted(scores, key=lambda page_id: (-scores[page_id], page_id)))
+
+
+@dataclass(frozen=True, slots=True)
+class HybridSearchEvent:
+    """Evaluator-only evidence for one fail-closed BM25+dense search call."""
+
+    search_index: int
+    query: str
+    query_terms: tuple[str, ...]
+    bm25_top10: tuple[SearchHit, ...]
+    dense_top10: tuple[SearchHit, ...]
+    rrf_k: int
+    rrf_page_ids: tuple[str, ...]
+    returned_candidates: tuple[HybridCandidate, ...]
+
+    def __post_init__(self) -> None:
+        if (
+            isinstance(self.search_index, bool)
+            or not isinstance(self.search_index, int)
+            or self.search_index <= 0
+        ):
+            raise ValueError("search_index must be a positive integer")
+        _required_text("query", self.query)
+        terms = tuple(self.query_terms)
+        if not terms or any(not isinstance(term, str) or not term for term in terms):
+            raise ValueError("query_terms must contain non-empty strings")
+        if len(terms) != len(set(terms)):
+            raise ValueError("query_terms must not contain duplicates")
+        object.__setattr__(self, "query_terms", terms)
+
+        bm25_hits = tuple(self.bm25_top10)
+        dense_hits = tuple(self.dense_top10)
+        _validate_ranked_hits("bm25_top10", bm25_hits)
+        _validate_ranked_hits("dense_top10", dense_hits)
+        object.__setattr__(self, "bm25_top10", bm25_hits)
+        object.__setattr__(self, "dense_top10", dense_hits)
+
+        if isinstance(self.rrf_k, bool) or not isinstance(self.rrf_k, int) or self.rrf_k <= 0:
+            raise ValueError("rrf_k must be a positive integer")
+        rrf_page_ids = tuple(self.rrf_page_ids)
+        expected_rrf_page_ids = _rrf_page_ids(bm25_hits, dense_hits, k=self.rrf_k)
+        if rrf_page_ids != expected_rrf_page_ids:
+            raise ValueError("rrf_page_ids do not match the two complete source rankings")
+        object.__setattr__(self, "rrf_page_ids", rrf_page_ids)
+
+        candidates = tuple(self.returned_candidates)
+        if any(not isinstance(candidate, HybridCandidate) for candidate in candidates):
+            raise TypeError("returned_candidates must contain only HybridCandidate values")
+        candidate_ids = tuple(candidate.page_id for candidate in candidates)
+        if len(candidate_ids) != len(set(candidate_ids)):
+            raise ValueError("returned candidate page IDs must be unique")
+        positions = [rrf_page_ids.index(page_id) for page_id in candidate_ids]
+        if positions != sorted(positions):
+            raise ValueError("returned candidates must preserve RRF display order")
+        object.__setattr__(self, "returned_candidates", candidates)
+
+    @property
+    def returned_page_ids(self) -> tuple[str, ...]:
+        return tuple(candidate.page_id for candidate in self.returned_candidates)
+
+    @property
+    def agent_results(self) -> tuple[dict[str, Any], ...]:
+        return tuple(candidate.to_agent_dict() for candidate in self.returned_candidates)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "search_index": self.search_index,
+            "query": self.query,
+            "query_terms": list(self.query_terms),
+            "bm25_top10": [hit.to_dict() for hit in self.bm25_top10],
+            "dense_top10": [hit.to_dict() for hit in self.dense_top10],
+            "rrf_k": self.rrf_k,
+            "rrf_page_ids": list(self.rrf_page_ids),
+            "returned_page_ids": list(self.returned_page_ids),
+            "returned_candidates": [candidate.to_dict() for candidate in self.returned_candidates],
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> HybridSearchEvent:
+        if not isinstance(value, Mapping):
+            raise TypeError("hybrid search event must be a mapping")
+        event = cls(
+            search_index=value["search_index"],
+            query=value["query"],
+            query_terms=tuple(value["query_terms"]),
+            bm25_top10=tuple(SearchHit.from_dict(hit) for hit in value["bm25_top10"]),
+            dense_top10=tuple(SearchHit.from_dict(hit) for hit in value["dense_top10"]),
+            rrf_k=value["rrf_k"],
+            rrf_page_ids=tuple(value["rrf_page_ids"]),
+            returned_candidates=tuple(
+                HybridCandidate.from_dict(candidate) for candidate in value["returned_candidates"]
+            ),
+        )
+        if (
+            "returned_page_ids" in value
+            and tuple(value["returned_page_ids"]) != event.returned_page_ids
+        ):
+            raise ValueError("returned_page_ids do not match returned_candidates")
+        return event
+
+
+@dataclass(frozen=True, slots=True)
 class TraceEvent:
     """One event that was visible to the deployed or acquisition agent."""
 

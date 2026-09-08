@@ -1,0 +1,20 @@
+{
+  "schema_version": "tau.deepseek-v4-api-4b-dense.origin.v1",
+  "status": "ORIGIN_BOUND_READ_ONLY_REFERENCE",
+  "fresh_run_in_this_directory": false,
+  "relocated_or_resealed": false,
+  "pipeline_execution_id": "pipeline-754f2ac3c93840998b6bba3313547595",
+  "origin": {
+    "gate_run": "experiments/tau-knowledge/hybrid-full-doc/runs/smoke/deepseek-v4-flash-20260908T010136.841895Z-8049c70e7d35",
+    "gate_creation_complete_sha256": "cb595ad47ba2c29a016d540ad4941652ec9fb900742deab36d54c3a2ccf80e0b",
+    "gate_complete_sha256": "444d74de9e01638598bcbe2f34773f96dc54df283580c3c4f0f42e9e0d6e2484",
+    "creation_run": "experiments/tau-knowledge/hybrid-full-doc/runs/creation/full-doc-create-20260908T020446.542831Z-9805c06c089a",
+    "creation_complete_sha256": "3c587f178ddfd928fe95db36310449c378e03525e56df4ed765b25d08fd63761",
+    "evaluation_run": "experiments/tau-knowledge/hybrid-full-doc/runs/evaluation/full-doc-evaluate-20260908T065150.821042Z-9805c06c089a",
+    "evaluation_complete_sha256": "36f6a449d1a0c200e1c5ad0248a05c7e3fa722c0d804f2ad0297bb41f2284fb6",
+    "executed_protocol_sha256": "95240b739512f88979a988f8801fea0c9590589ac2a61e345eb2bf0d4f950ad3"
+  },
+  "copied_result_snapshots": {
+    "metrics.json": "f62930b4146f101d61b793c33f7aa182799a5624e1b414cd0146c1cc2d42d625"
+  }
+}

@@ -1,2 +1,3 @@
 # Resolve to requirements/model-service.lock on the actual H200/CUDA service host.
 vllm==0.28.0
+transformers>=5.8.0,<6

@@ -40,5 +40,6 @@ testpaths = [
   "tests",
   "experiments/appworld/preliminary/tests",
   "experiments/tau-knowledge/preliminary/tests",
+  "experiments/tau-knowledge/deepseek-v4-api-4b-dense/tests",
 ]
 addopts = "-ra"

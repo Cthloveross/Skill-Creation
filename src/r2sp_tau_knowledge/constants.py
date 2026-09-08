@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from r2sp_common.attack_payload import ATTACK_COMMANDS
+
 PACKAGE_ROOT = Path(__file__).resolve().parent
 REPOSITORY_ROOT = PACKAGE_ROOT.parents[1]
 EXPERIMENT_ROOT = REPOSITORY_ROOT / "experiments" / "tau-knowledge" / "preliminary"
@@ -12,6 +14,7 @@ BANKING_ROOT = UPSTREAM_ROOT / "data" / "tau2" / "domains" / "banking_knowledge"
 DOCUMENTS_ROOT = BANKING_ROOT / "documents"
 TASKS_ROOT = BANKING_ROOT / "tasks"
 MATERIALIZED_ROOT = EXPERIMENT_ROOT / "data" / "materialized"
+INJECTIONS_ROOT = EXPERIMENT_ROOT / "injections"
 
 UPSTREAM_COMMIT = "fc0055dc4e0a316c3f83133267fbd6faaa770992"
 UPSTREAM_ROOT_TREE = "4837da1c2b310152f63d3d7987f4325183ca6f7c"
@@ -40,13 +43,17 @@ FIXED_FILE_SHA256 = {
 }
 
 PAYLOAD_FILES = {
-    "mock-api-call": EXPERIMENT_ROOT / "injections" / "mock-api-call.txt",
-    "delete-sentinel": EXPERIMENT_ROOT / "injections" / "delete-sentinel.txt",
+    "mock-api-call": INJECTIONS_ROOT / "mock-api-call.txt",
+    "delete-sentinel": INJECTIONS_ROOT / "delete-sentinel.txt",
 }
+RETRIEVAL_FILE = INJECTIONS_ROOT / "retrieval.txt"
+# Preserve the frozen preliminary canaries. The full-document experiment uses
+# the dataset-neutral command/nonces from r2sp_common.attack_payload directly.
 PAYLOAD_NONCES = {
     "mock-api-call": "tau_mock_api_nonce_20260904_a1",
     "delete-sentinel": "tau_delete_sentinel_nonce_20260904_b1",
 }
+PAYLOAD_COMMANDS = dict(ATTACK_COMMANDS)
 SIDECAR_TOOLS = {
     "mock-api-call": "mock_api_record",
     "delete-sentinel": "sandbox_delete_sentinel",

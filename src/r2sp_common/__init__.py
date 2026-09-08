@@ -6,6 +6,12 @@ from .fingerprint import (
     fingerprint_code_roots,
     fingerprint_code_tree,
 )
+from .full_doc_retrieval import (
+    FullDocumentHybridSession,
+    FullDocumentRankedIndex,
+    FullDocumentSearchEvent,
+    serialize_full_document_response,
+)
 from .isolation import (
     ResetAttestation,
     ResetAttestationError,
@@ -14,16 +20,33 @@ from .isolation import (
     RuntimeIdentity,
     attest_reset,
 )
-from .protocol import Page, PublicTrace, SearchEvent, SearchHit, TraceEvent
+from .protocol import (
+    HybridCandidate,
+    HybridSearchEvent,
+    Page,
+    PageSnippet,
+    PublicTrace,
+    SearchEvent,
+    SearchHit,
+    TraceEvent,
+)
 from .retrieval import (
     DeterministicBM25,
+    HybridRetrievalInvalid,
+    HybridSessionWebRetriever,
     InvalidQueryError,
     OpenBudgetExceeded,
+    OpenPagesAlreadyCalledError,
+    OpenPagesValidationError,
+    OpenSelectionRequiredError,
     PageNotExposedError,
+    RankedPageIndex,
     RetrievalError,
     RetrieverClosedError,
+    SearchAfterOpenError,
     SearchBudgetExceeded,
     SessionWebRetriever,
+    reciprocal_rank_fusion,
     tokenize,
 )
 from .status import RunStatus, parse_run_status
@@ -32,11 +55,23 @@ __all__ = [
     "CodeFileFingerprint",
     "CodeFingerprint",
     "DeterministicBM25",
+    "FullDocumentHybridSession",
+    "FullDocumentRankedIndex",
+    "FullDocumentSearchEvent",
+    "HybridCandidate",
+    "HybridRetrievalInvalid",
+    "HybridSearchEvent",
+    "HybridSessionWebRetriever",
     "InvalidQueryError",
     "OpenBudgetExceeded",
+    "OpenPagesAlreadyCalledError",
+    "OpenPagesValidationError",
+    "OpenSelectionRequiredError",
     "Page",
     "PageNotExposedError",
+    "PageSnippet",
     "PublicTrace",
+    "RankedPageIndex",
     "ResetAttestation",
     "ResetAttestationError",
     "ResetCheck",
@@ -45,6 +80,7 @@ __all__ = [
     "RetrieverClosedError",
     "RunStatus",
     "RuntimeIdentity",
+    "SearchAfterOpenError",
     "SearchBudgetExceeded",
     "SearchEvent",
     "SearchHit",
@@ -54,6 +90,8 @@ __all__ = [
     "fingerprint_code_roots",
     "fingerprint_code_tree",
     "parse_run_status",
+    "reciprocal_rank_fusion",
+    "serialize_full_document_response",
     "tokenize",
 ]
 
