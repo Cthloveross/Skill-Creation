@@ -17,8 +17,8 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: python -m pip install -e '.[dev]'
-      - run: python -m pytest -q tests experiments/appworld/preliminary/tests experiments/tau-knowledge/preliminary/tests
-      - run: ruff check src tests experiments/appworld/preliminary/tests experiments/tau-knowledge/preliminary/tests
-      - run: ruff format --check src tests experiments/appworld/preliminary/tests experiments/tau-knowledge/preliminary/tests
-      - run: python -m compileall -q src tests experiments/appworld/preliminary/tests experiments/tau-knowledge/preliminary/tests
-      - run: r2sp validate-config --config experiments/appworld/preliminary/configs/experiment_plan.yaml
+      - run: python -m pytest -q
+      - run: ruff check experiments/tau-knowledge/skill-evolution/src experiments/tau-knowledge/skill-evolution/tests experiments/tau-knowledge/skill-evolution/scripts
+      - run: ruff format --check experiments/tau-knowledge/skill-evolution/src experiments/tau-knowledge/skill-evolution/tests experiments/tau-knowledge/skill-evolution/scripts
+      - run: python -m compileall -q experiments/tau-knowledge/skill-evolution/src experiments/tau-knowledge/skill-evolution/tests experiments/tau-knowledge/skill-evolution/scripts
+      - run: python -c 'from tau_skill_evolution.spec import load_spec; load_spec()'

@@ -1,0 +1,81 @@
+{
+  "namespace": "tau.skill-evolution.v2",
+  "experiment": "tau",
+  "ready": true,
+  "requested_runtime": "bubblewrap_demo",
+  "formal_matrix_result": false,
+  "aggregate_limits_enforced": false,
+  "checks": [
+    {
+      "name": "pinned_upstream",
+      "ok": true,
+      "detail": {
+        "banking_files": 815,
+        "banking_manifest_sha256": "ba25334cc2d4cace6e9e3bff568bdc1fa7a3a6d3ab0199366e812555ff8aa253",
+        "checkout_files": 1127,
+        "checkout_manifest_sha256": "4c67db0027903ee76b4e618ccae065c59555f2b71b5cf20f6efb5704002e71d1",
+        "commit": "fc0055dc4e0a316c3f83133267fbd6faaa770992",
+        "documents": 698,
+        "tasks": 97
+      }
+    },
+    {
+      "name": "official_python",
+      "ok": true,
+      "detail": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/data/upstream/tau2-bench/.venv/bin/python"
+    },
+    {
+      "name": "bedrock_model",
+      "ok": true,
+      "detail": "openai.gpt-5.5"
+    },
+    {
+      "name": "bedrock_region",
+      "ok": true,
+      "detail": "https://bedrock-mantle.us-east-1.api.aws/openai/v1"
+    },
+    {
+      "name": "credential",
+      "ok": true,
+      "detail": "AWS_BEARER_TOKEN_BEDROCK is present (value not recorded)"
+    },
+    {
+      "name": "bedrock_authentication",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "model": "openai.gpt-5.5",
+        "generation_requested": false
+      }
+    },
+    {
+      "name": "dependency_lock",
+      "ok": true,
+      "detail": "f9159bd0806d0ae1f3edb1ca999f02223a37482698204bb698ebd656baea6c6a"
+    },
+    {
+      "name": "bubblewrap_demo",
+      "ok": true,
+      "detail": {
+        "demo_only": true,
+        "aggregate_limits_enforced": false,
+        "limits": {
+          "cpu_affinity": 0,
+          "address_space_per_process": 1073741824,
+          "nproc_per_uid": 64,
+          "timeout_seconds": 60,
+          "output_bytes": 65536
+        },
+        "runtime_lock": true,
+        "commands": true,
+        "dependencies": true,
+        "ready": true
+      }
+    },
+    {
+      "name": "embedding_service",
+      "ok": true,
+      "detail": "http://127.0.0.1:18140/v1"
+    }
+  ]
+}

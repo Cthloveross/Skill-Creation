@@ -1,0 +1,29 @@
+.venv/bin/python -m pytest -q
+.......................................................................s [ 12%]
+sss.....................sss............................................. [ 25%]
+........................................................................ [ 38%]
+........................................................................ [ 51%]
+....................ss.......................................ss.....s... [ 64%]
+........................................................................ [ 77%]
+........................................................................ [ 90%]
+.......................................................                  [100%]
+=========================== short test summary info ============================
+SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_bubblewrap.py:108: real Bubblewrap boundaries are opt-in and not attested by mocks
+SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_bubblewrap.py:146: real Bubblewrap boundaries are opt-in and not attested by mocks
+SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_bubblewrap.py:175: real Bubblewrap boundaries are opt-in and not attested by mocks
+SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_bubblewrap.py:198: real Bubblewrap boundaries are opt-in and not attested by mocks
+SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_container_integration.py:31: real Docker integration is opt-in; no container boundary has been measured
+SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_container_integration.py:64: real Docker integration is opt-in; no container boundary has been measured
+SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_container_integration.py:90: real Docker integration is opt-in; no container boundary has been measured
+SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench.py:173: Pinned SkillsBench source and pool checks require prepared data and opt-in.
+SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench.py:190: Pinned SkillsBench source and pool checks require prepared data and opt-in.
+SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench.py:627: Real SkillsBench Bubblewrap boundaries require explicit opt-in.
+SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench.py:676: Real SkillsBench Bubblewrap boundaries require explicit opt-in.
+SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench.py:961: Real SkillsBench Bubblewrap boundaries require explicit opt-in.
+547 passed, 12 skipped in 79.58s (0:01:19)
+.venv/bin/ruff check experiments/tau-knowledge/skill-evolution/src experiments/tau-knowledge/skill-evolution/tests experiments/tau-knowledge/skill-evolution/scripts
+All checks passed!
+.venv/bin/ruff format --check experiments/tau-knowledge/skill-evolution/src experiments/tau-knowledge/skill-evolution/tests experiments/tau-knowledge/skill-evolution/scripts
+71 files already formatted
+.venv/bin/python -m compileall -q experiments/tau-knowledge/skill-evolution/src experiments/tau-knowledge/skill-evolution/tests experiments/tau-knowledge/skill-evolution/scripts
+.venv/bin/python -c 'from tau_skill_evolution.spec import DEFAULT_CONFIG, load_spec; load_spec(); load_spec(DEFAULT_CONFIG.parent / "skillsbench.yaml")'

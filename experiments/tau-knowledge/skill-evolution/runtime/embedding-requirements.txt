@@ -1,0 +1,3 @@
+# Dense embedding service only; never used for generation.
+vllm==0.28.0
+transformers>=5.8.0,<6

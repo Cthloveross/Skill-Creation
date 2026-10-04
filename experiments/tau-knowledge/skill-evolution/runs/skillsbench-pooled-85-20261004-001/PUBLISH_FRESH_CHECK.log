@@ -1,0 +1,26 @@
+Fresh-distribution offline validation
+UTC: 2026-10-04T22:16:21+00:00
+Interpreter: Python 3.12.3
+Workspace: /tmp/tau-fresh-offline-w848kzgk
+Git-visible delivery copied without ignored upstream data, rootfs or key.env.
+Refreshed 4 source and 5 test files; copies still match the current workspace.
+AWS/API credentials and TAU_RUN_* integration flags excluded from the pytest environment.
+
+pytest -q --tb=short: 535 passed, 24 skipped in 57.56s; exit 0
+24 skips: 10 pinned bank Python checks; 1 upstream snapshot; 3 SkillsBench source/pool/tree;
+          7 Bubblewrap checks; 3 Docker checks. Real boundaries were not attested by mocks.
+ruff check (source/tests/scripts): PASSED
+ruff format --check (source/tests/scripts): PASSED, 71 files
+compileall (source/tests/scripts): PASSED
+load_spec() and load_spec(SKILLSBENCH_CONFIG): PASSED
+
+Refreshed files:
+experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/model.py
+experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/generator.py
+experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/workflow.py
+experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/skillsbench.py
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_model.py
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_workflow.py
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench.py
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_demo.py
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_spec.py

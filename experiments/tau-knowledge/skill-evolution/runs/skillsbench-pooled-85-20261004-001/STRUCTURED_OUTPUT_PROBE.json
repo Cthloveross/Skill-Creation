@@ -1,0 +1,40 @@
+{
+  "created_at": "2026-10-04T22:07:38.030958+00:00",
+  "purpose": "diagnostic structured-output capability check, not S0",
+  "model": "openai.gpt-5.5",
+  "format": {
+    "type": "json_schema",
+    "name": "pipeline_format_probe",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "ready": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ready"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "generation_requested": true,
+  "credential_recorded": false,
+  "http_status": 200,
+  "status": "completed",
+  "usage": {
+    "input_tokens": 38,
+    "input_tokens_details": {
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "output_tokens": 14,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 52
+  },
+  "content": "{\"ready\":true}",
+  "supported": true
+}

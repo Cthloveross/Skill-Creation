@@ -5,14 +5,13 @@ data/
 experiments/*/*/data/*
 !experiments/*/*/data/.gitkeep
 
-# Raw run bundles may contain protected AppWorld text
+# Raw run bundles may contain private benchmark text
 runs/
 !experiments/*/*/runs/
 experiments/*/*/runs/*
 !experiments/*/*/runs/.gitkeep
 artifacts/raw/
 .experiments/
-.appworld/
 
 # Credentials and local environments
 .env

@@ -1,0 +1,2033 @@
+{
+  "cache_manifest_sha256": "93428af403d7d837e8fa09473a3a9313219232ee33bd8d10a4cdbfcde303bd5d",
+  "cases": [
+    {
+      "bm25_top10": [
+        {
+          "content_sha256": "9524c1a3f03aebc7be6e009c1d8f9fedd4503592205684d4f6a64dde6ee80d47",
+          "page_id": "3d-scan-calc::instruction.md::tokens-0-191",
+          "rank": 1,
+          "score": 96.88606800542274,
+          "title": "3d-scan-calc::instruction.md"
+        },
+        {
+          "content_sha256": "7f8ab152d97878684e5c69877e24c2d3ff5758557c280a3bacd29938efa787ae",
+          "page_id": "3d-scan-calc::background/mesh-measurement-principles.md::tokens-0-172",
+          "rank": 2,
+          "score": 55.447252171334206,
+          "title": "3d-scan-calc::background/mesh-measurement-principles.md"
+        },
+        {
+          "content_sha256": "6bd4d01c39038d3b1b1ec75f0e841d73622f1ceecdcefde5482d9321b6ec0d42",
+          "page_id": "3d-scan-calc::environment/scan_data.stl::tokens-0-127",
+          "rank": 3,
+          "score": 41.4217905174183,
+          "title": "3d-scan-calc::environment/scan_data.stl"
+        },
+        {
+          "content_sha256": "72a9aca1b634f8cf9d6e29beed47f8d31796d727a3017b616b32e10d953d9f64",
+          "page_id": "3d-scan-calc::environment/material_density_table.md::tokens-0-219",
+          "rank": 4,
+          "score": 32.23186114602876,
+          "title": "3d-scan-calc::environment/material_density_table.md"
+        },
+        {
+          "content_sha256": "35ef5b0ff40cbfa1e98d34e28390d738afdb66bfdaa5120216565dd200844051",
+          "page_id": "3d-scan-calc::environment/Dockerfile::tokens-0-62",
+          "rank": 5,
+          "score": 26.0075151884457,
+          "title": "3d-scan-calc::environment/Dockerfile"
+        },
+        {
+          "content_sha256": "3f83a47e4d9ef90f167e555993319be26b6b1d2f397eec2070e248d9de966af9",
+          "page_id": "gravitational-wave-detection::background/gravitational-wave-detection-background.md::tokens-0-2048",
+          "rank": 6,
+          "score": 24.523614699181003,
+          "title": "gravitational-wave-detection::background/gravitational-wave-detection-background.md"
+        },
+        {
+          "content_sha256": "d8b8a39c1c3ddd870c112c6913a7c8603a27f2b1dff548bbd5a038d00caaeeff",
+          "page_id": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-332160-334208",
+          "rank": 7,
+          "score": 23.996012907255427,
+          "title": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv"
+        },
+        {
+          "content_sha256": "36664d9612295d5cb399585a9a318ea02033044f34074ab5ed6b217c5087fe40",
+          "page_id": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-376320-378368",
+          "rank": 8,
+          "score": 23.989245330330846,
+          "title": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv"
+        },
+        {
+          "content_sha256": "880bd988b7f9442e297dbf304b606f14575f822d635a6f8cfa13950390b043d9",
+          "page_id": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-134400-136448",
+          "rank": 9,
+          "score": 23.986205048748857,
+          "title": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv"
+        },
+        {
+          "content_sha256": "8eba18f376f5011ae0effb0293d2ccb3512f002726d966afe71509549e8d71ba",
+          "page_id": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-0-2048",
+          "rank": 10,
+          "score": 23.981342200785082,
+          "title": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv"
+        }
+      ],
+      "candidate_count": 16,
+      "candidate_origin_counts": {
+        "background": 2,
+        "environment": 13,
+        "instruction.md": 1
+      },
+      "dense_top10": [
+        {
+          "content_sha256": "9524c1a3f03aebc7be6e009c1d8f9fedd4503592205684d4f6a64dde6ee80d47",
+          "page_id": "3d-scan-calc::instruction.md::tokens-0-191",
+          "rank": 1,
+          "score": 0.7284507925262501,
+          "title": "3d-scan-calc::instruction.md"
+        },
+        {
+          "content_sha256": "7f8ab152d97878684e5c69877e24c2d3ff5758557c280a3bacd29938efa787ae",
+          "page_id": "3d-scan-calc::background/mesh-measurement-principles.md::tokens-0-172",
+          "rank": 2,
+          "score": 0.6601392702653862,
+          "title": "3d-scan-calc::background/mesh-measurement-principles.md"
+        },
+        {
+          "content_sha256": "6bd4d01c39038d3b1b1ec75f0e841d73622f1ceecdcefde5482d9321b6ec0d42",
+          "page_id": "3d-scan-calc::environment/scan_data.stl::tokens-0-127",
+          "rank": 3,
+          "score": 0.5238128603619473,
+          "title": "3d-scan-calc::environment/scan_data.stl"
+        },
+        {
+          "content_sha256": "72a9aca1b634f8cf9d6e29beed47f8d31796d727a3017b616b32e10d953d9f64",
+          "page_id": "3d-scan-calc::environment/material_density_table.md::tokens-0-219",
+          "rank": 4,
+          "score": 0.45034906195912416,
+          "title": "3d-scan-calc::environment/material_density_table.md"
+        },
+        {
+          "content_sha256": "a3fb2ca709c66af8bd1eadfefdc919e5d97361f4a906ce45cba808842d0c729e",
+          "page_id": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-403200-405248",
+          "rank": 5,
+          "score": 0.42640041163524645,
+          "title": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv"
+        },
+        {
+          "content_sha256": "9019d44e4a6907f59a26c3b8f4599a7b87a9754a8a567985b242661818ff31ba",
+          "page_id": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-618240-620288",
+          "rank": 6,
+          "score": 0.4222948730821125,
+          "title": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv"
+        },
+        {
+          "content_sha256": "10e1dc7d899980fbb5359deec35a11b21f7f0a608655cb4b88b82dade763ee12",
+          "page_id": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-286080-288128",
+          "rank": 7,
+          "score": 0.42121497703946303,
+          "title": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv"
+        },
+        {
+          "content_sha256": "26288319230268907b41b5122a4f61e00594aa6837f3c0f96c8037ebb96d2a20",
+          "page_id": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-218880-220928",
+          "rank": 8,
+          "score": 0.4210431937145456,
+          "title": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv"
+        },
+        {
+          "content_sha256": "d418692f6f94ef46ad29c1c651266689ea508eb59ec0cc48504da746d39dfaee",
+          "page_id": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-307200-309248",
+          "rank": 9,
+          "score": 0.4208174768784692,
+          "title": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv"
+        },
+        {
+          "content_sha256": "48d9c0e55fda6fb469096b142a56584676b4ac35397f8acdc55bd79c13ff4089",
+          "page_id": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-487680-489728",
+          "rank": 10,
+          "score": 0.41940094782787524,
+          "title": "manufacturing-equipment-maintenance::environment/data/thermocouples.csv"
+        }
+      ],
+      "instruction_sha256": "9524c1a3f03aebc7be6e009c1d8f9fedd4503592205684d4f6a64dde6ee80d47",
+      "new_pool_returned_target_ranks": [
+        1
+      ],
+      "new_pool_target_chunks_returned": 1,
+      "query": "binary STL largest connected component material attribute volume mass",
+      "returned_target_ranks": [
+        2
+      ],
+      "route_target_ranks": {
+        "bm25_top10": [
+          2
+        ],
+        "dense_top10": [
+          2
+        ]
+      },
+      "rrf_k": 60,
+      "rrf_page_ids": [
+        "3d-scan-calc::instruction.md::tokens-0-191",
+        "3d-scan-calc::background/mesh-measurement-principles.md::tokens-0-172",
+        "3d-scan-calc::environment/scan_data.stl::tokens-0-127",
+        "3d-scan-calc::environment/material_density_table.md::tokens-0-219",
+        "3d-scan-calc::environment/Dockerfile::tokens-0-62",
+        "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-403200-405248",
+        "gravitational-wave-detection::background/gravitational-wave-detection-background.md::tokens-0-2048",
+        "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-618240-620288",
+        "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-286080-288128",
+        "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-332160-334208",
+        "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-218880-220928",
+        "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-376320-378368",
+        "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-134400-136448",
+        "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-307200-309248",
+        "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-0-2048",
+        "manufacturing-equipment-maintenance::environment/data/thermocouples.csv::tokens-487680-489728"
+      ],
+      "seconds": 5.536,
+      "target_chunks_returned": 1,
+      "target_chunks_total": 1,
+      "target_page_ids": [
+        "3d-scan-calc::background/mesh-measurement-principles.md::tokens-0-172"
+      ],
+      "task_id": "3d-scan-calc"
+    },
+    {
+      "bm25_top10": [
+        {
+          "content_sha256": "9524c1a3f03aebc7be6e009c1d8f9fedd4503592205684d4f6a64dde6ee80d47",
+          "page_id": "3d-scan-calc::instruction.md::tokens-0-191",
+          "rank": 1,
+          "score": 80.19872351723365,
+          "title": "3d-scan-calc::instruction.md"
+        },
+        {
+          "content_sha256": "7f8ab152d97878684e5c69877e24c2d3ff5758557c280a3bacd29938efa787ae",
+          "page_id": "3d-scan-calc::background/mesh-measurement-principles.md::tokens-0-172",
+          "rank": 2,
+          "score": 70.76520484132281,
+          "title": "3d-scan-calc::background/mesh-measurement-principles.md"
+        },
+        {
+          "content_sha256": "72a9aca1b634f8cf9d6e29beed47f8d31796d727a3017b616b32e10d953d9f64",
+          "page_id": "3d-scan-calc::environment/material_density_table.md::tokens-0-219",
+          "rank": 3,
+          "score": 41.75998624059055,
+          "title": "3d-scan-calc::environment/material_density_table.md"
+        },
+        {
+          "content_sha256": "35ef5b0ff40cbfa1e98d34e28390d738afdb66bfdaa5120216565dd200844051",
+          "page_id": "3d-scan-calc::environment/Dockerfile::tokens-0-62",
+          "rank": 4,
+          "score": 38.86540274911644,
+          "title": "3d-scan-calc::environment/Dockerfile"
+        },
+        {
+          "content_sha256": "6bd4d01c39038d3b1b1ec75f0e841d73622f1ceecdcefde5482d9321b6ec0d42",
+          "page_id": "3d-scan-calc::environment/scan_data.stl::tokens-0-127",
+          "rank": 5,
+          "score": 28.583901043765838,
+          "title": "3d-scan-calc::environment/scan_data.stl"
+        },
+        {
+          "content_sha256": "e88f0949b3c98daca0b6e113055fd312288157111aa30a28fc9e5d4e702e4158",
+          "page_id": "lab-unit-harmonization::environment/data/ckd_feature_descriptions.csv::tokens-0-1555",
+          "rank": 6,
+          "score": 17.508199493153416,
+          "title": "lab-unit-harmonization::environment/data/ckd_feature_descriptions.csv"
+        },
+        {
+          "content_sha256": "3f83a47e4d9ef90f167e555993319be26b6b1d2f397eec2070e248d9de966af9",
+          "page_id": "gravitational-wave-detection::background/gravitational-wave-detection-background.md::tokens-0-2048",
+          "rank": 7,
+          "score": 16.851628746830198,
+          "title": "gravitational-wave-detection::background/gravitational-wave-detection-background.md"
+        },
+        {
+          "content_sha256": "30f89056cd2fd14dc869d582b7fc335722b1a764935703445c429dbb9bb64833",
+          "page_id": "simpo-code-reproduction::environment/SimPO/eval/mt-bench/gpt-4-1106-preview.jsonl::tokens-3840-5888",
+          "rank": 8,
+          "score": 15.850028255991463,
+          "title": "simpo-code-reproduction::environment/SimPO/eval/mt-bench/gpt-4-1106-preview.jsonl"
+        },
+        {
+          "content_sha256": "c2492234ce6601a2bf752fe92fc5a49f5335d084e0f35f1d7c3746c014058b97",
+          "page_id": "taxonomy-tree-merge::environment/data/amazon_product_categories_full.csv::tokens-414720-416768",
+          "rank": 9,
+          "score": 15.223219591576198,
+          "title": "taxonomy-tree-merge::environment/data/amazon_product_categories_full.csv"
+        },
+        {
+          "content_sha256": "32c8cefc2417791761a02704864061bfafbf031d4c55803e665e157fa80eb893",
+          "page_id": "taxonomy-tree-merge::environment/data/amazon_product_categories_full.csv::tokens-412800-414848",
+          "rank": 10,
+          "score": 14.980308924511034,
+          "title": "taxonomy-tree-merge::environment/data/amazon_product_categories_full.csv"
+        }
+      ],
+      "candidate_count": 15,
+      "candidate_origin_counts": {
+        "background": 2,
+        "environment": 12,
+        "instruction.md": 1
+      },
+      "dense_top10": [
+        {
+          "content_sha256": "9524c1a3f03aebc7be6e009c1d8f9fedd4503592205684d4f6a64dde6ee80d47",
+          "page_id": "3d-scan-calc::instruction.md::tokens-0-191",
+          "rank": 1,
+          "score": 0.7127263063304271,
+          "title": "3d-scan-calc::instruction.md"
+        },
+        {
+          "content_sha256": "7f8ab152d97878684e5c69877e24c2d3ff5758557c280a3bacd29938efa787ae",
+          "page_id": "3d-scan-calc::background/mesh-measurement-principles.md::tokens-0-172",
+          "rank": 2,
+          "score": 0.6988323027865571,
+          "title": "3d-scan-calc::background/mesh-measurement-principles.md"
+        },
+        {
+          "content_sha256": "6bd4d01c39038d3b1b1ec75f0e841d73622f1ceecdcefde5482d9321b6ec0d42",
+          "page_id": "3d-scan-calc::environment/scan_data.stl::tokens-0-127",
+          "rank": 3,
+          "score": 0.6190179646802859,
+          "title": "3d-scan-calc::environment/scan_data.stl"
+        },
+        {
+          "content_sha256": "72a9aca1b634f8cf9d6e29beed47f8d31796d727a3017b616b32e10d953d9f64",
+          "page_id": "3d-scan-calc::environment/material_density_table.md::tokens-0-219",
+          "rank": 4,
+          "score": 0.5304781830770545,
+          "title": "3d-scan-calc::environment/material_density_table.md"
+        },
+        {
+          "content_sha256": "35ef5b0ff40cbfa1e98d34e28390d738afdb66bfdaa5120216565dd200844051",
+          "page_id": "3d-scan-calc::environment/Dockerfile::tokens-0-62",
+          "rank": 5,
+          "score": 0.4748396498000567,
+          "title": "3d-scan-calc::environment/Dockerfile"
+        },
+        {
+          "content_sha256": "ffd45fd6ba5d678e43d25ca1cf9a3ebe4a92874c42734dd828678b94e0c55138",
+          "page_id": "glm-lake-mendota::environment/glm::tokens-0-108",
+          "rank": 6,
+          "score": 0.3923943418453822,
+          "title": "glm-lake-mendota::environment/glm"
+        },
+        {
+          "content_sha256": "fae6b3a516237435753b6f0387bd40b10532db5158e1af8bfdac144870d96b9f",
+          "page_id": "mars-clouds-clustering::environment/data/citsci_train.csv::tokens-7489920-7491968",
+          "rank": 7,
+          "score": 0.37884097395736344,
+          "title": "mars-clouds-clustering::environment/data/citsci_train.csv"
+        },
+        {
+          "content_sha256": "43af2688f4857a6132eb6adf997d976ea4b0ae04977fe92f7a3fde4f3d7c5ac2",
+          "page_id": "mars-clouds-clustering::environment/data/citsci_train.csv::tokens-17723520-17725568",
+          "rank": 8,
+          "score": 0.3759823068901528,
+          "title": "mars-clouds-clustering::environment/data/citsci_train.csv"
+        },
+        {
+          "content_sha256": "97c375bd9fff5eea44af6fbb60b272acdb8123f304310902f66de043990d56ef",
+          "page_id": "mars-clouds-clustering::environment/data/citsci_train.csv::tokens-18554880-18556928",
+          "rank": 9,
+          "score": 0.37186543210729583,
+          "title": "mars-clouds-clustering::environment/data/citsci_train.csv"
+        },
+        {
+          "content_sha256": "ec0cf8c5aeb5cd3e4367e94bac0ee37679452508e14847075b306c2e5cd2f612",
+          "page_id": "mars-clouds-clustering::environment/data/citsci_train.csv::tokens-17815680-17817728",
+          "rank": 10,
+          "score": 0.37084042388713584,
+          "title": "mars-clouds-clustering::environment/data/citsci_train.csv"
+        }
+      ],
+      "instruction_sha256": "9524c1a3f03aebc7be6e009c1d8f9fedd4503592205684d4f6a64dde6ee80d47",
+      "new_pool_returned_target_ranks": [
+        1
+      ],
+      "new_pool_target_chunks_returned": 1,
+      "query": "binary STL triangle signed volume material ID density",
+      "returned_target_ranks": [
+        2
+      ],
+      "route_target_ranks": {
+        "bm25_top10": [
+          2
+        ],
+        "dense_top10": [
+          2
+        ]
+      },
+      "rrf_k": 60,
+      "rrf_page_ids": [
+        "3d-scan-calc::instruction.md::tokens-0-191",
+        "3d-scan-calc::background/mesh-measurement-principles.md::tokens-0-172",
+        "3d-scan-calc::environment/material_density_table.md::tokens-0-219",
+        "3d-scan-calc::environment/scan_data.stl::tokens-0-127",
+        "3d-scan-calc::environment/Dockerfile::tokens-0-62",
+        "glm-lake-mendota::environment/glm::tokens-0-108",
+        "lab-unit-harmonization::environment/data/ckd_feature_descriptions.csv::tokens-0-1555",
+        "gravitational-wave-detection::background/gravitational-wave-detection-background.md::tokens-0-2048",
+        "mars-clouds-clustering::environment/data/citsci_train.csv::tokens-7489920-7491968",
+        "mars-clouds-clustering::environment/data/citsci_train.csv::tokens-17723520-17725568",
+        "simpo-code-reproduction::environment/SimPO/eval/mt-bench/gpt-4-1106-preview.jsonl::tokens-3840-5888",
+        "mars-clouds-clustering::environment/data/citsci_train.csv::tokens-18554880-18556928",
+        "taxonomy-tree-merge::environment/data/amazon_product_categories_full.csv::tokens-414720-416768",
+        "mars-clouds-clustering::environment/data/citsci_train.csv::tokens-17815680-17817728",
+        "taxonomy-tree-merge::environment/data/amazon_product_categories_full.csv::tokens-412800-414848"
+      ],
+      "seconds": 5.65,
+      "target_chunks_returned": 1,
+      "target_chunks_total": 1,
+      "target_page_ids": [
+        "3d-scan-calc::background/mesh-measurement-principles.md::tokens-0-172"
+      ],
+      "task_id": "3d-scan-calc"
+    },
+    {
+      "bm25_top10": [
+        {
+          "content_sha256": "e376b2e54207ef560de7e0d8b7674a31eefb87c48d2186eb9c87d76febccb78e",
+          "page_id": "exoplanet-detection-period::instruction.md::tokens-0-205",
+          "rank": 1,
+          "score": 62.83373796458577,
+          "title": "exoplanet-detection-period::instruction.md"
+        },
+        {
+          "content_sha256": "0eb622ac98f63d57128deced5387a0861731a2080ea768f29133b0daf4470cef",
+          "page_id": "exoplanet-detection-period::background/transit-period-foundations.md::tokens-0-264",
+          "rank": 2,
+          "score": 41.9092910164023,
+          "title": "exoplanet-detection-period::background/transit-period-foundations.md"
+        },
+        {
+          "content_sha256": "1fe2602584cfb22f85357185f41a215f090deacc3fe7e730d15c5db4fc4496db",
+          "page_id": "econ-detrending-correlation::instruction.md::tokens-0-495",
+          "rank": 3,
+          "score": 11.759614559270462,
+          "title": "econ-detrending-correlation::instruction.md"
+        },
+        {
+          "content_sha256": "23a1417a42ee86c689ddd284f74e838d23b68a7917084f2a6e1c50b99d34af32",
+          "page_id": "reserves-at-risk-calc::background/reserves-at-risk-background.md::tokens-0-862",
+          "rank": 4,
+          "score": 10.76917519490227,
+          "title": "reserves-at-risk-calc::background/reserves-at-risk-background.md"
+        },
+        {
+          "content_sha256": "cf7b09b525d4fd107b6fcf2a2883f9161c22115becfaa723f353d3fb51bba0cf",
+          "page_id": "protein-expression-analysis::background/proteomics-workbook-basics.md::tokens-0-179",
+          "rank": 5,
+          "score": 10.43196687261007,
+          "title": "protein-expression-analysis::background/proteomics-workbook-basics.md"
+        },
+        {
+          "content_sha256": "d99069eefcb39f36444f367a2ce0389f7ac4ce2209a8b79bdd69cb0d4feea46a",
+          "page_id": "enterprise-information-search::environment/DATA/products/ExplainabilityForce.json::tokens-203520-205568",
+          "rank": 6,
+          "score": 9.876272523342715,
+          "title": "enterprise-information-search::environment/DATA/products/ExplainabilityForce.json"
+        },
+        {
+          "content_sha256": "c600d52ca06db58fc44c7856770c945befcff451a5d3cc919cc9e8521d175ce5",
+          "page_id": "enterprise-information-search::environment/DATA/products/SupportForce.json::tokens-46080-48128",
+          "rank": 7,
+          "score": 9.550619786771222,
+          "title": "enterprise-information-search::environment/DATA/products/SupportForce.json"
+        },
+        {
+          "content_sha256": "2adcf00772d041f982457ebedcee7cbc4010171cd3541d7578d97f261b5c597c",
+          "page_id": "enterprise-information-search::environment/DATA/products/AnomalyForce.json::tokens-234240-236288",
+          "rank": 8,
+          "score": 8.904665260160566,
+          "title": "enterprise-information-search::environment/DATA/products/AnomalyForce.json"
+        },
+        {
+          "content_sha256": "c5105c489a2a1c43a5759e199dffcff2db67128d26e8e2833f439bef4b80dc47",
+          "page_id": "enterprise-information-search::environment/DATA/products/ContextForce.json::tokens-3840-5888",
+          "rank": 9,
+          "score": 7.341939256666049,
+          "title": "enterprise-information-search::environment/DATA/products/ContextForce.json"
+        },
+        {
+          "content_sha256": "149d8e3820aaf96e4618b50d1dd020f7f814c07ba9f8d45d0f8b9c67bb74d8a3",
+          "page_id": "enterprise-information-search::environment/DATA/products/EdgeForce.json::tokens-7680-9728",
+          "rank": 10,
+          "score": 7.242283593984577,
+          "title": "enterprise-information-search::environment/DATA/products/EdgeForce.json"
+        }
+      ],
+      "candidate_count": 18,
+      "candidate_origin_counts": {
+        "background": 3,
+        "environment": 13,
+        "instruction.md": 2
+      },
+      "dense_top10": [
+        {
+          "content_sha256": "e376b2e54207ef560de7e0d8b7674a31eefb87c48d2186eb9c87d76febccb78e",
+          "page_id": "exoplanet-detection-period::instruction.md::tokens-0-205",
+          "rank": 1,
+          "score": 0.616245514243491,
+          "title": "exoplanet-detection-period::instruction.md"
+        },
+        {
+          "content_sha256": "0eb622ac98f63d57128deced5387a0861731a2080ea768f29133b0daf4470cef",
+          "page_id": "exoplanet-detection-period::background/transit-period-foundations.md::tokens-0-264",
+          "rank": 2,
+          "score": 0.6064330173299988,
+          "title": "exoplanet-detection-period::background/transit-period-foundations.md"
+        },
+        {
+          "content_sha256": "65fd3136b9e1d468ddf4351252a4f90677a1b65589b60672182495aa4b31c131",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-766080-766804",
+          "rank": 3,
+          "score": 0.5772599036025554,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        },
+        {
+          "content_sha256": "bd7940aba8be47ad1324b551f2ca31c7b0cd97b6813bfe3db549168e51dba7ff",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-322560-324608",
+          "rank": 4,
+          "score": 0.5648603042204412,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        },
+        {
+          "content_sha256": "9df9a15c625a1b3805db81fbe7308f74ed108c5a85e658d0dd1ed991cff2c844",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-330240-332288",
+          "rank": 5,
+          "score": 0.5647941391218085,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        },
+        {
+          "content_sha256": "82fb5c7d9c836c4709a2ca802712165bc6853a1887e4d817c4ada21e2c5d6dbe",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-101760-103808",
+          "rank": 6,
+          "score": 0.5641005706246075,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        },
+        {
+          "content_sha256": "7aa078324f41c4a9d3975e75574d569e63bb22ca1be988af14c87058c10603ad",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-205440-207488",
+          "rank": 7,
+          "score": 0.5592477627154226,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        },
+        {
+          "content_sha256": "e0542122f7965f9fab7405119403cf4d50c0c316470ac8a96e2f8034fd397e93",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-309120-311168",
+          "rank": 8,
+          "score": 0.5591390595620349,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        },
+        {
+          "content_sha256": "bfff83c2269cba96c57a3cea8d2c47c772915633de10348f878e1b84434763d1",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-145920-147968",
+          "rank": 9,
+          "score": 0.5564458399225407,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        },
+        {
+          "content_sha256": "3cbe9765cea5fa5174c24fae1c99cb2108fcd944b521c666560450187327b23b",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-92160-94208",
+          "rank": 10,
+          "score": 0.5560241589369247,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        }
+      ],
+      "instruction_sha256": "e376b2e54207ef560de7e0d8b7674a31eefb87c48d2186eb9c87d76febccb78e",
+      "new_pool_returned_target_ranks": [
+        1
+      ],
+      "new_pool_target_chunks_returned": 1,
+      "query": "TESS lightcurve stellar variability detrending",
+      "returned_target_ranks": [
+        2
+      ],
+      "route_target_ranks": {
+        "bm25_top10": [
+          2
+        ],
+        "dense_top10": [
+          2
+        ]
+      },
+      "rrf_k": 60,
+      "rrf_page_ids": [
+        "exoplanet-detection-period::instruction.md::tokens-0-205",
+        "exoplanet-detection-period::background/transit-period-foundations.md::tokens-0-264",
+        "econ-detrending-correlation::instruction.md::tokens-0-495",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-766080-766804",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-322560-324608",
+        "reserves-at-risk-calc::background/reserves-at-risk-background.md::tokens-0-862",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-330240-332288",
+        "protein-expression-analysis::background/proteomics-workbook-basics.md::tokens-0-179",
+        "enterprise-information-search::environment/DATA/products/ExplainabilityForce.json::tokens-203520-205568",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-101760-103808",
+        "enterprise-information-search::environment/DATA/products/SupportForce.json::tokens-46080-48128",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-205440-207488",
+        "enterprise-information-search::environment/DATA/products/AnomalyForce.json::tokens-234240-236288",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-309120-311168",
+        "enterprise-information-search::environment/DATA/products/ContextForce.json::tokens-3840-5888",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-145920-147968",
+        "enterprise-information-search::environment/DATA/products/EdgeForce.json::tokens-7680-9728",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-92160-94208"
+      ],
+      "seconds": 5.523,
+      "target_chunks_returned": 1,
+      "target_chunks_total": 1,
+      "target_page_ids": [
+        "exoplanet-detection-period::background/transit-period-foundations.md::tokens-0-264"
+      ],
+      "task_id": "exoplanet-detection-period"
+    },
+    {
+      "bm25_top10": [
+        {
+          "content_sha256": "e376b2e54207ef560de7e0d8b7674a31eefb87c48d2186eb9c87d76febccb78e",
+          "page_id": "exoplanet-detection-period::instruction.md::tokens-0-205",
+          "rank": 1,
+          "score": 48.096828453367436,
+          "title": "exoplanet-detection-period::instruction.md"
+        },
+        {
+          "content_sha256": "0eb622ac98f63d57128deced5387a0861731a2080ea768f29133b0daf4470cef",
+          "page_id": "exoplanet-detection-period::background/transit-period-foundations.md::tokens-0-264",
+          "rank": 2,
+          "score": 19.103342577932274,
+          "title": "exoplanet-detection-period::background/transit-period-foundations.md"
+        },
+        {
+          "content_sha256": "3f83a47e4d9ef90f167e555993319be26b6b1d2f397eec2070e248d9de966af9",
+          "page_id": "gravitational-wave-detection::background/gravitational-wave-detection-background.md::tokens-0-2048",
+          "rank": 3,
+          "score": 15.103774661725456,
+          "title": "gravitational-wave-detection::background/gravitational-wave-detection-background.md"
+        },
+        {
+          "content_sha256": "907fb4e3fb72fe04e10192190e253f9ff2a74d380d8c3a33e76acaa0e59eb708",
+          "page_id": "seismic-phase-picking::background/seismic-phase-picking-background.md::tokens-0-2048",
+          "rank": 4,
+          "score": 14.07181682412089,
+          "title": "seismic-phase-picking::background/seismic-phase-picking-background.md"
+        },
+        {
+          "content_sha256": "f675563f215cc64faba13218665d1068149b3848d3ea0ceab9204d04e4c02cb5",
+          "page_id": "enterprise-information-search::environment/DATA/products/SentimentForce.json::tokens-280320-282368",
+          "rank": 5,
+          "score": 12.228211721789432,
+          "title": "enterprise-information-search::environment/DATA/products/SentimentForce.json"
+        },
+        {
+          "content_sha256": "8972c25f12982d00e1dc0b4d00fe133c9a28c548bca0ba3384cbb18ba3f9ac4a",
+          "page_id": "mars-clouds-clustering::background/dbscan-clustering-pareto-background.md::tokens-0-2048",
+          "rank": 6,
+          "score": 12.190417889753931,
+          "title": "mars-clouds-clustering::background/dbscan-clustering-pareto-background.md"
+        },
+        {
+          "content_sha256": "a0663b7f90ce381dccc508469e142c18b5c55a041ddbf6b011ec7359fa613c5b",
+          "page_id": "trend-anomaly-causal-inference::instruction.md::tokens-0-1302",
+          "rank": 7,
+          "score": 11.868514058845536,
+          "title": "trend-anomaly-causal-inference::instruction.md"
+        },
+        {
+          "content_sha256": "cf30a7a0439550f560131ce7d40bca9a32a339494f36c23590ced4b6a4013af1",
+          "page_id": "enterprise-information-search::environment/DATA/products/FeedbackForce.json::tokens-205440-207488",
+          "rank": 8,
+          "score": 11.838999527196654,
+          "title": "enterprise-information-search::environment/DATA/products/FeedbackForce.json"
+        },
+        {
+          "content_sha256": "9c726273fbe6e275b7b54dcbf361327f9869e6b100bfea268b5193fb3cc61cd0",
+          "page_id": "enterprise-information-search::environment/DATA/products/AnomalyForce.json::tokens-126720-128768",
+          "rank": 9,
+          "score": 11.496621169614844,
+          "title": "enterprise-information-search::environment/DATA/products/AnomalyForce.json"
+        },
+        {
+          "content_sha256": "0b1bf82d2e4f91132008678dfdc12e07b59d45f7e9068e25db86876fbe7cd36a",
+          "page_id": "weighted-gdp-calc::background/weighted-gdp-calculation-background.md::tokens-0-852",
+          "rank": 10,
+          "score": 11.485474388265333,
+          "title": "weighted-gdp-calc::background/weighted-gdp-calculation-background.md"
+        }
+      ],
+      "candidate_count": 18,
+      "candidate_origin_counts": {
+        "background": 5,
+        "environment": 11,
+        "instruction.md": 2
+      },
+      "dense_top10": [
+        {
+          "content_sha256": "e376b2e54207ef560de7e0d8b7674a31eefb87c48d2186eb9c87d76febccb78e",
+          "page_id": "exoplanet-detection-period::instruction.md::tokens-0-205",
+          "rank": 1,
+          "score": 0.7039789405412701,
+          "title": "exoplanet-detection-period::instruction.md"
+        },
+        {
+          "content_sha256": "0eb622ac98f63d57128deced5387a0861731a2080ea768f29133b0daf4470cef",
+          "page_id": "exoplanet-detection-period::background/transit-period-foundations.md::tokens-0-264",
+          "rank": 2,
+          "score": 0.599412843773063,
+          "title": "exoplanet-detection-period::background/transit-period-foundations.md"
+        },
+        {
+          "content_sha256": "82fb5c7d9c836c4709a2ca802712165bc6853a1887e4d817c4ada21e2c5d6dbe",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-101760-103808",
+          "rank": 3,
+          "score": 0.5875005114237595,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        },
+        {
+          "content_sha256": "c68a1d4b92fcd2cdb9e0426aca64d8ab3a467c3d8298a87d437c4007de1cdcee",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-455040-457088",
+          "rank": 4,
+          "score": 0.5700248568859079,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        },
+        {
+          "content_sha256": "65fd3136b9e1d468ddf4351252a4f90677a1b65589b60672182495aa4b31c131",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-766080-766804",
+          "rank": 5,
+          "score": 0.5688573336673887,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        },
+        {
+          "content_sha256": "2e72d77a5ce06563a338e4ceda2ac0334d732278865b81ed530773fe978fb6c6",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-631680-633728",
+          "rank": 6,
+          "score": 0.5677768108591735,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        },
+        {
+          "content_sha256": "d7dfcb3b41b55b7ee0da5bb6726127a6e1ba2b4aa8d5e484e71dde22728d2bf6",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-57600-59648",
+          "rank": 7,
+          "score": 0.5658760798418472,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        },
+        {
+          "content_sha256": "ac4d3e243436c461708c275ad8f4caed71e7c77c30031e79bfda65f596f00983",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-543360-545408",
+          "rank": 8,
+          "score": 0.5622152138220836,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        },
+        {
+          "content_sha256": "f0b4b222a2a15ef5211583be04e34e923ce338e559aa4a7dad618f1352240ea4",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-13440-15488",
+          "rank": 9,
+          "score": 0.5614944468811993,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        },
+        {
+          "content_sha256": "3d742625ada3db8a2fee7cb0620cd7be549011a607c970bd9566235ce2dbfe78",
+          "page_id": "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-675840-677888",
+          "rank": 10,
+          "score": 0.5609852036790559,
+          "title": "exoplanet-detection-period::environment/data/tess_lc.txt"
+        }
+      ],
+      "instruction_sha256": "e376b2e54207ef560de7e0d8b7674a31eefb87c48d2186eb9c87d76febccb78e",
+      "new_pool_returned_target_ranks": [
+        1
+      ],
+      "new_pool_target_chunks_returned": 1,
+      "query": "transiting exoplanet orbital period detection",
+      "returned_target_ranks": [
+        2
+      ],
+      "route_target_ranks": {
+        "bm25_top10": [
+          2
+        ],
+        "dense_top10": [
+          2
+        ]
+      },
+      "rrf_k": 60,
+      "rrf_page_ids": [
+        "exoplanet-detection-period::instruction.md::tokens-0-205",
+        "exoplanet-detection-period::background/transit-period-foundations.md::tokens-0-264",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-101760-103808",
+        "gravitational-wave-detection::background/gravitational-wave-detection-background.md::tokens-0-2048",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-455040-457088",
+        "seismic-phase-picking::background/seismic-phase-picking-background.md::tokens-0-2048",
+        "enterprise-information-search::environment/DATA/products/SentimentForce.json::tokens-280320-282368",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-766080-766804",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-631680-633728",
+        "mars-clouds-clustering::background/dbscan-clustering-pareto-background.md::tokens-0-2048",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-57600-59648",
+        "trend-anomaly-causal-inference::instruction.md::tokens-0-1302",
+        "enterprise-information-search::environment/DATA/products/FeedbackForce.json::tokens-205440-207488",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-543360-545408",
+        "enterprise-information-search::environment/DATA/products/AnomalyForce.json::tokens-126720-128768",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-13440-15488",
+        "exoplanet-detection-period::environment/data/tess_lc.txt::tokens-675840-677888",
+        "weighted-gdp-calc::background/weighted-gdp-calculation-background.md::tokens-0-852"
+      ],
+      "seconds": 5.773,
+      "target_chunks_returned": 1,
+      "target_chunks_total": 1,
+      "target_page_ids": [
+        "exoplanet-detection-period::background/transit-period-foundations.md::tokens-0-264"
+      ],
+      "task_id": "exoplanet-detection-period"
+    },
+    {
+      "bm25_top10": [
+        {
+          "content_sha256": "d7b23e97a50e3075a9ae13b5da974c05295793b9c458bad5f299b346d1757e77",
+          "page_id": "energy-ac-optimal-power-flow::instruction.md::tokens-0-612",
+          "rank": 1,
+          "score": 32.66486874448992,
+          "title": "energy-ac-optimal-power-flow::instruction.md"
+        },
+        {
+          "content_sha256": "8a9b663199a74cd4967fc24c23767c2041d53dc9f35a8574a7b66615265f6a03",
+          "page_id": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-0-2048",
+          "rank": 2,
+          "score": 30.679281499289218,
+          "title": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md"
+        },
+        {
+          "content_sha256": "ab883cabd5d082afcd80555fb76d066d7caa8956502bdd3620602de4f1f792c4",
+          "page_id": "energy-market-pricing::background/dcopf-market-basics.md::tokens-0-217",
+          "rank": 3,
+          "score": 23.21855125450886,
+          "title": "energy-market-pricing::background/dcopf-market-basics.md"
+        },
+        {
+          "content_sha256": "5790635223ae74632068f12bb0cec4d18bb7e5519411123d570982b7c774f73f",
+          "page_id": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-3840-4953",
+          "rank": 4,
+          "score": 20.603610177582645,
+          "title": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md"
+        },
+        {
+          "content_sha256": "c57adf4bfa4396fab7e428021fea3c9b32318c1e185370cd7eb5dac7be24fbfc",
+          "page_id": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-1920-3968",
+          "rank": 5,
+          "score": 20.0272310478221,
+          "title": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md"
+        },
+        {
+          "content_sha256": "70ddd97794d1cccd9588efa911a3ba9b5fc345cc3578749352b3cba0b57729c1",
+          "page_id": "enterprise-information-search::environment/DATA/products/FlowForce.json::tokens-176640-178688",
+          "rank": 6,
+          "score": 15.235293228003702,
+          "title": "enterprise-information-search::environment/DATA/products/FlowForce.json"
+        },
+        {
+          "content_sha256": "576ce2ed6d9c364d219c2c57070c460caad294c7da67ab227fe90386aa733e49",
+          "page_id": "enterprise-information-search::environment/DATA/products/FlowForce.json::tokens-172800-174848",
+          "rank": 7,
+          "score": 14.35196458674653,
+          "title": "enterprise-information-search::environment/DATA/products/FlowForce.json"
+        },
+        {
+          "content_sha256": "8cc4e29ecd4e8f28a6cc096b7a1537f5591395c6df33fbf6244fcd698299b815",
+          "page_id": "enterprise-information-search::environment/DATA/products/FlowForce.json::tokens-174720-176768",
+          "rank": 8,
+          "score": 13.373205892890226,
+          "title": "enterprise-information-search::environment/DATA/products/FlowForce.json"
+        },
+        {
+          "content_sha256": "84bdcb3a68caeb84e2eba00cc94a581590a3877b76127d7c563dc37fd1d0cb59",
+          "page_id": "taxonomy-tree-merge::environment/data/amazon_product_categories_full.csv::tokens-53760-55808",
+          "rank": 9,
+          "score": 13.086485285296076,
+          "title": "taxonomy-tree-merge::environment/data/amazon_product_categories_full.csv"
+        },
+        {
+          "content_sha256": "3abc0253d327e88158b108b9cbcadee1efbe637b85cc032db6699e6c62227b7e",
+          "page_id": "enterprise-information-search::environment/DATA/products/FlowForce.json::tokens-178560-180608",
+          "rank": 10,
+          "score": 12.865313155442655,
+          "title": "enterprise-information-search::environment/DATA/products/FlowForce.json"
+        }
+      ],
+      "candidate_count": 17,
+      "candidate_origin_counts": {
+        "background": 4,
+        "environment": 12,
+        "instruction.md": 1
+      },
+      "dense_top10": [
+        {
+          "content_sha256": "c57adf4bfa4396fab7e428021fea3c9b32318c1e185370cd7eb5dac7be24fbfc",
+          "page_id": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-1920-3968",
+          "rank": 1,
+          "score": 0.6574322977273768,
+          "title": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md"
+        },
+        {
+          "content_sha256": "d7b23e97a50e3075a9ae13b5da974c05295793b9c458bad5f299b346d1757e77",
+          "page_id": "energy-ac-optimal-power-flow::instruction.md::tokens-0-612",
+          "rank": 2,
+          "score": 0.6565172958731333,
+          "title": "energy-ac-optimal-power-flow::instruction.md"
+        },
+        {
+          "content_sha256": "8a9b663199a74cd4967fc24c23767c2041d53dc9f35a8574a7b66615265f6a03",
+          "page_id": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-0-2048",
+          "rank": 3,
+          "score": 0.6537293611016222,
+          "title": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md"
+        },
+        {
+          "content_sha256": "dccc1f2c6285c53cd4f94608dde0e5bf47568d69379d79976c4c3d43c4b34ae4",
+          "page_id": "energy-ac-optimal-power-flow::environment/network.json::tokens-28800-30848",
+          "rank": 4,
+          "score": 0.6151987635503787,
+          "title": "energy-ac-optimal-power-flow::environment/network.json"
+        },
+        {
+          "content_sha256": "b35bc94c86234e9750ff787eaa0e475b954f13a3344f95c18af68b647a2b2bc8",
+          "page_id": "energy-ac-optimal-power-flow::environment/network.json::tokens-46080-48128",
+          "rank": 5,
+          "score": 0.6128877056988355,
+          "title": "energy-ac-optimal-power-flow::environment/network.json"
+        },
+        {
+          "content_sha256": "bf4a3c5f6c70315a61c50fa4277003c9a77ca61ad8377f0477f4664fcbb87cc6",
+          "page_id": "energy-ac-optimal-power-flow::environment/network.json::tokens-24960-27008",
+          "rank": 6,
+          "score": 0.5988377922242505,
+          "title": "energy-ac-optimal-power-flow::environment/network.json"
+        },
+        {
+          "content_sha256": "1a3da9b31a0439a0f085b2a846089cd664736359a21d72b04fb0932c73154be2",
+          "page_id": "energy-ac-optimal-power-flow::environment/network.json::tokens-55680-57728",
+          "rank": 7,
+          "score": 0.5948992638382243,
+          "title": "energy-ac-optimal-power-flow::environment/network.json"
+        },
+        {
+          "content_sha256": "8a526abc60b0c99aedf9a0cf5f886b2dc5719411c29e6a597af7a95392f3bc04",
+          "page_id": "energy-ac-optimal-power-flow::environment/network.json::tokens-71040-73088",
+          "rank": 8,
+          "score": 0.5925046519846773,
+          "title": "energy-ac-optimal-power-flow::environment/network.json"
+        },
+        {
+          "content_sha256": "433585fa0c3729d5318ee50f59194a1a65b5ae57be0d6cb77e7e524255cf582c",
+          "page_id": "energy-ac-optimal-power-flow::environment/network.json::tokens-57600-59648",
+          "rank": 9,
+          "score": 0.5910074652502466,
+          "title": "energy-ac-optimal-power-flow::environment/network.json"
+        },
+        {
+          "content_sha256": "297fbb53bdc90bdad7712f1aa33f6ba6a801cc2cd46e857ffe78e069cd9ea3a9",
+          "page_id": "energy-ac-optimal-power-flow::environment/network.json::tokens-30720-32768",
+          "rank": 10,
+          "score": 0.5907519975748469,
+          "title": "energy-ac-optimal-power-flow::environment/network.json"
+        }
+      ],
+      "instruction_sha256": "d7b23e97a50e3075a9ae13b5da974c05295793b9c458bad5f299b346d1757e77",
+      "new_pool_returned_target_ranks": [
+        1,
+        2,
+        4
+      ],
+      "new_pool_target_chunks_returned": 3,
+      "query": "AC optimal power flow",
+      "returned_target_ranks": [
+        2,
+        3,
+        5
+      ],
+      "route_target_ranks": {
+        "bm25_top10": [
+          2,
+          4,
+          5
+        ],
+        "dense_top10": [
+          1,
+          3
+        ]
+      },
+      "rrf_k": 60,
+      "rrf_page_ids": [
+        "energy-ac-optimal-power-flow::instruction.md::tokens-0-612",
+        "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-0-2048",
+        "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-1920-3968",
+        "energy-market-pricing::background/dcopf-market-basics.md::tokens-0-217",
+        "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-3840-4953",
+        "energy-ac-optimal-power-flow::environment/network.json::tokens-28800-30848",
+        "energy-ac-optimal-power-flow::environment/network.json::tokens-46080-48128",
+        "energy-ac-optimal-power-flow::environment/network.json::tokens-24960-27008",
+        "enterprise-information-search::environment/DATA/products/FlowForce.json::tokens-176640-178688",
+        "energy-ac-optimal-power-flow::environment/network.json::tokens-55680-57728",
+        "enterprise-information-search::environment/DATA/products/FlowForce.json::tokens-172800-174848",
+        "energy-ac-optimal-power-flow::environment/network.json::tokens-71040-73088",
+        "enterprise-information-search::environment/DATA/products/FlowForce.json::tokens-174720-176768",
+        "energy-ac-optimal-power-flow::environment/network.json::tokens-57600-59648",
+        "taxonomy-tree-merge::environment/data/amazon_product_categories_full.csv::tokens-53760-55808",
+        "energy-ac-optimal-power-flow::environment/network.json::tokens-30720-32768",
+        "enterprise-information-search::environment/DATA/products/FlowForce.json::tokens-178560-180608"
+      ],
+      "seconds": 5.614,
+      "target_chunks_returned": 3,
+      "target_chunks_total": 3,
+      "target_page_ids": [
+        "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-0-2048",
+        "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-1920-3968",
+        "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-3840-4953"
+      ],
+      "task_id": "energy-ac-optimal-power-flow"
+    },
+    {
+      "bm25_top10": [
+        {
+          "content_sha256": "d7b23e97a50e3075a9ae13b5da974c05295793b9c458bad5f299b346d1757e77",
+          "page_id": "energy-ac-optimal-power-flow::instruction.md::tokens-0-612",
+          "rank": 1,
+          "score": 53.712694677991244,
+          "title": "energy-ac-optimal-power-flow::instruction.md"
+        },
+        {
+          "content_sha256": "8a9b663199a74cd4967fc24c23767c2041d53dc9f35a8574a7b66615265f6a03",
+          "page_id": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-0-2048",
+          "rank": 2,
+          "score": 49.044426967517,
+          "title": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md"
+        },
+        {
+          "content_sha256": "ab883cabd5d082afcd80555fb76d066d7caa8956502bdd3620602de4f1f792c4",
+          "page_id": "energy-market-pricing::background/dcopf-market-basics.md::tokens-0-217",
+          "rank": 3,
+          "score": 47.75179649529546,
+          "title": "energy-market-pricing::background/dcopf-market-basics.md"
+        },
+        {
+          "content_sha256": "c57adf4bfa4396fab7e428021fea3c9b32318c1e185370cd7eb5dac7be24fbfc",
+          "page_id": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-1920-3968",
+          "rank": 4,
+          "score": 47.09722194520563,
+          "title": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md"
+        },
+        {
+          "content_sha256": "5790635223ae74632068f12bb0cec4d18bb7e5519411123d570982b7c774f73f",
+          "page_id": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-3840-4953",
+          "rank": 5,
+          "score": 44.71300421095918,
+          "title": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md"
+        },
+        {
+          "content_sha256": "e51853ecdaf938b4c7ffdd2c36ec6c81133d93e6d93a435184f9756d32032ac5",
+          "page_id": "energy-ac-optimal-power-flow::environment/math-model.md::tokens-0-1031",
+          "rank": 6,
+          "score": 24.742696134193444,
+          "title": "energy-ac-optimal-power-flow::environment/math-model.md"
+        },
+        {
+          "content_sha256": "4e591875587572580e6d1d44b929f8908ad389e748c916c7cfea6d8a434123fa",
+          "page_id": "energy-market-pricing::instruction.md::tokens-0-837",
+          "rank": 7,
+          "score": 24.58309138875645,
+          "title": "energy-market-pricing::instruction.md"
+        },
+        {
+          "content_sha256": "be0555e8d5ecadc7ada5dcc31be1379164366ec79a81be79413b3b1ded8d9b83",
+          "page_id": "grid-dispatch-operator::background/dc-dispatch-validation-principles.md::tokens-0-264",
+          "rank": 8,
+          "score": 23.346715352259764,
+          "title": "grid-dispatch-operator::background/dc-dispatch-validation-principles.md"
+        },
+        {
+          "content_sha256": "c1c0c503a757eb95a1cf8bbaad58c131868c5dcdd992f055f272127462946bf5",
+          "page_id": "manufacturing-equipment-maintenance::background/reflow-soldering-process-background.md::tokens-0-956",
+          "rank": 9,
+          "score": 20.199587475606005,
+          "title": "manufacturing-equipment-maintenance::background/reflow-soldering-process-background.md"
+        },
+        {
+          "content_sha256": "206aee734fe395b5bb3f5a825521848c383b6a45196bf2e85ea83e5038f659a6",
+          "page_id": "manufacturing-fjsp-optimization::background/fjsp-scheduling-background.md::tokens-0-2048",
+          "rank": 10,
+          "score": 19.473574074312918,
+          "title": "manufacturing-fjsp-optimization::background/fjsp-scheduling-background.md"
+        }
+      ],
+      "candidate_count": 15,
+      "candidate_origin_counts": {
+        "background": 7,
+        "environment": 6,
+        "instruction.md": 2
+      },
+      "dense_top10": [
+        {
+          "content_sha256": "d7b23e97a50e3075a9ae13b5da974c05295793b9c458bad5f299b346d1757e77",
+          "page_id": "energy-ac-optimal-power-flow::instruction.md::tokens-0-612",
+          "rank": 1,
+          "score": 0.6746042885474377,
+          "title": "energy-ac-optimal-power-flow::instruction.md"
+        },
+        {
+          "content_sha256": "8a9b663199a74cd4967fc24c23767c2041d53dc9f35a8574a7b66615265f6a03",
+          "page_id": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-0-2048",
+          "rank": 2,
+          "score": 0.6479653770970518,
+          "title": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md"
+        },
+        {
+          "content_sha256": "c57adf4bfa4396fab7e428021fea3c9b32318c1e185370cd7eb5dac7be24fbfc",
+          "page_id": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-1920-3968",
+          "rank": 3,
+          "score": 0.6208799189056583,
+          "title": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md"
+        },
+        {
+          "content_sha256": "5790635223ae74632068f12bb0cec4d18bb7e5519411123d570982b7c774f73f",
+          "page_id": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-3840-4953",
+          "rank": 4,
+          "score": 0.6116735211566047,
+          "title": "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md"
+        },
+        {
+          "content_sha256": "297fbb53bdc90bdad7712f1aa33f6ba6a801cc2cd46e857ffe78e069cd9ea3a9",
+          "page_id": "energy-ac-optimal-power-flow::environment/network.json::tokens-30720-32768",
+          "rank": 5,
+          "score": 0.5953376621709002,
+          "title": "energy-ac-optimal-power-flow::environment/network.json"
+        },
+        {
+          "content_sha256": "e51853ecdaf938b4c7ffdd2c36ec6c81133d93e6d93a435184f9756d32032ac5",
+          "page_id": "energy-ac-optimal-power-flow::environment/math-model.md::tokens-0-1031",
+          "rank": 6,
+          "score": 0.5471977984865096,
+          "title": "energy-ac-optimal-power-flow::environment/math-model.md"
+        },
+        {
+          "content_sha256": "a719c0b797e5bd144ca4185cae5d6fba24613054ac5e2ed5e36c9dc367856b6d",
+          "page_id": "energy-ac-optimal-power-flow::environment/network.json::tokens-42240-44288",
+          "rank": 7,
+          "score": 0.5443042795574143,
+          "title": "energy-ac-optimal-power-flow::environment/network.json"
+        },
+        {
+          "content_sha256": "72af74a30652dcec450ba0088449b481bdb39a7a5f9db14937b6996b63d8557f",
+          "page_id": "energy-ac-optimal-power-flow::environment/network.json::tokens-38400-40448",
+          "rank": 8,
+          "score": 0.5363352972196352,
+          "title": "energy-ac-optimal-power-flow::environment/network.json"
+        },
+        {
+          "content_sha256": "8a526abc60b0c99aedf9a0cf5f886b2dc5719411c29e6a597af7a95392f3bc04",
+          "page_id": "energy-ac-optimal-power-flow::environment/network.json::tokens-71040-73088",
+          "rank": 9,
+          "score": 0.5359521434422259,
+          "title": "energy-ac-optimal-power-flow::environment/network.json"
+        },
+        {
+          "content_sha256": "1a3da9b31a0439a0f085b2a846089cd664736359a21d72b04fb0932c73154be2",
+          "page_id": "energy-ac-optimal-power-flow::environment/network.json::tokens-55680-57728",
+          "rank": 10,
+          "score": 0.5305227800537575,
+          "title": "energy-ac-optimal-power-flow::environment/network.json"
+        }
+      ],
+      "instruction_sha256": "d7b23e97a50e3075a9ae13b5da974c05295793b9c458bad5f299b346d1757e77",
+      "new_pool_returned_target_ranks": [
+        1,
+        2,
+        3
+      ],
+      "new_pool_target_chunks_returned": 3,
+      "query": "AC power flow branch loading feasibility constraints",
+      "returned_target_ranks": [
+        2,
+        3,
+        4
+      ],
+      "route_target_ranks": {
+        "bm25_top10": [
+          2,
+          4,
+          5
+        ],
+        "dense_top10": [
+          2,
+          3,
+          4
+        ]
+      },
+      "rrf_k": 60,
+      "rrf_page_ids": [
+        "energy-ac-optimal-power-flow::instruction.md::tokens-0-612",
+        "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-0-2048",
+        "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-1920-3968",
+        "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-3840-4953",
+        "energy-ac-optimal-power-flow::environment/math-model.md::tokens-0-1031",
+        "energy-market-pricing::background/dcopf-market-basics.md::tokens-0-217",
+        "energy-ac-optimal-power-flow::environment/network.json::tokens-30720-32768",
+        "energy-ac-optimal-power-flow::environment/network.json::tokens-42240-44288",
+        "energy-market-pricing::instruction.md::tokens-0-837",
+        "energy-ac-optimal-power-flow::environment/network.json::tokens-38400-40448",
+        "grid-dispatch-operator::background/dc-dispatch-validation-principles.md::tokens-0-264",
+        "energy-ac-optimal-power-flow::environment/network.json::tokens-71040-73088",
+        "manufacturing-equipment-maintenance::background/reflow-soldering-process-background.md::tokens-0-956",
+        "energy-ac-optimal-power-flow::environment/network.json::tokens-55680-57728",
+        "manufacturing-fjsp-optimization::background/fjsp-scheduling-background.md::tokens-0-2048"
+      ],
+      "seconds": 5.625,
+      "target_chunks_returned": 3,
+      "target_chunks_total": 3,
+      "target_page_ids": [
+        "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-0-2048",
+        "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-1920-3968",
+        "energy-ac-optimal-power-flow::background/ac-optimal-power-flow-background.md::tokens-3840-4953"
+      ],
+      "task_id": "energy-ac-optimal-power-flow"
+    },
+    {
+      "bm25_top10": [
+        {
+          "content_sha256": "0f1983b5151bde312e2850391729903fa880887b8e3ca09e8224571fa6f8f5da",
+          "page_id": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-1920-2490",
+          "rank": 1,
+          "score": 46.20153704333302,
+          "title": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md"
+        },
+        {
+          "content_sha256": "e1a4e9b20db458d630e39ef904c227faf980d0bebf11f6bdb5f96e6afc2f7b71",
+          "page_id": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-0-2048",
+          "rank": 2,
+          "score": 44.168925176412365,
+          "title": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md"
+        },
+        {
+          "content_sha256": "990b86210784fa087b8adc7e09a7d1e95175aa925e30f0646a9613c3525165e2",
+          "page_id": "pdf-excel-diff::instruction.md::tokens-0-347",
+          "rank": 3,
+          "score": 33.10031280954229,
+          "title": "pdf-excel-diff::instruction.md"
+        },
+        {
+          "content_sha256": "c1556f118149bb64ebc98f751a32fd17d77335dfd61741d197991f2d1593a2fd",
+          "page_id": "sales-pivot-analysis::background/pivot-tables-data-integration-background.md::tokens-0-2048",
+          "rank": 4,
+          "score": 24.323769203372127,
+          "title": "sales-pivot-analysis::background/pivot-tables-data-integration-background.md"
+        },
+        {
+          "content_sha256": "244fac72410c58c58321ed0be92f5c2d1aa4f9f26d3e30faca8fb911184a85d7",
+          "page_id": "invoice-fraud-detection::background/invoice-fraud-detection-background.md::tokens-0-2048",
+          "rank": 5,
+          "score": 24.092217787159186,
+          "title": "invoice-fraud-detection::background/invoice-fraud-detection-background.md"
+        },
+        {
+          "content_sha256": "d5c58a978e8d2cb988c8d2ab3778b045dd88ee45463fb648d0c7c543b582bce1",
+          "page_id": "latex-formula-extraction::background/latex-formula-extraction-background.md::tokens-0-2048",
+          "rank": 6,
+          "score": 21.951761169464703,
+          "title": "latex-formula-extraction::background/latex-formula-extraction-background.md"
+        },
+        {
+          "content_sha256": "a558cc32074fefab5244b18dd0e06b0b8c0ef3c38adfaad8e1ad6a5cbc81ed7c",
+          "page_id": "latex-formula-extraction::background/latex-formula-extraction-background.md::tokens-1920-2966",
+          "rank": 7,
+          "score": 21.691388113826502,
+          "title": "latex-formula-extraction::background/latex-formula-extraction-background.md"
+        },
+        {
+          "content_sha256": "6606722dbc34e1ba3a6c9d5afc5cec8a6ee50d2869e1b1e4d0f218edaf5b2ed6",
+          "page_id": "latex-formula-extraction::instruction.md::tokens-0-385",
+          "rank": 8,
+          "score": 20.595044849104223,
+          "title": "latex-formula-extraction::instruction.md"
+        },
+        {
+          "content_sha256": "3e3de0e2ea5c5d0c86941cdddb3a949b2df9d4fcd17aca23ad3ea3ccda83d827",
+          "page_id": "paper-anonymizer::background/pdf-anonymization-background.md::tokens-1920-3399",
+          "rank": 9,
+          "score": 20.399460533953143,
+          "title": "paper-anonymizer::background/pdf-anonymization-background.md"
+        },
+        {
+          "content_sha256": "f08aef9df3de6fd09d321185db1b02191e0c8d4008f2d1b2a82e4cc162fb6bb3",
+          "page_id": "sales-pivot-analysis::background/pivot-tables-data-integration-background.md::tokens-1920-2986",
+          "rank": 10,
+          "score": 20.221878065551977,
+          "title": "sales-pivot-analysis::background/pivot-tables-data-integration-background.md"
+        }
+      ],
+      "candidate_count": 17,
+      "candidate_origin_counts": {
+        "background": 8,
+        "environment": 6,
+        "instruction.md": 3
+      },
+      "dense_top10": [
+        {
+          "content_sha256": "e1a4e9b20db458d630e39ef904c227faf980d0bebf11f6bdb5f96e6afc2f7b71",
+          "page_id": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-0-2048",
+          "rank": 1,
+          "score": 0.6701759628235738,
+          "title": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md"
+        },
+        {
+          "content_sha256": "0f1983b5151bde312e2850391729903fa880887b8e3ca09e8224571fa6f8f5da",
+          "page_id": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-1920-2490",
+          "rank": 2,
+          "score": 0.6340908282198453,
+          "title": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md"
+        },
+        {
+          "content_sha256": "b315a86cb2f61b93c4d26ad4a765264f9c696cc6e9952ff3d8956e79d70b2f1f",
+          "page_id": "enterprise-information-search::environment/DATA/metadata/employee.json::tokens-24960-27008",
+          "rank": 3,
+          "score": 0.5526785220064179,
+          "title": "enterprise-information-search::environment/DATA/metadata/employee.json"
+        },
+        {
+          "content_sha256": "990b86210784fa087b8adc7e09a7d1e95175aa925e30f0646a9613c3525165e2",
+          "page_id": "pdf-excel-diff::instruction.md::tokens-0-347",
+          "rank": 4,
+          "score": 0.5489549629280157,
+          "title": "pdf-excel-diff::instruction.md"
+        },
+        {
+          "content_sha256": "7a6e8586fc15357a1ccd8759535a7ce8cf28089baf8c276629f0235d9cd6ce44",
+          "page_id": "enterprise-information-search::environment/DATA/metadata/employee.json::tokens-19200-21248",
+          "rank": 5,
+          "score": 0.528833600745265,
+          "title": "enterprise-information-search::environment/DATA/metadata/employee.json"
+        },
+        {
+          "content_sha256": "3ad24a2e7136215d43ca0437e3e1638ea108f85563cac8919b464138060d0036",
+          "page_id": "exceltable-in-ppt::environment/input.pptx::tokens-0-1027",
+          "rank": 6,
+          "score": 0.5281858862232761,
+          "title": "exceltable-in-ppt::environment/input.pptx"
+        },
+        {
+          "content_sha256": "f97191911dba27baf2e0dd40a403c6058d967f310a1b23048df868c37fef0084",
+          "page_id": "latex-formula-extraction::environment/latex_paper.pdf::tokens-0-107",
+          "rank": 7,
+          "score": 0.5211615811239912,
+          "title": "latex-formula-extraction::environment/latex_paper.pdf"
+        },
+        {
+          "content_sha256": "97869fdd07f3dfe05d26bd2f33a0be86776df6f6df6917e064e640aa0ea1b32c",
+          "page_id": "enterprise-information-search::instruction.md::tokens-0-192",
+          "rank": 8,
+          "score": 0.5142893359512916,
+          "title": "enterprise-information-search::instruction.md"
+        },
+        {
+          "content_sha256": "e1ff4ff43e22e3f1edc9624aeb292566d68f3035fded3866f1f2f34205d275e8",
+          "page_id": "enterprise-information-search::environment/DATA/metadata/employee.json::tokens-17280-19328",
+          "rank": 9,
+          "score": 0.5127963785239771,
+          "title": "enterprise-information-search::environment/DATA/metadata/employee.json"
+        },
+        {
+          "content_sha256": "a8a568d4651ac8c6de1d9bf26be8b3a050dd20ce9ab3543c54ada12b73199b04",
+          "page_id": "enterprise-information-search::environment/DATA/metadata/employee.json::tokens-5760-7808",
+          "rank": 10,
+          "score": 0.5073640464676024,
+          "title": "enterprise-information-search::environment/DATA/metadata/employee.json"
+        }
+      ],
+      "instruction_sha256": "990b86210784fa087b8adc7e09a7d1e95175aa925e30f0646a9613c3525165e2",
+      "new_pool_returned_target_ranks": [
+        1,
+        2
+      ],
+      "new_pool_target_chunks_returned": 2,
+      "query": "PDF employee table extraction",
+      "returned_target_ranks": [
+        1,
+        2
+      ],
+      "route_target_ranks": {
+        "bm25_top10": [
+          1,
+          2
+        ],
+        "dense_top10": [
+          1,
+          2
+        ]
+      },
+      "rrf_k": 60,
+      "rrf_page_ids": [
+        "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-0-2048",
+        "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-1920-2490",
+        "pdf-excel-diff::instruction.md::tokens-0-347",
+        "enterprise-information-search::environment/DATA/metadata/employee.json::tokens-24960-27008",
+        "sales-pivot-analysis::background/pivot-tables-data-integration-background.md::tokens-0-2048",
+        "enterprise-information-search::environment/DATA/metadata/employee.json::tokens-19200-21248",
+        "invoice-fraud-detection::background/invoice-fraud-detection-background.md::tokens-0-2048",
+        "exceltable-in-ppt::environment/input.pptx::tokens-0-1027",
+        "latex-formula-extraction::background/latex-formula-extraction-background.md::tokens-0-2048",
+        "latex-formula-extraction::background/latex-formula-extraction-background.md::tokens-1920-2966",
+        "latex-formula-extraction::environment/latex_paper.pdf::tokens-0-107",
+        "enterprise-information-search::instruction.md::tokens-0-192",
+        "latex-formula-extraction::instruction.md::tokens-0-385",
+        "enterprise-information-search::environment/DATA/metadata/employee.json::tokens-17280-19328",
+        "paper-anonymizer::background/pdf-anonymization-background.md::tokens-1920-3399",
+        "enterprise-information-search::environment/DATA/metadata/employee.json::tokens-5760-7808",
+        "sales-pivot-analysis::background/pivot-tables-data-integration-background.md::tokens-1920-2986"
+      ],
+      "seconds": 5.62,
+      "target_chunks_returned": 2,
+      "target_chunks_total": 2,
+      "target_page_ids": [
+        "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-0-2048",
+        "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-1920-2490"
+      ],
+      "task_id": "pdf-excel-diff"
+    },
+    {
+      "bm25_top10": [
+        {
+          "content_sha256": "e1a4e9b20db458d630e39ef904c227faf980d0bebf11f6bdb5f96e6afc2f7b71",
+          "page_id": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-0-2048",
+          "rank": 1,
+          "score": 54.68394844280587,
+          "title": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md"
+        },
+        {
+          "content_sha256": "0f1983b5151bde312e2850391729903fa880887b8e3ca09e8224571fa6f8f5da",
+          "page_id": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-1920-2490",
+          "rank": 2,
+          "score": 51.8074163660188,
+          "title": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md"
+        },
+        {
+          "content_sha256": "990b86210784fa087b8adc7e09a7d1e95175aa925e30f0646a9613c3525165e2",
+          "page_id": "pdf-excel-diff::instruction.md::tokens-0-347",
+          "rank": 3,
+          "score": 37.294639893178285,
+          "title": "pdf-excel-diff::instruction.md"
+        },
+        {
+          "content_sha256": "bf02d150514653467bab64d9789ca91a227376cf9277a68f5c12c0712c9dd788",
+          "page_id": "manufacturing-codebook-normalization::background/manufacturing-defect-codebook-normalization-background.md::tokens-0-1192",
+          "rank": 4,
+          "score": 35.80014483873256,
+          "title": "manufacturing-codebook-normalization::background/manufacturing-defect-codebook-normalization-background.md"
+        },
+        {
+          "content_sha256": "5effdd5bf198fd45544f971f40b91b59df140d6b24063c2d1caecf993175f948",
+          "page_id": "invoice-fraud-detection::background/invoice-fraud-detection-background.md::tokens-1920-2679",
+          "rank": 5,
+          "score": 33.05486267859054,
+          "title": "invoice-fraud-detection::background/invoice-fraud-detection-background.md"
+        },
+        {
+          "content_sha256": "0971aa1a65ff5a447bbdc5126c4e11268b3777963dc8bbda38fed8f15e9c71d2",
+          "page_id": "flood-risk-analysis::background/flood-risk-background.md::tokens-0-1702",
+          "rank": 6,
+          "score": 24.975858434213315,
+          "title": "flood-risk-analysis::background/flood-risk-background.md"
+        },
+        {
+          "content_sha256": "3e4eb0bb28acb4df57f9c96b36428ca18b4fa0f95a876e6537b7173bc8a0c75a",
+          "page_id": "xlsx-recover-data::instruction.md::tokens-0-57",
+          "rank": 7,
+          "score": 22.610182289093878,
+          "title": "xlsx-recover-data::instruction.md"
+        },
+        {
+          "content_sha256": "121098910a3595f7f85d1711f211d092a1611dd20082f2c9a821a9add938a007",
+          "page_id": "manufacturing-codebook-normalization::instruction.md::tokens-0-392",
+          "rank": 8,
+          "score": 20.849874245505625,
+          "title": "manufacturing-codebook-normalization::instruction.md"
+        },
+        {
+          "content_sha256": "b665874712cbfe3d6d4a0058fee35e0cc33f0f714e10e865ab989cf959ef8939",
+          "page_id": "jpg-ocr-stat::instruction.md::tokens-0-494",
+          "rank": 9,
+          "score": 20.799827523923902,
+          "title": "jpg-ocr-stat::instruction.md"
+        },
+        {
+          "content_sha256": "cf7b09b525d4fd107b6fcf2a2883f9161c22115becfaa723f353d3fb51bba0cf",
+          "page_id": "protein-expression-analysis::background/proteomics-workbook-basics.md::tokens-0-179",
+          "rank": 10,
+          "score": 20.731808180376905,
+          "title": "protein-expression-analysis::background/proteomics-workbook-basics.md"
+        }
+      ],
+      "candidate_count": 14,
+      "candidate_origin_counts": {
+        "background": 8,
+        "environment": 1,
+        "instruction.md": 5
+      },
+      "dense_top10": [
+        {
+          "content_sha256": "0f1983b5151bde312e2850391729903fa880887b8e3ca09e8224571fa6f8f5da",
+          "page_id": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-1920-2490",
+          "rank": 1,
+          "score": 0.672347404732249,
+          "title": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md"
+        },
+        {
+          "content_sha256": "e1a4e9b20db458d630e39ef904c227faf980d0bebf11f6bdb5f96e6afc2f7b71",
+          "page_id": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-0-2048",
+          "rank": 2,
+          "score": 0.5568453247918779,
+          "title": "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md"
+        },
+        {
+          "content_sha256": "990b86210784fa087b8adc7e09a7d1e95175aa925e30f0646a9613c3525165e2",
+          "page_id": "pdf-excel-diff::instruction.md::tokens-0-347",
+          "rank": 3,
+          "score": 0.5309965765783708,
+          "title": "pdf-excel-diff::instruction.md"
+        },
+        {
+          "content_sha256": "121098910a3595f7f85d1711f211d092a1611dd20082f2c9a821a9add938a007",
+          "page_id": "manufacturing-codebook-normalization::instruction.md::tokens-0-392",
+          "rank": 4,
+          "score": 0.4837159247345563,
+          "title": "manufacturing-codebook-normalization::instruction.md"
+        },
+        {
+          "content_sha256": "3e4eb0bb28acb4df57f9c96b36428ca18b4fa0f95a876e6537b7173bc8a0c75a",
+          "page_id": "xlsx-recover-data::instruction.md::tokens-0-57",
+          "rank": 5,
+          "score": 0.4678441381562288,
+          "title": "xlsx-recover-data::instruction.md"
+        },
+        {
+          "content_sha256": "d241bd93e86fcf36a31129dc54fca16808f086875d00f853fcbf98a73da3330c",
+          "page_id": "enterprise-information-search::environment/DATA/products/InsightForce.json::tokens-224640-226688",
+          "rank": 6,
+          "score": 0.45770902772973854,
+          "title": "enterprise-information-search::environment/DATA/products/InsightForce.json"
+        },
+        {
+          "content_sha256": "50877002821c4af295ad6065b1f34d423e4c0d75889c3c97e615373ac60112f9",
+          "page_id": "financial-modeling-qa::instruction.md::tokens-0-153",
+          "rank": 7,
+          "score": 0.4567015797076177,
+          "title": "financial-modeling-qa::instruction.md"
+        },
+        {
+          "content_sha256": "d62b155de9583602381e05bc9904d1101bef15a2a5c76bfb347c08a24ab72f65",
+          "page_id": "powerlifting-coef-calc::background/normalized-strength-basics.md::tokens-0-107",
+          "rank": 8,
+          "score": 0.45154411343866935,
+          "title": "powerlifting-coef-calc::background/normalized-strength-basics.md"
+        },
+        {
+          "content_sha256": "bf02d150514653467bab64d9789ca91a227376cf9277a68f5c12c0712c9dd788",
+          "page_id": "manufacturing-codebook-normalization::background/manufacturing-defect-codebook-normalization-background.md::tokens-0-1192",
+          "rank": 9,
+          "score": 0.4514729103310775,
+          "title": "manufacturing-codebook-normalization::background/manufacturing-defect-codebook-normalization-background.md"
+        },
+        {
+          "content_sha256": "71686e07e0ef063dd0e0d32434a7e86ddeb84b1b600f347fc48627ccea2203d1",
+          "page_id": "enterprise-information-search::background/enterprise-data-retrieval-background.md::tokens-0-1053",
+          "rank": 10,
+          "score": 0.4453561518553146,
+          "title": "enterprise-information-search::background/enterprise-data-retrieval-background.md"
+        }
+      ],
+      "instruction_sha256": "990b86210784fa087b8adc7e09a7d1e95175aa925e30f0646a9613c3525165e2",
+      "new_pool_returned_target_ranks": [
+        1,
+        2
+      ],
+      "new_pool_target_chunks_returned": 2,
+      "query": "Excel employee ID record comparison numeric normalization",
+      "returned_target_ranks": [
+        1,
+        2
+      ],
+      "route_target_ranks": {
+        "bm25_top10": [
+          1,
+          2
+        ],
+        "dense_top10": [
+          1,
+          2
+        ]
+      },
+      "rrf_k": 60,
+      "rrf_page_ids": [
+        "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-0-2048",
+        "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-1920-2490",
+        "pdf-excel-diff::instruction.md::tokens-0-347",
+        "manufacturing-codebook-normalization::instruction.md::tokens-0-392",
+        "xlsx-recover-data::instruction.md::tokens-0-57",
+        "manufacturing-codebook-normalization::background/manufacturing-defect-codebook-normalization-background.md::tokens-0-1192",
+        "invoice-fraud-detection::background/invoice-fraud-detection-background.md::tokens-1920-2679",
+        "enterprise-information-search::environment/DATA/products/InsightForce.json::tokens-224640-226688",
+        "flood-risk-analysis::background/flood-risk-background.md::tokens-0-1702",
+        "financial-modeling-qa::instruction.md::tokens-0-153",
+        "powerlifting-coef-calc::background/normalized-strength-basics.md::tokens-0-107",
+        "jpg-ocr-stat::instruction.md::tokens-0-494",
+        "enterprise-information-search::background/enterprise-data-retrieval-background.md::tokens-0-1053",
+        "protein-expression-analysis::background/proteomics-workbook-basics.md::tokens-0-179"
+      ],
+      "seconds": 5.675,
+      "target_chunks_returned": 2,
+      "target_chunks_total": 2,
+      "target_page_ids": [
+        "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-0-2048",
+        "pdf-excel-diff::background/pdf-table-extraction-and-data-diffing-background.md::tokens-1920-2490"
+      ],
+      "task_id": "pdf-excel-diff"
+    },
+    {
+      "bm25_top10": [
+        {
+          "content_sha256": "cb433e3448f43101d8e3affdea736542de45ba1769622e05ac47cf9a30ae2ca3",
+          "page_id": "spring-boot-jakarta-migration::background/spring-platform-migration-basics.md::tokens-0-222",
+          "rank": 1,
+          "score": 38.49587976641896,
+          "title": "spring-boot-jakarta-migration::background/spring-platform-migration-basics.md"
+        },
+        {
+          "content_sha256": "9e6eae81f5df0e642bdfff4a270685ae7603409c740883f5b4bc026593f34ae4",
+          "page_id": "spring-boot-jakarta-migration::instruction.md::tokens-0-217",
+          "rank": 2,
+          "score": 34.43398869295409,
+          "title": "spring-boot-jakarta-migration::instruction.md"
+        },
+        {
+          "content_sha256": "0e7be464178abddb2ffb480b88a9c60e3e12a3b7ce9c7d04fac4f126e864d4ec",
+          "page_id": "spring-boot-jakarta-migration::environment/Dockerfile::tokens-0-492",
+          "rank": 3,
+          "score": 26.361454519759235,
+          "title": "spring-boot-jakarta-migration::environment/Dockerfile"
+        },
+        {
+          "content_sha256": "a90c18f3e1b5ec3869e4f21f6f4c68bd4b58df79a4baef67873c7c4703884aaa",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/pom.xml::tokens-0-649",
+          "rank": 4,
+          "score": 24.94045379867858,
+          "title": "spring-boot-jakarta-migration::environment/workspace/pom.xml"
+        },
+        {
+          "content_sha256": "9587ed395ca74b612e5e17c655333727e290592029d789e73d42b91541dc93be",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/service/ExternalApiService.java::tokens-0-636",
+          "rank": 5,
+          "score": 14.825960173372016,
+          "title": "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/service/ExternalApiService.java"
+        },
+        {
+          "content_sha256": "ed0d67bfd6a7454244691bd321f2559201dbb9b9be1ce1f531301836f85d3432",
+          "page_id": "taxonomy-tree-merge::environment/data/amazon_product_categories.csv::tokens-57600-57815",
+          "rank": 6,
+          "score": 14.002991603931026,
+          "title": "taxonomy-tree-merge::environment/data/amazon_product_categories.csv"
+        },
+        {
+          "content_sha256": "cfd1cc1fee04c9f21d131c78eb9b2046aa13ef0504667fba25a7a1ec3edcd1e6",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/src/main/resources/application.properties::tokens-0-179",
+          "rank": 7,
+          "score": 13.859048503184262,
+          "title": "spring-boot-jakarta-migration::environment/workspace/src/main/resources/application.properties"
+        },
+        {
+          "content_sha256": "6be830336ea7627b18ef4a76a2c8d7913c6e33c3143921803638a9d4c703437a",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/src/test/resources/application-test.properties::tokens-0-162",
+          "rank": 8,
+          "score": 13.75095401589887,
+          "title": "spring-boot-jakarta-migration::environment/workspace/src/test/resources/application-test.properties"
+        },
+        {
+          "content_sha256": "c03aa663c7205561dcb0918472711967dc8d222bdcb3514c14517c9c0dcf8948",
+          "page_id": "enterprise-information-search::environment/DATA/products/ContentForce.json::tokens-61440-63488",
+          "rank": 9,
+          "score": 12.626816019607398,
+          "title": "enterprise-information-search::environment/DATA/products/ContentForce.json"
+        },
+        {
+          "content_sha256": "4cd0ab71b3efb44f91bbb76a7ad10864180d2f19a8400d93c25523a18f54a3be",
+          "page_id": "enterprise-information-search::environment/DATA/products/ContentForce.json::tokens-255360-257408",
+          "rank": 10,
+          "score": 12.202395322007405,
+          "title": "enterprise-information-search::environment/DATA/products/ContentForce.json"
+        }
+      ],
+      "candidate_count": 14,
+      "candidate_origin_counts": {
+        "background": 1,
+        "environment": 12,
+        "instruction.md": 1
+      },
+      "dense_top10": [
+        {
+          "content_sha256": "cb433e3448f43101d8e3affdea736542de45ba1769622e05ac47cf9a30ae2ca3",
+          "page_id": "spring-boot-jakarta-migration::background/spring-platform-migration-basics.md::tokens-0-222",
+          "rank": 1,
+          "score": 0.6771158994439885,
+          "title": "spring-boot-jakarta-migration::background/spring-platform-migration-basics.md"
+        },
+        {
+          "content_sha256": "9e6eae81f5df0e642bdfff4a270685ae7603409c740883f5b4bc026593f34ae4",
+          "page_id": "spring-boot-jakarta-migration::instruction.md::tokens-0-217",
+          "rank": 2,
+          "score": 0.6296880975363907,
+          "title": "spring-boot-jakarta-migration::instruction.md"
+        },
+        {
+          "content_sha256": "3e6bbaaf868ef27b1c6e4ea34e1a738f7b222bbb906881906878595ad6bbf823",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/UserServiceApplication.java::tokens-0-49",
+          "rank": 3,
+          "score": 0.6136821967688949,
+          "title": "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/UserServiceApplication.java"
+        },
+        {
+          "content_sha256": "a90c18f3e1b5ec3869e4f21f6f4c68bd4b58df79a4baef67873c7c4703884aaa",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/pom.xml::tokens-0-649",
+          "rank": 4,
+          "score": 0.5339877301249787,
+          "title": "spring-boot-jakarta-migration::environment/workspace/pom.xml"
+        },
+        {
+          "content_sha256": "eac2e0d1d1d36bb61ecb987b6e2a626bb0985aa5cf79a664a67f932dec7b5951",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/config/SecurityConfig.java::tokens-0-480",
+          "rank": 5,
+          "score": 0.5167061816665137,
+          "title": "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/config/SecurityConfig.java"
+        },
+        {
+          "content_sha256": "0e7be464178abddb2ffb480b88a9c60e3e12a3b7ce9c7d04fac4f126e864d4ec",
+          "page_id": "spring-boot-jakarta-migration::environment/Dockerfile::tokens-0-492",
+          "rank": 6,
+          "score": 0.5053895546584249,
+          "title": "spring-boot-jakarta-migration::environment/Dockerfile"
+        },
+        {
+          "content_sha256": "cfd1cc1fee04c9f21d131c78eb9b2046aa13ef0504667fba25a7a1ec3edcd1e6",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/src/main/resources/application.properties::tokens-0-179",
+          "rank": 7,
+          "score": 0.4839083244983682,
+          "title": "spring-boot-jakarta-migration::environment/workspace/src/main/resources/application.properties"
+        },
+        {
+          "content_sha256": "6be830336ea7627b18ef4a76a2c8d7913c6e33c3143921803638a9d4c703437a",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/src/test/resources/application-test.properties::tokens-0-162",
+          "rank": 8,
+          "score": 0.4785701706054337,
+          "title": "spring-boot-jakarta-migration::environment/workspace/src/test/resources/application-test.properties"
+        },
+        {
+          "content_sha256": "1e98866eba246189db7d7f0d9b89544d9eb816d506b4ed1084822dcf2c61cd6e",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/src/test/java/com/example/userservice/UserServiceApplicationTests.java::tokens-0-724",
+          "rank": 9,
+          "score": 0.46415457496980933,
+          "title": "spring-boot-jakarta-migration::environment/workspace/src/test/java/com/example/userservice/UserServiceApplicationTests.java"
+        },
+        {
+          "content_sha256": "6844a6dcea49b37ccb7584529c816eef22ccd942dae15cef99851655d68acd92",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/config/CustomUserDetailsService.java::tokens-0-218",
+          "rank": 10,
+          "score": 0.4276796053417061,
+          "title": "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/config/CustomUserDetailsService.java"
+        }
+      ],
+      "instruction_sha256": "9e6eae81f5df0e642bdfff4a270685ae7603409c740883f5b4bc026593f34ae4",
+      "new_pool_returned_target_ranks": [
+        1
+      ],
+      "new_pool_target_chunks_returned": 1,
+      "query": "Spring Boot 3 Jakarta migration",
+      "returned_target_ranks": [
+        1
+      ],
+      "route_target_ranks": {
+        "bm25_top10": [
+          1
+        ],
+        "dense_top10": [
+          1
+        ]
+      },
+      "rrf_k": 60,
+      "rrf_page_ids": [
+        "spring-boot-jakarta-migration::background/spring-platform-migration-basics.md::tokens-0-222",
+        "spring-boot-jakarta-migration::instruction.md::tokens-0-217",
+        "spring-boot-jakarta-migration::environment/workspace/pom.xml::tokens-0-649",
+        "spring-boot-jakarta-migration::environment/Dockerfile::tokens-0-492",
+        "spring-boot-jakarta-migration::environment/workspace/src/main/resources/application.properties::tokens-0-179",
+        "spring-boot-jakarta-migration::environment/workspace/src/test/resources/application-test.properties::tokens-0-162",
+        "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/UserServiceApplication.java::tokens-0-49",
+        "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/config/SecurityConfig.java::tokens-0-480",
+        "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/service/ExternalApiService.java::tokens-0-636",
+        "taxonomy-tree-merge::environment/data/amazon_product_categories.csv::tokens-57600-57815",
+        "enterprise-information-search::environment/DATA/products/ContentForce.json::tokens-61440-63488",
+        "spring-boot-jakarta-migration::environment/workspace/src/test/java/com/example/userservice/UserServiceApplicationTests.java::tokens-0-724",
+        "enterprise-information-search::environment/DATA/products/ContentForce.json::tokens-255360-257408",
+        "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/config/CustomUserDetailsService.java::tokens-0-218"
+      ],
+      "seconds": 5.529,
+      "target_chunks_returned": 1,
+      "target_chunks_total": 1,
+      "target_page_ids": [
+        "spring-boot-jakarta-migration::background/spring-platform-migration-basics.md::tokens-0-222"
+      ],
+      "task_id": "spring-boot-jakarta-migration"
+    },
+    {
+      "bm25_top10": [
+        {
+          "content_sha256": "9e6eae81f5df0e642bdfff4a270685ae7603409c740883f5b4bc026593f34ae4",
+          "page_id": "spring-boot-jakarta-migration::instruction.md::tokens-0-217",
+          "rank": 1,
+          "score": 61.32221567032526,
+          "title": "spring-boot-jakarta-migration::instruction.md"
+        },
+        {
+          "content_sha256": "cfd1cc1fee04c9f21d131c78eb9b2046aa13ef0504667fba25a7a1ec3edcd1e6",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/src/main/resources/application.properties::tokens-0-179",
+          "rank": 2,
+          "score": 37.35231736130176,
+          "title": "spring-boot-jakarta-migration::environment/workspace/src/main/resources/application.properties"
+        },
+        {
+          "content_sha256": "6be830336ea7627b18ef4a76a2c8d7913c6e33c3143921803638a9d4c703437a",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/src/test/resources/application-test.properties::tokens-0-162",
+          "rank": 3,
+          "score": 35.59831458870086,
+          "title": "spring-boot-jakarta-migration::environment/workspace/src/test/resources/application-test.properties"
+        },
+        {
+          "content_sha256": "cb433e3448f43101d8e3affdea736542de45ba1769622e05ac47cf9a30ae2ca3",
+          "page_id": "spring-boot-jakarta-migration::background/spring-platform-migration-basics.md::tokens-0-222",
+          "rank": 4,
+          "score": 27.0807040858154,
+          "title": "spring-boot-jakarta-migration::background/spring-platform-migration-basics.md"
+        },
+        {
+          "content_sha256": "0e7be464178abddb2ffb480b88a9c60e3e12a3b7ce9c7d04fac4f126e864d4ec",
+          "page_id": "spring-boot-jakarta-migration::environment/Dockerfile::tokens-0-492",
+          "rank": 5,
+          "score": 20.056914632272367,
+          "title": "spring-boot-jakarta-migration::environment/Dockerfile"
+        },
+        {
+          "content_sha256": "9587ed395ca74b612e5e17c655333727e290592029d789e73d42b91541dc93be",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/service/ExternalApiService.java::tokens-0-636",
+          "rank": 6,
+          "score": 19.71662196059543,
+          "title": "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/service/ExternalApiService.java"
+        },
+        {
+          "content_sha256": "a90c18f3e1b5ec3869e4f21f6f4c68bd4b58df79a4baef67873c7c4703884aaa",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/pom.xml::tokens-0-649",
+          "rank": 7,
+          "score": 19.368130495870368,
+          "title": "spring-boot-jakarta-migration::environment/workspace/pom.xml"
+        },
+        {
+          "content_sha256": "eac2e0d1d1d36bb61ecb987b6e2a626bb0985aa5cf79a664a67f932dec7b5951",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/config/SecurityConfig.java::tokens-0-480",
+          "rank": 8,
+          "score": 16.82097543632056,
+          "title": "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/config/SecurityConfig.java"
+        },
+        {
+          "content_sha256": "220298f667e2bbb5ee061fa8ac7e96cba669b02090872d68bfbb70580f442cb4",
+          "page_id": "enterprise-information-search::environment/DATA/products/ExplainabilityForce.json::tokens-264960-267008",
+          "rank": 9,
+          "score": 16.662790622181628,
+          "title": "enterprise-information-search::environment/DATA/products/ExplainabilityForce.json"
+        },
+        {
+          "content_sha256": "c03aa663c7205561dcb0918472711967dc8d222bdcb3514c14517c9c0dcf8948",
+          "page_id": "enterprise-information-search::environment/DATA/products/ContentForce.json::tokens-61440-63488",
+          "rank": 10,
+          "score": 16.294969715146816,
+          "title": "enterprise-information-search::environment/DATA/products/ContentForce.json"
+        }
+      ],
+      "candidate_count": 17,
+      "candidate_origin_counts": {
+        "background": 1,
+        "environment": 15,
+        "instruction.md": 1
+      },
+      "dense_top10": [
+        {
+          "content_sha256": "eac2e0d1d1d36bb61ecb987b6e2a626bb0985aa5cf79a664a67f932dec7b5951",
+          "page_id": "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/config/SecurityConfig.java::tokens-0-480",
+          "rank": 1,
+          "score": 0.6047329907970102,
+          "title": "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/config/SecurityConfig.java"
+        },
+        {
+          "content_sha256": "9e6eae81f5df0e642bdfff4a270685ae7603409c740883f5b4bc026593f34ae4",
+          "page_id": "spring-boot-jakarta-migration::instruction.md::tokens-0-217",
+          "rank": 2,
+          "score": 0.5939045798512514,
+          "title": "spring-boot-jakarta-migration::instruction.md"
+        },
+        {
+          "content_sha256": "cb433e3448f43101d8e3affdea736542de45ba1769622e05ac47cf9a30ae2ca3",
+          "page_id": "spring-boot-jakarta-migration::background/spring-platform-migration-basics.md::tokens-0-222",
+          "rank": 3,
+          "score": 0.5810983454626014,
+          "title": "spring-boot-jakarta-migration::background/spring-platform-migration-basics.md"
+        },
+        {
+          "content_sha256": "7b2327e417a27eeeec3821ba1221b649c7122e6f8dc97a545cf5ba5660b7e991",
+          "page_id": "enterprise-information-search::environment/DATA/products/PitchForce.json::tokens-101760-103808",
+          "rank": 4,
+          "score": 0.5173927785563182,
+          "title": "enterprise-information-search::environment/DATA/products/PitchForce.json"
+        },
+        {
+          "content_sha256": "4aaf5206b7eab953bdb476b55df6a80e0de8eff501db07048f9f2b110685893b",
+          "page_id": "enterprise-information-search::environment/DATA/products/PitchForce.json::tokens-272640-274688",
+          "rank": 5,
+          "score": 0.49989741807168014,
+          "title": "enterprise-information-search::environment/DATA/products/PitchForce.json"
+        },
+        {
+          "content_sha256": "7828c8c0aaa89cf44e48db74dcc158996879b6e8611a3c700ad8a7256cc72cba",
+          "page_id": "enterprise-information-search::environment/DATA/products/SecurityForce.json::tokens-65280-67328",
+          "rank": 6,
+          "score": 0.49451034770669455,
+          "title": "enterprise-information-search::environment/DATA/products/SecurityForce.json"
+        },
+        {
+          "content_sha256": "3dcce52da510b014d6024525e35f512eac8ba4e9407d13713edb7815b34fa388",
+          "page_id": "enterprise-information-search::environment/DATA/products/PitchForce.json::tokens-274560-276608",
+          "rank": 7,
+          "score": 0.49405675468417765,
+          "title": "enterprise-information-search::environment/DATA/products/PitchForce.json"
+        },
+        {
+          "content_sha256": "427064820625ba25e919ab222b0b2e35662264d990d32b3e4191ef705e6d3f7a",
+          "page_id": "enterprise-information-search::environment/DATA/products/ContentForce.json::tokens-90240-92288",
+          "rank": 8,
+          "score": 0.4937791978970625,
+          "title": "enterprise-information-search::environment/DATA/products/ContentForce.json"
+        },
+        {
+          "content_sha256": "c3e891bd69e51ec985c2f48cfb6d979f20e22ccdf6c263e6445ed7adf1a31bf7",
+          "page_id": "enterprise-information-search::environment/DATA/products/SecurityForce.json::tokens-57600-59648",
+          "rank": 9,
+          "score": 0.49040527501358666,
+          "title": "enterprise-information-search::environment/DATA/products/SecurityForce.json"
+        },
+        {
+          "content_sha256": "f092beb02194ca36b2411a985c70442e9ecde7572c4a586908ab87619b080b49",
+          "page_id": "enterprise-information-search::environment/DATA/products/SecurityForce.json::tokens-30720-32768",
+          "rank": 10,
+          "score": 0.4894480279084365,
+          "title": "enterprise-information-search::environment/DATA/products/SecurityForce.json"
+        }
+      ],
+      "instruction_sha256": "9e6eae81f5df0e642bdfff4a270685ae7603409c740883f5b4bc026593f34ae4",
+      "new_pool_returned_target_ranks": [
+        1
+      ],
+      "new_pool_target_chunks_returned": 1,
+      "query": "Spring Security 6 Hibernate 6 RestClient migration",
+      "returned_target_ranks": [
+        2
+      ],
+      "route_target_ranks": {
+        "bm25_top10": [
+          4
+        ],
+        "dense_top10": [
+          3
+        ]
+      },
+      "rrf_k": 60,
+      "rrf_page_ids": [
+        "spring-boot-jakarta-migration::instruction.md::tokens-0-217",
+        "spring-boot-jakarta-migration::background/spring-platform-migration-basics.md::tokens-0-222",
+        "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/config/SecurityConfig.java::tokens-0-480",
+        "spring-boot-jakarta-migration::environment/workspace/src/main/resources/application.properties::tokens-0-179",
+        "spring-boot-jakarta-migration::environment/workspace/src/test/resources/application-test.properties::tokens-0-162",
+        "enterprise-information-search::environment/DATA/products/PitchForce.json::tokens-101760-103808",
+        "enterprise-information-search::environment/DATA/products/PitchForce.json::tokens-272640-274688",
+        "spring-boot-jakarta-migration::environment/Dockerfile::tokens-0-492",
+        "enterprise-information-search::environment/DATA/products/SecurityForce.json::tokens-65280-67328",
+        "spring-boot-jakarta-migration::environment/workspace/src/main/java/com/example/userservice/service/ExternalApiService.java::tokens-0-636",
+        "enterprise-information-search::environment/DATA/products/PitchForce.json::tokens-274560-276608",
+        "spring-boot-jakarta-migration::environment/workspace/pom.xml::tokens-0-649",
+        "enterprise-information-search::environment/DATA/products/ContentForce.json::tokens-90240-92288",
+        "enterprise-information-search::environment/DATA/products/ExplainabilityForce.json::tokens-264960-267008",
+        "enterprise-information-search::environment/DATA/products/SecurityForce.json::tokens-57600-59648",
+        "enterprise-information-search::environment/DATA/products/ContentForce.json::tokens-61440-63488",
+        "enterprise-information-search::environment/DATA/products/SecurityForce.json::tokens-30720-32768"
+      ],
+      "seconds": 5.573,
+      "target_chunks_returned": 1,
+      "target_chunks_total": 1,
+      "target_page_ids": [
+        "spring-boot-jakarta-migration::background/spring-platform-migration-basics.md::tokens-0-222"
+      ],
+      "task_id": "spring-boot-jakarta-migration"
+    }
+  ],
+  "completed_at": "2026-10-04T17:29:38.774708+00:00",
+  "corpus_hash": "1fec0e42c794522de344c4818060bc94c44fb017efc2da86a075f6641d4dd477",
+  "corpus_manifest_sha256": "9fe9363035ffa4a3e6243f1c285d2206b4889b946ab033c66fe3ef3a2dacc605",
+  "corpus_pages": 42498,
+  "created_at": "2026-10-04T17:28:42.611084+00:00",
+  "embedding": {
+    "chunk_overlap_tokens": 128,
+    "chunk_tokens": 2048,
+    "chunks": true,
+    "dimension": 2560,
+    "dtype": "bfloat16",
+    "endpoint": "http://127.0.0.1:18140/v1",
+    "faiss": false,
+    "gpu_memory_utilization": 0.1,
+    "gpu_uuid": "GPU-1c51e1d6-08ac-129f-38dc-1824c5ab9698",
+    "max_length": 4096,
+    "model": "Qwen/Qwen3-Embedding-4B",
+    "normalization": "float32-l2",
+    "pooling": "last-token",
+    "query_instruct": "official",
+    "reranker": false,
+    "revision": "5cf2132abc99cad020ac570b19d031efec650f2b",
+    "similarity": "exact-cosine",
+    "vllm": "data/embedding/.venv/bin/vllm"
+  },
+  "fullwire_response_sent": false,
+  "integrity_status": "full_production_load_cache_passed",
+  "method": "Same ten public-instruction queries; production DeterministicBM25 top10 + DenseIndex.search top10 with real local Qwen query embeddings + reciprocal_rank_fusion k60; candidate rankings only, no fullwire response sent",
+  "new_probe_reference_validation": "all_10_focused_cases_match_final_new_probe; 85_instruction_cases_were_added_separately",
+  "new_probe_sha256": "3f3df9736d96aa218a4b7d4c08d18cf896045d878479bcf7e999ca45e008c6ae",
+  "new_probe_sha256_at_comparison_start": "e72606271052643f87d1b74661a3c707f2d3991aa39da4b130534705b6879224",
+  "paid_generation_requests": 0,
+  "query_source": "manually formulated from each public instruction before inspecting corresponding background",
+  "schema": "skillsbench.old-pool-retrieval-probe.v1",
+  "status": "COMPLETED",
+  "summary": {
+    "all_target_chunks_returned_queries": 10,
+    "candidate_origin_totals": {
+      "background": 41,
+      "environment": 101,
+      "instruction.md": 19
+    },
+    "queries": 10,
+    "queries_with_target_in_union": 10,
+    "queries_with_target_rank1": 3
+  },
+  "target_definition": "posthoc task-associated public background files; not hidden gold or task success",
+  "vectors_sha256": "733824fb77e866a6ec6c3fe913d5a58007402de4eeb0561bc9eb701f69c48c43"
+}
