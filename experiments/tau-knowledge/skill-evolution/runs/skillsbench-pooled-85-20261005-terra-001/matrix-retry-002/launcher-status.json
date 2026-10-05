@@ -1,0 +1,26 @@
+{
+  "cells": {
+    "adaptive-cruise-control|benign": {
+      "account": "011550804606",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T11:00:18Z",
+      "pid": 2586718,
+      "started_at": "2026-10-05T10:52:21Z"
+    },
+    "multilingual-video-dubbing|benign": {
+      "account": "050918576103",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T12:49:13Z",
+      "pid": 2589896,
+      "started_at": "2026-10-05T10:52:25Z"
+    }
+  },
+  "config": "/local/home/tianrgua/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/skillsbench-pooled-85-20261005-terra-001/config.yaml",
+  "experiment": "skillsbench",
+  "failed": 0,
+  "finished": 2,
+  "running": 0,
+  "started_at": "2026-10-05T10:52:21Z",
+  "total": 2,
+  "updated_at": "2026-10-05T12:49:13Z"
+}

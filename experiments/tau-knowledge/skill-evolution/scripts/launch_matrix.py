@@ -1,0 +1,395 @@
+#!/usr/bin/env python3
+"""Run many (task, arm) cells concurrently in ONE shared run directory.
+
+Each cell is a separate ``r2sp run --task T --arm A --no-interim-report``
+subprocess bound to one AWS account via ``AWS_BEARER_TOKEN_BEDROCK_FILE``
+(a token file maintained by ``bedrock_token_daemon.py``). Cells lock only
+``<run-dir>/locks/<task>__<arm>.lock`` so they do not contend for the run-dir
+lock; the shared ``journal/identity.json`` is created once up front by
+``r2sp report`` and the final ``report.json`` is written once at the end.
+
+Runs with the experiment virtualenv Python (``.venv/bin/python``).
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import signal
+import subprocess
+import sys
+import tempfile
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+TOKEN_FILE_ENV = "AWS_BEARER_TOKEN_BEDROCK_FILE"
+DROPPED_ENV = ("AWS_PROFILE", "AWS_BEARER_TOKEN_BEDROCK")
+DEFAULT_R2SP = "/local/home/tianrgua/Skill-Creation/.venv/bin/r2sp"
+TERMINATE_GRACE_SECONDS = 30.0
+
+
+# ----------------------------------------------------------------------------
+# pure helpers (imported by tests)
+# ----------------------------------------------------------------------------
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def filter_cells(
+    cells: tuple[tuple[str, str], ...] | list[tuple[str, str]],
+    tasks: list[str] | None,
+    arms: list[str] | None,
+) -> list[tuple[str, str]]:
+    """Keep the spec's cell order; empty/None filters keep everything."""
+    return [
+        (task, arm)
+        for task, arm in cells
+        if (not tasks or task in tasks) and (not arms or arm in arms)
+    ]
+
+
+def assign_accounts(cells: list[tuple[str, str]], accounts: list[str]) -> dict[str, str]:
+    """Round-robin ``"task|arm" -> account``."""
+    if not accounts:
+        raise ValueError("at least one account is required")
+    return {
+        cell_key(task, arm): accounts[index % len(accounts)]
+        for index, (task, arm) in enumerate(cells)
+    }
+
+
+def cell_key(task: str, arm: str) -> str:
+    return f"{task}|{arm}"
+
+
+def token_path(token_dir: Path, account: str) -> Path:
+    return Path(token_dir) / f"{account}.json"
+
+
+def discover_accounts(token_dir: Path) -> list[str]:
+    return sorted(
+        path.stem
+        for path in Path(token_dir).glob("*.json")
+        if path.stem != "status" and path.stem.isdigit()
+    )
+
+
+def build_command(
+    r2sp: str, experiment: str, config: Path, run_dir: Path, task: str, arm: str
+) -> list[str]:
+    return [
+        r2sp,
+        "run",
+        "--experiment",
+        experiment,
+        "--config",
+        str(config),
+        "--task",
+        task,
+        "--arm",
+        arm,
+        "--run-dir",
+        str(run_dir),
+        "--no-interim-report",
+    ]
+
+
+def build_env(base: dict[str, str], token_file: Path) -> dict[str, str]:
+    env = {key: value for key, value in base.items() if key not in DROPPED_ENV}
+    env[TOKEN_FILE_ENV] = str(token_file)
+    return env
+
+
+def report_command(r2sp: str, experiment: str, config: Path, run_dir: Path) -> list[str]:
+    return [
+        r2sp,
+        "report",
+        "--experiment",
+        experiment,
+        "--config",
+        str(config),
+        "--run-dir",
+        str(run_dir),
+    ]
+
+
+def executable(path: str) -> bool:
+    return os.path.isfile(path) and os.access(path, os.X_OK)
+
+
+def log_path(run_dir: Path, task: str, arm: str) -> Path:
+    return Path(run_dir) / "logs" / f"{task}__{arm}.log"
+
+
+def build_status(
+    *,
+    started_at: str,
+    experiment: str,
+    config: Path,
+    cells: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    finished = [item for item in cells.values() if item.get("finished_at") is not None]
+    running = [
+        item
+        for item in cells.values()
+        if item.get("started_at") is not None and item.get("finished_at") is None
+    ]
+    failed = [item for item in finished if item.get("exit_code") != 0]
+    return {
+        "started_at": started_at,
+        "updated_at": now_iso(),
+        "experiment": experiment,
+        "config": str(config),
+        "cells": cells,
+        "running": len(running),
+        "finished": len(finished),
+        "failed": len(failed),
+        "total": len(cells),
+    }
+
+
+def write_atomic_json(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            json.dump(payload, stream, indent=2, sort_keys=True)
+            stream.write("\n")
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+# ----------------------------------------------------------------------------
+# launcher
+# ----------------------------------------------------------------------------
+
+
+class Launcher:
+    def __init__(self, args: argparse.Namespace, cells: list[tuple[str, str]]) -> None:
+        self.args = args
+        self.cells = cells
+        self.accounts = assign_accounts(cells, args.accounts)
+        self.started_at = now_iso()
+        self.status_cells: dict[str, dict[str, Any]] = {
+            cell_key(task, arm): {
+                "account": self.accounts[cell_key(task, arm)],
+                "pid": None,
+                "started_at": None,
+                "finished_at": None,
+                "exit_code": None,
+            }
+            for task, arm in cells
+        }
+        self.processes: dict[str, tuple[subprocess.Popen[bytes], Any]] = {}
+        self.stop = False
+
+    def write_status(self) -> None:
+        write_atomic_json(
+            Path(self.args.run_dir) / "launcher-status.json",
+            build_status(
+                started_at=self.started_at,
+                experiment=self.args.experiment,
+                config=self.args.config,
+                cells=self.status_cells,
+            ),
+        )
+
+    def start(self, task: str, arm: str) -> None:
+        key = cell_key(task, arm)
+        account = self.accounts[key]
+        command = build_command(
+            self.args.r2sp, self.args.experiment, self.args.config, self.args.run_dir, task, arm
+        )
+        env = build_env(dict(os.environ), token_path(self.args.token_dir, account))
+        log_file = log_path(self.args.run_dir, task, arm)
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        stream = log_file.open("ab")
+        process = subprocess.Popen(
+            command, stdout=stream, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, env=env
+        )
+        self.processes[key] = (process, stream)
+        self.status_cells[key].update(pid=process.pid, started_at=now_iso())
+        self.write_status()
+        print(f"started {key} account={account} pid={process.pid}", flush=True)
+
+    def reap(self) -> None:
+        for key, (process, stream) in list(self.processes.items()):
+            code = process.poll()
+            if code is None:
+                continue
+            stream.close()
+            del self.processes[key]
+            self.status_cells[key].update(finished_at=now_iso(), exit_code=code)
+            self.write_status()
+            print(f"finished {key} exit={code}", flush=True)
+
+    def terminate_children(self) -> None:
+        for process, _ in self.processes.values():
+            if process.poll() is None:
+                process.terminate()
+        deadline = time.monotonic() + TERMINATE_GRACE_SECONDS
+        while time.monotonic() < deadline and any(
+            process.poll() is None for process, _ in self.processes.values()
+        ):
+            time.sleep(0.2)
+        for process, _ in self.processes.values():
+            if process.poll() is None:
+                process.kill()
+        self.reap()
+
+    def run(self) -> int:
+        pending = list(self.cells)
+        self.write_status()
+        try:
+            while (pending or self.processes) and not self.stop:
+                self.reap()
+                if pending and len(self.processes) < self.args.max_concurrent:
+                    task, arm = pending.pop(0)
+                    self.start(task, arm)
+                    time.sleep(max(0.0, self.args.stagger_seconds))
+                    continue
+                time.sleep(1.0)
+        except BaseException:
+            # A failed Popen or an unexpected error must not orphan running cells.
+            self.terminate_children()
+            self.write_status()
+            raise
+        if self.stop:
+            self.terminate_children()
+            self.write_status()
+            return 130
+        self.reap()
+        return 0
+
+
+def _dry_run(args: argparse.Namespace, cells: list[tuple[str, str]]) -> None:
+    accounts = assign_accounts(cells, args.accounts)
+    for task, arm in cells:
+        account = accounts[cell_key(task, arm)]
+        command = build_command(args.r2sp, args.experiment, args.config, args.run_dir, task, arm)
+        print(
+            f"{TOKEN_FILE_ENV}={token_path(args.token_dir, account)} "
+            + " ".join(command)
+            + f"  # log={log_path(args.run_dir, task, arm)}"
+        )
+    print(f"planned {len(cells)} cells over {len(args.accounts)} accounts", flush=True)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--experiment", choices=("tau", "skillsbench"), required=True)
+    parser.add_argument("--config", type=Path, required=True)
+    parser.add_argument("--run-dir", type=Path, required=True)
+    parser.add_argument("--token-dir", type=Path, required=True)
+    parser.add_argument("--accounts", help="comma-separated; default: all <ID>.json in token-dir")
+    parser.add_argument("--max-concurrent", type=int, default=96)
+    parser.add_argument("--stagger-seconds", type=float, default=1.0)
+    parser.add_argument("--task", action="append")
+    parser.add_argument("--arm", action="append")
+    parser.add_argument(
+        "--cells-file",
+        type=Path,
+        help='JSON list of exact "task|arm" cells to run (intersected with --task/--arm)',
+    )
+    parser.add_argument("--r2sp", default=DEFAULT_R2SP)
+    parser.add_argument("--skip-final-report", action="store_true")
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args(argv)
+    args.config = args.config.resolve()
+    args.run_dir = args.run_dir.resolve()
+    args.token_dir = args.token_dir.resolve()
+    if args.max_concurrent <= 0:
+        parser.error("--max-concurrent must be positive")
+    if not executable(args.r2sp):
+        parser.error(f"--r2sp is not an executable file: {args.r2sp}")
+    args.accounts = (
+        [item.strip() for item in args.accounts.split(",") if item.strip()]
+        if args.accounts
+        else discover_accounts(args.token_dir)
+    )
+    if not args.accounts:
+        parser.error("no accounts: pass --accounts or populate --token-dir with <ID>.json files")
+    missing = [
+        account for account in args.accounts if not token_path(args.token_dir, account).is_file()
+    ]
+    if missing and not args.dry_run:
+        parser.error("token files missing for accounts: " + ", ".join(missing))
+
+    from tau_skill_evolution.spec import load_spec
+
+    spec = load_spec(args.config)
+    if spec.experiment != args.experiment:
+        parser.error("--experiment differs from the selected configuration")
+    if args.task and set(args.task) - set(spec.tasks):
+        parser.error("--task must belong to the frozen experiment task population")
+    if args.arm and set(args.arm) - set(spec.arms):
+        parser.error("--arm is not supported by this experiment")
+    cells = filter_cells(spec.cells, args.task, args.arm)
+    if args.cells_file is not None:
+        wanted = json.loads(args.cells_file.read_text(encoding="utf-8"))
+        if not isinstance(wanted, list) or not all(
+            isinstance(item, str) and item.count("|") == 1 for item in wanted
+        ):
+            parser.error('--cells-file must be a JSON list of "task|arm" strings')
+        unknown = set(wanted) - {f"{task}|{arm}" for task, arm in spec.cells}
+        if unknown:
+            parser.error(
+                "--cells-file names cells outside the matrix: " + ", ".join(sorted(unknown))
+            )
+        cells = [(task, arm) for task, arm in cells if f"{task}|{arm}" in set(wanted)]
+    if not cells:
+        parser.error("no cells selected")
+
+    if args.dry_run:
+        _dry_run(args, cells)
+        return 0
+
+    # (1) Initialise the shared run identity once, without credentials or model calls.
+    args.run_dir.mkdir(parents=True, exist_ok=True)
+    (args.run_dir / "locks").mkdir(exist_ok=True)
+    (args.run_dir / "logs").mkdir(exist_ok=True)
+    report = report_command(args.r2sp, args.experiment, args.config, args.run_dir)
+    initial = subprocess.run(report, capture_output=True, text=True, check=False)
+    if initial.returncode != 0:
+        sys.stderr.write(initial.stdout[-2000:] + initial.stderr[-2000:])
+        sys.stderr.write("\ninitial r2sp report failed; aborting\n")
+        return 2
+
+    launcher = Launcher(args, cells)
+
+    def _stop(signum: int, _frame: Any) -> None:
+        launcher.stop = True
+        print(f"received signal {signum}; terminating children", flush=True)
+
+    signal.signal(signal.SIGINT, _stop)
+    signal.signal(signal.SIGTERM, _stop)
+    code = launcher.run()
+    if code != 0:
+        return code
+
+    status = launcher.status_cells
+    total = len(status)
+    ok = sum(1 for item in status.values() if item["exit_code"] == 0)
+    if not args.skip_final_report:
+        final = subprocess.run(report, capture_output=True, text=True, check=False)
+        if final.returncode != 0:
+            sys.stderr.write(final.stdout[-2000:] + final.stderr[-2000:])
+            sys.stderr.write("\nfinal r2sp report failed\n")
+            return 2
+    print(
+        f"cells total={total} exit0={ok} nonzero={total - ok} "
+        f"report={args.run_dir / 'report.json'}",
+        flush=True,
+    )
+    return 0 if ok == total else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

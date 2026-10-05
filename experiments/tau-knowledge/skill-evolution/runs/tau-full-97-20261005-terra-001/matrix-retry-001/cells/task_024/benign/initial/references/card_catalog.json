@@ -1,0 +1,105 @@
+{
+  "point_value_cents": 1,
+  "category_names": ["travel", "software", "media", "operations", "transportation"],
+  "cards": [
+    {
+      "id": "business_bronze",
+      "name": "Business Bronze Rewards Card",
+      "base_rate_percent": 1.0,
+      "bonus_rates": {},
+      "personal_fico_min": 660,
+      "paydex_min": 20,
+      "paydex_required": false,
+      "credit_limit_min": 10000,
+      "credit_limit_max": 50000,
+      "industry_required": null,
+      "offers": [
+        {
+          "id": "new_customer_statement_credit",
+          "type": "statement_credit",
+          "start": "2025-10-01",
+          "end": "2026-03-31",
+          "new_customer_required": true,
+          "threshold_amount": 10000,
+          "posting_days_max": 61,
+          "credit_cents": 50000,
+          "conditions": ["Make at least the threshold in net purchases within the first two months of account opening.", "Qualifying transactions must post within two months."]
+        }
+      ]
+    },
+    {
+      "id": "business_silver",
+      "name": "Business Silver Rewards Card",
+      "base_rate_percent": 1.0,
+      "bonus_rates": {"travel": 10.0, "software": 10.0},
+      "personal_fico_min": 700,
+      "paydex_min": 47,
+      "paydex_required": false,
+      "credit_limit_min": 17500,
+      "credit_limit_max": 112500,
+      "industry_required": null,
+      "offers": [
+        {
+          "id": "double_cash_back",
+          "type": "rate_multiplier",
+          "start": "2024-11-14",
+          "end": "2025-11-14",
+          "new_customer_required": true,
+          "multiplier": 2,
+          "duration_months": 6,
+          "conditions": ["Account must be opened during the promotional period.", "The multiplier lasts for the first six months after account opening.", "Merchant exclusions continue to apply."]
+        }
+      ]
+    },
+    {
+      "id": "business_gold",
+      "name": "Business Gold Rewards Card",
+      "base_rate_percent": 1.0,
+      "bonus_rates": {"operations": 2.5},
+      "personal_fico_min": 735,
+      "paydex_min": 67,
+      "paydex_required": true,
+      "credit_limit_min": 37500,
+      "credit_limit_max": 225000,
+      "industry_required": null,
+      "offers": []
+    },
+    {
+      "id": "business_platinum",
+      "name": "Business Platinum Rewards Card",
+      "base_rate_percent": 1.5,
+      "bonus_rates": {"travel": 4.0, "software": 4.0, "media": 4.0},
+      "personal_fico_min": 765,
+      "paydex_min": 77,
+      "paydex_required": true,
+      "credit_limit_min": 75000,
+      "credit_limit_max": 400000,
+      "industry_required": null,
+      "offers": []
+    },
+    {
+      "id": "silver_zoom",
+      "name": "Silver Zoom Card",
+      "base_rate_percent": 1.0,
+      "bonus_rates": {"transportation": 3.0},
+      "personal_fico_min": 680,
+      "paydex_min": 57,
+      "paydex_required": true,
+      "credit_limit_min": 22500,
+      "credit_limit_max": 175000,
+      "industry_required": "logistics",
+      "offers": [
+        {
+          "id": "triple_cash_back",
+          "type": "rate_multiplier",
+          "start": "2024-01-01",
+          "end": "2025-12-31",
+          "claim_required": true,
+          "multiplier": 3,
+          "duration_months": 9,
+          "conditions": ["The offer must be claimed within the claim window.", "The multiplier lasts for nine months from account opening once claimed.", "The multiplier does not stack with other category accelerators beyond the defined multiplier."]
+        }
+      ]
+    }
+  ]
+}

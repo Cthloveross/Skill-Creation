@@ -1,0 +1,14 @@
+{
+  "programs": [
+    {"key":"blue","account_type":"Blue Account","referrer_bonus":35,"recipient_bonus":30,"annual_cap":5,"deposit_required":500,"deposit_days":60,"tenure_days":30},
+    {"key":"green","account_type":"Green Account","referrer_bonus":20,"recipient_bonus":30,"annual_cap":5,"deposit_required":500,"deposit_days":60,"tenure_days":30},
+    {"key":"light_blue","account_type":"Light Blue Account","referrer_bonus":30,"recipient_bonus":20,"annual_cap":5,"deposit_required":500,"deposit_days":60,"tenure_days":30},
+    {"key":"green_fee_free","account_type":"Green Fee-Free Account","referrer_bonus":20,"recipient_bonus":35,"annual_cap":4,"deposit_required":300,"deposit_days":60,"tenure_days":30},
+    {"key":"light_green","account_type":"Light Green Account","referrer_bonus":15,"recipient_bonus":25,"annual_cap":3,"deposit_required":100,"deposit_days":90,"tenure_days":14,"recipient_min_age":13,"recipient_max_age":24,"minor_requires_guardian":true},
+    {"key":"dark_green","account_type":"Dark Green Account","referrer_bonus":40,"recipient_bonus":30,"annual_cap":6,"deposit_required":1000,"deposit_days":60,"tenure_days":45},
+    {"key":"purple","account_type":"Purple Account","referrer_bonus":45,"recipient_bonus":35,"annual_cap":6,"deposit_required":1000,"deposit_days":60,"tenure_days":45},
+    {"key":"bluest","account_type":"Bluest Account","referrer_bonus":75,"recipient_bonus":50,"annual_cap":8,"deposit_required":2000,"deposit_days":90,"tenure_days":60},
+    {"key":"gold_years","account_type":"Gold Years Account","referrer_bonus":50,"recipient_bonus":75,"annual_cap":6,"deposit_required":1000,"deposit_days":90,"tenure_days":30,"recipient_min_age":62},
+    {"key":"evergreen","account_type":"Evergreen Account","referrer_bonus":35,"recipient_bonus":25,"annual_cap":6,"deposit_required":750,"deposit_days":60,"tenure_days":45}
+  ]
+}

@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import fcntl
 import json
 import os
 import re
 import shlex
+from collections.abc import Iterator
 from pathlib import Path
 
 from .preflight import preflight
@@ -51,6 +53,49 @@ def load_env(path: Path) -> None:
         os.environ.setdefault(name, parsed[0] if parsed else "")
 
 
+def lock_path(run_dir: Path, cells: tuple[tuple[str, str], ...]) -> Path:
+    """Exactly one selected cell locks only itself so cells can run in parallel.
+
+    Any other selection (several cells, or report over the whole matrix) keeps
+    the run-dir-wide ``.lock``.
+    """
+    if len(cells) == 1:
+        task, arm = cells[0]
+        return Path(run_dir) / "locks" / f"{task}__{arm}.lock"
+    return Path(run_dir) / ".lock"
+
+
+@contextlib.contextmanager
+def run_locks(run_dir: Path, cells: tuple[tuple[str, str], ...]) -> Iterator[Path]:
+    """Hold the locks for one invocation; yields the lock the caller owns.
+
+    Whole-run and report invocations take ``.lock`` exclusively. A single-cell
+    invocation takes its own ``locks/<task>__<arm>.lock`` exclusively plus a
+    SHARED ``.lock``, so per-cell processes run side by side but never together
+    with a whole-run or report process on the same run directory.
+    """
+    run_dir = Path(run_dir)
+    selected = lock_path(run_dir, cells)
+    selected.parent.mkdir(parents=True, exist_ok=True)
+    with contextlib.ExitStack() as stack:
+        if selected.name != ".lock":
+            shared = stack.enter_context((run_dir / ".lock").open("a"))
+            try:
+                fcntl.flock(shared, fcntl.LOCK_SH | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise RuntimeError("another process owns this run directory") from None
+        owned = stack.enter_context(selected.open("a"))
+        try:
+            fcntl.flock(owned, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RuntimeError(
+                "another process owns this run directory"
+                if selected.name == ".lock"
+                else "another process owns this cell"
+            ) from None
+        yield selected
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Frozen retrieval, one-shot Skill creation and CoEvo evolution"
@@ -72,6 +117,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--task", action="append", help="restrict to selected task IDs")
     parser.add_argument(
         "--arm", choices=ARMS, action="append", help="restrict to selected conditions"
+    )
+    parser.add_argument(
+        "--no-interim-report",
+        action="store_true",
+        help="run: do not rewrite report.json after each cell (parallel launcher mode)",
     )
     args = parser.parse_args(argv)
     try:
@@ -119,15 +169,18 @@ def main(argv: list[str] | None = None) -> int:
                 print(json.dumps(admission, ensure_ascii=False, indent=2))
                 return 2
         args.run_dir.mkdir(parents=True, exist_ok=True)
-        with (args.run_dir / ".lock").open("a") as lock:
-            try:
-                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
-                raise RuntimeError("another process owns this run directory") from None
+        with run_locks(args.run_dir, cells if args.command != "report" else ()):
+            interim_report = not args.no_interim_report
             workflow = (
-                Workflow(spec, args.run_dir, demo=True, demo_task=args.task[0])
+                Workflow(
+                    spec,
+                    args.run_dir,
+                    demo=True,
+                    demo_task=args.task[0],
+                    interim_report=interim_report,
+                )
                 if args.demo
-                else Workflow(spec, args.run_dir)
+                else Workflow(spec, args.run_dir, interim_report=interim_report)
             )
             if args.command == "run":
                 result = workflow.run(cells)

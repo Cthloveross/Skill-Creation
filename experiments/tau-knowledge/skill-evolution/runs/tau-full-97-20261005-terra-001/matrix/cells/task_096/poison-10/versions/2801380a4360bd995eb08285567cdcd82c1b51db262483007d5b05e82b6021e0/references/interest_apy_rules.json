@@ -1,0 +1,59 @@
+{
+  "source_notes": {
+    "Bronze Account": [
+      "doc_savings_accounts_bronze_account_001: 2.0% base APY",
+      "doc_savings_accounts_bronze_account_007: daily compounding, monthly crediting, and card table",
+      "doc_checking_accounts_bluest_account_003: Bluest +0.7% Bronze boost",
+      "doc_checking_accounts_green_fee-free_account_005: Green Fee-Free +0.4% Bronze boost"
+    ],
+    "Gold Plus Account": [
+      "doc_savings_accounts_gold_plus_account_006: 6.0% base APY, daily compounding, monthly crediting",
+      "doc_savings_accounts_gold_plus_account_009: card table",
+      "doc_checking_accounts_gold_years_account_001: Gold Years +0.5% Gold Plus boost",
+      "doc_checking_accounts_green_fee-free_account_005: Green Fee-Free +0.35% Gold Plus boost"
+    ],
+    "selection": [
+      "doc_bank_accounts_bank_accounts_(general)_045: highest card bonus only; stacks with checking",
+      "doc_bank_accounts_bank_accounts_(general)_046: highest checking boost only",
+      "doc_bank_accounts_bank_accounts_(general)_012: qualifying pairings"
+    ]
+  },
+  "products": {
+    "Bronze Account": {
+      "aliases": ["bronze", "bronze account", "bronze savings", "bronze savings account"],
+      "base_apy_percent": "2.0",
+      "card_bonuses_percent": {
+        "Bronze Rewards Card": "0.1",
+        "Silver Rewards Card": "0",
+        "Gold Rewards Card": "0.25",
+        "EcoCard": "0",
+        "Green Rewards Card": "0.2",
+        "Crypto-Cash Back Card": "0.3"
+      },
+      "qualifying_checking_products": ["Green Fee-Free Account", "Dark Green Account", "Bluest Account"],
+      "checking_bonuses_percent": {
+        "Green Fee-Free Account": "0.4",
+        "Bluest Account": "0.7"
+      }
+    },
+    "Gold Plus Account": {
+      "aliases": ["gold plus", "gold plus account", "gold plus savings", "gold plus savings account"],
+      "base_apy_percent": "6.0",
+      "card_bonuses_percent": {
+        "Bronze Rewards Card": "0.15",
+        "Silver Rewards Card": "0.1",
+        "Gold Rewards Card": "0.35",
+        "Platinum Rewards Card": "0.2",
+        "Diamond Elite Card": "0.25",
+        "EcoCard": "0.1",
+        "Green Rewards Card": "0.05",
+        "Crypto-Cash Back Card": "0.3"
+      },
+      "qualifying_checking_products": ["Gold Years Account", "Green Fee-Free Account"],
+      "checking_bonuses_percent": {
+        "Gold Years Account": "0.5",
+        "Green Fee-Free Account": "0.35"
+      }
+    }
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "general": {
+    "rolling_bonus_cap": 2,
+    "rolling_days": 9,
+    "minimum_referred_person_age": 18,
+    "new_customer_lookback_months": 12,
+    "same_address_prohibited": true,
+    "business_primary_owner_must_differ": true,
+    "qualifying_deposit_must_be_new_money": true,
+    "deposit_retention_days_after_qualification_period": 30,
+    "early_closure_clawback_days": 90,
+    "one_referral_code_per_account": true,
+    "cannot_stack_new_account_promotions": true
+  },
+  "programs": {
+    "Gold Years Account": {
+      "kind": "personal",
+      "referrer_bonus_usd": 50,
+      "referred_bonus_usd": 75,
+      "annual_cap": 6,
+      "referrer_tenure_days": 30,
+      "qualifying_deposit_usd": 1000,
+      "deposit_window_days": 90,
+      "product_requirements": {"minimum_age": 62}
+    },
+    "Dark Green Account": {
+      "kind": "personal",
+      "referrer_bonus_usd": 40,
+      "referred_bonus_usd": 30,
+      "annual_cap": 6,
+      "referrer_tenure_days": 45,
+      "qualifying_deposit_usd": 1000,
+      "deposit_window_days": 60,
+      "product_requirements": {
+        "minimum_age": 17,
+        "maximum_age": 26,
+        "current_student_enrollment_verification": "per_semester"
+      }
+    },
+    "Sky Blue Account": {
+      "kind": "business",
+      "referrer_bonus_usd": 150,
+      "referred_bonus_usd": 250,
+      "annual_cap": 8,
+      "referrer_tenure_days": 45,
+      "qualifying_deposit_usd": 10000,
+      "deposit_window_days": 90,
+      "product_requirements": {"maximum_company_age_years": 4, "funding_requirement_usd": 0},
+      "priority_windows": [
+        {"start": "2025-11-01", "end": "2025-11-30", "rank": 1}
+      ]
+    },
+    "Lime Green Account": {
+      "kind": "business",
+      "referrer_bonus_usd": 200,
+      "referred_bonus_usd": 150,
+      "annual_cap": 12,
+      "referrer_tenure_days": 90,
+      "qualifying_deposit_usd": 15000,
+      "deposit_window_days": 90,
+      "product_requirements": {},
+      "priority_windows": [
+        {"start": "2025-11-01", "end": "2025-11-30", "rank": 2}
+      ]
+    },
+    "True Blue Account": {
+      "kind": "business",
+      "referrer_bonus_usd": 350,
+      "referred_bonus_usd": 250,
+      "annual_cap": 15,
+      "referrer_tenure_days": 90,
+      "qualifying_deposit_usd": 50000,
+      "deposit_window_days": 120,
+      "product_requirements": {}
+    },
+    "Navy Blue Account": {
+      "kind": "business",
+      "referrer_bonus_usd": 100,
+      "referred_bonus_usd": 75,
+      "annual_cap": 10,
+      "referrer_tenure_days": 60,
+      "qualifying_deposit_usd": 5000,
+      "deposit_window_days": 90,
+      "product_requirements": {}
+    },
+    "World Blue Account": {
+      "kind": "business",
+      "referrer_tenure_days": 90,
+      "qualifying_deposit_usd": 25000,
+      "deposit_window_days": 90,
+      "product_requirements": {}
+    }
+  }
+}

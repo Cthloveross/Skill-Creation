@@ -1,0 +1,90 @@
+{
+  "currency": "USD",
+  "point_value_dollars": "0.01",
+  "rounding": "floor whole points per purchase",
+  "cards": [
+    {
+      "name": "Business Platinum Rewards Card",
+      "base_rate_percent": "1.5",
+      "bonus_rates_percent": {"travel": "4.0", "software": "4.0", "media": "4.0"},
+      "limit_min": "75000",
+      "limit_max": "400000",
+      "personal_credit_min": 765,
+      "business_paydex_min_established": 77,
+      "standard_annual_fee": "450.00",
+      "fee_waiver": {
+        "start_date": "2025-11-01",
+        "end_date": "2026-02-28",
+        "first_year_fee": "0.00",
+        "requires_new_customer": true,
+        "requires_good_standing": true
+      },
+      "sources": [
+        "doc_business_credit_cards_business_platinum_rewards_card_002",
+        "doc_business_credit_cards_business_platinum_rewards_card_001",
+        "doc_business_credit_cards_business_platinum_rewards_card_008",
+        "doc_business_credit_cards_business_platinum_rewards_card_011",
+        "doc_business_credit_cards_business_platinum_rewards_card_003"
+      ]
+    },
+    {
+      "name": "Business Gold Rewards Card",
+      "base_rate_percent": "1.0",
+      "bonus_rates_percent": {"operations": "2.5"},
+      "limit_min": "37500",
+      "limit_max": "225000",
+      "personal_credit_min": 735,
+      "business_paydex_min_established": 67,
+      "standard_annual_fee": "200.00",
+      "sources": [
+        "doc_business_credit_cards_business_gold_rewards_card_002",
+        "doc_business_credit_cards_business_gold_rewards_card_001",
+        "doc_business_credit_cards_business_gold_rewards_card_007",
+        "doc_business_credit_cards_business_gold_rewards_card_003"
+      ]
+    },
+    {
+      "name": "Business Silver Rewards Card",
+      "base_rate_percent": "1.0",
+      "bonus_rates_percent": {"travel": "10.0", "software": "10.0"},
+      "limit_min": "17500",
+      "limit_max": "112500",
+      "personal_credit_min": 700,
+      "business_paydex_min_established": 47,
+      "standard_annual_fee": "122.50",
+      "fee_waiver": {
+        "first_year_fee": "0.00",
+        "requires_new_customer": true,
+        "requires_confirmation": true
+      },
+      "sources": [
+        "doc_business_credit_cards_business_silver_rewards_card_002",
+        "doc_business_credit_cards_business_silver_rewards_card_001",
+        "doc_business_credit_cards_business_silver_rewards_card_009",
+        "doc_business_credit_cards_business_silver_rewards_card_011",
+        "doc_business_credit_cards_business_silver_rewards_card_012",
+        "doc_business_credit_cards_business_silver_rewards_card_005"
+      ]
+    },
+    {
+      "name": "Business Bronze Rewards Card",
+      "base_rate_percent": "1.0",
+      "bonus_rates_percent": {},
+      "limit_min": "10000",
+      "limit_max": "50000",
+      "personal_credit_min": 660,
+      "business_paydex_min_established": 20,
+      "standard_annual_fee": "0.00",
+      "sources": [
+        "doc_business_credit_cards_business_bronze_rewards_card_001",
+        "doc_business_credit_cards_business_bronze_rewards_card_005",
+        "doc_business_credit_cards_business_bronze_rewards_card_002"
+      ]
+    }
+  ],
+  "category_aliases": {
+    "advertising": "media",
+    "streaming": "media",
+    "sustainable": "green"
+  }
+}

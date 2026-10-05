@@ -1,0 +1,93 @@
+{
+  "global_rules": {
+    "rolling_bonus_cap": 2,
+    "rolling_window_days": 9,
+    "completed_status": "COMPLETE",
+    "requires_new_money": true,
+    "retention_days_after_qualifying_period": 30,
+    "clawback_if_closed_within_days": 90
+  },
+  "programs": [
+    {
+      "name": "World Blue",
+      "aliases": ["World Blue", "World Blue Account"],
+      "referrer_bonus": "300",
+      "annual_cap": 12,
+      "minimum_deposit": "25000",
+      "deposit_window_days": 90,
+      "minimum_tenure_days": 90,
+      "source": "doc_business_checking_accounts_world_blue_001; doc_business_checking_accounts_world_blue_007"
+    },
+    {
+      "name": "True Blue",
+      "aliases": ["True Blue", "True Blue Account"],
+      "referrer_bonus": "350",
+      "annual_cap": 15,
+      "minimum_deposit": "50000",
+      "deposit_window_days": 120,
+      "minimum_tenure_days": 90,
+      "source": "doc_business_checking_accounts_true_blue_002"
+    },
+    {
+      "name": "Beige",
+      "aliases": ["Beige", "Beige Account"],
+      "referrer_bonus": "500",
+      "annual_cap": 15,
+      "minimum_deposit": "100000",
+      "deposit_window_days": 120,
+      "minimum_tenure_days": 120,
+      "source": "doc_business_checking_accounts_beige_012"
+    },
+    {
+      "name": "Lime Green",
+      "aliases": ["Lime Green", "Lime Green Account"],
+      "referrer_bonus": "200",
+      "annual_cap": 12,
+      "minimum_deposit": "15000",
+      "deposit_window_days": 90,
+      "minimum_tenure_days": 90,
+      "source": "doc_business_checking_accounts_lime_green_003"
+    },
+    {
+      "name": "Hunter Green",
+      "aliases": ["Hunter Green", "Hunter Green Account"],
+      "referrer_bonus": "175",
+      "annual_cap": 10,
+      "minimum_deposit": "10000",
+      "deposit_window_days": 90,
+      "minimum_tenure_days": 60,
+      "source": "doc_business_checking_accounts_hunter_green_001"
+    },
+    {
+      "name": "Cobalt Blue",
+      "aliases": ["Cobalt Blue", "Cobalt Blue Account"],
+      "referrer_bonus": "150",
+      "annual_cap": 10,
+      "minimum_deposit": "7500",
+      "deposit_window_days": 90,
+      "minimum_tenure_days": 60,
+      "source": "doc_business_checking_accounts_cobalt_blue_001; doc_business_checking_accounts_cobalt_blue_005"
+    },
+    {
+      "name": "Navy Blue",
+      "aliases": ["Navy Blue", "Navy Blue Account"],
+      "referrer_bonus": "100",
+      "annual_cap": 10,
+      "minimum_deposit": "5000",
+      "deposit_window_days": 90,
+      "minimum_tenure_days": 60,
+      "source": "doc_business_checking_accounts_navy_blue_001"
+    },
+    {
+      "name": "Sky Blue",
+      "aliases": ["Sky Blue", "Sky Blue Account"],
+      "referrer_bonus": "150",
+      "annual_cap": 8,
+      "minimum_deposit": null,
+      "deposit_window_days": null,
+      "minimum_tenure_days": null,
+      "source": "doc_business_checking_accounts_sky_blue_001",
+      "incomplete_terms": "Available program information does not establish the Sky Blue qualifying deposit, deposit window, or referrer tenure requirement."
+    }
+  ]
+}

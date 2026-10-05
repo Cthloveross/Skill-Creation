@@ -35,11 +35,21 @@ class _Channel:
         env = os.environ.copy()
         env["R2SP_TAU_UPSTREAM_ROOT"] = str(bank.upstream_root)
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
+        # Worker stderr (official runtime logs, retry events, tracebacks) is private
+        # run-local diagnostics; it never enters the journal or any role input.
+        self.stderr_log = None
+        log_dir = bank.config.get("worker_log_dir")
+        stderr: Any = subprocess.DEVNULL
+        if isinstance(log_dir, str) and log_dir:
+            directory = Path(log_dir)
+            directory.mkdir(parents=True, exist_ok=True)
+            self.stderr_log = (directory / f"worker-{bank.task_id}-{os.getpid()}.log").open("ab")
+            stderr = self.stderr_log
         self.process = subprocess.Popen(
             [str(bank.python), "-m", "tau_skill_evolution.worker"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
+            stderr=stderr,
             env=env,
             cwd=bank.upstream_root,
         )
@@ -86,7 +96,9 @@ class _Channel:
                     "bank model authentication failed",
                     status=response["error_status"],
                 )
-            raise BankWorkerError("bank_worker_operation_failed")
+            kind = response.get("error_kind")
+            suffix = f":{kind}" if isinstance(kind, str) and kind else ""
+            raise BankWorkerError(f"bank_worker_operation_failed{suffix}")
         return response["result"]
 
     def close(self) -> None:
@@ -100,6 +112,8 @@ class _Channel:
         for pipe in (self.process.stdin, self.process.stdout):
             if pipe is not None:
                 pipe.close()
+        if self.stderr_log is not None:
+            self.stderr_log.close()
 
 
 class Acquisition:

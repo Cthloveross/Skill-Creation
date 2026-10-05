@@ -7,7 +7,7 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 from .artifacts import SkillBundle
-from .model import authentication_status
+from .model import authentication_status, is_credential_error
 
 NOT_MEASURED = "NOT_MEASURED"
 
@@ -110,6 +110,8 @@ def evaluate_versions(
                 "metrics": dict(metrics),
             }
         except Exception as exc:
+            if is_credential_error(exc):
+                raise
             measurements[bundle.bundle_hash] = not_measured(
                 bundle.bundle_hash,
                 "result_unknown"

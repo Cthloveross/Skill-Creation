@@ -1,0 +1,34 @@
+{
+  "products": [
+    {
+      "account_class": "Blue Account",
+      "overdraft_fee": 0.0,
+      "automatic_overdraft_protection": true,
+      "overdraft_protection_transfer_fee": 12.5,
+      "monthly_maintenance_fee": 20.0,
+      "minimum_daily_balance_to_waive_monthly_fee": 625.0,
+      "early_direct_deposit_days": 1,
+      "notes": "Protection requires an eligible linked funding account."
+    },
+    {
+      "account_class": "Light Blue Account",
+      "overdraft_fee": 0.0,
+      "automatic_overdraft_protection": true,
+      "overdraft_protection_transfer_fee": 0.0,
+      "monthly_maintenance_fee": 0.0,
+      "minimum_daily_balance_to_waive_monthly_fee": 0.0,
+      "early_direct_deposit_days": 0,
+      "notes": "No early-direct-deposit advance is documented."
+    },
+    {
+      "account_class": "Green Account (checking)",
+      "overdraft_fee": 0.0,
+      "automatic_overdraft_protection": false,
+      "overdraft_protection_transfer_fee": null,
+      "monthly_maintenance_fee": 22.5,
+      "minimum_daily_balance_to_waive_monthly_fee": 1350.0,
+      "early_direct_deposit_days": 1,
+      "notes": "Transactions exceeding available balance are declined; no overdraft protection transfers are provided."
+    }
+  ]
+}

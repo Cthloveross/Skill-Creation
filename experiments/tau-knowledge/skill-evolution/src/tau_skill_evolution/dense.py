@@ -15,6 +15,7 @@ import ipaddress
 import json
 import math
 import struct
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -41,6 +42,10 @@ DENSE_DOCUMENT_FORMAT = "title\n\nbody"
 QUERY_INSTRUCTION = (
     "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery:"
 )
+
+
+# Gateway/overload statuses from the loopback embedding front are transient.
+_RETRYABLE_HTTP_STATUSES = frozenset({502, 503, 504})
 
 
 class DenseBackendError(RuntimeError):
@@ -285,6 +290,8 @@ class OpenAICompatibleEmbeddingClient:
         model_id: str = DENSE_MODEL_ID,
         revision: str = DENSE_MODEL_REVISION,
         dimensions: int = DENSE_EMBEDDING_DIMENSIONS,
+        retry_attempts: int = 5,
+        retry_backoff_seconds: float = 0.2,
     ) -> None:
         if (
             isinstance(timeout_seconds, bool)
@@ -293,6 +300,12 @@ class OpenAICompatibleEmbeddingClient:
             or timeout_seconds <= 0
         ):
             raise ValueError("timeout_seconds must be a positive finite number")
+        if isinstance(retry_attempts, bool) or not isinstance(retry_attempts, int):
+            raise ValueError("retry_attempts must be an integer")
+        if retry_attempts < 1 or retry_backoff_seconds < 0:
+            raise ValueError("retry_attempts must be >= 1 and retry_backoff_seconds >= 0")
+        self.retry_attempts = retry_attempts
+        self.retry_backoff_seconds = float(retry_backoff_seconds)
         if isinstance(batch_size, bool) or not isinstance(batch_size, int) or batch_size <= 0:
             raise ValueError("batch_size must be a positive integer")
         if (
@@ -357,15 +370,28 @@ class OpenAICompatibleEmbeddingClient:
         )
         if self.api_key is not None:
             request.add_header("Authorization", f"Bearer {self.api_key}")
-        try:
-            with self._opener(request, timeout=self.timeout_seconds) as response:
-                raw = response.read(self.max_response_bytes + 1)
-        except urllib.error.HTTPError as exc:
-            raise DenseServiceError(
-                "http_error", f"embedding service returned HTTP {exc.code}", status=exc.code
-            ) from exc
-        except (OSError, TimeoutError, urllib.error.URLError) as exc:
-            raise DenseServiceError("transport_error", str(exc)) from exc
+        # Embedding a fixed text is deterministic and side-effect free, so transient
+        # loopback/tunnel outages are retried briefly; the result is still fail-closed.
+        attempt = 0
+        while True:
+            try:
+                with self._opener(request, timeout=self.timeout_seconds) as response:
+                    raw = response.read(self.max_response_bytes + 1)
+                break
+            except urllib.error.HTTPError as exc:
+                attempt += 1
+                if attempt < self.retry_attempts and exc.code in _RETRYABLE_HTTP_STATUSES:
+                    time.sleep(self.retry_backoff_seconds * 2 ** (attempt - 1))
+                    continue
+                raise DenseServiceError(
+                    "http_error", f"embedding service returned HTTP {exc.code}", status=exc.code
+                ) from exc
+            except (OSError, TimeoutError, urllib.error.URLError) as exc:
+                attempt += 1
+                if attempt < self.retry_attempts:
+                    time.sleep(self.retry_backoff_seconds * 2 ** (attempt - 1))
+                    continue
+                raise DenseServiceError("transport_error", str(exc)) from exc
         if len(raw) > self.max_response_bytes:
             raise DenseServiceError("response_too_large", "embedding response exceeded size limit")
         try:

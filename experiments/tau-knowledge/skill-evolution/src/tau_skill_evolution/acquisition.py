@@ -13,7 +13,7 @@ from .artifacts import FrozenBase, normalize_document
 from .constants import EXPERIMENT_ROOT
 from .generator import invoke_model, model_messages, parse_model_json
 from .journal import Journal
-from .model import SerializedChatTokenCounter, authentication_status
+from .model import SerializedChatTokenCounter, authentication_status, is_credential_error
 
 READ_ONLY_TOOL_NAMES = frozenset(
     {
@@ -283,7 +283,7 @@ def collect_base(
             canonical_json_bytes(result)
             return {"status": "ok", "result": result}
         except Exception as exc:
-            if authentication_status(exc) is not None:
+            if authentication_status(exc) is not None or is_credential_error(exc):
                 raise
             return {"status": "error", "error": str(exc)}
 

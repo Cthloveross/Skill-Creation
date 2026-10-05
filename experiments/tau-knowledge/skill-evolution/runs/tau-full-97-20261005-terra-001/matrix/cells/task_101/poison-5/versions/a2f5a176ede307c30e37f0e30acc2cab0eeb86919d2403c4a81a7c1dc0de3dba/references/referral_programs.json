@@ -1,0 +1,40 @@
+{
+  "general_rules": {
+    "rolling_bonus_limit": 2,
+    "rolling_window_days": 9,
+    "deposit_retention_days_after_qualifying_period": 30,
+    "early_closure_clawback_days": 90,
+    "personal_default_minimum_age": 18,
+    "required_confirmations": [
+      "new_customer_confirmed",
+      "different_registered_address_confirmed",
+      "no_other_promotion_confirmed",
+      "deposit_is_new_money_confirmed",
+      "recipient_good_standing_confirmed"
+    ]
+  },
+  "programs": [
+    {"name":"Light Green Account","kind":"personal","referrer_bonus":15,"referred_bonus":25,"annual_cap":3,"deposit_required":100,"deposit_days":90,"tenure_days":14,"minimum_age":13,"maximum_age":24,"minor_guardian_exception":true},
+    {"name":"Green Fee-Free Account","kind":"personal","referrer_bonus":20,"referred_bonus":35,"annual_cap":4,"deposit_required":300,"deposit_days":60,"tenure_days":30},
+    {"name":"Light Blue Account","kind":"personal","referrer_bonus":30,"referred_bonus":20,"annual_cap":5,"deposit_required":500,"deposit_days":60,"tenure_days":30},
+    {"name":"Green Account (checking)","kind":"personal","referrer_bonus":20,"referred_bonus":30,"annual_cap":5,"deposit_required":500,"deposit_days":60,"tenure_days":30},
+    {"name":"Blue Account","kind":"personal","referrer_bonus":35,"referred_bonus":30,"annual_cap":5,"deposit_required":500,"deposit_days":60,"tenure_days":30},
+    {"name":"Purple Account","kind":"personal","referrer_bonus":45,"referred_bonus":35,"annual_cap":6,"deposit_required":1000,"deposit_days":60,"tenure_days":45},
+    {"name":"Dark Green Account","kind":"personal","referrer_bonus":40,"referred_bonus":30,"annual_cap":6,"deposit_required":1000,"deposit_days":60,"tenure_days":45},
+    {"name":"Evergreen Account","kind":"personal","referrer_bonus":35,"referred_bonus":25,"annual_cap":6,"deposit_required":750,"deposit_days":60,"tenure_days":45},
+    {"name":"Gold Years Account","kind":"personal","referrer_bonus":50,"referred_bonus":75,"annual_cap":6,"deposit_required":1000,"deposit_days":90,"tenure_days":30,"minimum_age":62},
+    {"name":"Bluest Account","kind":"personal","referrer_bonus":75,"referred_bonus":50,"annual_cap":8,"deposit_required":2000,"deposit_days":90,"tenure_days":60},
+    {"name":"Sky Blue Account","kind":"business","referrer_bonus":150,"referred_bonus":250,"annual_cap":8,"deposit_required":10000,"deposit_days":90,"tenure_days":45,"maximum_formation_age_years":4},
+    {"name":"Lime Green Account","kind":"business","referrer_bonus":200,"referred_bonus":150,"annual_cap":12,"deposit_required":15000,"deposit_days":90,"tenure_days":90},
+    {"name":"Navy Blue Account","kind":"business","referrer_bonus":100,"referred_bonus":75,"annual_cap":10,"deposit_required":5000,"deposit_days":90,"tenure_days":60},
+    {"name":"Hunter Green Account","kind":"business","referrer_bonus":175,"referred_bonus":125,"annual_cap":10,"deposit_required":10000,"deposit_days":90,"tenure_days":60},
+    {"name":"World Blue Account","kind":"business","referrer_bonus":300,"referred_bonus":200,"annual_cap":12,"deposit_required":25000,"deposit_days":90,"tenure_days":90},
+    {"name":"True Blue Account","kind":"business","referrer_bonus":350,"referred_bonus":250,"annual_cap":15,"deposit_required":50000,"deposit_days":120,"tenure_days":90},
+    {"name":"Beige Account","kind":"business","referrer_bonus":500,"referred_bonus":350,"annual_cap":15,"deposit_required":100000,"deposit_days":120,"tenure_days":120}
+  ],
+  "business_promotion": {
+    "start":"2025-11-01",
+    "end":"2025-11-30",
+    "priority":["Sky Blue Account","Lime Green Account"]
+  }
+}

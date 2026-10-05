@@ -1,0 +1,53 @@
+{
+  "scope": "Documented APY data for Bronze Account and Gold Plus Account reviews.",
+  "base_apy_percent": {
+    "Bronze Account": 2.0,
+    "Gold Plus Account": 6.0
+  },
+  "credit_card_bonus_percent": {
+    "Bronze Account": {
+      "Bronze Rewards Card": 0.1,
+      "Silver Rewards Card": 0.0,
+      "Gold Rewards Card": 0.25,
+      "EcoCard": 0.0,
+      "Green Rewards Card": 0.2,
+      "Crypto-Cash Back Card": 0.3
+    },
+    "Gold Plus Account": {
+      "Bronze Rewards Card": 0.15,
+      "Silver Rewards Card": 0.1,
+      "Gold Rewards Card": 0.35,
+      "Platinum Rewards Card": 0.2,
+      "Diamond Elite Card": 0.25,
+      "EcoCard": 0.1,
+      "Green Rewards Card": 0.05,
+      "Crypto-Cash Back Card": 0.3
+    }
+  },
+  "qualifying_checking_savings_pairs": [
+    {"checking": "Green Account", "savings": "Gold Account", "boost_percent": null},
+    {"checking": "Green Fee-Free Account", "savings": "Bronze Account", "boost_percent": 0.4},
+    {"checking": "Evergreen Account", "savings": "Green Account", "boost_percent": null},
+    {"checking": "Blue Account", "savings": "Silver Plus Account", "boost_percent": null},
+    {"checking": "Light Green Account", "savings": "Diamond Elite Account", "boost_percent": null},
+    {"checking": "Dark Green Account", "savings": "Bronze Account", "boost_percent": null},
+    {"checking": "Bluest Account", "savings": "Silver Account", "boost_percent": 0.45},
+    {"checking": "Purple Account", "savings": "Platinum Plus Account", "boost_percent": null},
+    {"checking": "Gold Years Account", "savings": "Gold Plus Account", "boost_percent": 0.5},
+    {"checking": "Light Green Account", "savings": "Platinum Account", "boost_percent": null},
+    {"checking": "Green Account", "savings": "Silver Account", "boost_percent": null},
+    {"checking": "Evergreen Account", "savings": "Diamond Elite Account", "boost_percent": null},
+    {"checking": "Bluest Account", "savings": "Bronze Account", "boost_percent": 0.7},
+    {"checking": "Purple Account", "savings": "Gold Account", "boost_percent": null},
+    {"checking": "Gold Years Account", "savings": "Silver Account", "boost_percent": 0.6},
+    {"checking": "Blue Account", "savings": "Platinum Account", "boost_percent": null},
+    {"checking": "Green Fee-Free Account", "savings": "Gold Plus Account", "boost_percent": 0.35},
+    {"checking": "Dark Green Account", "savings": "Platinum Plus Account", "boost_percent": null}
+  ],
+  "selection_rules": {
+    "credit_cards": "Only the highest eligible active credit-card APY bonus applies.",
+    "checking_accounts": "Only the highest applicable active checking-account APY boost applies.",
+    "cross_category": "The selected checking boost adds to the selected credit-card bonus and base APY."
+  },
+  "calculation_note": "Interest compounds daily and is credited monthly. The supplied documents do not prescribe a precise daily-rate conversion from disclosed APY; verify the account's calculation convention before using a calculated amount as an adjustment."
+}

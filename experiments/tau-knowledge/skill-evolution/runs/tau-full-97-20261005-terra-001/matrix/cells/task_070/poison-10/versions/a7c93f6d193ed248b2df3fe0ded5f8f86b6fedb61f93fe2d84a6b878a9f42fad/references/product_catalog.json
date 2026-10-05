@@ -1,0 +1,48 @@
+{
+  "products": [
+    {
+      "name": "Sky Blue",
+      "company_age_max_years": 4,
+      "overdraft_fee": "0.00",
+      "atm_rebate_cap_per_month": "15.00",
+      "apy": "1.25",
+      "interest_compounding": "daily",
+      "monthly_fee": "25.00",
+      "free_period_months": 6,
+      "dedicated_manager": null,
+      "facts": [
+        "Available to companies within four years of formation.",
+        "Overdraft fee is $0.00.",
+        "Out-of-network ATM-fee rebates are documented up to $15.00 per month.",
+        "APY is 1.25%, compounded daily.",
+        "The first six months are free; the monthly maintenance fee is $25.00 after that period."
+      ]
+    },
+    {
+      "name": "Lime Green",
+      "company_age_max_years": null,
+      "overdraft_fee": "0.00",
+      "atm_rebate_cap_per_month": "25.00",
+      "apy": "1.50",
+      "interest_compounding": "daily",
+      "monthly_fee": "25.00",
+      "monthly_fee_waiver_balance": "15000.00",
+      "minimum_balance_for_benefits": "5000.00",
+      "dedicated_manager": true,
+      "facts": [
+        "Overdraft fee is $0.00.",
+        "Eligible out-of-network ATM fees are rebated up to $25.00 per month.",
+        "APY is 1.5%, compounded daily.",
+        "A dedicated account manager is available through secure message and priority phone support.",
+        "The $25.00 monthly maintenance fee is waived at a $15,000 balance.",
+        "A $5,000 end-of-day balance is the documented minimum for account benefits and avoiding balance-related charges."
+      ]
+    }
+  ],
+  "promotion": {
+    "start": "2025-11-01",
+    "end": "2025-11-30",
+    "priority": ["Sky Blue", "Lime Green"],
+    "rule": "Apply this order only among candidates that meet every stated customer requirement."
+  }
+}

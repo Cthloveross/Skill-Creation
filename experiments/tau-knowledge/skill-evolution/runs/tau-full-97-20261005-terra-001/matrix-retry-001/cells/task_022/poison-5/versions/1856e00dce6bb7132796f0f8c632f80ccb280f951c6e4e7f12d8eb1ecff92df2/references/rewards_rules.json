@@ -1,0 +1,38 @@
+{
+  "rounding": "floor_each_transaction",
+  "auditable_statuses": ["COMPLETED", "POSTED"],
+  "card_rules": {
+    "Diamond Elite Card": {
+      "default_points_per_dollar": "5",
+      "reason": "Diamond Elite earns 5.0% cash back on eligible posted purchases."
+    },
+    "Business Platinum Rewards Card": {
+      "bonus_categories": ["travel", "software", "media"],
+      "bonus_points_per_dollar": "4",
+      "default_points_per_dollar": "1.5",
+      "non_earning_transaction_types": ["cash equivalent", "cash equivalents", "balance transfer", "balance transfers", "fee", "fees"],
+      "reason": "Business Platinum earns 4.0% on Travel, Software, and Media and 1.5% on other purchases."
+    },
+    "Business Silver Rewards Card": {
+      "bonus_categories": ["travel", "software"],
+      "bonus_points_per_dollar": "10",
+      "default_points_per_dollar": "1",
+      "standard_rate_excluded_merchants": ["Concur", "SAP Concur", "Expensify", "Navan", "Apple", "Microsoft", "Dell", "Xbox Game Pass", "PlayStation Plus", "Nintendo Switch Online", "Coursera", "Udemy", "LinkedIn Learning", "Skillshare", "Pluralsight"],
+      "promotion": {
+        "open_start": "2024-11-14",
+        "open_end": "2025-11-14",
+        "months_after_open": 6,
+        "multiplier": "2"
+      },
+      "reason": "Business Silver earns 10.0% on eligible Travel and Software purchases and 1.0% on other purchases."
+    },
+    "EcoCard": {
+      "bonus_categories": ["green", "sustainable"],
+      "bonus_points_per_dollar": "5",
+      "default_points_per_dollar": "1",
+      "standard_rate_excluded_merchants": ["Target", "Amazon", "ThredUp"],
+      "certified_ev_charging_merchants": ["Tesla Supercharger", "ChargePoint", "EVgo"],
+      "reason": "EcoCard earns 5 sustainability points per dollar for qualifying Green purchases and 1 point per dollar otherwise."
+    }
+  }
+}

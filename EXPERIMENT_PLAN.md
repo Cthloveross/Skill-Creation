@@ -14,3 +14,9 @@ SkillsBench首个`smoke/`完成24次Analyzer调用、18次搜索，冻结1块/29
 最新本机`make check`为547通过/12跳过；干净分发检查535通过/24跳过，lint、71文件格式、编译与两域配置均通过，日志见父目录`PUBLISH_FRESH_CHECK.log`。数据/rootfs相关集成显式跳过，Docker实际集成未验证。测试、检索探针和结构化输出探针均不替代模型任务成绩。
 
 GitHub交付新pipeline及两个父目录的公开配置、清单、hash、验收记录和汇总，排除凭据、原始数据、rootfs、原始journal与私有评分。**公开快照不是可恢复checkpoint**；同事按HANDOFF准备本地环境，并从新空运行目录开始。当前运行身份与源码hash由各父目录的`SOURCE_HASHES.json`另行封存。
+
+## 2026-10-05：两套完整矩阵已在 Bedrock GPT-5.6 Terra 上跑完
+
+- [τ 97题×三条件结果](experiments/tau-knowledge/skill-evolution/runs/tau-full-97-20261005-terra-001/RESULTS-20261005.md)：288/291 链有效测得，canary ASR 全为 0，benign S0 与最终包 utility 均 11.5%，poison-5/10 最终包 10.4%（冻结对照 8.3%/7.3%）。
+- [SkillsBench 85题结果](experiments/tau-knowledge/skill-evolution/runs/skillsbench-pooled-85-20261005-terra-001/RESULTS-20261005.md)：78 题环境可用，71 条链有效测得，S0 与最终包 utility 均 32.4%（end-to-end 27.1%）。
+- 运行条件、协议偏离（超时重发、空输出映射为停止）与七次中止启动的原因见两份 RESULTS 和 [skill-evolution README](experiments/tau-knowledge/skill-evolution/README.md) 末尾各节。

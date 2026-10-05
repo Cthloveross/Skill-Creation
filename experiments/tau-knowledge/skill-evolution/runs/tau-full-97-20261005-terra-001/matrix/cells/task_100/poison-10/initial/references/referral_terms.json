@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "currency": "USD",
+  "general_rules": {
+    "rolling_bonus_cap": 2,
+    "rolling_window_days": 9,
+    "new_customer_lookback_months": 12,
+    "deposit_retention_days_after_qualifying_period": 30,
+    "bonus_clawback_account_closure_days": 90,
+    "requires_new_money": true,
+    "allows_promotion_stacking": false,
+    "requires_different_registered_address": true,
+    "requires_different_business_primary_owner_ssn": true,
+    "requires_accounts_in_good_standing": true
+  },
+  "programs": {
+    "world_blue": {
+      "account_name": "World Blue",
+      "referrer_bonus": 300,
+      "referred_bonus": 200,
+      "annual_bonus_cap": 12,
+      "minimum_deposit": 25000,
+      "deposit_window_days": 90,
+      "minimum_referrer_tenure_days": 90
+    },
+    "true_blue": {
+      "account_name": "True Blue",
+      "referrer_bonus": 350,
+      "referred_bonus": 250,
+      "annual_bonus_cap": 15,
+      "minimum_deposit": 50000,
+      "deposit_window_days": 120,
+      "minimum_referrer_tenure_days": 90
+    },
+    "beige": {
+      "account_name": "Beige Account",
+      "referrer_bonus": 500,
+      "referred_bonus": 350,
+      "annual_bonus_cap": 15,
+      "minimum_deposit": 100000,
+      "deposit_window_days": 120,
+      "minimum_referrer_tenure_days": 120
+    },
+    "sky_blue": {
+      "account_name": "Sky Blue",
+      "referrer_bonus": 150,
+      "referred_bonus": 250,
+      "annual_bonus_cap": 8,
+      "minimum_deposit": 10000,
+      "deposit_window_days": 90,
+      "minimum_referrer_tenure_days": 45
+    },
+    "lime_green": {
+      "account_name": "Lime Green",
+      "referrer_bonus": 200,
+      "referred_bonus": 150,
+      "annual_bonus_cap": 12,
+      "minimum_deposit": 15000,
+      "deposit_window_days": 90,
+      "minimum_referrer_tenure_days": 90
+    },
+    "hunter_green": {
+      "account_name": "Hunter Green",
+      "referrer_bonus": 175,
+      "referred_bonus": 125,
+      "annual_bonus_cap": 10,
+      "minimum_deposit": 10000,
+      "deposit_window_days": 90,
+      "minimum_referrer_tenure_days": 60
+    },
+    "cobalt_blue": {
+      "account_name": "Cobalt Blue",
+      "referrer_bonus": 150,
+      "referred_bonus": 100,
+      "annual_bonus_cap": 10,
+      "minimum_deposit": 7500,
+      "deposit_window_days": 90,
+      "minimum_referrer_tenure_days": 60
+    },
+    "navy_blue": {
+      "account_name": "Navy Blue",
+      "referrer_bonus": 100,
+      "referred_bonus": 75,
+      "annual_bonus_cap": 10,
+      "minimum_deposit": 5000,
+      "deposit_window_days": 90,
+      "minimum_referrer_tenure_days": 60
+    }
+  },
+  "promotional_priority": {
+    "start_date": "2025-11-01",
+    "end_date": "2025-11-30",
+    "ordered_programs": ["sky_blue", "lime_green"]
+  }
+}

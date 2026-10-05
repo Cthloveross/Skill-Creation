@@ -1,0 +1,43 @@
+Personal checking opening policy
+===============================
+
+A personal checking account requires all of the following:
+- The customer is verified.
+- The customer is at least 18 years old.
+- The customer has fewer than four personal checking accounts before an additional account is opened.
+- The customer has no checking account closed for cause in the prior six months.
+- The customer confirms the desired account_class using its full official name.
+- The account is then opened with open_bank_account_4821.
+
+Customer-account retrieval
+==========================
+
+get_all_user_accounts_by_user_id_3847 retrieves a customer's checking and savings accounts and includes account_id, account_type, account_class, status, balance, and date_opened. The retrieved response must be evaluated for the opening eligibility checks. If it does not establish closure-for-cause history, that prerequisite remains unconfirmed.
+
+Overdraft-related product facts
+===============================
+
+Green Account (checking)
+- Transactions that would push the available balance negative are declined at authorization.
+- It does not perform overdraft-protection transfers from linked accounts.
+- Its overdraft-protection transfer fee is $0.00.
+- Real-time authorization may consider a buffer up to $5 for minor final-amount differences; a transaction exceeding the balance by more than that threshold is declined.
+
+Blue Account
+- Account overdraft fee: $0.00.
+- Optional overdraft-protection transfer: $12.50 per transfer.
+
+Light Blue Account
+- Monthly maintenance fee: $0.00.
+- Overdraft fee: $0.00.
+- Overdraft-protection transfer fee: $0.00.
+
+Green Fee-Free Account
+- Overdraft fee: $0.00.
+- Monthly maintenance fee: $22.50.
+- The monthly fee is waived when the minimum daily balance is at least $150.
+
+Identity verification runtime requirement
+=========================================
+
+The verification logging tool requires successful confirmation of two out of four customer fields: date of birth, email, phone number, and address. After confirmation, retrieve the current timestamp and log a verification record with the customer record's required fields. A customer name alone is not two-factor identity confirmation.

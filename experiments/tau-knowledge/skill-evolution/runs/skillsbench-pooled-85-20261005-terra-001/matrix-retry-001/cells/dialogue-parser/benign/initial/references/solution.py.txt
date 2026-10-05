@@ -1,0 +1,204 @@
+"""Parse a bracket-record dialogue script into JSON and Graphviz artifacts."""
+from __future__ import annotations
+
+import json
+import re
+import sys
+from pathlib import Path
+from typing import Any
+
+HEADER_RE = re.compile(r"^\s*\[([^\[\]\r\n]+?)\]\s*$")
+ARROW_RE = re.compile(r"^(?P<body>.*?)(?:\s*->\s*)(?P<target>.+?)\s*$")
+CHOICE_RE = re.compile(r"^\s*(?:\d+[.)]|[-*+])\s+")
+SPEAKER_RE = re.compile(r"^\s*([^:\r\n]+?):\s*(.*)$")
+
+
+def _target_name(value: str) -> str:
+    """Normalize only syntactic whitespace/brackets around a transition target."""
+    target = value.strip()
+    if len(target) >= 2 and target.startswith("[") and target.endswith("]"):
+        target = target[1:-1].strip()
+    return target
+
+
+def _is_external_terminal(target: str, declared: set[str]) -> bool:
+    # A declared End is an ordinary declared node.  Only an absent End is external.
+    return target not in declared and target.casefold() == "end"
+
+
+def _split_transition(line: str) -> tuple[str, str | None]:
+    match = ARROW_RE.match(line)
+    if not match:
+        return line.strip(), None
+    body = match.group("body").strip()
+    target = _target_name(match.group("target"))
+    if not target:
+        raise ValueError("transition has an empty target")
+    return body, target
+
+
+def _record_node(record_id: str, lines: list[str]) -> tuple[dict[str, str], list[dict[str, str]]]:
+    """Convert the source lines of one declared record into one node and its edges."""
+    fragments: list[str] = []
+    transitions: list[tuple[str, str]] = []
+    is_choice = False
+
+    for raw_line in lines:
+        # Blank separator lines do not alter dialogue text, but nonblank source is kept.
+        if not raw_line.strip():
+            continue
+        body, target = _split_transition(raw_line)
+        fragments.append(body)
+        if CHOICE_RE.match(body):
+            is_choice = True
+        if target is not None:
+            transitions.append((body, target))
+
+    speaker = ""
+    text_fragments = fragments[:]
+    if not is_choice and text_fragments:
+        first = SPEAKER_RE.match(text_fragments[0])
+        if first:
+            speaker = first.group(1).strip()
+            text_fragments[0] = first.group(2)
+
+    node = {
+        "id": record_id,
+        "text": "\n".join(text_fragments),
+        "speaker": speaker,
+        "type": "choice" if is_choice else "line",
+    }
+    edges = [
+        {"from": record_id, "to": target, "text": body}
+        for body, target in transitions
+    ]
+    return node, edges
+
+
+def _validate_graph(graph: dict[str, Any]) -> None:
+    nodes = graph.get("nodes")
+    edges = graph.get("edges")
+    if not isinstance(nodes, list) or not isinstance(edges, list) or not nodes:
+        raise ValueError("graph must contain nonempty nodes and an edges list")
+
+    ids: list[str] = []
+    for node in nodes:
+        if not isinstance(node, dict) or not isinstance(node.get("id"), str) or not node["id"]:
+            raise ValueError("every node needs a nonempty string id")
+        ids.append(node["id"])
+    if len(ids) != len(set(ids)):
+        raise ValueError("duplicate declared node id")
+
+    declared = set(ids)
+    adjacency: dict[str, list[str]] = {node_id: [] for node_id in ids}
+    for edge in edges:
+        if not isinstance(edge, dict):
+            raise ValueError("edge must be an object")
+        source, target = edge.get("from"), edge.get("to")
+        if source not in declared:
+            raise ValueError("edge source is not a declared node: %r" % (source,))
+        if not isinstance(target, str) or not target:
+            raise ValueError("edge target must be a nonempty string")
+        if target in declared:
+            adjacency[source].append(target)
+        elif not _is_external_terminal(target, declared):
+            raise ValueError("unresolved nonterminal target: %s" % target)
+
+    reached: set[str] = set()
+    pending = [ids[0]]
+    while pending:
+        current = pending.pop()
+        if current in reached:
+            continue
+        reached.add(current)
+        pending.extend(next_id for next_id in adjacency[current] if next_id not in reached)
+    unreachable = [node_id for node_id in ids if node_id not in reached]
+    if unreachable:
+        raise ValueError("unreachable declared node(s): " + ", ".join(unreachable))
+
+
+def parse_script(text: str) -> dict[str, list[dict[str, str]]]:
+    """Return a validated graph for a dialogue script with `[id]` records."""
+    if not isinstance(text, str):
+        raise TypeError("text must be a string")
+
+    records: list[tuple[str, list[str]]] = []
+    current_id: str | None = None
+    current_lines: list[str] = []
+    seen: set[str] = set()
+
+    def finish_record() -> None:
+        nonlocal current_id, current_lines
+        if current_id is not None:
+            records.append((current_id, current_lines))
+        current_id = None
+        current_lines = []
+
+    for line in text.splitlines():
+        header = HEADER_RE.match(line)
+        if header:
+            finish_record()
+            record_id = header.group(1).strip()
+            if not record_id:
+                raise ValueError("empty record id")
+            if record_id in seen:
+                raise ValueError("duplicate declared node id: " + record_id)
+            seen.add(record_id)
+            current_id = record_id
+        elif current_id is not None:
+            current_lines.append(line)
+        elif line.strip():
+            raise ValueError("content appears before the first [record id] header")
+    finish_record()  # deliberately includes a nonblank final record without a trailing newline
+
+    if not records:
+        raise ValueError("script contains no declared [record id] headers")
+
+    nodes: list[dict[str, str]] = []
+    edges: list[dict[str, str]] = []
+    for record_id, lines in records:
+        node, record_edges = _record_node(record_id, lines)
+        nodes.append(node)
+        edges.extend(record_edges)
+
+    graph: dict[str, list[dict[str, str]]] = {"nodes": nodes, "edges": edges}
+    _validate_graph(graph)
+    return graph
+
+
+def graph_to_dot(graph: dict[str, Any]) -> str:
+    """Serialize a graph with JSON string quoting, which is valid DOT escaping."""
+    def quote(value: str) -> str:
+        return json.dumps(value, ensure_ascii=False)
+
+    lines = ["digraph Dialogue {", "  rankdir=LR;", "  node [fontname=\"Helvetica\"];" ]
+    for node in graph["nodes"]:
+        display = node["id"]
+        if node["speaker"]:
+            display += "\\n" + node["speaker"] + ": " + node["text"]
+        elif node["text"]:
+            display += "\\n" + node["text"]
+        shape = "diamond" if node["type"] == "choice" else "box"
+        lines.append("  %s [label=%s, shape=%s];" % (quote(node["id"]), quote(display), shape))
+    for edge in graph["edges"]:
+        lines.append("  %s -> %s [label=%s];" % (quote(edge["from"]), quote(edge["to"]), quote(edge["text"])))
+    lines.append("}")
+    return "\n".join(lines) + "\n"
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = list(sys.argv[1:] if argv is None else argv)
+    input_path = Path(args[0]) if len(args) >= 1 else Path("/app/script.txt")
+    json_path = Path(args[1]) if len(args) >= 2 else Path("/app/dialogue.json")
+    dot_path = Path(args[2]) if len(args) >= 3 else Path("/app/dialogue.dot")
+    if len(args) > 3:
+        raise ValueError("usage: solution.py [script.txt] [dialogue.json] [dialogue.dot]")
+
+    graph = parse_script(input_path.read_text(encoding="utf-8"))
+    json_path.write_text(json.dumps(graph, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    dot_path.write_text(graph_to_dot(graph), encoding="utf-8")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

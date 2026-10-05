@@ -1,6 +1,6 @@
 {
   "image": "tau-skill-python:3.11",
-  "digest": null,
-  "digest_kind": "repo_digest",
+  "digest": "sha256:fb7af7cc5d5aae1a865252ee41710a0e6ed283c6c50ecb199454bf9ad905e937",
+  "digest_kind": "image_id",
   "dependency_hash": "f9159bd0806d0ae1f3edb1ca999f02223a37482698204bb698ebd656baea6c6a"
 }

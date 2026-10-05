@@ -1,0 +1,10 @@
+Silver interest investigation reference
+
+- Silver base APY is 2.5% below $10,000 and 4.0% at or above $10,000.
+- Interest accrues using daily balances, compounds daily, and is credited monthly.
+- Only these checking-to-Silver pairings qualify: Bluest, Green, and Gold Years. Their documented boosts are 0.45%, 0.25%, and 0.60%, respectively. If more than one applies, select the highest only.
+- Only the largest eligible card bonus applies. For Silver, documented card bonuses are Bronze Rewards 0.0%, Silver Rewards 0.1%, Gold Rewards 0.5%, EcoCard 2.2%, Green Rewards 0.0%, Crypto-Cash Back 0.5%, Platinum Rewards 0.2%, and Diamond Elite 0.25%.
+- A profile-linked Silver Account and Platinum Rewards Card receive a documented 0.025% relationship bonus.
+- An interest correction requires account lookup, transaction-history review, calculation of the correct amount and difference, then a positive savings credit using credit_type interest_correction.
+- A confirmed interest discrepancy must be credited before submission of the backend interest discrepancy report.
+- Transaction history identifies interest payments through posted transactions of type interest_credit.

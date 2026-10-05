@@ -46,3 +46,14 @@ SIDECAR_TOOLS = {
 MAX_TASK_TOOL_CALLS = 800
 
 MODEL_SEED = 20260904
+
+# Bedrock Mantle Responses models this method may use. The first entry is the
+# historical default; configs select one explicitly via provider.model.
+SUPPORTED_MODELS = ("openai.gpt-5.5", "openai.gpt-5.6-terra")
+DEFAULT_MODEL = SUPPORTED_MODELS[0]
+
+# The official tau2 bank worker runs in data/upstream/tau2-bench/.venv. The
+# original pin was 3.12.14, but uv's download index (checked 2026-10-04) does
+# not publish 3.12.14, and 3.12.12 is what is installed in that venv. The pin
+# is exact: preflight and official_runtime both compare against this tuple.
+WORKER_PYTHON_VERSION = (3, 12, 12)

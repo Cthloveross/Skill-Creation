@@ -8,7 +8,7 @@ from typing import Any
 
 from .artifacts import SkillBundle
 from .generator import GeneratorContextBudgetExhausted, public_feedback_history
-from .model import ModelClientError, authentication_status
+from .model import ModelClientError, authentication_status, is_credential_error
 from .verifier import TestSuite, VerificationReport
 
 
@@ -285,6 +285,9 @@ class EvolutionEngine:
                 stop_reason = "context_budget_exhausted"
                 break
             except Exception as exc:
+                if is_credential_error(exc):
+                    # Nothing was dispatched; abort without consuming an attempt.
+                    raise
                 attempt["status"] = "invalid"
                 attempt["failure"] = type(exc).__name__
                 if (

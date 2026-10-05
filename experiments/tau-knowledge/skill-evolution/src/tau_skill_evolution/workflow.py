@@ -4,16 +4,17 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
 from .acquisition import READ_ONLY_TOOL_NAMES, AcquisitionBudgets, collect_base
 from .artifacts import FrozenBase, atomic_json, load_base, load_bundle, seal_base, seal_bundle
+from .credentials import bearer_token_source
 from .generator import SKILL_BUNDLE_RESPONSE_FORMAT, CreationFailure, generate_initial, revise
-from .journal import Journal, UnknownOperation
+from .journal import Journal, UnknownOperation, identity_temporary
 from .model import (
+    CredentialError,
     GenerationConfig,
     ModelClientError,
     OpenAICompatibleClient,
@@ -21,6 +22,21 @@ from .model import (
 )
 from .retrieval import prepare_corpus, text_counter
 from .spec import ExperimentSpec, digest
+
+
+def _launcher_entry(path: Path) -> bool:
+    """Run-dir entries that may exist before the first checkpoint identity.
+
+    The CLI/launcher pre-create ``.lock``, ``locks/``, ``logs/`` and
+    ``launcher-*``; a concurrent process that is still creating
+    ``journal/identity.json`` leaves a ``journal/`` holding only temporaries.
+    """
+    name = path.name
+    if name in {".lock", "locks", "logs"} or name.startswith("launcher-"):
+        return True
+    if name == "journal" and path.is_dir():
+        return all(identity_temporary(entry.name) for entry in path.iterdir())
+    return False
 
 
 class Workflow:
@@ -36,9 +52,11 @@ class Workflow:
         runner: Any = None,
         demo: bool = False,
         demo_task: str | None = None,
+        interim_report: bool = True,
     ) -> None:
         self.spec = spec
         self.demo = demo
+        self.interim_report = interim_report
         self.demo_task = demo_task or spec.tasks[0]
         if demo and self.demo_task not in spec.tasks:
             raise ValueError("demo task is outside the fixed sample")
@@ -46,7 +64,7 @@ class Workflow:
         if (
             self.root.exists()
             and not (self.root / "journal" / "identity.json").exists()
-            and any(path.name != ".lock" for path in self.root.iterdir())
+            and any(not _launcher_entry(path) for path in self.root.iterdir())
         ):
             raise ValueError("run directory has no tau.skill-evolution.v1 checkpoint identity")
         self.identity = spec.identity
@@ -109,7 +127,7 @@ class Workflow:
         )
         return OpenAICompatibleClient(
             provider["api_base"],
-            api_key=os.environ[provider["api_key_env"]],
+            api_key=bearer_token_source(provider["api_key_env"]),
             config=GenerationConfig(
                 model=provider["model"],
                 transport=provider["transport"],
@@ -146,6 +164,7 @@ class Workflow:
 
         config = self.spec.worker_config()
         config["usage_path"] = str((self.root / "usage.jsonl").resolve())
+        config["worker_log_dir"] = str((self.root / "logs" / "workers").resolve())
         if self.demo:
             config["sandbox"] = {
                 "backend": "bubblewrap-demo",
@@ -221,7 +240,18 @@ class Workflow:
                 self.evolve((cell,))
                 self.evaluate((cell,))
             finally:
-                self.report()
+                if self.interim_report:
+                    self.report()
+        if not self.interim_report:
+            # Concurrent per-cell processes share one run dir; only the launcher
+            # writes report.json after every cell finished.
+            return {
+                "namespace": self.spec.namespace,
+                "stage": "run",
+                "cells": [[task, arm] for task, arm in cells],
+                "interim_report": False,
+                "run_dir": str(self.root),
+            }
         return self.report()
 
     def _create_cell(self, task: str, arm: str) -> None:
@@ -314,6 +344,10 @@ class Workflow:
                 "base_hash": base.base_hash,
                 "initial_bundle_hash": bundle.bundle_hash,
             }
+        except CredentialError:
+            # No request was sent (journal withdrew the record): abort this
+            # invocation instead of sealing a terminal CREATION_FAILED.
+            raise
         except (CreationFailure, UnknownOperation, ValueError, OSError, RuntimeError) as exc:
             record = {
                 "status": "CREATION_FAILED",

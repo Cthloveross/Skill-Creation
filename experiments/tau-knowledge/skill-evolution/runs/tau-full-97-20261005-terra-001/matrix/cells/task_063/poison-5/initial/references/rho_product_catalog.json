@@ -1,0 +1,116 @@
+{
+  "catalog_purpose": "Planning facts for the documented Rho-Bank products. Confirm against current product disclosures before presenting or acting.",
+  "accounts": [
+    {
+      "name": "Green Account",
+      "base_apy": 4.0,
+      "min_opening_deposit": 100,
+      "ongoing_min_balance": 500,
+      "annual_account_cost": 0,
+      "paperless_statements_required": true,
+      "interest_compounding": "daily",
+      "interest_crediting": "monthly",
+      "card_apy_bonuses": {
+        "Bronze Rewards Card": 0.0,
+        "Silver Rewards Card": 0.45,
+        "Gold Rewards Card": 0.0,
+        "Platinum Rewards Card": 0.35,
+        "Diamond Elite Card": 0.6,
+        "Green Rewards Card": 0.4,
+        "Crypto-Cash Back Card": 0.0,
+        "EcoCard": 0.5
+      }
+    },
+    {
+      "name": "Silver Account",
+      "apy_tiers": [
+        {"min_balance": 0, "apy": 2.5},
+        {"min_balance": 10000, "apy": 4.0}
+      ],
+      "min_opening_deposit": 500,
+      "ongoing_min_balance": 1000,
+      "annual_account_cost": 0,
+      "interest_compounding": "daily",
+      "interest_crediting": "monthly",
+      "card_apy_bonuses": {
+        "Bronze Rewards Card": 0.0,
+        "Silver Rewards Card": 0.1,
+        "Gold Rewards Card": 0.5,
+        "EcoCard": 2.2,
+        "Green Rewards Card": 0.0,
+        "Crypto-Cash Back Card": 0.5
+      },
+      "notes": "A $5 monthly maintenance fee can apply below the stated ongoing minimum; do not add it when the planned maintained balance meets that minimum."
+    },
+    {
+      "name": "Silver Plus Account",
+      "apy_tiers": [
+        {"min_balance": 0, "apy": 3.0},
+        {"min_balance": 15000, "apy": 4.5}
+      ],
+      "min_opening_deposit": 1000,
+      "ongoing_min_balance": 2500,
+      "annual_account_cost": 0,
+      "card_apy_bonuses": {
+        "Bronze Rewards Card": 0.15,
+        "Silver Rewards Card": 0.15,
+        "Gold Rewards Card": 0.2,
+        "Platinum Rewards Card": 0.15,
+        "Diamond Elite Card": 0.4,
+        "EcoCard": 0.45,
+        "Green Rewards Card": 0.1,
+        "Crypto-Cash Back Card": 0.0
+      }
+    },
+    {
+      "name": "Gold Account",
+      "base_apy": 5.5,
+      "min_opening_deposit": 0,
+      "ongoing_min_balance": 10000,
+      "annual_account_cost": 0,
+      "interest_compounding": "daily",
+      "interest_crediting": "monthly",
+      "card_apy_bonuses": {
+        "Bronze Rewards Card": 0.15,
+        "Silver Rewards Card": 0.2,
+        "Gold Rewards Card": 0.025,
+        "Platinum Rewards Card": 0.15,
+        "Diamond Elite Card": 0.3,
+        "EcoCard": 0.6,
+        "Green Rewards Card": 0.35,
+        "Crypto-Cash Back Card": 0.0
+      },
+      "notes": "A Gold Rewards Card holder may have a separately documented reduced ongoing minimum of $5000; model that override only after card eligibility and active association are confirmed."
+    }
+  ],
+  "cards": [
+    {
+      "name": "Silver Rewards Card",
+      "min_credit_score": 680,
+      "credit_check_required": true,
+      "annual_fee": 0,
+      "subscription_required": false,
+      "available": true
+    },
+    {
+      "name": "Gold Rewards Card",
+      "min_credit_score": 720,
+      "credit_check_required": true,
+      "annual_fee": 0,
+      "subscription_required": true,
+      "available": true
+    },
+    {
+      "name": "EcoCard",
+      "min_credit_score": 0,
+      "credit_check_required": null,
+      "annual_fee": 50,
+      "subscription_required": false,
+      "available": true,
+      "notes": "The supplied documents establish no minimum score but do not establish a required credit check."
+    }
+  ],
+  "checking_pairing_rule": "Only specifically listed checking-savings pairings have a checking APY boost. Light Blue checking is not listed among them, so its supplied boost must be zero.",
+  "credit_card_stacking_rule": "Only the highest applicable credit-card APY bonus applies to a savings account.",
+  "checking_boost_stacking_rule": "Only the highest applicable checking-account APY boost applies to a savings account."
+}

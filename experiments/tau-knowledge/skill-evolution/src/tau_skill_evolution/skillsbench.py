@@ -751,6 +751,33 @@ EXECUTION_TOOLS = [
 ]
 
 
+def _open_permissions(directory: Path) -> None:
+    """Make root-owned executor artifacts readable to the host via a cleanup container."""
+    directory = Path(directory)
+    if not directory.is_absolute() or not directory.is_dir() or directory.is_symlink():
+        raise ValueError("skillsbench_artifact_directory_invalid")
+    from .container import CLEANUP_IMAGE
+
+    subprocess.run(
+        [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--mount",
+            f"type=bind,src={directory},dst=/tau-artifacts",
+            CLEANUP_IMAGE,
+            "sh",
+            "-c",
+            "chmod -R a+rX /tau-artifacts",
+        ],
+        check=True,
+        capture_output=True,
+        timeout=120,
+    )
+
+
 class SkillsBenchAdapter:
     """Keep creation public and execute/oracle/evaluate in separate fresh environments."""
 
@@ -803,13 +830,14 @@ class SkillsBenchAdapter:
     def _model(self) -> Any:
         if self.model_factory is not None:
             return self.model_factory("execution")
+        from .credentials import bearer_token_source
         from .model import GenerationConfig, OpenAICompatibleClient, SerializedChatTokenCounter
 
         provider, settings = self.spec.provider_settings, self.spec.values["runtime"]
         agent = settings["controls"]["agent"]
         return OpenAICompatibleClient(
             provider["api_base"],
-            api_key=os.environ[provider["api_key_env"]],
+            api_key=bearer_token_source(provider["api_key_env"]),
             config=GenerationConfig(
                 model=provider["model"],
                 transport=provider["transport"],
@@ -959,20 +987,37 @@ class SkillsBenchAdapter:
                             )
                             selected[relative] = file
         files = []
+        excluded: list[dict[str, str]] = []
+        permissions_repaired = False
         for relative, original in sorted(selected.items()):
             if not original.exists():
                 continue
             directory = mounts["/" + relative.split("/")[0]]
-            if (
-                original.is_symlink()
-                or not original.is_file()
-                or not original.resolve().is_relative_to(directory.resolve())
-                or any(parent.is_symlink() for parent in original.parents if parent != directory)
+            if not original.resolve().is_relative_to(directory.resolve()) or any(
+                parent.is_symlink() for parent in original.parents if parent != directory
             ):
+                # A path that resolves outside its mount is a host-escape attempt.
                 raise ValueError("skillsbench_public_artifact_not_regular")
+            if original.is_symlink() or not original.is_file():
+                # The executor may leave a symlink/directory/special file at a declared
+                # artifact path. Such a path is not a public artifact; it is excluded and
+                # recorded instead of failing the whole rollout as unknown.
+                excluded.append({"path": relative, "reason": "not_regular_file"})
+                continue
             destination = files_root / _safe_path(relative)
             destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(original, destination)
+            try:
+                shutil.copyfile(original, destination)
+            except PermissionError:
+                # The executor runs as root inside the container and may leave its
+                # artifacts unreadable for the host user; open them up once via a
+                # throwaway container (the episode is over, so this changes no result).
+                if permissions_repaired:
+                    raise
+                for mount_directory in mounts.values():
+                    _open_permissions(mount_directory)
+                permissions_repaired = True
+                shutil.copyfile(original, destination)
             destination.chmod(0o444)
             files.append(
                 {
@@ -983,11 +1028,15 @@ class SkillsBenchAdapter:
                 }
             )
         snapshot_hash = _json_hash(files)
-        atomic_json(path / "snapshot.json", {"files": files, "snapshot_hash": snapshot_hash})
+        atomic_json(
+            path / "snapshot.json",
+            {"files": files, "excluded": excluded, "snapshot_hash": snapshot_hash},
+        )
         return {
             "public_artifacts_dir": str(files_root),
             "public_artifacts_hash": snapshot_hash,
             "public_artifacts": files,
+            "public_artifacts_excluded": excluded,
         }
 
     def rollout(self, bundle: Any) -> dict[str, Any]:

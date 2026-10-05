@@ -12,7 +12,14 @@ from typing import Any
 
 import yaml
 
-from .constants import BANKING_TREE, EXPERIMENT_ROOT, UPSTREAM_COMMIT, UPSTREAM_ROOT_TREE
+from .constants import (
+    BANKING_TREE,
+    DEFAULT_MODEL,
+    EXPERIMENT_ROOT,
+    SUPPORTED_MODELS,
+    UPSTREAM_COMMIT,
+    UPSTREAM_ROOT_TREE,
+)
 
 # Historical wire-format tests and sealed artifacts still use v1. New method
 # namespaces are deliberately different and cannot resume those checkpoints.
@@ -26,7 +33,8 @@ SKILLSBENCH_TASK_POPULATION_SHA256 = (
     "1afe3b8bb2a9f1055ea7a341fee43d02245cc32ce8ae5f151cee226aa3119224"
 )
 POISON_SAMPLE_SHA256 = "798669a317ab9abb8215b996a9a586af58a81b3f32b83678768f2889cd225fe6"
-BEDROCK_MODEL = "openai.gpt-5.5"
+# Default alias kept for existing imports; configs may select any SUPPORTED_MODELS entry.
+BEDROCK_MODEL = DEFAULT_MODEL
 BEDROCK_REGIONS = ("us-east-1", "us-east-2")
 LEGACY_TASKS = (
     "task_019",
@@ -129,7 +137,7 @@ class ExperimentSpec:
             raise ValueError(f"missing_region: set provider.region or {provider['region_env']}")
         if region not in BEDROCK_REGIONS:
             raise ValueError(
-                "unsupported_region: GPT-5.5 Bedrock Mantle requires us-east-1/us-east-2"
+                "unsupported_region: GPT-5.x Bedrock Mantle requires us-east-1/us-east-2"
             )
         provider.update(
             region=region, api_base=f"https://bedrock-mantle.{region}.api.aws/openai/v1"
@@ -317,12 +325,19 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
     if not retrieval["full_text"] or not retrieval["fail_closed"]:
         raise ValueError("retrieval must return full text and fail closed")
     provider = value["provider"]
-    if provider.get("model") != BEDROCK_MODEL or provider.get("transport") != "bedrock-responses":
-        raise ValueError("only GPT-5.5 (openai.gpt-5.5) via Bedrock Mantle Responses is supported")
+    if (
+        provider.get("model") not in SUPPORTED_MODELS
+        or provider.get("transport") != "bedrock-responses"
+    ):
+        raise ValueError(
+            "only Bedrock Mantle Responses models "
+            + " / ".join(SUPPORTED_MODELS)
+            + " are supported"
+        )
     if set(provider) != {"model", "transport", "region", "region_env", "api_key_env"}:
         raise ValueError("provider fields must use the Bedrock Mantle configuration")
     if provider["region"] is not None and provider["region"] not in BEDROCK_REGIONS:
-        raise ValueError("unsupported GPT-5.5 Bedrock region")
+        raise ValueError("unsupported GPT-5.x Bedrock region")
     if not all(
         isinstance(provider[name], str) and provider[name] for name in ("region_env", "api_key_env")
     ):

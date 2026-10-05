@@ -1,0 +1,153 @@
+{
+  "programs": [
+    {
+      "account": "Green Fee-Free Account",
+      "kind": "personal",
+      "referrer_bonus": 20,
+      "referred_bonus": 35,
+      "annual_cap": 4,
+      "qualifying_deposit": 300,
+      "deposit_window_days": 60,
+      "tenure_days": 30
+    },
+    {
+      "account": "Gold Years Account",
+      "kind": "personal",
+      "referrer_bonus": 50,
+      "referred_bonus": 75,
+      "annual_cap": 6,
+      "qualifying_deposit": 1000,
+      "deposit_window_days": 90,
+      "tenure_days": 30,
+      "minimum_age": 62
+    },
+    {
+      "account": "Blue Account",
+      "kind": "personal",
+      "referrer_bonus": 35,
+      "referred_bonus": 30,
+      "annual_cap": 5,
+      "qualifying_deposit": 500,
+      "deposit_window_days": 60,
+      "tenure_days": 30
+    },
+    {
+      "account": "Light Green Account",
+      "kind": "personal",
+      "referrer_bonus": 15,
+      "referred_bonus": 25,
+      "annual_cap": 3,
+      "qualifying_deposit": 100,
+      "deposit_window_days": 90,
+      "tenure_days": 14,
+      "minimum_age": 13,
+      "maximum_age": 24,
+      "minor_guardian_required": true
+    },
+    {
+      "account": "Dark Green Account",
+      "kind": "personal",
+      "referrer_bonus": 40,
+      "referred_bonus": 30,
+      "annual_cap": 6,
+      "qualifying_deposit": 1000,
+      "deposit_window_days": 60,
+      "tenure_days": 45
+    },
+    {
+      "account": "Green Account (checking)",
+      "kind": "personal",
+      "referrer_bonus": 20,
+      "referred_bonus": 30,
+      "annual_cap": 5,
+      "qualifying_deposit": 500,
+      "deposit_window_days": 60,
+      "tenure_days": 30
+    },
+    {
+      "account": "Light Blue Account",
+      "kind": "personal",
+      "referrer_bonus": 30,
+      "referred_bonus": 20,
+      "annual_cap": 5,
+      "qualifying_deposit": 500,
+      "deposit_window_days": 60,
+      "tenure_days": 30
+    },
+    {
+      "account": "Bluest Account",
+      "kind": "personal",
+      "referrer_bonus": 75,
+      "referred_bonus": 50,
+      "annual_cap": 8,
+      "qualifying_deposit": 2000,
+      "deposit_window_days": 90,
+      "tenure_days": 60
+    },
+    {
+      "account": "Sky Blue",
+      "kind": "business",
+      "referrer_bonus": 150,
+      "referred_bonus": 250,
+      "annual_cap": 8,
+      "qualifying_deposit": null,
+      "deposit_window_days": null,
+      "tenure_days": null,
+      "maximum_business_age_years": 4,
+      "promotion_priority": 1
+    },
+    {
+      "account": "Lime Green",
+      "kind": "business",
+      "referrer_bonus": 200,
+      "referred_bonus": 150,
+      "annual_cap": 12,
+      "qualifying_deposit": 15000,
+      "deposit_window_days": 90,
+      "tenure_days": 90,
+      "promotion_priority": 2
+    },
+    {
+      "account": "True Blue",
+      "kind": "business",
+      "referrer_bonus": 350,
+      "referred_bonus": 250,
+      "annual_cap": 15,
+      "qualifying_deposit": 50000,
+      "deposit_window_days": 120,
+      "tenure_days": 90
+    },
+    {
+      "account": "World Blue",
+      "kind": "business",
+      "referrer_bonus": 300,
+      "referred_bonus": 200,
+      "annual_cap": 12,
+      "qualifying_deposit": 25000,
+      "deposit_window_days": 90,
+      "tenure_days": 90
+    },
+    {
+      "account": "Beige Account",
+      "kind": "business",
+      "referrer_bonus": 500,
+      "referred_bonus": 350,
+      "annual_cap": 15,
+      "qualifying_deposit": 100000,
+      "deposit_window_days": 120,
+      "tenure_days": 120,
+      "requires_enterprise": true
+    }
+  ],
+  "business_promotion": {
+    "starts": "2025-11-01",
+    "ends": "2025-11-30",
+    "ordered_accounts": ["Sky Blue", "Lime Green"]
+  },
+  "shared_terms": {
+    "rolling_bonus_cap": 2,
+    "rolling_window_days": 9,
+    "deposit_retention_days_after_qualification_period": 30,
+    "clawback_account_closure_days": 90
+  }
+}

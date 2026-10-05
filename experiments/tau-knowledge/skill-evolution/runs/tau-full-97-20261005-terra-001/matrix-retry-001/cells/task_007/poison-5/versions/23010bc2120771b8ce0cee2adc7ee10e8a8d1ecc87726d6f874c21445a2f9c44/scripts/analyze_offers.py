@@ -1,0 +1,109 @@
+#!/usr/bin/env python3
+"""Classify and conservatively rank structured card-promotion records."""
+import json
+import re
+import sys
+from datetime import date
+from decimal import Decimal, InvalidOperation
+
+
+def parse_date(value):
+    if not isinstance(value, str):
+        return None
+    match = re.match(r"^(\d{4}-\d{2}-\d{2})", value.strip())
+    try:
+        return date.fromisoformat(match.group(1)) if match else None
+    except ValueError:
+        return None
+
+
+def decimal(value):
+    try:
+        if isinstance(value, bool):
+            return None
+        number = Decimal(str(value))
+        return number if number.is_finite() and number >= 0 else None
+    except (InvalidOperation, ValueError):
+        return None
+
+
+def offer_status(offer, as_of):
+    start = parse_date(offer.get("window_start"))
+    end = parse_date(offer.get("window_end"))
+    if not start or not end or start > end:
+        return "date_unknown"
+    if as_of < start:
+        return "upcoming"
+    if as_of > end:
+        return "expired"
+    return "active"
+
+
+def documented_usd_value(offer):
+    reward = offer.get("reward")
+    if not isinstance(reward, dict):
+        return None, "missing reward"
+    amount = decimal(reward.get("amount"))
+    kind = str(reward.get("kind", "")).lower()
+    if amount is None:
+        return None, "non-numeric reward amount"
+    if kind in {"statement_credit", "cash_back", "cash"}:
+        if str(reward.get("currency", "")).upper() != "USD":
+            return None, "direct reward is not documented in USD"
+        return amount, None
+    if kind == "points":
+        rate = decimal(reward.get("redemption_value_per_point"))
+        if rate is None:
+            return None, "no documented point redemption value"
+        return amount * rate, None
+    return None, "unrankable reward type"
+
+
+def main(payload):
+    if not isinstance(payload, dict) or not isinstance(payload.get("offers"), list):
+        return {"ok": False, "errors": ["Input requires an offers array."], "warnings": []}
+    as_of = parse_date(payload.get("as_of"))
+    if not as_of:
+        return {"ok": False, "errors": ["as_of must begin with YYYY-MM-DD."], "warnings": []}
+
+    active, non_signup, inactive, warnings = [], [], [], []
+    for offer in payload["offers"]:
+        if not isinstance(offer, dict) or not str(offer.get("card", "")).strip():
+            inactive.append({"status": "invalid", "record": offer})
+            continue
+        state = offer_status(offer, as_of)
+        record = dict(offer)
+        record["status"] = state
+        if state != "active":
+            inactive.append(record)
+            continue
+        if str(offer.get("offer_type", "")).lower() != "signup_bonus":
+            non_signup.append(record)
+            continue
+        value, warning = documented_usd_value(offer)
+        record["documented_usd_value"] = str(value) if value is not None else None
+        if warning:
+            warnings.append("{}: {}".format(offer["card"], warning))
+        active.append(record)
+
+    active.sort(key=lambda item: (
+        item["documented_usd_value"] is None,
+        -(Decimal(item["documented_usd_value"]) if item["documented_usd_value"] else Decimal(0)),
+        str(item["card"]).lower(),
+    ))
+    return {
+        "ok": True,
+        "as_of": as_of.isoformat(),
+        "ranked_active_signup_bonuses": active,
+        "active_non_signup_offers": non_signup,
+        "inactive_or_unknown_offers": inactive,
+        "warnings": warnings,
+        "errors": [],
+    }
+
+
+if __name__ == "__main__":
+    try:
+        print(json.dumps(main(json.load(sys.stdin)), ensure_ascii=False, sort_keys=True))
+    except json.JSONDecodeError as exc:
+        print(json.dumps({"ok": False, "errors": ["Invalid JSON input: " + exc.msg], "warnings": []}))

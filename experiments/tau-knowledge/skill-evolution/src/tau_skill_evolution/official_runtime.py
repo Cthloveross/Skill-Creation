@@ -26,6 +26,7 @@ from .constants import (
     SIDECAR_TOOLS,
     TASKS_ROOT,
     UPSTREAM_ROOT,
+    WORKER_PYTHON_VERSION,
 )
 from .model import ChatTokenCounter, ModelClient
 from .runtime_controls import RuntimeControls
@@ -56,9 +57,10 @@ def _runtime_upstream_root() -> Path:
 def _require_pinned_interpreter() -> None:
     expected_prefix = (_runtime_upstream_root() / ".venv").resolve()
     observed_prefix = Path(sys.prefix).resolve()
-    if sys.version_info[:3] != (3, 12, 14) or observed_prefix != expected_prefix:
+    if tuple(sys.version_info[:3]) != WORKER_PYTHON_VERSION or observed_prefix != expected_prefix:
+        pinned = ".".join(str(part) for part in WORKER_PYTHON_VERSION)
         raise OfficialRuntimeError(
-            "official_runtime must run with the frozen tau2 Python 3.12.14 "
+            f"official_runtime must run with the frozen tau2 Python {pinned} "
             f"environment at {expected_prefix}; observed {sys.version.split()[0]} "
             f"at {observed_prefix}"
         )
@@ -182,9 +184,18 @@ def _complete(
         if key in result
     }
     usage = result.get("usage", getattr(client, "last_usage", None))
+    content = result.get("content")
+    if not calls and (content is None or not str(content).strip()):
+        # GPT-5.6 Terra returns a completed response with no output when it has
+        # nothing further to say (observed after transfer_to_human_agents). The
+        # official runtime rejects a message with neither content nor tool calls, and
+        # its own semantics for "nothing more to say" is the stop signal, so the
+        # empty output is mapped to it; the adaptation is recorded in private raw data.
+        content = "###STOP###"
+        raw["empty_output_as_stop"] = True
     return AssistantMessage(
         role="assistant",
-        content=result.get("content"),
+        content=content,
         tool_calls=calls or None,
         usage=usage,
         raw_data=raw or None,

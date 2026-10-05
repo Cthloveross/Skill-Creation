@@ -1,0 +1,181 @@
+{
+  "catalog_note": "Documented product terms for comparison only. Confirm current disclosures, customer eligibility, and unresolved source conflicts before an action.",
+  "savings_products": [
+    {
+      "name": "Bronze Account",
+      "opening_minimum": 0,
+      "ongoing_minimum": 0,
+      "tiers": [{"minimum_balance": 0, "apy": 2.0}],
+      "annual_non_card_fee": 0,
+      "eligibility": "unknown"
+    },
+    {
+      "name": "Silver Account",
+      "opening_minimum": 500,
+      "ongoing_minimum": 1000,
+      "tiers": [
+        {"minimum_balance": 0, "apy": 2.5},
+        {"minimum_balance": 10000, "apy": 4.0}
+      ],
+      "annual_non_card_fee": 0,
+      "eligibility": "unknown"
+    },
+    {
+      "name": "Silver Plus Account",
+      "opening_minimum": 1000,
+      "ongoing_minimum": 2500,
+      "tiers": [
+        {"minimum_balance": 0, "apy": 3.0},
+        {"minimum_balance": 15000, "apy": 4.5}
+      ],
+      "annual_non_card_fee": 0,
+      "eligibility": "unknown"
+    },
+    {
+      "name": "Gold Account",
+      "opening_minimum": 5000,
+      "ongoing_minimum": 10000,
+      "tiers": [{"minimum_balance": 0, "apy": 5.5}],
+      "annual_non_card_fee": 0,
+      "eligibility": "unknown"
+    },
+    {
+      "name": "Gold Plus Account",
+      "opening_minimum": 10000,
+      "ongoing_minimum": 25000,
+      "tiers": [{"minimum_balance": 0, "apy": 6.0}],
+      "annual_non_card_fee": 0,
+      "eligibility": "unknown"
+    },
+    {
+      "name": "Platinum Account",
+      "opening_minimum": 25000,
+      "ongoing_minimum": 50000,
+      "tiers": [{"minimum_balance": 0, "apy": 6.5}],
+      "annual_non_card_fee": 0,
+      "eligibility": "unknown"
+    },
+    {
+      "name": "Platinum Plus Account",
+      "opening_minimum": 50000,
+      "ongoing_minimum": 100000,
+      "tiers": [{"minimum_balance": 0, "apy": 7.0}],
+      "annual_non_card_fee": 0,
+      "eligibility": "unknown"
+    },
+    {
+      "name": "Diamond Elite Account",
+      "opening_minimum": 100000,
+      "ongoing_minimum": 250000,
+      "tiers": [{"minimum_balance": 0, "apy": 7.5}],
+      "annual_non_card_fee": 0,
+      "eligibility": "unknown"
+    }
+  ],
+  "credit_cards": [
+    {
+      "name": "Bronze Rewards Card",
+      "annual_fee": 0,
+      "eligibility": "unknown",
+      "bonuses": {
+        "Bronze Account": 0.1,
+        "Silver Account": 0.0,
+        "Silver Plus Account": 0.15,
+        "Gold Account": 0.15,
+        "Gold Plus Account": 0.15,
+        "Platinum Account": 0.0,
+        "Platinum Plus Account": 0.0,
+        "Diamond Elite Account": 0.0
+      }
+    },
+    {
+      "name": "Silver Rewards Card",
+      "annual_fee": 0,
+      "eligibility": "unknown",
+      "bonuses": {
+        "Bronze Account": 0.0,
+        "Silver Account": 0.1,
+        "Silver Plus Account": 0.15,
+        "Gold Account": 0.2,
+        "Gold Plus Account": 0.1,
+        "Platinum Account": 0.0,
+        "Platinum Plus Account": 0.0,
+        "Diamond Elite Account": 0.0
+      }
+    },
+    {
+      "name": "Gold Rewards Card",
+      "annual_fee": 0,
+      "eligibility": "unknown",
+      "bonuses": {
+        "Bronze Account": 0.25,
+        "Silver Account": 0.5,
+        "Silver Plus Account": 0.2,
+        "Gold Account": 0.025,
+        "Gold Plus Account": 0.35,
+        "Platinum Account": 0.15,
+        "Platinum Plus Account": 0.1,
+        "Diamond Elite Account": 0.0
+      }
+    },
+    {
+      "name": "EcoCard",
+      "annual_fee": 50,
+      "eligibility": "unknown",
+      "bonuses": {
+        "Bronze Account": 0.0,
+        "Silver Account": 2.2,
+        "Silver Plus Account": 0.45,
+        "Gold Account": 0.6,
+        "Gold Plus Account": 0.1,
+        "Platinum Account": 0.0,
+        "Platinum Plus Account": 0.05,
+        "Diamond Elite Account": 0.0
+      }
+    },
+    {
+      "name": "Platinum Rewards Card",
+      "annual_fee": 200,
+      "eligibility": "unknown",
+      "bonuses": {
+        "Silver Account": 0.2,
+        "Silver Plus Account": 0.15,
+        "Gold Account": 0.15,
+        "Gold Plus Account": 0.2,
+        "Platinum Account": 0.25,
+        "Platinum Plus Account": 0.4,
+        "Diamond Elite Account": 0.1
+      }
+    },
+    {
+      "name": "Diamond Elite Card",
+      "annual_fee": 495,
+      "eligibility": "unknown",
+      "bonuses": {
+        "Silver Account": 0.25,
+        "Silver Plus Account": 0.4,
+        "Gold Account": 0.3,
+        "Gold Plus Account": 0.25,
+        "Platinum Account": 0.35,
+        "Platinum Plus Account": 0.6,
+        "Diamond Elite Account": 0.5
+      }
+    },
+    {
+      "name": "Crypto-Cash Back Card",
+      "annual_fee": 75,
+      "eligibility": "unknown",
+      "bonuses": {
+        "Bronze Account": 0.3,
+        "Silver Account": 0.5,
+        "Silver Plus Account": 0.0,
+        "Gold Account": 0.0,
+        "Gold Plus Account": 0.3,
+        "Platinum Account": 0.0,
+        "Platinum Plus Account": 0.25,
+        "Diamond Elite Account": 0.15
+      }
+    }
+  ],
+  "checking_pairing_note": "Only explicitly documented checking/savings pairings receive a checking APY boost. Light Blue checking is not a listed qualifying pairing."
+}

@@ -171,7 +171,7 @@ print(json.dumps({"normal_reward":scored.reward,"premature_reward":failed.reward
 def _pinned(program: str) -> dict:
     python = UPSTREAM_ROOT / ".venv/bin/python"
     if not python.is_file():
-        pytest.skip("pinned tau2 Python 3.12.14 is unavailable")
+        pytest.skip("pinned tau2 worker Python is unavailable")
     env = os.environ.copy()
     env["R2SP_TAU_UPSTREAM_ROOT"] = str(UPSTREAM_ROOT.resolve())
     env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2] / "src")
@@ -195,7 +195,7 @@ def _pinned(program: str) -> dict:
 def test_pinned_public_schemas_do_not_need_private_tasks_or_model_calls() -> None:
     python = UPSTREAM_ROOT / ".venv/bin/python"
     if not python.is_file():
-        pytest.skip("pinned tau2 Python 3.12.14 is unavailable")
+        pytest.skip("pinned tau2 worker Python is unavailable")
     service = bank.Bank(
         python,
         UPSTREAM_ROOT,
@@ -607,7 +607,7 @@ config = {
 clients = []
 class Client:
     def __init__(self, endpoint, *, config, api_key, timeout_seconds, **kwargs):
-        assert api_key == "offline-dummy-secret"
+        assert callable(api_key) and api_key() == "offline-dummy-secret"
         self.config = config
         clients.append(self)
 def build(task_id, toolkit, **kwargs):

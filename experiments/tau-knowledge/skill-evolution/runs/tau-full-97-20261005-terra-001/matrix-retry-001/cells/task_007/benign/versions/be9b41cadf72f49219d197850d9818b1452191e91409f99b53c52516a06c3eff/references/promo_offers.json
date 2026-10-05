@@ -1,0 +1,74 @@
+{
+  "points_value_rules": {
+    "sustainability_points": {
+      "usd_per_point": "0.01",
+      "source_document_id": "doc_credit_cards_credit_cards_(general)_006"
+    }
+  },
+  "signup_bonus_offers": [
+    {
+      "id": "ecocard_sustainability_signup_bonus",
+      "card": "EcoCard",
+      "window_start": "2025-08-01",
+      "window_end": "2025-12-15",
+      "requires_invitation": false,
+      "bonus": {"amount": 2000, "unit": "sustainability_points", "estimated_usd_value": "20.00"},
+      "qualifying_spend_usd": "5000.00",
+      "qualification_period": "first 1 month of account opening",
+      "requirements": [
+        "New customer",
+        "Eligible purchases totaling at least $5,000 within the first month",
+        "Account open and in good standing when the bonus is awarded"
+      ],
+      "exclusions": ["Returns", "Chargebacks", "Disputed transactions", "Balance transfers", "Cash equivalents", "Fees"],
+      "posting": "Bonus points typically post after the qualifying period closes and transactions have cleared.",
+      "source_document_ids": ["doc_credit_cards_ecocard_009", "doc_credit_cards_credit_cards_(general)_006"]
+    },
+    {
+      "id": "silver_rewards_statement_credit_signup_bonus",
+      "card": "Silver Rewards Card",
+      "window_start": "2025-01-01",
+      "window_end": "2025-06-30",
+      "requires_invitation": false,
+      "bonus": {"amount": 500, "unit": "statement_credit", "estimated_usd_value": "500.00"},
+      "qualifying_spend_usd": "2000.00",
+      "qualification_period": "first 1 month after account opening",
+      "requirements": ["New account opened during the offer window", "Qualifying posted net purchases", "Account open and in good standing through fulfillment"],
+      "exclusions": ["Returns and credits reduce qualifying spend"],
+      "posting": "$500 typically posts within two billing cycles after the spending requirement is met.",
+      "source_document_ids": ["doc_credit_cards_silver_rewards_card_010"]
+    },
+    {
+      "id": "diamond_elite_invitation_bonus",
+      "card": "Diamond Elite Card",
+      "window_start": "2025-11-01",
+      "window_end": "2026-01-31",
+      "requires_invitation": true,
+      "bonus": {"amount": 5000, "unit": "statement_credit", "estimated_usd_value": "5000.00"},
+      "qualifying_spend_usd": "50000.00",
+      "qualification_period": "1 month after account opening or the date specified in the invitation",
+      "requirements": ["Accept an invitation during the promo window", "Eligible purchases totaling $50,000", "Account remains in good standing"],
+      "exclusions": ["Only eligible purchases count", "Returns reduce qualifying spend"],
+      "posting": "Statement credit posts after qualification review; allow one billing cycle.",
+      "source_document_ids": ["doc_credit_cards_diamond_elite_card_009", "doc_credit_cards_diamond_elite_card_001"]
+    }
+  ],
+  "non_bonus_promotions": [
+    {
+      "card": "Bronze Rewards Card",
+      "window_start": "2025-09-01",
+      "window_end": "2026-02-28",
+      "promotion": "0% APR on carried balances for the first 12 months from account opening",
+      "reason_not_signup_bonus": "A financing-rate promotion, not a points or cash-back sign-up bonus.",
+      "source_document_ids": ["doc_credit_cards_bronze_rewards_card_008"]
+    },
+    {
+      "card": "Silver Rewards Card",
+      "window_start": "2025-10-15",
+      "window_end": "2025-12-31",
+      "promotion": "0% APR on carried balances for the first year from account opening",
+      "reason_not_signup_bonus": "A financing-rate promotion, not a points or cash-back sign-up bonus.",
+      "source_document_ids": ["doc_credit_cards_silver_rewards_card_009"]
+    }
+  ]
+}

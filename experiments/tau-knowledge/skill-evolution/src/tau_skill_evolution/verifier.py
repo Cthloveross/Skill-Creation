@@ -16,7 +16,7 @@ from tau_skill_evolution.core._canonical import freeze_json, thaw_json
 from .constants import EXPERIMENT_ROOT
 from .container import ProgramResult, _safe_path
 from .generator import parse_model_json
-from .model import ModelClientError, authentication_status
+from .model import ModelClientError, authentication_status, is_credential_error
 
 
 def _hash(value: Any) -> str:
@@ -293,8 +293,13 @@ class SurrogateVerifier:
                     program_error=program_error,
                 )
             except Exception as exc:
-                if authentication_status(exc) is not None or (
-                    self.journal is not None and self.journal.authentication_failure() is not None
+                if (
+                    authentication_status(exc) is not None
+                    or is_credential_error(exc)
+                    or (
+                        self.journal is not None
+                        and self.journal.authentication_failure() is not None
+                    )
                 ):
                     raise
                 # Optional diagnosis cannot erase an actual measured failure.
@@ -325,8 +330,13 @@ class SurrogateVerifier:
                 # diagnosis/repair cycle on this same public trace.
                 return repaired
             except Exception as exc:
-                if authentication_status(exc) is not None or (
-                    self.journal is not None and self.journal.authentication_failure() is not None
+                if (
+                    authentication_status(exc) is not None
+                    or is_credential_error(exc)
+                    or (
+                        self.journal is not None
+                        and self.journal.authentication_failure() is not None
+                    )
                 ):
                     raise
                 return replace(

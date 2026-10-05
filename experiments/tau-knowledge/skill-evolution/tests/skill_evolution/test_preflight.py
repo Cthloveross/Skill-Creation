@@ -11,6 +11,7 @@ from dataclasses import replace
 import pytest
 from tau_skill_evolution import cli
 from tau_skill_evolution import preflight as admission
+from tau_skill_evolution.constants import WORKER_PYTHON_VERSION
 from tau_skill_evolution.container import DockerRunner
 from tau_skill_evolution.spec import ExperimentSpec, load_spec
 
@@ -56,7 +57,7 @@ def infrastructure(tmp_path, monkeypatch):
         return None if state["fault"] == "cli_missing" else "/usr/bin/docker"
 
     def official_python(command, **kwargs):
-        return json.dumps([[3, 12, 14], str(spec.upstream / ".venv")])
+        return json.dumps([list(WORKER_PYTHON_VERSION), str(spec.upstream / ".venv")])
 
     def process(command, **kwargs):
         state["requests"].append(command)

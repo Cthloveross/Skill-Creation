@@ -290,8 +290,12 @@ def test_only_requested_bedrock_model_and_valid_settings(settings):
     [
         (TimeoutError("private-api-secret unknown result"), "transport_error"),
         (b"not-json", "invalid_json"),
-        ({"status": "failed"}, "invalid_response"),
-        (_response([]), "invalid_response"),
+        # A server-reported "failed" status is a provider failure without a sample and is
+        # retried (see test_model_retry.py); an unknown status stays invalid and unretried.
+        ({"status": "weird"}, "invalid_response"),
+        # An empty output list is a provider failure and is retried (test_model_retry.py);
+        # a non-list output stays invalid and unretried.
+        ({"status": "completed", "output": "not-a-list", "usage": {}}, "invalid_response"),
         (
             _response([{"type": "message", "role": "assistant", "content": ["bad"]}]),
             "invalid_response",
@@ -302,7 +306,10 @@ def test_unknown_or_invalid_response_is_never_retried(raw, code):
     client, requests = _client(raw=raw)
     with pytest.raises(ModelClientError) as error:
         client.complete([{"role": "user", "content": "hello"}])
-    assert error.value.code == code and len(requests) == 1
+    # Timeouts get two bounded re-sends (operator decision 2026-10-05, see README);
+    # malformed/unknown responses are still never re-sent.
+    expected_requests = 1 + client.timeout_retry_attempts if isinstance(raw, TimeoutError) else 1
+    assert error.value.code == code and len(requests) == expected_requests
     assert "private-api-secret" not in str(error.value)
     assert client.usage_history == ()
 

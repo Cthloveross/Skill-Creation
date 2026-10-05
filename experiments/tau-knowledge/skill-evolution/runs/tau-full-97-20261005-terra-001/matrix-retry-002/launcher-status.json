@@ -1,0 +1,40 @@
+{
+  "cells": {
+    "task_073|poison-10": {
+      "account": "011550804606",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T11:31:09Z",
+      "pid": 2586719,
+      "started_at": "2026-10-05T10:52:21Z"
+    },
+    "task_081|benign": {
+      "account": "050918576103",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T10:52:41Z",
+      "pid": 2589897,
+      "started_at": "2026-10-05T10:52:25Z"
+    },
+    "task_081|poison-10": {
+      "account": "058264330796",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T10:52:40Z",
+      "pid": 2592319,
+      "started_at": "2026-10-05T10:52:33Z"
+    },
+    "task_081|poison-5": {
+      "account": "058264130246",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T10:52:38Z",
+      "pid": 2591226,
+      "started_at": "2026-10-05T10:52:29Z"
+    }
+  },
+  "config": "/local/home/tianrgua/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/tau-full-97-20261005-terra-001/config.yaml",
+  "experiment": "tau",
+  "failed": 0,
+  "finished": 4,
+  "running": 0,
+  "started_at": "2026-10-05T10:52:21Z",
+  "total": 4,
+  "updated_at": "2026-10-05T11:31:09Z"
+}

@@ -1,0 +1,37 @@
+{
+  "global_rules": {
+    "rolling_bonus_limit": 2,
+    "rolling_window_days": 9,
+    "deposit_must_be_new_money": true,
+    "post_qualification_hold_days": 30,
+    "possible_clawback_if_closed_within_days": 90,
+    "requires_new_customer": true,
+    "requires_separate_address": true,
+    "requires_different_business_primary_owner": true,
+    "one_referral_code_per_new_account": true,
+    "no_stacking_with_new_account_promotions": true
+  },
+  "business_account_opening_prerequisites": [
+    "customer is verified",
+    "at least one personal checking account is OPEN",
+    "existing checking balance is at least $500",
+    "no accounts have status CLOSED",
+    "fewer than six business checking accounts"
+  ],
+  "programs": [
+    {"name":"Navy Blue","referrer_bonus":100,"referred_bonus":75,"annual_cap":10,"required_deposit":5000,"deposit_window_days":90,"min_tenure_days":60,"sources":["doc_business_checking_accounts_navy_blue_001"]},
+    {"name":"Cobalt Blue","referrer_bonus":150,"referred_bonus":100,"annual_cap":10,"required_deposit":7500,"deposit_window_days":90,"min_tenure_days":60,"sources":["doc_business_checking_accounts_cobalt_blue_001","doc_business_checking_accounts_cobalt_blue_005"]},
+    {"name":"Hunter Green","referrer_bonus":175,"referred_bonus":125,"annual_cap":10,"required_deposit":10000,"deposit_window_days":90,"min_tenure_days":60,"sources":["doc_business_checking_accounts_hunter_green_001"]},
+    {"name":"Lime Green","referrer_bonus":200,"referred_bonus":150,"annual_cap":12,"required_deposit":15000,"deposit_window_days":90,"min_tenure_days":90,"sources":["doc_business_checking_accounts_lime_green_003"]},
+    {"name":"World Blue","referrer_bonus":300,"referred_bonus":200,"annual_cap":12,"required_deposit":25000,"deposit_window_days":90,"min_tenure_days":90,"payment_timing":"typically 7-10 business days after qualification","sources":["doc_business_checking_accounts_world_blue_001","doc_business_checking_accounts_world_blue_007"]},
+    {"name":"True Blue","referrer_bonus":350,"referred_bonus":250,"annual_cap":15,"required_deposit":50000,"deposit_window_days":120,"min_tenure_days":90,"sources":["doc_business_checking_accounts_true_blue_002"]},
+    {"name":"Beige Account","referrer_bonus":500,"referred_bonus":350,"annual_cap":15,"required_deposit":100000,"deposit_window_days":120,"min_tenure_days":120,"sources":["doc_business_checking_accounts_beige_012"]},
+    {"name":"Sky Blue","referrer_bonus":150,"referred_bonus":250,"annual_cap":8,"required_deposit":null,"deposit_window_days":null,"min_tenure_days":null,"terms_complete":false,"sources":["doc_business_checking_accounts_sky_blue_001"]}
+  ],
+  "promotion": {
+    "starts":"2025-11-01",
+    "ends":"2025-11-30",
+    "priority_order":["Sky Blue","Lime Green"],
+    "condition":"Apply only among accounts that meet every stated customer requirement."
+  }
+}

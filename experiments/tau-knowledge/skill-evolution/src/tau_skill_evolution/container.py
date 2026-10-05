@@ -252,9 +252,52 @@ def _remove_staging(path: str) -> None:
             return
         except RetryCleanup:
             continue
+        except PermissionError as exc:
+            # Official graders run as root and may leave root-owned subdirectories in
+            # the bind-mounted staging area; the host user can neither chmod nor unlink
+            # those, so delete them from inside a throwaway container instead.
+            _privileged_cleanup(root, exc)
+            try:
+                shutil.rmtree(root)
+                return
+            except OSError as retry_exc:
+                raise ContainerUnavailable(
+                    f"staging_cleanup_failed:{root}:{retry_exc}"
+                ) from retry_exc
         except OSError as exc:
             raise ContainerUnavailable(f"staging_cleanup_failed:{root}:{exc}") from exc
     raise ContainerUnavailable(f"staging_cleanup_failed:{root}:permission_repair_limit")
+
+
+CLEANUP_IMAGE = "busybox:stable"
+
+
+def _privileged_cleanup(root: Path, cause: BaseException) -> None:
+    """Remove root-owned staging contents via a container; fail closed otherwise."""
+    if (
+        not root.is_absolute()
+        or not root.is_dir()
+        or root.is_symlink()
+        or root == Path(root.anchor)
+    ):
+        raise ContainerUnavailable(f"staging_cleanup_failed:{root}:{cause}") from cause
+    command = [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--mount",
+        f"type=bind,src={root},dst=/tau-cleanup",
+        CLEANUP_IMAGE,
+        "sh",
+        "-c",
+        "rm -rf /tau-cleanup/* /tau-cleanup/.[!.]* /tau-cleanup/..?* 2>/dev/null; true",
+    ]
+    try:
+        subprocess.run(command, check=True, capture_output=True, timeout=120)
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise ContainerUnavailable(f"staging_cleanup_failed:{root}:{cause}") from exc
 
 
 class DockerRunner:

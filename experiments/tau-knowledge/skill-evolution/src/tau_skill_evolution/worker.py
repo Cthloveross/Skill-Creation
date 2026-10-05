@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import json
-import os
 import signal
 import sys
+import traceback
 import uuid
 from collections.abc import Mapping
 from contextlib import ExitStack
@@ -26,6 +26,7 @@ from tau_skill_evolution.sidecar import DualCommandSidecar
 from .artifacts import PROTOCOL, SkillBundle
 from .bank import READ_ONLY_TOOLS
 from .container import DockerRunner, ImageLock, SkillEpisode
+from .credentials import bearer_token_source
 
 
 class SkillKnowledgeTools(runtime.KnowledgeTools):
@@ -88,9 +89,10 @@ def _runtime(
     controls = RuntimeControls.from_dict(config["runtime_controls"])
     if config["transport"] != "bedrock-responses" or config["user_model"] != config["model"]:
         raise ValueError("bank participants require the same Bedrock Responses model")
-    api_key = os.environ.get(config["api_key_env"])
-    if not api_key:
-        raise ValueError("required Bedrock API key is missing")
+    try:
+        api_key = bearer_token_source(config["api_key_env"])
+    except ValueError:
+        raise ValueError("required Bedrock API key is missing") from None
 
     def client(settings: Any, role: str) -> OpenAICompatibleClient:
         return OpenAICompatibleClient(
@@ -246,17 +248,19 @@ def execute(
         )
         judge = None
         if needs_judge:
-            if config.get("judge_model", config["model"]) != "openai.gpt-5.5":
-                raise ValueError("private NL judge must use the declared GPT-5.5 adaptation")
+            if config.get("judge_model", config["model"]) != config["model"]:
+                raise ValueError(
+                    "private NL judge must use the same declared Bedrock model adaptation"
+                )
             judge = OpenAICompatibleClient(
                 config["api_base"],
                 config=GenerationConfig(
-                    model="openai.gpt-5.5",
+                    model=config["model"],
                     reasoning_effort="medium",
                     max_output_tokens=16384,
                     max_input_tokens=config["runtime_controls"]["max_input_tokens"],
                 ),
-                api_key=os.environ[config["api_key_env"]],
+                api_key=bearer_token_source(config["api_key_env"]),
                 timeout_seconds=config["request_timeout_seconds"],
                 usage_path=Path(config["usage_path"]) if config.get("usage_path") else None,
                 usage_role="private_nl_judge",
@@ -310,7 +314,7 @@ def execute(
             "nl_judge_adaptation": (
                 {
                     "original_model": "gpt-4.1-2025-04-14",
-                    "model": "openai.gpt-5.5",
+                    "model": config["model"],
                     "usage": list(judge.usage_history),
                 }
                 if judge is not None
@@ -329,10 +333,19 @@ def _read_request() -> dict[str, Any] | None:
     return request
 
 
-def _respond(result: Any = None, *, ok: bool = True, error_status: int | None = None) -> None:
+def _respond(
+    result: Any = None,
+    *,
+    ok: bool = True,
+    error_status: int | None = None,
+    error_kind: str | None = None,
+) -> None:
     response = {"protocol": PROTOCOL, "ok": ok, "result": result}
     if error_status is not None:
         response["error_status"] = error_status
+    if error_kind is not None:
+        # Exception class and client error code only; never the message text.
+        response["error_kind"] = error_kind
     print(
         json.dumps(response, ensure_ascii=False, allow_nan=False),
         flush=True,
@@ -376,8 +389,16 @@ def main() -> int:
             _respond(result)
         return 0
     except Exception as exc:
-        # Exception text can contain task data or model-provider credentials.
-        _respond(ok=False, error_status=authentication_status(exc))
+        # Exception text can contain task data or model-provider credentials, so the
+        # stdout protocol carries only the class/code; the full traceback goes to the
+        # worker's private stderr log for run-local diagnostics.
+        traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
+        kind = type(exc).__name__
+        code = getattr(exc, "code", None)
+        if isinstance(code, str) and code:
+            kind = f"{kind}:{code}"
+        _respond(ok=False, error_status=authentication_status(exc), error_kind=kind)
         return 1
     finally:
         if session is not None:

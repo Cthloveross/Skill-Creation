@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+"""End-to-end JSON-stdin entrypoint for the multilingual dubbing package."""
+import json
+import sys
+from pathlib import Path
+
+
+def main(cfg):
+    from synthesize_kokoro import main as synthesize
+    from build_dub import main as build
+
+    defaults = {
+        "video": "/root/input.mp4",
+        "segments_srt": "/root/segments.srt",
+        "source_srt": "/root/source_text.srt",
+        "target_srt": "/root/reference_target_text.srt",
+        "target_language_file": "/root/target_language.txt",
+        "source_language": "en",
+        "output_dir": "/outputs",
+    }
+    job = dict(defaults)
+    job.update({k: v for k, v in cfg.items() if v is not None})
+    for key in ("video", "segments_srt", "source_srt", "target_srt", "target_language_file"):
+        if not Path(job[key]).is_file():
+            raise ValueError("missing required input file: " + str(job[key]))
+
+    target_language = Path(job["target_language_file"]).read_text(encoding="utf-8-sig").strip().lower()
+    if not target_language:
+        raise ValueError("target language file is empty")
+    raw_dir = Path(job.get("raw_wav_dir") or (Path(job["output_dir"]).parent / "raw_tts"))
+    synth_cfg = {"text_srt": job["target_srt"], "language": target_language,
+                 "output_dir": str(raw_dir), "speed": job.get("speed", 1.0)}
+    if job.get("voice"):
+        synth_cfg["voice"] = job["voice"]
+    synthesis = synthesize(synth_cfg)
+    build_cfg = {
+        "video": job["video"], "segments_srt": job["segments_srt"],
+        "source_srt": job["source_srt"], "target_srt": job["target_srt"],
+        "raw_wavs": synthesis["raw_wavs"], "source_language": str(job["source_language"]).strip(),
+        "target_language": target_language, "output_dir": job["output_dir"],
+    }
+    return build(build_cfg)
+
+
+if __name__ == "__main__":
+    try:
+        print(json.dumps(main(json.load(sys.stdin)), ensure_ascii=False))
+    except Exception as exc:
+        print(json.dumps({"error": str(exc)}, ensure_ascii=False))
+        sys.exit(1)

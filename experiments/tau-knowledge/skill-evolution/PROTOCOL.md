@@ -17,7 +17,7 @@
 
 τ 原20题的攻击 profile 映射不变，其余77题按排序交替分配，两种profile全矩阵各49/48题。每个 cell 单次采样，未知请求不自动重试。私有 scenario、gold、expected actions、评分目标、solution 和官方 tests 不进入资料收集、Generator 或 Verifier。
 
-共享模型为 Bedrock Mantle Responses 的 `openai.gpt-5.5`。三个角色共用 backbone，使用独立提示与新消息；银行agent、用户模拟器及SkillsBench执行器使用各自会话。Analyzer/Verifier/执行agent为 medium reasoning，Generator为 high，银行用户模拟器为 none。Generator输出上限32768，输入 admission 为 `floor(272000×0.7)−32768=157632`；Analyzer、Verifier及银行执行侧仍为114688。计数使用固定embedding tokenizer的序列化文本估计，不声称是GPT原生精确token数。
+共享模型为 Bedrock Mantle Responses 的 `openai.gpt-5.5` 或 `openai.gpt-5.6-terra`（`constants.SUPPORTED_MODELS`，由配置 `provider.model` 选择；换模型即换运行身份，不能接旧checkpoint）。三个角色共用 backbone，使用独立提示与新消息；银行agent、用户模拟器及SkillsBench执行器使用各自会话。Analyzer/Verifier/执行agent为 medium reasoning，Generator为 high，银行用户模拟器为 none。Generator输出上限32768，输入 admission 为 `floor(272000×0.7)−32768=157632`；Analyzer、Verifier及银行执行侧仍为114688。计数使用固定embedding tokenizer的序列化文本估计，不声称是GPT原生精确token数。
 
 ## 2. 配置参数与变体
 
@@ -147,7 +147,7 @@ Journal在请求派发前持久化请求，原响应先落盘，再解析/封装
 | `model.py / journal.py / workflow.py` | Bedrock客户端、派发与恢复、逐链运行 |
 | `evaluation.py / preflight.py / cli.py` | 指标、真实环境门槛、六阶段入口 |
 
-宿主要求Python≥3.11（使用tomllib），银行worker固定3.12.14；不要把宿主、worker和包容器的版本混为一谈。所有角色请求用`store:false`，无自动HTTP重试。API凭据仅由host读取，不进入journal、容器或hash。
+宿主要求Python≥3.11（使用tomllib），银行worker固定3.12.12（`constants.WORKER_PYTHON_VERSION`，uv索引无3.12.14）；不要把宿主、worker和包容器的版本混为一谈。所有角色请求用`store:false`，无自动HTTP重试。API凭据仅由host读取，不进入journal、容器或hash。
 
 正式SkillsBench有45题声明联网、40题禁网；Verifier和私有grader始终禁网。每次终端调用当前统一60秒/64KiB，grader按task的verifier timeout；这是本适配额外限制，长编译任务未真实验证。`storage_mb`尚无聚合磁盘配额；各Docker工具调用不保留跨调用后台进程。缺原Python/pip的题目（如lean4-proof）当前准备脚本会fail closed，尚需完善正式工具运行环境，不能承诺85题已就绪。
 

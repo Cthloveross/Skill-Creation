@@ -3,21 +3,22 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import urllib.error
 import urllib.request
 from typing import Any
 
-from .constants import UPSTREAM_ROOT
+from .constants import SUPPORTED_MODELS, UPSTREAM_ROOT, WORKER_PYTHON_VERSION
+from .credentials import bearer_token_source, describe_credential
 from .data import verify_tracked_snapshot
-from .spec import BEDROCK_MODEL, ExperimentSpec
+from .spec import ExperimentSpec
 
 
 def bedrock_authentication(spec: ExperimentSpec) -> dict[str, Any]:
     provider = spec.provider_settings
-    token = os.environ.get(provider["api_key_env"])
+    model = spec.values["provider"]["model"]
+    token = bearer_token_source(provider["api_key_env"])()
     if not token:
         raise ValueError("Bedrock credential is missing")
     # The model catalog uses /v1; GPT inference separately uses /openai/v1/responses.
@@ -31,9 +32,9 @@ def bedrock_authentication(spec: ExperimentSpec) -> dict[str, Any]:
             status = response.status
     except urllib.error.HTTPError as exc:
         raise ValueError(f"Bedrock catalog returned HTTP {exc.code}") from None
-    if not any(item.get("id") == BEDROCK_MODEL for item in value.get("data", [])):
-        raise ValueError("Bedrock catalog does not expose the configured GPT-5.5 model")
-    return {"status": status, "model": BEDROCK_MODEL, "generation_requested": False}
+    if not any(item.get("id") == model for item in value.get("data", [])):
+        raise ValueError(f"Bedrock catalog does not expose the configured model {model}")
+    return {"status": status, "model": model, "generation_requested": False}
 
 
 def preflight(
@@ -64,8 +65,9 @@ def preflight(
             timeout=20,
         )
         version, prefix = json.loads(output)
-        if version != [3, 12, 14] or str(spec.upstream / ".venv") != prefix:
-            raise ValueError("official worker interpreter is not the pinned Python 3.12.14")
+        pinned = ".".join(str(part) for part in WORKER_PYTHON_VERSION)
+        if tuple(version) != WORKER_PYTHON_VERSION or str(spec.upstream / ".venv") != prefix:
+            raise ValueError(f"official worker interpreter is not the pinned Python {pinned}")
         return str(python)
 
     def upstream() -> dict[str, Any]:
@@ -75,20 +77,21 @@ def preflight(
 
     def bedrock_model() -> str:
         provider = spec.values["provider"]
-        if provider["model"] != BEDROCK_MODEL or provider["transport"] != "bedrock-responses":
+        if (
+            provider["model"] not in SUPPORTED_MODELS
+            or provider["transport"] != "bedrock-responses"
+        ):
             raise ValueError(
-                "unsupported_model: this experiment uses GPT-5.5 Bedrock Mantle Responses"
+                "unsupported_model: this experiment uses Bedrock Mantle Responses models "
+                + " / ".join(SUPPORTED_MODELS)
             )
-        return BEDROCK_MODEL
+        return provider["model"]
 
     def bedrock_region() -> str:
         return spec.provider_settings["api_base"]
 
     def credential() -> str:
-        variable = spec.values["provider"]["api_key_env"]
-        if not os.environ.get(variable):
-            raise ValueError(f"required environment variable is missing: {variable}")
-        return f"{variable} is present (value not recorded)"
+        return describe_credential(spec.values["provider"]["api_key_env"])
 
     def docker_cli() -> str:
         command = shutil.which("docker")

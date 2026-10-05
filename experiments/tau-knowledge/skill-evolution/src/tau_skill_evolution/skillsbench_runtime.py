@@ -38,6 +38,24 @@ from .skillsbench import COMMIT, SkillsBenchSource, _hash, _json_hash
 
 _GRADER_PREFIX = "/opt/tau-grader"
 _VERIFIER_PREFIX = "/.tau-verifier"
+# Official graders print verbose pytest output that is never shown to a model; it is
+# only scanned by _validate_grader_warmup, so it may be far larger than tool output.
+_GRADER_OUTPUT_LIMIT = 16 * 1024 * 1024
+_GRADER_DIAGNOSTICS_LIMIT = 1024 * 1024
+# The verifier lock is resolved for CPython 3.11; images lacking exactly that (or pip)
+# receive a hash-verified python-build-standalone interpreter outside the task PATH.
+_UV_IMAGE = "ghcr.io/astral-sh/uv:0.9.26"
+_STANDALONE_PYTHON_DIR = "/opt/tau-python"
+_STANDALONE_PYTHON = _STANDALONE_PYTHON_DIR + "/python3"
+_NATIVE_PYTHON = "python3"
+_VERIFIER_PYTHON_PROBE = 'python3 -c "import sys, pip; assert sys.version_info[:2] == (3, 11)"'
+# The astral installer skips writing $HOME/.local/bin/env when the install dir is already
+# on PATH (as the grader image arranges), yet official test.sh files `source` it.
+_UV_ENV_FILE = (
+    '{ [ -e "$HOME/.local/bin/env" ] || printf '
+    '\'#!/bin/sh\\ncase ":${PATH}:" in *:"%s":*) ;; *) export PATH="%s:$PATH" ;; esac\\n\' '
+    '"$HOME/.local/bin" "$HOME/.local/bin" > "$HOME/.local/bin/env"; } 2>/dev/null || true; '
+)
 
 
 def _grader_bootstrap(*, prepare: bool) -> str:
@@ -46,7 +64,7 @@ def _grader_bootstrap(*, prepare: bool) -> str:
         'if [ "$tool" = curl ]; then local installer; '
         f"installer=$(mktemp {_GRADER_PREFIX}/installer.XXXXXX) || return; "
         'if command curl "$@" > "$installer" && command sh "$installer" >&2; then '
-        'rm "$installer"; printf "#!/bin/sh\\nexit 0\\n"; '
+        f'rm "$installer"; {_UV_ENV_FILE}printf "#!/bin/sh\\nexit 0\\n"; '
         'else status=$?; rm "$installer"; touch "$failure"; return "$status"; fi; '
         'elif ! command "$tool" "$@"; then touch "$failure"; return 97; fi; '
         'printf "%s\\n" "$key" >> "$log"'
@@ -279,35 +297,140 @@ def _prepare_build_context(source: SkillsBenchSource, task_id: str, stage: Path)
     return recipe
 
 
+def _missing_modules(diagnostics: str) -> list[str]:
+    """Top-level names whose import failed because the module (or a name in it) is absent."""
+    names = re.findall(r"No module named '([A-Za-z_]\w*)", diagnostics)
+    names += re.findall(r"cannot import name '\w+' from '([A-Za-z_]\w*)'", diagnostics)
+    return sorted(set(names))
+
+
+def _deliverable_modules(diagnostics: str, tests: Path) -> list[str]:
+    """Missing modules that the official tests import from the agent workspace.
+
+    A module counts as an agent deliverable only when the grader image cannot import
+    it, the tests' own source imports it, and that source extends sys.path (i.e. it
+    reaches into the workspace); missing third-party dependencies never qualify.
+    """
+    source = "\n".join(
+        path.read_text(encoding="utf-8", errors="replace") for path in sorted(tests.rglob("*.py"))
+    )
+    if not re.search(r"sys\.path\.(insert|append)\(", source):
+        return []
+    names = []
+    for name in _missing_modules(diagnostics):
+        imported = re.search(
+            rf"^\s*(?:from\s+{name}(?:\.\w+)*\s+import|import\s+(?:[\w.]+\s*,\s*)*{name}\b)",
+            source,
+            re.MULTILINE,
+        )
+        try:
+            installed = importlib.util.find_spec(name) is not None
+        except (ImportError, ValueError):
+            installed = False
+        if imported and not installed:
+            names.append(name)
+    return names
+
+
 def _validate_grader_warmup(
-    exit_code: int, reward: str | None, report: Any, diagnostics: str
+    exit_code: int,
+    reward: str | None,
+    report: Any,
+    diagnostics: str,
+    deliverables: Sequence[str] = (),
 ) -> None:
-    """Accept an actual negative grade, never missing dependencies or a missing result."""
+    """Accept an actual negative grade, never missing dependencies or a missing result.
+
+    Missing *deliverables* (agent modules the tests import from the workspace, see
+    _deliverable_modules) are the expected negative outcome without a solution, so
+    their import and collection errors are accepted; anything else stays fatal.
+    """
+    excerpt = re.sub(r"[^\x20-\x7e\n\t]", "?", diagnostics[-1200:])
+
+    def fail(reason: str) -> RuntimeError:
+        return RuntimeError(f"{reason}\n--- official grader output (tail) ---\n{excerpt}")
+
     if reward is None:
-        raise RuntimeError("skillsbench_warmup_reward_missing")
+        raise fail("skillsbench_warmup_reward_missing")
     try:
         value = float(reward.strip())
     except ValueError as exc:
-        raise RuntimeError("skillsbench_warmup_reward_invalid") from exc
+        raise fail("skillsbench_warmup_reward_invalid") from exc
     if not math.isfinite(value) or not 0 <= value <= 1:
-        raise RuntimeError("skillsbench_warmup_reward_invalid")
+        raise fail("skillsbench_warmup_reward_invalid")
     if exit_code not in {0, 1}:
-        raise RuntimeError("skillsbench_warmup_execution_failed")
-    if re.search(
-        r"ModuleNotFoundError|ImportError|ERROR collecting|errors? during collection"
-        r"|command not found",
+        raise fail("skillsbench_warmup_execution_failed")
+    missing = _missing_modules(diagnostics)
+    only_deliverables = bool(missing) and all(name in deliverables for name in missing)
+    if re.search(r"command not found", diagnostics) or (missing and not only_deliverables):
+        raise fail("skillsbench_warmup_dependency_or_collection_error")
+    if not only_deliverables and re.search(
+        r"ModuleNotFoundError|ImportError|ERROR collecting|errors? during collection",
         diagnostics,
     ):
-        raise RuntimeError("skillsbench_warmup_dependency_or_collection_error")
-    if report is not None:
+        raise fail("skillsbench_warmup_dependency_or_collection_error")
+    if report is not None and not only_deliverables:
         summary = report.get("results", {}).get("summary", {})
         if not isinstance(summary.get("tests"), int) or summary["tests"] <= 0:
-            raise RuntimeError("skillsbench_warmup_no_collected_checks")
+            raise fail("skillsbench_warmup_no_collected_checks")
         if summary.get("errors", 0) or any(
             t.get("status") in {"broken", "error"}
             for t in report.get("results", {}).get("tests", [])
         ):
-            raise RuntimeError("skillsbench_warmup_dependency_or_collection_error")
+            raise fail("skillsbench_warmup_dependency_or_collection_error")
+
+
+def _verifier_python_mode(docker: str, image: str) -> str:
+    """Use the image's own interpreter only when it matches the verifier lock resolution."""
+    probe = subprocess.run(
+        [docker, "run", "--rm", "--network", "none", "--entrypoint", "/bin/sh", image, "-c"]
+        + [_VERIFIER_PYTHON_PROBE],
+        capture_output=True,
+    )
+    return "native" if probe.returncode == 0 else "standalone"
+
+
+def _standalone_python_layer() -> str:
+    """Dockerfile lines adding a hash-verified CPython 3.11 outside the task's PATH."""
+    return (
+        f"COPY --from={_UV_IMAGE} /uv /usr/local/bin/tau-uv\n"
+        "RUN /usr/local/bin/tau-uv python install 3.11 --no-cache --no-bin --no-registry "
+        f"--install-dir {_STANDALONE_PYTHON_DIR} && ln -s "
+        f'"$(ls -d {_STANDALONE_PYTHON_DIR}/cpython-3.11*/bin/python3.11 | head -n1)" '
+        f"{_STANDALONE_PYTHON}\n"
+    )
+
+
+def _grader_warmup_driver() -> str:
+    """Self-contained build-time driver: run the official grader once without a solution."""
+    return (
+        "from __future__ import annotations\n"
+        "import importlib.util, json, math, re, shutil, subprocess\nfrom pathlib import Path\n"
+        + inspect.getsource(_missing_modules)
+        + "\n"
+        + inspect.getsource(_deliverable_modules)
+        + "\n"
+        + inspect.getsource(_validate_grader_warmup)
+        + "\nshutil.rmtree('/logs/verifier', ignore_errors=True)\n"
+        "Path('/logs/verifier').mkdir(parents=True)\n"
+        f"Path('{_GRADER_PREFIX}/bootstrap.commands').touch()\n"
+        f"result = subprocess.run(['/bin/bash', '-c', {_grader_bootstrap(prepare=True)!r}], "
+        "capture_output=True)\n"
+        f"if Path('{_GRADER_PREFIX}/bootstrap.failed').exists(): "
+        "raise RuntimeError('skillsbench_warmup_bootstrap_failed')\n"
+        "reward = Path('/logs/verifier/reward.txt')\n"
+        "report = Path('/logs/verifier/ctrf.json')\n"
+        "diagnostics = (result.stdout + result.stderr)"
+        f"[-{_GRADER_DIAGNOSTICS_LIMIT}:].decode('utf-8', 'replace')\n"
+        "deliverables = _deliverable_modules(diagnostics, Path('/tests'))\n"
+        "_validate_grader_warmup(result.returncode, "
+        "reward.read_text() if reward.is_file() else None, "
+        "json.loads(report.read_text()) if report.is_file() else None, "
+        "diagnostics, deliverables)\n"
+        f"Path('{_GRADER_PREFIX}/warmup.json').write_text(json.dumps({{"
+        "'reward': float(reward.read_text().strip()), 'exit_code': result.returncode, "
+        "'missing_deliverable_modules': deliverables}, sort_keys=True))\n"
+    )
 
 
 def prepare_docker(root: Path, task_id: str) -> dict[str, Any]:
@@ -329,48 +452,42 @@ def prepare_docker(root: Path, task_id: str) -> dict[str, Any]:
         stage = Path(temp)
         recipe = _prepare_build_context(source, task_id, stage)
         subprocess.run([docker, "build", "-t", image, str(stage)], check=True)
+    mode = _verifier_python_mode(docker, image)
+    verifier_python = _NATIVE_PYTHON if mode == "native" else _STANDALONE_PYTHON
+    python_layer = "" if mode == "native" else _standalone_python_layer()
+    installer = (
+        f"python3 -m pip install --require-hashes --target {_VERIFIER_PREFIX}"
+        if mode == "native"
+        else f"/usr/local/bin/tau-uv pip install --no-cache --python {_STANDALONE_PYTHON} "
+        f"--require-hashes --target {_VERIFIER_PREFIX}"
+    )
     requirements = root / "runtime/skillsbench-verifier-requirements.lock"
     with tempfile.TemporaryDirectory(prefix="sb-runtime-build-") as temp:
         stage = Path(temp)
         shutil.copy2(requirements, stage / "requirements.lock")
         (stage / "Dockerfile").write_text(
-            f"FROM {image}\nUSER root\nCOPY requirements.lock /tmp/runtime-requirements.lock\n"
-            f"RUN python3 -m pip install --require-hashes --target {_VERIFIER_PREFIX} "
-            "-r /tmp/runtime-requirements.lock && rm /tmp/runtime-requirements.lock\n"
+            f"FROM {image}\nUSER root\n{python_layer}"
+            "COPY requirements.lock /tmp/runtime-requirements.lock\n"
+            f"RUN {installer} -r /tmp/runtime-requirements.lock "
+            "&& rm /tmp/runtime-requirements.lock\n"
             "RUN mkdir -p /bundle /work\n"
         )
         subprocess.run([docker, "build", "-t", runtime_image, str(stage)], check=True)
     with tempfile.TemporaryDirectory(prefix="sb-grader-build-") as temp:
         stage = Path(temp)
         shutil.copytree(directory / "tests", stage / "tests")
-        warmup = (
-            "from __future__ import annotations\n"
-            "import json, math, re, shutil, subprocess\nfrom pathlib import Path\n"
-            + inspect.getsource(_validate_grader_warmup)
-            + "\nshutil.rmtree('/logs/verifier', ignore_errors=True)\n"
-            "Path('/logs/verifier').mkdir(parents=True)\n"
-            f"Path('{_GRADER_PREFIX}/bootstrap.commands').touch()\n"
-            f"result = subprocess.run(['/bin/bash', '-c', {_grader_bootstrap(prepare=True)!r}], "
-            "capture_output=True)\n"
-            f"if Path('{_GRADER_PREFIX}/bootstrap.failed').exists(): "
-            "raise RuntimeError('skillsbench_warmup_bootstrap_failed')\n"
-            "reward = Path('/logs/verifier/reward.txt')\n"
-            "report = Path('/logs/verifier/ctrf.json')\n"
-            "_validate_grader_warmup(result.returncode, "
-            "reward.read_text() if reward.is_file() else None, "
-            "json.loads(report.read_text()) if report.is_file() else None, "
-            "(result.stdout + result.stderr).decode('utf-8', 'replace'))\n"
-        )
+        warmup = _grader_warmup_driver()
         (stage / "warmup.py").write_text(warmup)
         (stage / "Dockerfile").write_text(
-            f"FROM {image}\nUSER root\n"
+            f"FROM {image}\nUSER root\n{python_layer}"
             f"ENV HOME={_GRADER_PREFIX}/home UV_CACHE_DIR={_GRADER_PREFIX}/cache "
             f"XDG_CACHE_HOME={_GRADER_PREFIX}/cache\n"
             f"ENV PATH={_GRADER_PREFIX}/home/.local/bin:${{PATH}}\n"
             f"RUN mkdir -p {_GRADER_PREFIX}/home {_GRADER_PREFIX}/cache /logs/verifier\n"
             "COPY tests /tests\n"
             "COPY warmup.py /tmp/grader-warmup.py\n"
-            "RUN python3 -I /tmp/grader-warmup.py && rm /tmp/grader-warmup.py && rm -rf /logs\n"
+            f"RUN {verifier_python} -I /tmp/grader-warmup.py && rm /tmp/grader-warmup.py "
+            "&& rm -rf /logs\n"
         )
         subprocess.run([docker, "build", "-t", grader, str(stage)], check=True)
     identities = {}
@@ -382,10 +499,27 @@ def prepare_docker(root: Path, task_id: str) -> dict[str, Any]:
             "digest_kind": "image_id",
             "environment": metadata["Config"].get("Env") or [],
         }
+    run = [docker, "run", "--rm", "--network", "none", "--entrypoint"]
+    identities["runtime"]["verifier_python"] = verifier_python
+    identities["runtime"]["verifier_python_version"] = json.loads(
+        subprocess.check_output(
+            run
+            + [verifier_python, runtime_image, "-I", "-c"]
+            + ["import json, sys; print(json.dumps(list(sys.version_info[:3])))"]
+        )
+    )
+    warmup_result = json.loads(
+        subprocess.check_output(run + ["cat", grader, f"{_GRADER_PREFIX}/warmup.json"])
+    )
     lock = {
         "task_id": task_id,
         "commit": COMMIT,
         "images": identities,
+        "verifier_python_mode": mode,
+        "grader_warmup": {
+            key: warmup_result[key]
+            for key in ("reward", "exit_code", "missing_deliverable_modules")
+        },
         "dockerfile_sha256": _hash(directory / "environment/Dockerfile"),
         "public_manifest_hash": source.manifest["manifest_hash"],
         "dependency_hash": _hash(requirements),
@@ -414,6 +548,7 @@ class SkillsBenchRunner:
         self.verifier_artifacts: Path | None = None
         self.workspace_mounts: dict[str, Path] = {}
         self.grader_cache: Path | None = None
+        self.grader_diagnostics: str | None = None
 
     def _lock(self) -> SkillsBenchRuntimeLock:
         return SkillsBenchRuntimeLock.from_file(
@@ -593,11 +728,14 @@ class SkillsBenchRunner:
             environment["UV_OFFLINE"] = "1"
         if not grader:
             environment["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
-        args = ["python3" if args[0] == "python" else args[0], *args[1:]]
+        args = [_NATIVE_PYTHON if args[0] == "python" else args[0], *args[1:]]
         if self.verifier_artifacts is not None:
-            if args[0] != "python3":
+            if args[0] != _NATIVE_PYTHON:
                 raise ValueError("skillsbench_verifier_requires_python")
+            # Locks built before the standalone fallback existed always used the task python.
+            interpreter = identity.get("verifier_python", _NATIVE_PYTHON)
             if args[1:3] == ["-I", "-c"]:
+                args[0] = interpreter
                 args[3] = f"import sys; sys.path.insert(0, {_VERIFIER_PREFIX!r}); " + args[3]
             else:
                 code = (
@@ -605,7 +743,7 @@ class SkillsBenchRunner:
                     "runpy.run_path(sys.argv[1],run_name='__main__')"
                 )
                 script = args[2:] if len(args) > 1 and args[1] == "-I" else args[1:]
-                args = ["python3", "-I", "-c", code, *script]
+                args = [interpreter, "-I", "-c", code, *script]
         command += [
             "--tmpfs",
             "/tmp:rw,nosuid,nodev,size=64m",
@@ -628,15 +766,16 @@ class SkillsBenchRunner:
         grader: bool = False,
     ) -> Any:
         timeout = float(self.config["verifier"]["timeout_sec"]) if grader else self.timeout
+        output_limit = _GRADER_OUTPUT_LIMIT if grader else self.output_limit
         command = self._command(package.resolve(), work.resolve(), args, grader=grader)
         if self.demo:
             return self.transport.run(
-                command, stdin=stdin, timeout=timeout, output_limit=self.output_limit
+                command, stdin=stdin, timeout=timeout, output_limit=output_limit
             )
         name = command[command.index("--name") + 1]
         try:
             result = self.transport.run(
-                command, stdin=stdin, timeout=timeout, output_limit=self.output_limit
+                command, stdin=stdin, timeout=timeout, output_limit=output_limit
             )
         finally:
             cleanup = self.transport.run(
@@ -767,6 +906,21 @@ class SkillsBenchRunner:
             or set(value.get("images", {})) != {"environment", "runtime", "grader"}
         ):
             raise ContainerUnavailable("skillsbench_docker_lock_invalid")
+        # Locks predating the standalone fallback carry neither key and used the task python.
+        mode = value.get("verifier_python_mode", "native")
+        interpreter = value["images"]["runtime"].get("verifier_python", _NATIVE_PYTHON)
+        warmup = value.get("grader_warmup", {"missing_deliverable_modules": []})
+        if (
+            mode not in {"native", "standalone"}
+            or interpreter != (_NATIVE_PYTHON if mode == "native" else _STANDALONE_PYTHON)
+            or not isinstance(warmup, Mapping)
+            or not isinstance(warmup.get("missing_deliverable_modules"), list)
+            or not all(
+                isinstance(name, str) and re.fullmatch(r"[A-Za-z_]\w*", name)
+                for name in warmup["missing_deliverable_modules"]
+            )
+        ):
+            raise ContainerUnavailable("skillsbench_docker_lock_invalid")
         for image in value["images"].values():
             if not re.fullmatch(r"sha256:[0-9a-f]{64}", image.get("digest", "")):
                 raise ContainerUnavailable("skillsbench_image_digest_not_prepared")
@@ -794,6 +948,8 @@ class SkillsBenchRunner:
         logs.chmod(0o777)
         empty = episode.work.parent / "grader-package"
         empty.mkdir()
+        deliverables: list[str] = []
+        self.grader_diagnostics = None
         if self.demo:
             result = self._raw(empty, episode.work, ["/bin/bash", "/tests/test.sh"], grader=True)
         else:
@@ -801,6 +957,9 @@ class SkillsBenchRunner:
             self.grader_cache.mkdir()
             try:
                 lock = self._docker_lock()
+                deliverables = list(
+                    lock.get("grader_warmup", {}).get("missing_deliverable_modules", [])
+                )
                 self._copy_image_directories(
                     lock["images"]["grader"]["digest"],
                     {_GRADER_PREFIX: self.grader_cache},
@@ -849,13 +1008,15 @@ class SkillsBenchRunner:
             }
         checks = None
         report = logs / "ctrf.json"
+        # Grader output never reaches a model; a bounded tail is kept only for preflight's
+        # re-validation and for the classification of missing agent deliverables.
+        self.grader_diagnostics = (
+            (result.stdout + result.stderr)[-_GRADER_DIAGNOSTICS_LIMIT:]
+        ).decode("utf-8", "replace")
         try:
             data = json.loads(report.read_text()) if report.is_file() else None
             _validate_grader_warmup(
-                result.returncode,
-                str(measured),
-                data,
-                (result.stdout + result.stderr).decode("utf-8", "replace"),
+                result.returncode, str(measured), data, self.grader_diagnostics, deliverables
             )
         except (RuntimeError, ValueError, TypeError, AttributeError):
             return {
@@ -943,9 +1104,20 @@ class SkillsBenchRunner:
                         "'dependencies':{n:m.version(n) for n in "
                         "('numpy','pandas','pytest','pytest-json-ctrf','pip')}}))"
                     )
+                    probe = ["python", "-I", "-c", code]
+                else:
+                    # Task images need not ship Python (Java, Erlang, Lean, ...): the agent
+                    # only gets bash there and the verifier runs in the runtime image.
+                    probe = [
+                        "/bin/bash",
+                        "-c",
+                        f"if command -v python3 >/dev/null 2>&1; then exec python3 -I -c '{code}'; "
+                        "fi; echo null",
+                    ]
                 with self.episode(SkillBundle(files={"SKILL.md": "Runtime preflight"})) as episode:
-                    result = self._run(episode.package, episode.work, ["python", "-I", "-c", code])
+                    result = self._run(episode.package, episode.work, probe)
                     if not self.demo:
+                        checks["task_python"] = result.output
                         self.verifier_artifacts = episode.work.parent / "verifier-public"
                         self.verifier_artifacts.mkdir()
                         try:
@@ -986,12 +1158,18 @@ class SkillsBenchRunner:
                         )
                         if checks["official_grader"]:
                             report = episode.work.parent / "grader-logs/ctrf.json"
+                            deliverables = (
+                                self._docker_lock()
+                                .get("grader_warmup", {})
+                                .get("missing_deliverable_modules", [])
+                            )
                             try:
                                 _validate_grader_warmup(
                                     grade["grader_exit_code"],
                                     str(reward),
                                     json.loads(report.read_text()) if report.is_file() else None,
-                                    "",
+                                    self.grader_diagnostics or "",
+                                    deliverables,
                                 )
                             except RuntimeError:
                                 checks["official_grader"] = False

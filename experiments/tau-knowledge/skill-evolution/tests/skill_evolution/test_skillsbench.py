@@ -1063,8 +1063,9 @@ def test_grader_prepare_rejects_missing_invalid_reward_and_infrastructure(
         _validate_grader_warmup(exit_code, reward, report, diagnostics)
 
 
+@pytest.mark.parametrize("mode", ["native", "standalone"])
 def test_docker_grader_preparation_uses_private_guard_and_discards_warmup_scores(
-    public_source, tmp_path, monkeypatch
+    public_source, tmp_path, monkeypatch, mode
 ):
     from tau_skill_evolution import skillsbench_runtime as runtime
 
@@ -1075,7 +1076,8 @@ def test_docker_grader_preparation_uses_private_guard_and_discards_warmup_scores
     (tmp_path / "runtime/skillsbench-verifier-requirements.lock").write_bytes(
         (EXPERIMENT_ROOT / "runtime/skillsbench-verifier-requirements.lock").read_bytes()
     )
-    builds = []
+    builds, probes, readbacks = [], [], []
+    interpreter = "python3" if mode == "native" else "/opt/tau-python/python3"
 
     def run(command, **kwargs):
         if command[1] == "build":
@@ -1083,35 +1085,65 @@ def test_docker_grader_preparation_uses_private_guard_and_discards_warmup_scores
             recipe = (stage / "Dockerfile").read_text()
             guard = (stage / "warmup.py").read_text() if (stage / "warmup.py").exists() else None
             builds.append((recipe, guard, (stage / "tests").exists()))
+        if command[1] == "run":
+            probes.append(command)
+            assert "import sys, pip" in command[-1] and "--network" in command
+            return SimpleNamespace(returncode=0 if mode == "native" else 1)
         return SimpleNamespace(returncode=0)
 
+    def check_output(command):
+        readbacks.append(command)
+        if command[1] == "image":
+            return json.dumps(
+                [{"Id": "sha256:" + "a" * 64, "Config": {"Env": ["PATH=/usr/bin:/bin"]}}]
+            ).encode()
+        assert command[1] == "run" and "--network" in command
+        if "cat" in command:
+            assert command[-1] == "/opt/tau-grader/warmup.json"
+            return b'{"exit_code": 1, "missing_deliverable_modules": [], "reward": 0.0}'
+        assert command[command.index("--entrypoint") + 1] == interpreter
+        return b"[3, 11, 14]"
+
     monkeypatch.setattr(runtime.subprocess, "run", run)
-    monkeypatch.setattr(
-        runtime.subprocess,
-        "check_output",
-        lambda command: json.dumps(
-            [{"Id": "sha256:" + "a" * 64, "Config": {"Env": ["PATH=/usr/bin:/bin"]}}]
-        ).encode(),
-    )
+    monkeypatch.setattr(runtime.subprocess, "check_output", check_output)
     result = runtime.prepare_docker(tmp_path, "3d-scan-calc")
     assert result["ready"]
+    assert len(probes) == 1 and probes[0][-3] == "tau-skillsbench-3d-scan-calc:4380d4bff673"
     assert len(builds) == 3 and not builds[0][2] and not builds[1][2]
-    assert "--target /.tau-verifier" in builds[1][0]
+    assert "--target /.tau-verifier" in builds[1][0] and "--require-hashes" in builds[1][0]
     assert "numpy" not in (tmp_path / "runtime/skillsbench-verifier-requirements.lock").read_text()
     recipe, guard, hidden_tests_present = builds[2]
     assert recipe.startswith("FROM tau-skillsbench-3d-scan-calc:")
     assert "-runtime\n" not in recipe
     assert "HOME=/opt/tau-grader/home" in recipe
     assert "UV_CACHE_DIR=/opt/tau-grader/cache" in recipe
-    assert hidden_tests_present and "RUN python3 -I /tmp/grader-warmup.py" in recipe
+    assert hidden_tests_present and f"RUN {interpreter} -I /tmp/grader-warmup.py" in recipe
     assert "RUN /bin/bash /tests/test.sh" not in recipe
     compile(guard, "private grader warmup", "exec")
     assert "capture_output=True" in guard and "math.isfinite" in guard
     assert "bootstrap.commands').touch()" in guard
     assert "bootstrap.failed" in guard
     assert "shutil.rmtree('/logs/verifier', ignore_errors=True)" in guard
+    assert "def _deliverable_modules" in guard and "/opt/tau-grader/warmup.json" in guard
     assert "rm -rf /logs" in recipe
     assert "reward" not in result and "utility" not in result
+    assert result["verifier_python_mode"] == mode
+    assert result["images"]["runtime"]["verifier_python"] == interpreter
+    assert result["images"]["runtime"]["verifier_python_version"] == [3, 11, 14]
+    assert result["grader_warmup"] == {
+        "reward": 0.0,
+        "exit_code": 1,
+        "missing_deliverable_modules": [],
+    }
+    standalone = "COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /usr/local/bin/tau-uv"
+    for stage_recipe in (builds[1][0], recipe):
+        assert (standalone in stage_recipe) is (mode == "standalone")
+        assert ("tau-uv python install 3.11" in stage_recipe) is (mode == "standalone")
+    assert ("python3 -m pip install" in builds[1][0]) is (mode == "native")
+    assert ("tau-uv pip install --no-cache --python /opt/tau-python/python3" in builds[1][0]) is (
+        mode == "standalone"
+    )
+    assert standalone not in builds[0][0]
 
 
 @pytest.mark.parametrize("role", ["execution", "verifier", "grader"])
@@ -1131,6 +1163,7 @@ def test_docker_keeps_task_python_and_isolates_verifier_and_grader(
         }
         for index, name in enumerate(("environment", "runtime", "grader"), 1)
     }
+    images["runtime"]["verifier_python"] = "/opt/tau-python/python3"
     lock = {"images": images, "layout": {"workdir": "/app", "copies": []}}
     monkeypatch.setattr(Path, "read_text", lambda *args, **kwargs: json.dumps(lock))
     runner.workspace_mounts = {"/app": tmp_path / "app", "/opt": tmp_path / "opt"}
@@ -1149,8 +1182,9 @@ def test_docker_keeps_task_python_and_isolates_verifier_and_grader(
     assert identity["digest"] in command
     assert command[command.index("--network") + 1] == ("bridge" if role == "execution" else "none")
     assert "PATH=/original/python/bin:/usr/bin:/bin" in command
-    assert "python3" in command
     if role == "verifier":
+        # The verifier runs on the locked interpreter, never on the task's python.
+        assert "/opt/tau-python/python3" in command and "python3" not in command
         assert command[-1] == "/bundle/_harness.py"
         assert "sys.path.insert(0, '/.tau-verifier')" in command[-2]
         assert f"type=bind,src={runner.verifier_artifacts / 'opt'},dst=/opt,readonly" in command
@@ -1159,9 +1193,11 @@ def test_docker_keeps_task_python_and_isolates_verifier_and_grader(
             in command
         )
     elif role == "grader":
+        assert "python3" in command and "/opt/tau-python/python3" not in command
         assert "HOME=/opt/tau-grader/home" in command and "UV_OFFLINE=1" in command
         assert f"type=bind,src={runner.grader_cache},dst=/opt/tau-grader" in command
     else:
+        assert "python3" in command and "/opt/tau-python/python3" not in command
         assert "UV_OFFLINE=1" not in command
         assert not any("private-runtime" in arg for arg in command)
         assert "sys.path.insert" not in command[-1]
@@ -1278,3 +1314,287 @@ def test_private_grader_failure_marker_cannot_become_a_measured_zero(
     assert result["status"] == ("NOT_MEASURED" if bootstrap_failed else "MEASURED")
     assert result.get("failure") == ("grader_bootstrap_failed" if bootstrap_failed else None)
     assert result["utility"] is (None if bootstrap_failed else False)
+
+
+def test_grader_prepare_creates_the_uv_env_file_the_installer_skips(tmp_path):
+    import subprocess
+
+    from tau_skill_evolution.skillsbench_runtime import _grader_bootstrap
+
+    private, binaries, home = tmp_path / "private", tmp_path / "bin", tmp_path / "home"
+    private.mkdir()
+    binaries.mkdir()
+    (home / ".local/bin").mkdir(parents=True)
+    (private / "bootstrap.commands").touch()
+    curl = binaries / "curl"
+    # Like the real installer when $HOME/.local/bin is already on PATH: install, no env file.
+    curl.write_text("#!/bin/bash\nprintf '#!/bin/sh\\ntouch \"$HOME/.local/bin/uv\"\\n'\n")
+    curl.chmod(0o755)
+    script = tmp_path / "test.sh"
+    script.write_text(
+        "set -euo pipefail\ncurl -LsSf https://astral.sh/uv/0.9.7/install.sh | sh\n"
+        'source "$HOME/.local/bin/env"\necho "$PATH" > "$HOME/path.txt"\n'
+    )
+    env = {"PATH": f"{home / '.local/bin'}:{binaries}:/usr/bin:/bin", "HOME": str(home)}
+
+    def run(prepare):
+        code = _grader_bootstrap(prepare=prepare).replace("/opt/tau-grader", str(private))
+        return subprocess.run(
+            ["/bin/bash", "-c", code.replace("/tests/test.sh", str(script))],
+            env=env,
+            capture_output=True,
+        )
+
+    assert run(True).returncode == 0
+    assert (home / ".local/bin/uv").exists()
+    env_file = (home / ".local/bin/env").read_text()
+    assert env_file.startswith("#!/bin/sh\n") and 'export PATH="' in env_file
+    assert (home / "path.txt").read_text().startswith(str(home / ".local/bin"))
+    assert not (private / "bootstrap.failed").exists()
+    (home / ".local/bin/env").write_text("# kept\n")
+    assert run(False).returncode == 0
+    assert (home / ".local/bin/env").read_text() == "# kept\n"
+    assert not (private / "bootstrap.failed").exists()
+
+
+def test_warmup_accepts_missing_agent_deliverables_but_not_missing_dependencies():
+    from tau_skill_evolution.skillsbench_runtime import _missing_modules, _validate_grader_warmup
+
+    collection = (
+        "ERROR collecting /tests/test_outputs.py\n"
+        "ModuleNotFoundError: No module named 'solution'\n"
+        "!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n"
+    )
+    empty = {"results": {"summary": {"tests": 0, "passed": 0}, "tests": []}}
+    assert _missing_modules(collection) == ["solution"]
+    assert _missing_modules(
+        "ImportError: cannot import name 'solve' from 'solution' (/root/workspace/solution.py)"
+    ) == ["solution"]
+    assert _missing_modules("No module named 'package.sub'; 'package' is not a package") == [
+        "package"
+    ]
+    _validate_grader_warmup(1, "0", empty, collection, ["solution"])
+    _validate_grader_warmup(1, "0", None, collection, ["solution", "helpers"])
+    with pytest.raises(RuntimeError, match="dependency_or_collection_error"):
+        _validate_grader_warmup(1, "0", empty, collection)
+    with pytest.raises(RuntimeError, match="dependency_or_collection_error"):
+        _validate_grader_warmup(
+            1, "0", empty, collection + "No module named 'numpy'\n", ["solution"]
+        )
+    with pytest.raises(RuntimeError, match="dependency_or_collection_error"):
+        _validate_grader_warmup(1, "0", None, collection + "uvx: command not found\n", ["solution"])
+    with pytest.raises(RuntimeError, match="dependency_or_collection_error"):
+        _validate_grader_warmup(1, "0", None, "ImportError: libGL.so.1 missing", ["solution"])
+    with pytest.raises(RuntimeError, match="no_collected_checks"):
+        _validate_grader_warmup(1, "0", empty, "4 failed", ["solution"])
+    with pytest.raises(RuntimeError) as failure:
+        _validate_grader_warmup(1, "0", None, "x" * 5000 + "\x1b[31mNo module named 'scipy'\n")
+    message = str(failure.value)
+    assert message.startswith("skillsbench_warmup_dependency_or_collection_error\n")
+    assert "No module named 'scipy'" in message and "\x1b" not in message
+    assert len(message) < 1500 and "x" * 1300 not in message
+
+
+def test_deliverable_modules_require_workspace_import_and_absence_from_image(tmp_path):
+    from tau_skill_evolution.skillsbench_runtime import _deliverable_modules
+
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "test_outputs.py").write_text(
+        "import sys, json\nsys.path.insert(0, '/root/workspace')\n"
+        "from solution import solve\n\ndef test_x():\n    from parallel_solution import run\n"
+    )
+    diagnostics = (
+        "No module named 'solution'\nNo module named 'json'\nNo module named 'numpy'\n"
+        "No module named 'parallel_solution'\n"
+    )
+    assert _deliverable_modules(diagnostics, tests) == ["parallel_solution", "solution"]
+    (tests / "test_outputs.py").write_text("from solution import solve\n")
+    assert _deliverable_modules(diagnostics, tests) == []
+    (tests / "test_outputs.py").write_text(
+        "import sys\nsys.path.append('/x')\nimport os, solution\n"
+    )
+    assert _deliverable_modules("No module named 'solution'", tests) == ["solution"]
+    assert _deliverable_modules("No module named 'solutions'", tests) == []
+
+
+def test_docker_lock_accepts_legacy_and_standalone_locks_and_rejects_inconsistent_ones(
+    public_source, tmp_path, monkeypatch
+):
+    import hashlib
+
+    from tau_skill_evolution.skillsbench_runtime import _grader_bootstrap
+
+    runner = SkillsBenchRunner(EXPERIMENT_ROOT, "3d-scan-calc", demo=False)
+    runner.root = tmp_path
+    (tmp_path / "runtime").mkdir()
+    (tmp_path / "runtime/skillsbench-verifier-requirements.lock").write_bytes(
+        (EXPERIMENT_ROOT / "runtime/skillsbench-verifier-requirements.lock").read_bytes()
+    )
+    (runner.task_directory / "environment").mkdir(parents=True, exist_ok=True)
+    (runner.task_directory / "environment/Dockerfile").write_text("FROM base\n")
+    (runner.task_directory / "task.toml").write_text("[environment]\ncpus = 1\n[verifier]\n")
+    runner.config = {"environment": {"cpus": 1}, "verifier": {}}
+    runner.transport = SimpleNamespace(run=lambda *args, **kwargs: ProcessResult(0))
+    images = {
+        role: {
+            "digest": "sha256:" + str(index) * 64,
+            "environment": [
+                "HOME=/opt/tau-grader/home" if role == "grader" else "HOME=/root",
+                "UV_CACHE_DIR=/opt/tau-grader/cache",
+            ],
+        }
+        for index, role in enumerate(("environment", "runtime", "grader"), 1)
+    }
+    base = {
+        "commit": runner.source.manifest.get("commit", "4380d4bff673dd6e1d58e5babeb2aaa0fe527119"),
+        "task_id": "3d-scan-calc",
+        "dockerfile_sha256": hashlib.sha256(b"FROM base\n").hexdigest(),
+        "public_manifest_hash": runner.source.manifest["manifest_hash"],
+        "dependency_hash": hashlib.sha256(
+            (EXPERIMENT_ROOT / "runtime/skillsbench-verifier-requirements.lock").read_bytes()
+        ).hexdigest(),
+        "grader_bootstrap_sha256": hashlib.sha256(
+            _grader_bootstrap(prepare=False).encode()
+        ).hexdigest(),
+        "resources": {"cpus": 1},
+        "layout": runner.source.manifest["environments"]["3d-scan-calc"],
+        "images": images,
+    }
+    path = tmp_path / "runtime/skillsbench-docker-3d-scan-calc-lock.json"
+
+    def validate(**changes):
+        value = json.loads(json.dumps(base))
+        for key, replacement in changes.items():
+            target = value
+            parts = key.split(".")
+            for part in parts[:-1]:
+                target = target[part]
+            if replacement is None:
+                target.pop(parts[-1], None)
+            else:
+                target[parts[-1]] = replacement
+        path.write_text(json.dumps(value))
+        return runner._docker_lock()
+
+    assert validate()["images"]["runtime"].get("verifier_python") is None
+    standalone = validate(
+        verifier_python_mode="standalone",
+        **{"images.runtime.verifier_python": "/opt/tau-python/python3"},
+        grader_warmup={"reward": 0.0, "exit_code": 1, "missing_deliverable_modules": ["solution"]},
+    )
+    assert standalone["grader_warmup"]["missing_deliverable_modules"] == ["solution"]
+    validate(verifier_python_mode="native", **{"images.runtime.verifier_python": "python3"})
+    for changes in (
+        {"verifier_python_mode": "standalone"},
+        {"images.runtime.verifier_python": "/opt/tau-python/python3"},
+        {"verifier_python_mode": "system"},
+        {"grader_warmup": {"missing_deliverable_modules": "solution"}},
+        {"grader_warmup": {"missing_deliverable_modules": ["../solution"]}},
+        {"grader_warmup": []},
+        {"images.runtime.digest": None},
+    ):
+        with pytest.raises(RuntimeError, match="skillsbench_"):
+            validate(**changes)
+
+
+def test_official_grader_output_limit_exceeds_tool_output_limit(
+    public_source, tmp_path, monkeypatch
+):
+    from tau_skill_evolution.skillsbench_runtime import _GRADER_OUTPUT_LIMIT
+
+    runner = SkillsBenchRunner(EXPERIMENT_ROOT, "travel-planning", demo=False)
+    runner.config["verifier"] = {"timeout_sec": 30}
+    images = {
+        role: {"digest": "sha256:" + str(index) * 64, "environment": []}
+        for index, role in enumerate(("environment", "runtime", "grader"), 1)
+    }
+    lock = {"images": images, "layout": {"workdir": "/app", "copies": []}}
+    monkeypatch.setattr(Path, "read_text", lambda *args, **kwargs: json.dumps(lock))
+    runner.grader_cache = tmp_path
+    limits = []
+
+    class Transport:
+        def run(self, command, **kwargs):
+            if command[:2] == ["docker", "run"]:
+                limits.append((kwargs["output_limit"], kwargs["timeout"]))
+            return ProcessResult(0)
+
+    runner.transport = Transport()
+    runner._raw(tmp_path, tmp_path, ["/bin/bash", "-c", "true"], grader=True)
+    runner._raw(tmp_path, tmp_path, ["/bin/bash", "-c", "true"])
+    assert _GRADER_OUTPUT_LIMIT == 16 * 1024 * 1024
+    assert limits == [(_GRADER_OUTPUT_LIMIT, 30.0), (65536, 60.0)]
+
+
+def test_docker_preflight_admits_task_images_without_python_and_missing_deliverables(
+    public_source, tmp_path, monkeypatch
+):
+    runner = SkillsBenchRunner(EXPERIMENT_ROOT, "3d-scan-calc", demo=False)
+    runner.root = tmp_path
+    images = {
+        role: {
+            "digest": "sha256:" + str(index) * 64,
+            "environment": [
+                "PATH=/usr/bin:/bin",
+                "HOME=/opt/tau-grader/home" if role == "grader" else "HOME=/root",
+                "UV_CACHE_DIR=/opt/tau-grader/cache",
+            ],
+        }
+        for index, role in enumerate(("environment", "runtime", "grader"), 1)
+    }
+    images["runtime"]["verifier_python"] = "/opt/tau-python/python3"
+    lock = {
+        "images": images,
+        "layout": runner.source.manifest["environments"][runner.task_id],
+        "verifier_python_mode": "standalone",
+        "grader_warmup": {
+            "reward": 0.0,
+            "exit_code": 0,
+            "missing_deliverable_modules": ["solution"],
+        },
+    }
+    lock_path = tmp_path / f"runtime/skillsbench-docker-{runner.task_id}-lock.json"
+    lock_path.parent.mkdir()
+    lock_path.write_text(json.dumps(lock))
+    monkeypatch.setattr(runner, "_docker_lock", lambda: lock)
+    monkeypatch.setattr("tau_skill_evolution.skillsbench_runtime.shutil.which", lambda _: "docker")
+    runs = []
+
+    class Transport:
+        def run(self, command, **_kwargs):
+            if command[:2] == ["docker", "cp"]:
+                if command[2].endswith(":/opt/tau-grader/."):
+                    (Path(command[3]) / "bootstrap.commands").touch()
+                return ProcessResult(0)
+            if command[:2] != ["docker", "run"]:
+                return ProcessResult(0)
+            runs.append(command)
+            if images["environment"]["digest"] in command:
+                # A Java/Erlang/Lean task image: bash exists, python3 does not.
+                assert command[-3] == "/bin/bash" and "command -v python3" in command[-1]
+                return ProcessResult(0, stdout=b"null")
+            if images["runtime"]["digest"] in command:
+                assert "/opt/tau-python/python3" in command and "python3" not in command
+                return ProcessResult(0, stdout=b'{"pytest":"8.4.1","pytest-json-ctrf":"0.3.5"}')
+            for argument in command:
+                if argument.startswith("type=bind,") and "dst=/logs/verifier" in argument:
+                    logs = Path(argument.split("src=")[1].split(",")[0])
+            logs.joinpath("reward.txt").write_text("0")
+            logs.joinpath("ctrf.json").write_text(
+                json.dumps({"results": {"summary": {"tests": 0}, "tests": []}})
+            )
+            return ProcessResult(
+                0, stdout=b"ERROR collecting /tests/test_outputs.py\nNo module named 'solution'\n"
+            )
+
+    runner.transport = Transport()
+    result = runner.preflight(validate_source=False)
+    assert len(runs) == 3
+    assert result["task_python"] is None and result["dependencies"] is True
+    assert result["verifier_dependencies"] is True
+    assert result["official_grader"] is True and result["ready"] is True
+    lock["grader_warmup"]["missing_deliverable_modules"] = []
+    result = runner.preflight(validate_source=False)
+    assert result["official_grader"] is False and result["ready"] is False
+    assert result["official_grader_error"] == "official_grader_program_error"

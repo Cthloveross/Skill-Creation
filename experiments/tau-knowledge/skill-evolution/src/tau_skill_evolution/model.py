@@ -1,18 +1,30 @@
-"""Stateless Bedrock Mantle GPT-5.5 client and shared embedding token counters."""
+"""Stateless Bedrock Mantle GPT-5.x Responses client and shared embedding token counters."""
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
+import sys
+import time
 import urllib.error
 import urllib.request
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlsplit
+
+from .constants import DEFAULT_MODEL, SUPPORTED_MODELS
+
+# Loopback helper services (tokenizer, embeddings) are deterministic and side-effect
+# free; only gateway/overload statuses are retried, never model requests.
+RETRYABLE_LOCAL_HTTP_STATUSES = frozenset({502, 503, 504})
+# Model requests rejected with these statuses were not executed by the model (throttling
+# or gateway/server failure), so re-sending them is not a second sample.
+RETRYABLE_MODEL_HTTP_STATUSES = frozenset({429, 500, 502, 503, 504})
 
 
 class ModelClient(Protocol):
@@ -31,6 +43,27 @@ class ModelClientError(RuntimeError):
         super().__init__(message)
         self.code = code
         self.status = status
+
+
+class CredentialError(ModelClientError):
+    """A bearer credential could not be resolved before any request was built.
+
+    Codes: ``credential_unavailable`` (token file missing/unreadable/malformed)
+    and ``credential_expired``. Because no request left the host, callers abort
+    the invocation and leave the operation unsent instead of sealing an unknown.
+    """
+
+
+def is_credential_error(error: BaseException) -> bool:
+    """True when ``error`` or any wrapped cause is a :class:`CredentialError`."""
+    seen: set[int] = set()
+    current: BaseException | None = error
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, CredentialError):
+            return True
+        current = current.__cause__ or current.__context__
+    return False
 
 
 def authentication_status(error: BaseException) -> int | None:
@@ -71,11 +104,19 @@ class VllmTextTokenCounter:
         api_key: str = "tau-local-evaluation",
         timeout_seconds: float = 60.0,
         opener: Any | None = None,
+        retry_attempts: int = 5,
+        retry_backoff_seconds: float = 0.2,
     ) -> None:
         if not isinstance(endpoint, str) or not endpoint.strip() or timeout_seconds <= 0:
             raise ValueError("endpoint and timeout_seconds must be valid")
         if not isinstance(model, str) or not model.strip():
             raise ValueError("model must be a non-empty string")
+        if isinstance(retry_attempts, bool) or not isinstance(retry_attempts, int):
+            raise ValueError("retry_attempts must be an integer")
+        if retry_attempts < 1 or retry_backoff_seconds < 0:
+            raise ValueError("retry_attempts must be >= 1 and retry_backoff_seconds >= 0")
+        self.retry_attempts = retry_attempts
+        self.retry_backoff_seconds = float(retry_backoff_seconds)
         root = endpoint.rstrip("/")
         if root.endswith("/v1"):
             root = root[:-3]
@@ -106,21 +147,35 @@ class VllmTextTokenCounter:
             },
             method="POST",
         )
-        try:
-            with self._opener(request, timeout=self.timeout_seconds) as response:
-                decoded = json.loads(response.read())
-        except urllib.error.HTTPError as exc:
-            raise ModelClientError(
-                "tokenize_http_error",
-                f"tokenizer service returned HTTP {exc.code}",
-                status=exc.code,
-            ) from exc
-        except (OSError, TimeoutError, urllib.error.URLError) as exc:
-            raise ModelClientError("tokenize_transport_error", str(exc)) from exc
-        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise ModelClientError(
-                "tokenize_invalid_json", "tokenizer service returned invalid JSON"
-            ) from exc
+        # Tokenizing is a deterministic local-service lookup with no side effects, so a
+        # transient outage of the loopback service is retried briefly instead of
+        # permanently sealing the surrounding journal operation as unknown.
+        attempt = 0
+        while True:
+            try:
+                with self._opener(request, timeout=self.timeout_seconds) as response:
+                    decoded = json.loads(response.read())
+                break
+            except urllib.error.HTTPError as exc:
+                attempt += 1
+                if attempt < self.retry_attempts and exc.code in RETRYABLE_LOCAL_HTTP_STATUSES:
+                    time.sleep(self.retry_backoff_seconds * 2 ** (attempt - 1))
+                    continue
+                raise ModelClientError(
+                    "tokenize_http_error",
+                    f"tokenizer service returned HTTP {exc.code}",
+                    status=exc.code,
+                ) from exc
+            except (OSError, TimeoutError, urllib.error.URLError) as exc:
+                attempt += 1
+                if attempt < self.retry_attempts:
+                    time.sleep(self.retry_backoff_seconds * 2 ** (attempt - 1))
+                    continue
+                raise ModelClientError("tokenize_transport_error", str(exc)) from exc
+            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise ModelClientError(
+                    "tokenize_invalid_json", "tokenizer service returned invalid JSON"
+                ) from exc
         count = decoded.get("count") if isinstance(decoded, dict) else None
         if isinstance(count, bool) or not isinstance(count, int) or count <= 0:
             raise ModelClientError(
@@ -178,7 +233,7 @@ class SerializedChatTokenCounter:
 
 @dataclass(frozen=True, slots=True)
 class GenerationConfig:
-    model: str = "openai.gpt-5.5"
+    model: str = DEFAULT_MODEL
     reasoning_effort: str | None = "medium"
     max_output_tokens: int = 16384
     max_input_tokens: int | None = None
@@ -186,10 +241,14 @@ class GenerationConfig:
     response_format: Mapping[str, Any] | None = None
 
     def __post_init__(self) -> None:
-        if self.model != "openai.gpt-5.5" or self.transport != "bedrock-responses":
-            raise ValueError("only Bedrock Mantle GPT-5.5 Responses is supported")
+        if self.model not in SUPPORTED_MODELS or self.transport != "bedrock-responses":
+            raise ValueError(
+                "only Bedrock Mantle Responses models "
+                + " / ".join(SUPPORTED_MODELS)
+                + " are supported"
+            )
         if self.reasoning_effort not in {None, "none", "low", "medium", "high", "xhigh"}:
-            raise ValueError("invalid GPT-5.5 reasoning effort")
+            raise ValueError("invalid GPT-5.x reasoning effort")
         if self.response_format is not None and not isinstance(self.response_format, Mapping):
             raise ValueError("response_format must be a mapping")
         for name in ("max_output_tokens", "max_input_tokens"):
@@ -201,7 +260,7 @@ class GenerationConfig:
 
 
 def bedrock_responses_endpoint(endpoint: str) -> str:
-    """Require the documented GPT-5.5 route; never switch model or cloud endpoint."""
+    """Require the documented GPT-5.x route; never switch model or cloud endpoint."""
     if not isinstance(endpoint, str):
         raise ValueError("a Bedrock Mantle endpoint must be configured")
     parsed = urlsplit(endpoint.rstrip("/"))
@@ -212,7 +271,7 @@ def bedrock_responses_endpoint(endpoint: str) -> str:
         or parsed.fragment
         or parsed.path not in {"", "/openai/v1", "/openai/v1/responses"}
     ):
-        raise ValueError("GPT-5.5 requires a supported Bedrock Mantle /openai/v1 endpoint")
+        raise ValueError("GPT-5.x requires a supported Bedrock Mantle /openai/v1 endpoint")
     return f"https://{parsed.netloc}/openai/v1/responses"
 
 
@@ -348,7 +407,14 @@ def _assistant_response(decoded: Any) -> dict[str, Any]:
             raise ModelClientError("incomplete_response", "Bedrock response did not complete")
         finish_reason = "length"
     if not text and not calls and finish_reason != "length":
-        raise ModelClientError("invalid_response", "Bedrock response has no assistant output")
+        if output == [] and decoded["status"] == "completed":
+            # GPT-5.6 Terra deterministically returns a completed response with no
+            # output items when it has nothing further to say (observed after
+            # transfer_to_human_agents). That is an empty assistant message, not a
+            # provider failure; the official runtime decides how the episode ends.
+            text = [""]
+        else:
+            raise ModelClientError("invalid_response", "Bedrock response has no assistant output")
     raw_usage = decoded.get("usage")
     if not isinstance(raw_usage, Mapping):
         raise ModelClientError("invalid_response", "Bedrock response has no usage accounting")
@@ -376,23 +442,58 @@ class OpenAICompatibleClient:
         endpoint: str,
         *,
         config: GenerationConfig | None = None,
-        api_key: str = "",
+        api_key: str | Callable[[], str] = "",
         timeout_seconds: float = 300.0,
         opener: Any | None = None,
         token_counter: ChatTokenCounter | None = None,
         usage_path: Path | None = None,
         usage_role: str | None = None,
+        retry_attempts: int = 6,
+        retry_backoff_seconds: float = 2.0,
+        timeout_retry_attempts: int = 2,
     ) -> None:
         if not endpoint or timeout_seconds <= 0:
             raise ValueError("endpoint and timeout_seconds must be valid")
+        if isinstance(retry_attempts, bool) or not isinstance(retry_attempts, int):
+            raise ValueError("retry_attempts must be an integer")
+        if retry_attempts < 1 or retry_backoff_seconds < 0:
+            raise ValueError("retry_attempts must be >= 1 and retry_backoff_seconds >= 0")
+        if (
+            isinstance(timeout_retry_attempts, bool)
+            or not isinstance(timeout_retry_attempts, int)
+            or timeout_retry_attempts < 0
+        ):
+            raise ValueError("timeout_retry_attempts must be a non-negative integer")
+        self.timeout_retry_attempts = timeout_retry_attempts
         self.endpoint = bedrock_responses_endpoint(endpoint)
         self.config = config or GenerationConfig()
+        # Either a static bearer token or a resolver re-read before every request
+        # (refreshable token files). Never rendered by __repr__ or usage logs.
         self.api_key = api_key
         self.timeout_seconds = float(timeout_seconds)
         self._opener = opener or urllib.request.urlopen
         self._token_counter = token_counter
         self._usage_history: list[dict[str, Any]] = []
         self._usage_path, self._usage_role = usage_path, usage_role
+        self.retry_attempts = retry_attempts
+        self.retry_backoff_seconds = float(retry_backoff_seconds)
+        self.retry_events: list[dict[str, Any]] = []
+
+    def _pause_before_retry(self, attempt: int, reason: str, headers: Any) -> None:
+        retry_after = headers.get("Retry-After") if headers is not None else None
+        delay = retry_delay_seconds(attempt, retry_after, base_seconds=self.retry_backoff_seconds)
+        event = {
+            "event": "bedrock_retry",
+            "role": self._usage_role,
+            "model": self.config.model,
+            "attempt": attempt,
+            "reason": reason,
+            "delay_seconds": round(delay, 1),
+        }
+        self.retry_events.append(event)
+        # Operational visibility only; no payload or credential is ever logged.
+        print(json.dumps(event), file=sys.stderr, flush=True)
+        time.sleep(delay)
 
     def __repr__(self) -> str:
         return (
@@ -422,6 +523,9 @@ class OpenAICompatibleClient:
         seed: int | None = None,
         max_output_tokens: int | None = None,
     ) -> dict[str, Any]:
+        # Resolve the credential first: a CredentialError (missing/expired token
+        # file) must surface before any request is built or journaled as sent.
+        token = self.api_key() if callable(self.api_key) else self.api_key
         normalized = _response_input(messages)
         limit = self.config.max_output_tokens if max_output_tokens is None else max_output_tokens
         if isinstance(limit, bool) or not isinstance(limit, int) or limit <= 0:
@@ -460,25 +564,96 @@ class OpenAICompatibleClient:
             self.endpoint,
             data=json.dumps(payload, ensure_ascii=False, allow_nan=False).encode("utf-8"),
             headers={
-                "Authorization": f"Bearer {self.api_key}",
+                "Authorization": f"Bearer {token}",
                 "Content-Type": "application/json",
             },
             method="POST",
         )
+        # Retry policy: only failures that prove the model did not produce an observed
+        # sample are retried (HTTP 429/5xx rejections, connection failures).  Timeouts
+        # are never retried because the service may have completed the request; they
+        # stay unknown for the journal exactly as before.  A rejected request is not a
+        # resample, so this does not change the one-shot semantics of any stage.
+        attempt = 1
+        timeouts = 0
+        while True:
+            try:
+                with self._opener(request, timeout=self.timeout_seconds) as response:
+                    decoded = json.loads(response.read())
+                failed_status = _server_failure_status(decoded)
+                if failed_status is not None:
+                    # HTTP 200 carrying a failed/unfinished response object: the service
+                    # produced no sample, so this is a server failure, not a result.
+                    if attempt < self.retry_attempts:
+                        self._pause_before_retry(attempt, failed_status, None)
+                        attempt += 1
+                        continue
+                    raise ModelClientError(
+                        "server_failed_response", f"model service reported {failed_status}"
+                    )
+                break
+            except urllib.error.HTTPError as exc:
+                if exc.code in RETRYABLE_MODEL_HTTP_STATUSES and attempt < self.retry_attempts:
+                    self._pause_before_retry(attempt, f"http_{exc.code}", exc.headers)
+                    attempt += 1
+                    continue
+                raise ModelClientError(
+                    "http_error", f"model service returned HTTP {exc.code}", status=exc.code
+                ) from exc
+            except TimeoutError as exc:
+                if timeouts < self.timeout_retry_attempts:
+                    # Deviation from the original no-resend rule, chosen by the operator on
+                    # 2026-10-05: Bedrock Mantle left ~1% of requests hanging under load.
+                    # The first sample was never observed, so the retry is the first
+                    # observed sample; duplicate server-side work is the only cost.
+                    timeouts += 1
+                    self._pause_before_retry(attempt, "timeout", None)
+                    attempt += 1
+                    continue
+                raise ModelClientError(
+                    "transport_error", "model request returned no valid response"
+                ) from exc
+            except (OSError, urllib.error.URLError) as exc:
+                reason = getattr(exc, "reason", None)
+                if isinstance(reason, TimeoutError):
+                    if timeouts < self.timeout_retry_attempts:
+                        timeouts += 1
+                        self._pause_before_retry(attempt, "timeout", None)
+                        attempt += 1
+                        continue
+                    raise ModelClientError(
+                        "transport_error", "model request returned no valid response"
+                    ) from exc
+                if attempt >= self.retry_attempts:
+                    raise ModelClientError(
+                        "transport_error", "model request returned no valid response"
+                    ) from exc
+                self._pause_before_retry(attempt, type(exc).__name__, None)
+                attempt += 1
+                continue
+            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise ModelClientError(
+                    "invalid_json", "model service returned invalid JSON"
+                ) from exc
         try:
-            with self._opener(request, timeout=self.timeout_seconds) as response:
-                decoded = json.loads(response.read())
-        except urllib.error.HTTPError as exc:
-            raise ModelClientError(
-                "http_error", f"model service returned HTTP {exc.code}", status=exc.code
-            ) from exc
-        except (OSError, TimeoutError, urllib.error.URLError) as exc:
-            raise ModelClientError(
-                "transport_error", "model request returned no valid response"
-            ) from exc
-        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise ModelClientError("invalid_json", "model service returned invalid JSON") from exc
-        result = _assistant_response(decoded)
+            result = _assistant_response(decoded)
+        except ModelClientError as exc:
+            # Shape-only diagnostics (statuses and item/content types, never text) so an
+            # unexpected provider response can be recognised from the run logs.
+            print(
+                json.dumps(
+                    {
+                        "event": "bedrock_invalid_response",
+                        "role": self._usage_role,
+                        "model": self.config.model,
+                        "code": exc.code,
+                        **_response_shape(decoded),
+                    }
+                ),
+                file=sys.stderr,
+                flush=True,
+            )
+            raise
         self._usage_history.append(deepcopy(result["usage"]))
         if self._usage_path is not None:
             self._usage_path.parent.mkdir(parents=True, exist_ok=True)
@@ -486,6 +661,7 @@ class OpenAICompatibleClient:
                 "role": self._usage_role,
                 "model": self.config.model,
                 "usage": result["usage"],
+                "attempts": attempt,
             }
             encoded = (json.dumps(record, allow_nan=False) + "\n").encode("utf-8")
             descriptor = os.open(self._usage_path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
@@ -495,6 +671,68 @@ class OpenAICompatibleClient:
             finally:
                 os.close(descriptor)
         return result
+
+
+_FAILED_RESPONSE_STATUSES = frozenset({"failed", "cancelled", "queued", "in_progress"})
+
+
+def _server_failure_status(decoded: Any) -> str | None:
+    """Name the server-side failure carried by a 200 response, or None if it is a result."""
+    if not isinstance(decoded, Mapping):
+        return None
+    status = decoded.get("status")
+    if isinstance(status, str) and status in _FAILED_RESPONSE_STATUSES:
+        return f"response_status_{status}"
+    error = decoded.get("error")
+    if isinstance(error, Mapping) and error:
+        code = error.get("code") or error.get("type")
+        return f"response_error_{code}" if isinstance(code, str) and code else "response_error"
+    return None
+
+
+def _response_shape(decoded: Any) -> dict[str, Any]:
+    """Describe a response by status and item/content types only."""
+    if not isinstance(decoded, Mapping):
+        return {"decoded_type": type(decoded).__name__}
+    shape: dict[str, Any] = {"status": decoded.get("status")}
+    details = decoded.get("incomplete_details")
+    if isinstance(details, Mapping):
+        shape["incomplete_reason"] = details.get("reason")
+    output = decoded.get("output")
+    if isinstance(output, list):
+        shape["output_types"] = [
+            item.get("type") if isinstance(item, Mapping) else type(item).__name__
+            for item in output
+        ]
+        shape["content_types"] = [
+            block.get("type") if isinstance(block, Mapping) else type(block).__name__
+            for item in output
+            if isinstance(item, Mapping) and isinstance(item.get("content"), list)
+            for block in item["content"]
+        ]
+        shape["message_roles"] = [
+            item.get("role")
+            for item in output
+            if isinstance(item, Mapping) and item.get("type") == "message"
+        ]
+    else:
+        shape["output_type"] = type(output).__name__
+    shape["has_usage"] = isinstance(decoded.get("usage"), Mapping)
+    return shape
+
+
+def retry_delay_seconds(
+    attempt: int,
+    retry_after: str | None,
+    *,
+    base_seconds: float,
+    cap_seconds: float = 60.0,
+) -> float:
+    """Exponential backoff honouring an integer Retry-After header when present."""
+    if retry_after is not None:
+        with contextlib.suppress(ValueError, TypeError):
+            return min(max(float(retry_after), 0.0), cap_seconds)
+    return min(base_seconds * 2 ** (attempt - 1), cap_seconds)
 
 
 def _sanitized_usage(value: Mapping[str, Any]) -> dict[str, Any]:

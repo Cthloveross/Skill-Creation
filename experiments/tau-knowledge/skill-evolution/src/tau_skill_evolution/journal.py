@@ -2,19 +2,77 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
+import re
+import shutil
+import tempfile
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
-from tau_skill_evolution.core._canonical import canonical_json_sha256, sha256_text
+from tau_skill_evolution.core._canonical import (
+    canonical_json_bytes,
+    canonical_json_sha256,
+    sha256_text,
+)
 
 from .artifacts import PROTOCOL, atomic_json
+from .model import CredentialError
+
+IDENTITY_TEMPORARY_PREFIX = ".identity.json."
 
 
 class UnknownOperation(RuntimeError):
     """A request may have reached an external service but has no sealed response."""
+
+
+def identity_temporary(name: str) -> bool:
+    """In-flight temporaries of a concurrent ``identity.json`` creation."""
+    return name.startswith(IDENTITY_TEMPORARY_PREFIX)
+
+
+def _create_identity_exclusive(path: Path, value: Any) -> None:
+    """Create ``identity.json`` once; a concurrent first writer wins untouched.
+
+    ``os.link`` fails with EEXIST instead of replacing, so several processes
+    racing on one fresh journal never overwrite each other; every process then
+    verifies the file it observes.
+    """
+    descriptor, temporary = tempfile.mkstemp(prefix=IDENTITY_TEMPORARY_PREFIX, dir=path.parent)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(canonical_json_bytes(value))
+            stream.flush()
+            os.fsync(stream.fileno())
+        with contextlib.suppress(FileExistsError):
+            os.link(temporary, path)
+        directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        os.unlink(temporary)
+
+
+def _short_code(exc: BaseException) -> str | None:
+    """Return a short machine code for diagnostics, walking the cause chain."""
+    seen: set[int] = set()
+    current: BaseException | None = exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        code = getattr(current, "code", None)
+        if isinstance(code, str) and code and len(code) <= 80 and " " not in code:
+            return code
+        text = str(current)
+        # Code-like messages (no spaces, e.g. "bank_worker_operation_failed:..." or
+        # "skillsbench_public_artifact_not_regular") carry no task or provider text.
+        if text and len(text) <= 120 and re.fullmatch(r"[A-Za-z0-9_.:\-]+", text):
+            return text
+        current = current.__cause__ or current.__context__
+    return None
 
 
 class Journal:
@@ -23,13 +81,19 @@ class Journal:
         self.root.mkdir(parents=True, exist_ok=True)
         identity_path = self.root / "identity.json"
         expected = {"protocol": PROTOCOL, "identity": dict(identity or {})}
-        if identity_path.exists():
-            if json.loads(identity_path.read_text(encoding="utf-8")) != expected:
-                raise ValueError("checkpoint protocol or configuration identity differs")
-        else:
-            if any(self.root.iterdir()):
+        if not identity_path.exists():
+            # Several processes may create the same identity concurrently: ignore
+            # their temporaries and an identity.json that appeared meanwhile.
+            stray = [
+                path
+                for path in self.root.iterdir()
+                if path != identity_path and not identity_temporary(path.name)
+            ]
+            if stray:
                 raise ValueError("checkpoint has no new-protocol identity")
-            atomic_json(identity_path, expected)
+            _create_identity_exclusive(identity_path, expected)
+        if json.loads(identity_path.read_text(encoding="utf-8")) != expected:
+            raise ValueError("checkpoint protocol or configuration identity differs")
 
     def _directory(self, operation_id: str) -> Path:
         if not isinstance(operation_id, str) or not operation_id:
@@ -74,6 +138,12 @@ class Journal:
                 "response": response,
             }
             atomic_json(directory / "response.json", envelope)
+        except CredentialError:
+            # The client resolves its bearer token before building any request, so
+            # nothing reached a service: withdraw the record this call created and
+            # let the invocation abort; a later invocation sends it for the first time.
+            shutil.rmtree(directory)
+            raise
         except BaseException as exc:
             # The request record intentionally remains pending. A transport failure
             # does not establish that the remote service did not execute it.
@@ -82,15 +152,19 @@ class Journal:
             from .model import authentication_status
 
             status = authentication_status(exc)
+            failure: dict[str, Any] = {
+                "operation_id": operation_id,
+                "code": "authentication_failed" if status is not None else "unknown_result",
+                # Diagnostic only: the exception class and the client's short error code
+                # (never message text, which may carry provider bodies or task data) so
+                # operators can tell transport failures from program errors; the
+                # operation itself stays unknown and is never re-sent.
+                "exception": type(exc).__name__,
+                "error_code": _short_code(exc),
+            }
             if status is not None:
-                atomic_json(
-                    directory / "failure.json",
-                    {
-                        "operation_id": operation_id,
-                        "code": "authentication_failed",
-                        "status": status,
-                    },
-                )
+                failure["status"] = status
+            atomic_json(directory / "failure.json", failure)
             raise UnknownOperation(f"operation {operation_id!r} has an unknown result") from exc
         return response
 

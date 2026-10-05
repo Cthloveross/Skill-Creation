@@ -24,3 +24,5 @@ Bubblewrap smoke 是单题演示，不能作为正式矩阵结果。当前两份
 
 [实验参数与边界](experiments/tau-knowledge/skill-evolution/PROTOCOL.md)、[提示来源](experiments/tau-knowledge/skill-evolution/meta/coevo-authoring/SOURCE.md)。
 历史 runs、原始资料及用户 analysis 保留，旧 checkpoint 不进入新协议。
+
+2026-10-05 更新：两套矩阵已用 Bedrock GPT-5.6 Terra 跑完，结果与运行条件见 [EXPERIMENT_PLAN](EXPERIMENT_PLAN.md) 末节。

@@ -1,0 +1,182 @@
+{
+  "catalog_version": "supplied-product-facts-1",
+  "calculation_policy": {
+    "card_bonuses_stack": false,
+    "checking_boosts_stack": false,
+    "selected_card_bonus_rule": "highest applicable card bonus only",
+    "selected_checking_boost_rule": "highest documented applicable checking boost only",
+    "checking_and_card_bonuses_can_stack": true,
+    "interest_estimate": "stable balance multiplied by APY; APY is not compounded again"
+  },
+  "savings_accounts": [
+    {
+      "name": "Gold Plus Account",
+      "base_apy_percent": 6.0,
+      "opening_minimum": 10000,
+      "ongoing_minimum": 25000,
+      "sources": ["doc_savings_accounts_gold_plus_account_001", "doc_savings_accounts_gold_plus_account_005"],
+      "card_bonuses": {
+        "Bronze Rewards Card": 0.15,
+        "Silver Rewards Card": 0.1,
+        "Gold Rewards Card": 0.35,
+        "Platinum Rewards Card": 0.2,
+        "Diamond Elite Card": 0.25,
+        "EcoCard": 0.1,
+        "Green Rewards Card": 0.05,
+        "Crypto-Cash Back Card": 0.3
+      }
+    },
+    {
+      "name": "Gold Account",
+      "base_apy_percent": 5.5,
+      "opening_minimum": null,
+      "ongoing_minimum": 10000,
+      "sources": ["doc_savings_accounts_gold_account_002", "doc_savings_accounts_gold_account_014"],
+      "card_bonuses": {
+        "Bronze Rewards Card": 0.15,
+        "Silver Rewards Card": 0.2,
+        "Gold Rewards Card": 0.025,
+        "Platinum Rewards Card": 0.15,
+        "Diamond Elite Card": 0.3,
+        "EcoCard": 0.6,
+        "Green Rewards Card": 0.35,
+        "Crypto-Cash Back Card": 0.0
+      }
+    },
+    {
+      "name": "Silver Plus Account",
+      "base_apy_percent": 4.5,
+      "base_apy_condition": "Balance at or above 15000 uses the Tier 2 APY. The supplied calculator excludes lower balances rather than estimating the Tier 1 rate.",
+      "minimum_balance_for_listed_apy": 15000,
+      "opening_minimum": 1000,
+      "ongoing_minimum": 2500,
+      "sources": ["doc_savings_accounts_silver_plus_account_001", "doc_savings_accounts_silver_plus_account_002", "doc_savings_accounts_silver_plus_account_009"],
+      "card_bonuses": {
+        "Bronze Rewards Card": 0.15,
+        "Silver Rewards Card": 0.15,
+        "Gold Rewards Card": 0.2,
+        "Platinum Rewards Card": 0.15,
+        "Diamond Elite Card": 0.4,
+        "EcoCard": 0.45,
+        "Green Rewards Card": 0.1,
+        "Crypto-Cash Back Card": 0.0
+      }
+    },
+    {
+      "name": "Green Account (savings)",
+      "base_apy_percent": 4.0,
+      "opening_minimum": 100,
+      "ongoing_minimum": 500,
+      "sources": ["doc_savings_accounts_green_account_(savings)_001", "doc_savings_accounts_green_account_(savings)_003"],
+      "card_bonuses": {
+        "Bronze Rewards Card": 0.0,
+        "Silver Rewards Card": 0.45,
+        "Gold Rewards Card": 0.0,
+        "Platinum Rewards Card": 0.35,
+        "Diamond Elite Card": 0.6,
+        "EcoCard": 0.5,
+        "Green Rewards Card": 0.4,
+        "Crypto-Cash Back Card": 0.0
+      }
+    },
+    {
+      "name": "Platinum Account",
+      "base_apy_percent": 6.5,
+      "opening_minimum": 25000,
+      "ongoing_minimum": 50000,
+      "sources": ["doc_savings_accounts_platinum_account_002", "doc_savings_accounts_platinum_account_003", "doc_savings_accounts_platinum_account_010"],
+      "card_bonuses": {
+        "Bronze Rewards Card": 0.0,
+        "Silver Rewards Card": 0.0,
+        "Gold Rewards Card": 0.15,
+        "Platinum Rewards Card": 0.25,
+        "Diamond Elite Card": 0.35,
+        "EcoCard": 0.0,
+        "Green Rewards Card": 0.0,
+        "Crypto-Cash Back Card": 0.0
+      }
+    },
+    {
+      "name": "Platinum Plus Account",
+      "base_apy_percent": 7.0,
+      "opening_minimum": 50000,
+      "ongoing_minimum": 100000,
+      "sources": ["doc_savings_accounts_platinum_plus_account_001", "doc_savings_accounts_platinum_plus_account_002", "doc_savings_accounts_platinum_plus_account_009"],
+      "card_bonuses": {
+        "Bronze Rewards Card": 0.0,
+        "Silver Rewards Card": 0.0,
+        "Gold Rewards Card": 0.1,
+        "Platinum Rewards Card": 0.4,
+        "Diamond Elite Card": 0.6,
+        "EcoCard": 0.05,
+        "Green Rewards Card": 0.0,
+        "Crypto-Cash Back Card": 0.25
+      }
+    },
+    {
+      "name": "Diamond Elite Account",
+      "base_apy_percent": 7.5,
+      "opening_minimum": null,
+      "ongoing_minimum": 250000,
+      "sources": ["doc_savings_accounts_diamond_elite_account_002", "doc_savings_accounts_diamond_elite_account_009", "doc_savings_accounts_diamond_elite_account_011"],
+      "card_bonuses": {
+        "Bronze Rewards Card": 0.0,
+        "Silver Rewards Card": 0.0,
+        "Gold Rewards Card": 0.0,
+        "Platinum Rewards Card": 0.1,
+        "Diamond Elite Card": 0.5,
+        "EcoCard": 0.0,
+        "Green Rewards Card": 0.0,
+        "Crypto-Cash Back Card": 0.15
+      }
+    }
+  ],
+  "cards": [
+    {
+      "name": "Bronze Rewards Card",
+      "annual_fee": 0.0,
+      "minimum_credit_score": 640,
+      "sources": ["doc_credit_cards_bronze_rewards_card_001"]
+    },
+    {
+      "name": "Silver Rewards Card",
+      "annual_fee": 0.0,
+      "minimum_credit_score": 680,
+      "sources": ["doc_credit_cards_silver_rewards_card_001"]
+    },
+    {
+      "name": "Gold Rewards Card",
+      "annual_fee": 0.0,
+      "minimum_credit_score": 720,
+      "requires_premium_subscription": true,
+      "sources": ["doc_credit_cards_gold_rewards_card_001"]
+    },
+    {
+      "name": "EcoCard",
+      "annual_fee": 50.0,
+      "minimum_credit_score": 0,
+      "sources": ["doc_credit_cards_ecocard_001"]
+    },
+    {
+      "name": "Platinum Rewards Card",
+      "annual_fee": 200.0,
+      "requires_explicit_eligibility_confirmation": true,
+      "sources": ["doc_credit_cards_platinum_rewards_card_002"]
+    },
+    {
+      "name": "Diamond Elite Card",
+      "annual_fee": 495.0,
+      "minimum_credit_score": 780,
+      "requires_invitation": true,
+      "sources": ["doc_credit_cards_diamond_elite_card_001", "doc_credit_cards_diamond_elite_card_006"]
+    }
+  ],
+  "premium_subscription": {
+    "monthly_cost": 4.99,
+    "sources": ["doc_personal_subscriptions_rho_bank_plus_001"]
+  },
+  "known_linked_checking_fact": {
+    "description": "Only listed checking/savings pairs receive a linked-checking boost. Light Blue checking is not listed as a qualifying pair with Gold Plus Account; no boost is applied for that pairing.",
+    "sources": ["doc_bank_accounts_bank_accounts_(general)_012"]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "cards": [
+    {
+      "card": "EcoCard",
+      "terms": {
+        "annual_fee_usd": "50.00",
+        "purchase_apr_percent": "19.99",
+        "foreign_transaction_fee_percent": "1.0",
+        "late_payment_fee_usd": "32.50"
+      },
+      "source_document_ids": {
+        "annual_fee_usd": ["doc_credit_cards_ecocard_001"],
+        "purchase_apr_percent": ["doc_credit_cards_ecocard_001"],
+        "foreign_transaction_fee_percent": ["doc_credit_cards_ecocard_001"],
+        "late_payment_fee_usd": ["doc_credit_cards_ecocard_001"]
+      }
+    }
+  ]
+}

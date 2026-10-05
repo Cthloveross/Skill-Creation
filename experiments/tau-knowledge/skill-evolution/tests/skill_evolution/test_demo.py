@@ -84,8 +84,11 @@ def test_single_benign_cli_demo_propagates_mode_and_runs_stages_in_order(
         return {"ready": True}
 
     class FakeWorkflow:
-        def __init__(self, configured, directory, *, demo=False, demo_task=None):
+        def __init__(
+            self, configured, directory, *, demo=False, demo_task=None, interim_report=True
+        ):
             assert demo is True and demo_task == spec.tasks[0]
+            assert interim_report is True
             assert configured.tasks == spec.tasks
 
         def create(self, cells):

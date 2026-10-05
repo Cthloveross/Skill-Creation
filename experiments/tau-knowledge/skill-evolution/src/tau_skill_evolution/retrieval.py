@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import errno
+import fcntl
 import os
 import subprocess
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 
 from tau_skill_evolution.core import DeterministicBM25, FullDocumentHybridSession, Page
@@ -14,6 +17,34 @@ from .dense import DenseIndex, OpenAICompatibleEmbeddingClient
 from .materialize import CorpusMaterializer
 from .model import VllmTextTokenCounter
 from .spec import ExperimentSpec, digest
+
+
+def publish_cache(output: Path, cache: Path) -> None:
+    """Publish a built index; a concurrent identical publication wins untouched."""
+    try:
+        output.rename(cache)
+    except OSError as exc:
+        if exc.errno not in {errno.EEXIST, errno.ENOTEMPTY} or not cache.exists():
+            raise
+
+
+def ensure_cache(cache: Path, build: Callable[[Path], None]) -> Path:
+    """Build ``cache`` at most once across concurrent processes.
+
+    Holding ``<cache>.lock`` serialises builders of the same key (many cells
+    share one benign corpus); the staging directory lives beside the cache so
+    the final rename is atomic.
+    """
+    if cache.exists():
+        return cache
+    with (cache.parent / f"{cache.name}.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if not cache.exists():
+            with tempfile.TemporaryDirectory(prefix="build-", dir=cache.parent) as staging:
+                output = Path(staging) / "index"
+                build(output)
+                publish_cache(output, cache)
+    return cache
 
 
 def embedding_argv(spec: ExperimentSpec) -> list[str]:
@@ -92,43 +123,43 @@ def prepare_corpus(spec: ExperimentSpec, task: str, arm: str) -> FullDocumentHyb
     dense_root = spec.root / "data" / "dense"
     dense_root.mkdir(parents=True, exist_ok=True)
     cache = dense_root / key
-    if not cache.exists():
-        with tempfile.TemporaryDirectory(prefix="build-", dir=dense_root) as staging:
-            output = Path(staging) / "index"
-            vllm = (spec.root / embedding["vllm"]).absolute()
-            command = [
-                str(vllm.parent / "python"),
-                "-m",
-                "tau_skill_evolution.dense_worker",
-                "--documents",
-                str(documents),
-                "--cache",
-                str(output),
-                "--hf-home",
-                os.environ.get("HF_HOME", str(Path.home() / ".cache/huggingface")),
-                "--materialized-root",
-                str(spec.root / "data" / "materialized"),
-                "--dense-root",
-                str(dense_root),
-                "--embedding-endpoint",
-                embedding["endpoint"],
-                "--model-id",
-                embedding["model"],
-                "--revision",
-                embedding["revision"],
-                "--dimensions",
-                str(embedding["dimension"]),
-            ]
-            env = {**os.environ, "PYTHONPATH": str(spec.root / "src")}
-            subprocess.run(
-                command,
-                env=env,
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=spec.values["runtime"]["episode_timeout_seconds"],
-            )
-            output.rename(cache)
+
+    def build(output: Path) -> None:
+        vllm = (spec.root / embedding["vllm"]).absolute()
+        command = [
+            str(vllm.parent / "python"),
+            "-m",
+            "tau_skill_evolution.dense_worker",
+            "--documents",
+            str(documents),
+            "--cache",
+            str(output),
+            "--hf-home",
+            os.environ.get("HF_HOME", str(Path.home() / ".cache/huggingface")),
+            "--materialized-root",
+            str(spec.root / "data" / "materialized"),
+            "--dense-root",
+            str(dense_root),
+            "--embedding-endpoint",
+            embedding["endpoint"],
+            "--model-id",
+            embedding["model"],
+            "--revision",
+            embedding["revision"],
+            "--dimensions",
+            str(embedding["dimension"]),
+        ]
+        env = {**os.environ, "PYTHONPATH": str(spec.root / "src")}
+        subprocess.run(
+            command,
+            env=env,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=spec.values["runtime"]["episode_timeout_seconds"],
+        )
+
+    ensure_cache(cache, build)
     client = OpenAICompatibleEmbeddingClient(
         embedding["endpoint"],
         model_id=embedding["model"],

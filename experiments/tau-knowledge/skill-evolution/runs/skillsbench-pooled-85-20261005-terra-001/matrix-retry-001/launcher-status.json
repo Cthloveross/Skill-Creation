@@ -1,0 +1,292 @@
+{
+  "cells": {
+    "3d-scan-calc|benign": {
+      "account": "011550804606",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:11:21Z",
+      "pid": 2833515,
+      "started_at": "2026-10-05T06:51:22Z"
+    },
+    "adaptive-cruise-control|benign": {
+      "account": "050918576103",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:35:36Z",
+      "pid": 2836843,
+      "started_at": "2026-10-05T06:51:26Z"
+    },
+    "civ6-adjacency-optimizer|benign": {
+      "account": "058264130246",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T08:28:21Z",
+      "pid": 2842551,
+      "started_at": "2026-10-05T06:51:30Z"
+    },
+    "data-to-d3|benign": {
+      "account": "058264330796",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:30:16Z",
+      "pid": 2847419,
+      "started_at": "2026-10-05T06:51:34Z"
+    },
+    "dialogue-parser|benign": {
+      "account": "139337686882",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:13:35Z",
+      "pid": 2852747,
+      "started_at": "2026-10-05T06:51:38Z"
+    },
+    "energy-ac-optimal-power-flow|benign": {
+      "account": "291706265615",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:14:51Z",
+      "pid": 2855722,
+      "started_at": "2026-10-05T06:51:42Z"
+    },
+    "energy-market-pricing|benign": {
+      "account": "323974388366",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T09:00:45Z",
+      "pid": 2861713,
+      "started_at": "2026-10-05T06:51:46Z"
+    },
+    "enterprise-information-search|benign": {
+      "account": "329042483036",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:12:29Z",
+      "pid": 2867689,
+      "started_at": "2026-10-05T06:51:50Z"
+    },
+    "exoplanet-detection-period|benign": {
+      "account": "339713096311",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T08:05:16Z",
+      "pid": 2873528,
+      "started_at": "2026-10-05T06:51:54Z"
+    },
+    "fix-build-agentops|benign": {
+      "account": "431169894749",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:20:37Z",
+      "pid": 2879431,
+      "started_at": "2026-10-05T06:51:58Z"
+    },
+    "fix-build-google-auto|benign": {
+      "account": "449946024699",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:15:36Z",
+      "pid": 2884944,
+      "started_at": "2026-10-05T06:52:02Z"
+    },
+    "fix-erlang-ssh-cve|benign": {
+      "account": "484907524577",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:07:39Z",
+      "pid": 2890590,
+      "started_at": "2026-10-05T06:52:06Z"
+    },
+    "flood-risk-analysis|benign": {
+      "account": "495599760299",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:10:17Z",
+      "pid": 2899805,
+      "started_at": "2026-10-05T06:52:10Z"
+    },
+    "gravitational-wave-detection|benign": {
+      "account": "571600859300",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:46:01Z",
+      "pid": 2907300,
+      "started_at": "2026-10-05T06:52:14Z"
+    },
+    "grid-dispatch-operator|benign": {
+      "account": "590184034501",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T09:34:08Z",
+      "pid": 2914989,
+      "started_at": "2026-10-05T06:52:18Z"
+    },
+    "hvac-control|benign": {
+      "account": "658306273089",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T09:40:26Z",
+      "pid": 2922181,
+      "started_at": "2026-10-05T06:52:22Z"
+    },
+    "jax-computing-basics|benign": {
+      "account": "711387138391",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T09:12:33Z",
+      "pid": 2930181,
+      "started_at": "2026-10-05T06:52:26Z"
+    },
+    "lake-warming-attribution|benign": {
+      "account": "739418138357",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:19:18Z",
+      "pid": 2938466,
+      "started_at": "2026-10-05T06:52:30Z"
+    },
+    "latex-formula-extraction|benign": {
+      "account": "776544636561",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:07:03Z",
+      "pid": 2943481,
+      "started_at": "2026-10-05T06:52:34Z"
+    },
+    "manufacturing-codebook-normalization|benign": {
+      "account": "814271927865",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:10:46Z",
+      "pid": 2947798,
+      "started_at": "2026-10-05T06:52:38Z"
+    },
+    "manufacturing-fjsp-optimization|benign": {
+      "account": "849695477162",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:02:55Z",
+      "pid": 2952608,
+      "started_at": "2026-10-05T06:52:42Z"
+    },
+    "mario-coin-counting|benign": {
+      "account": "861276121800",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T09:06:31Z",
+      "pid": 2958784,
+      "started_at": "2026-10-05T06:52:46Z"
+    },
+    "multilingual-video-dubbing|benign": {
+      "account": "905418167188",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T08:07:08Z",
+      "pid": 2963414,
+      "started_at": "2026-10-05T06:52:50Z"
+    },
+    "paper-anonymizer|benign": {
+      "account": "905418303520",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T09:41:00Z",
+      "pid": 2968457,
+      "started_at": "2026-10-05T06:52:54Z"
+    },
+    "parallel-tfidf-search|benign": {
+      "account": "912797224360",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:19:21Z",
+      "pid": 2973287,
+      "started_at": "2026-10-05T06:52:58Z"
+    },
+    "pedestrian-traffic-counting|benign": {
+      "account": "913771848911",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T09:14:53Z",
+      "pid": 2980289,
+      "started_at": "2026-10-05T06:53:02Z"
+    },
+    "pptx-reference-formatting|benign": {
+      "account": "961341511387",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T08:54:43Z",
+      "pid": 2986271,
+      "started_at": "2026-10-05T06:53:06Z"
+    },
+    "python-scala-translation|benign": {
+      "account": "984312272924",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:31:24Z",
+      "pid": 2996896,
+      "started_at": "2026-10-05T06:53:10Z"
+    },
+    "reserves-at-risk-calc|benign": {
+      "account": "011550804606",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:28:39Z",
+      "pid": 3002007,
+      "started_at": "2026-10-05T06:53:14Z"
+    },
+    "setup-fuzzing-py|benign": {
+      "account": "050918576103",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:09:03Z",
+      "pid": 3012276,
+      "started_at": "2026-10-05T06:53:18Z"
+    },
+    "shock-analysis-demand|benign": {
+      "account": "058264130246",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T10:09:38Z",
+      "pid": 3025027,
+      "started_at": "2026-10-05T06:53:22Z"
+    },
+    "shock-analysis-supply|benign": {
+      "account": "058264330796",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:45:51Z",
+      "pid": 3039799,
+      "started_at": "2026-10-05T06:53:26Z"
+    },
+    "software-dependency-audit|benign": {
+      "account": "139337686882",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T08:24:08Z",
+      "pid": 3051823,
+      "started_at": "2026-10-05T06:53:30Z"
+    },
+    "speaker-diarization-subtitles|benign": {
+      "account": "291706265615",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:58:57Z",
+      "pid": 3059111,
+      "started_at": "2026-10-05T06:53:34Z"
+    },
+    "syzkaller-ppdev-syzlang|benign": {
+      "account": "323974388366",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:20:39Z",
+      "pid": 3067824,
+      "started_at": "2026-10-05T06:53:38Z"
+    },
+    "taxonomy-tree-merge|benign": {
+      "account": "329042483036",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:30:28Z",
+      "pid": 3076659,
+      "started_at": "2026-10-05T06:53:42Z"
+    },
+    "travel-planning|benign": {
+      "account": "339713096311",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:26:50Z",
+      "pid": 3084238,
+      "started_at": "2026-10-05T06:53:46Z"
+    },
+    "trend-anomaly-causal-inference|benign": {
+      "account": "431169894749",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T08:01:17Z",
+      "pid": 3091584,
+      "started_at": "2026-10-05T06:53:50Z"
+    },
+    "video-filler-word-remover|benign": {
+      "account": "449946024699",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T07:20:36Z",
+      "pid": 3101066,
+      "started_at": "2026-10-05T06:53:54Z"
+    },
+    "virtualhome-agent-planning|benign": {
+      "account": "484907524577",
+      "exit_code": 0,
+      "finished_at": "2026-10-05T09:35:27Z",
+      "pid": 3105365,
+      "started_at": "2026-10-05T06:53:58Z"
+    }
+  },
+  "config": "/local/home/tianrgua/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/skillsbench-pooled-85-20261005-terra-001/config.yaml",
+  "experiment": "skillsbench",
+  "failed": 0,
+  "finished": 40,
+  "running": 0,
+  "started_at": "2026-10-05T06:51:22Z",
+  "total": 40,
+  "updated_at": "2026-10-05T10:09:38Z"
+}
