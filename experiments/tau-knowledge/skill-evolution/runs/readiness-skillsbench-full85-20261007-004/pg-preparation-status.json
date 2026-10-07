@@ -1,0 +1,33 @@
+{
+  "task": "pg-essay-to-audiobook",
+  "driver_pid": 1511240,
+  "driver_running": false,
+  "model_calls": 0,
+  "credentials_read": false,
+  "required_environment": [
+    "SKILLSBENCH_TASK_PG_ESSAY_TO_AUDIOBOOK_OPENAI_API_KEY"
+  ],
+  "operations": [
+    {
+      "operation_id": "pg-essay-to-audiobook.build.004",
+      "state": "FAILED",
+      "stage": "build",
+      "started_at": 1791399891.5970118,
+      "timeout_seconds": 300.0,
+      "log_path": "pg-essay-to-audiobook.build.log",
+      "result_path": "pg-essay-to-audiobook.build.json",
+      "pid": 1511248,
+      "return_code": -2,
+      "timed_out": true,
+      "finished_at": 1791400191.813035,
+      "log_sha256": "e52e031c0de266744c9ee9a184eed491b86570f71379b05ea6d62adf4a5b16e5"
+    }
+  ],
+  "prepared": false,
+  "ready": false,
+  "reason": "OFFICIAL_BUILD_TIMEOUT",
+  "source_hash": "9e9cabb5980e9c8a447fc563bebccff5327ea2840ea84318b6746267a0a04453",
+  "updated_at": "2026-10-07T19:09:51.814365+00:00",
+  "finished": true,
+  "state": "NOT_READY"
+}

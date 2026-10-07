@@ -165,6 +165,8 @@ Messages API要求显式 `max_tokens`：Opus配置输出上限为null时，发�
 
 正式运行使用 Docker：银行脚本与公开角色 helper 在锁定的禁网沙箱执行，SkillsBench 使用各题官方环境与依赖。镜像、资源限制和逐题准备状态见 HANDOFF；环境未通过 preflight 则停止，不降级宿主执行。历史 workspace 结果与正式 Docker 分开报告。
 
+本机将独立Docker实例的数据存于项目内的 `data/docker/`，通过现有 `DOCKER_HOST` 选择实例；存储位置不改变官方任务环境和角色权限。外层实例使用已有Docker权限启动，属于可信基础设施，需要privileged权限，不称rootless或额外的宿主安全边界。源码与交接包不包含其镜像、缓存或容器数据；部署和逐题真实准入见SkillsBench交接。
+
 ## 6. 指标与分析口径
 
 | 指标 | 计算与范围 | 用途 |

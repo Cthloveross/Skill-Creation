@@ -1,0 +1,4 @@
+{
+  "preflight_parallelism": 8,
+  "build_parallelism": 12
+}

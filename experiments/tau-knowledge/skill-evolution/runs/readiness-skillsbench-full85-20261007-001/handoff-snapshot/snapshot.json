@@ -1,0 +1,31 @@
+{
+  "schema": "skillsbench.handoff-snapshot.v1",
+  "published_commit": "aabe12964c056820d6a177906cd48651b405ddb7",
+  "readiness": "001 historical 41 READY /44 NOT_READY",
+  "files": [
+    {
+      "original_path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/skillsbench-v4-source.tar.gz",
+      "preserved_path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-full85-20261007-001/handoff-snapshot/skillsbench-v4-source.tar.gz",
+      "sha256": "84b68f8b2e8631ca19fe52678d3553618909d57f283abfceec318efa570a3ece",
+      "bytes": 2371131
+    },
+    {
+      "original_path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/transfer-manifest.json",
+      "preserved_path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-full85-20261007-001/handoff-snapshot/transfer-manifest.json",
+      "sha256": "cca3bd044467fa6f2542669e6d18e26b4004f19ac3a92430298381289ad60ef6",
+      "bytes": 137976
+    },
+    {
+      "original_path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-gpt56-v4/manifest.json",
+      "preserved_path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-full85-20261007-001/handoff-snapshot/full-85-gpt56-v4/manifest.json",
+      "sha256": "75e86562729b86842e27b544586a3982ec63bf0e3d989c955a73e2838ebecb32",
+      "bytes": 249443
+    },
+    {
+      "original_path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-opus48-v4/manifest.json",
+      "preserved_path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-full85-20261007-001/handoff-snapshot/full-85-opus48-v4/manifest.json",
+      "sha256": "6d5a7b7b9a1e149b033b27cfe67729ac249af378fb107fb6d459406a4521cfbc",
+      "bytes": 249451
+    }
+  ]
+}

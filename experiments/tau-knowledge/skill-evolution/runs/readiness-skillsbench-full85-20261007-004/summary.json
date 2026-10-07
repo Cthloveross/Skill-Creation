@@ -1,0 +1,20 @@
+{
+  "schema": "skillsbench.project-preparation-summary.v1",
+  "total_tasks": 85,
+  "ready": 67,
+  "not_ready": 18,
+  "prepared": 68,
+  "NOT_SENT": 0,
+  "actual_operations": 101,
+  "benchmark_measured_tasks": 0,
+  "model_calls": 0,
+  "credentials_read": false,
+  "benchmark_status": "NOT_MEASURED",
+  "task_pass_rate": null,
+  "docker_endpoint": "unix:///home/tc442/.local/share/skillsbench-docker/project-run/docker.sock",
+  "backing_directory": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/data/docker",
+  "backing_free_gib": 5929.7,
+  "failure_assessment": "preparation-failure-assessment.json",
+  "all_actual_attempts_terminal": true,
+  "utility_improvement_measured": false
+}

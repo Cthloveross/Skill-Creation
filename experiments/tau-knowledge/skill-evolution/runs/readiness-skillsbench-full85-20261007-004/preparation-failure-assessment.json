@@ -1,0 +1,539 @@
+{
+  "schema": "skillsbench.preparation-failure-assessment.v1",
+  "terminal_snapshot": true,
+  "task_failures": [
+    {
+      "task_id": "mario-coin-counting",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 600.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/mario-coin-counting.build.log",
+      "raw_log_sha256": "b8b56e4231ba0855531b335bd1e9e8dcf1072e9f80839bd74f721cec1fe22ac7",
+      "raw_log_sha256_at_worker_exit": "b8b56e4231ba0855531b335bd1e9e8dcf1072e9f80839bd74f721cec1fe22ac7",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#6 [2/9] RUN apt-get update && apt-get install -y     python3     python3-pip     python3-venv     ffmpeg     wget     imagemagick     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#6 594.1 Get:402 http://archive.ubuntu.com/ubuntu noble/main amd64 libjs-jquery all 3.6.1+dfsg+~3.5.14-1 [328 kB]",
+        "#6 594.1 Get:403 http://archive.ubuntu.com/ubuntu noble/main amd64 libjs-underscore all 1.13.4~dfsg+~1.11.4-3 [118 kB]",
+        "#6 594.1 Get:404 http://archive.ubuntu.com/ubuntu noble/main amd64 libjs-sphinxdoc all 7.2.6-6 [149 kB]"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "multilingual-video-dubbing",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 1200.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/multilingual-video-dubbing.build.log",
+      "raw_log_sha256": "9986985c16ff61bff848902bf01b9e7f00830406a16b5bcebdad31a492a5286b",
+      "raw_log_sha256_at_worker_exit": "9986985c16ff61bff848902bf01b9e7f00830406a16b5bcebdad31a492a5286b",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#6 [ 2/16] RUN apt-get update && apt-get install -y     python3 python3-pip python3-dev python3-venv     ffmpeg espeak-ng git     libgomp1 libsox-dev sox wget     build-essential cmake     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#6 1159.7 Get:430 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3-dev amd64 3.12.3-0ubuntu2.1 [26.7 kB]",
+        "#6 1159.7 Get:431 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 python3-setuptools all 68.1.2-2ubuntu1.2 [397 kB]",
+        "#6 1159.7 Get:432 http://archive.ubuntu.com/ubuntu noble/universe amd64 python3-wheel all 0.42.0-2 [53.1 kB]"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "organize-messy-files",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 600.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/organize-messy-files.build.log",
+      "raw_log_sha256": "91f4af0837cf6f697091bc21ffa0be53fe8fa372c2edb95bfe5d5326e1d5fa23",
+      "raw_log_sha256_at_worker_exit": "91f4af0837cf6f697091bc21ffa0be53fe8fa372c2edb95bfe5d5326e1d5fa23",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#6 [2/5] RUN apt-get update && apt-get install -y     python3     python3-pip     python3-venv     libreoffice     poppler-utils     wget     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#6 529.1 Get:183 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libglib2.0-data all 2.80.0-6ubuntu3.9 [50.1 kB]",
+        "#6 591.4 Ign:184 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libnss-systemd amd64 255.4-1ubuntu8.17",
+        "#6 654.3 Ign:185 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpam-cap amd64 1:2.66-5ubuntu2.4"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "pdf-excel-diff",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 600.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/pdf-excel-diff.build.log",
+      "raw_log_sha256": "598f00e91169c3c9cd9535625eba99278d2089d9a1c6eff1ebde84965fe6acb8",
+      "raw_log_sha256_at_worker_exit": "598f00e91169c3c9cd9535625eba99278d2089d9a1c6eff1ebde84965fe6acb8",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#5 [2/5] RUN apt-get update && apt-get install -y     python3     python3-pip     python3-venv     libreoffice     poppler-utils     wget     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#5 529.0 Get:182 http://archive.ubuntu.com/ubuntu noble/main amd64 libfribidi0 amd64 1.0.13-3build1 [26.1 kB]",
+        "#5 529.1 Get:183 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libglib2.0-data all 2.80.0-6ubuntu3.9 [50.1 kB]",
+        "#5 591.4 Ign:184 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libnss-systemd amd64 255.4-1ubuntu8.17"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "pedestrian-traffic-counting",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 600.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/pedestrian-traffic-counting.build.log",
+      "raw_log_sha256": "dd48b5ec69608f187d6661a88ab2159020e323e197d2ac4be591b8022dcaba54",
+      "raw_log_sha256_at_worker_exit": "dd48b5ec69608f187d6661a88ab2159020e323e197d2ac4be591b8022dcaba54",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#6 [2/7] RUN apt-get update && apt-get install -y     python3     python3-pip     python3-venv     libreoffice     poppler-utils     wget     ffmpeg     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#6 594.1 Get:193 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 systemd-resolved amd64 255.4-1ubuntu8.17 [297 kB]",
+        "#6 594.3 Get:194 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 systemd-timesyncd amd64 255.4-1ubuntu8.17 [35.3 kB]",
+        "#6 594.6 Get:195 http://archive.ubuntu.com/ubuntu noble/main amd64 xdg-user-dirs amd64 0.18-1build1 [18.4 kB]"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "pg-essay-to-audiobook",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 300.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/pg-essay-to-audiobook.build.log",
+      "raw_log_sha256": "e52e031c0de266744c9ee9a184eed491b86570f71379b05ea6d62adf4a5b16e5",
+      "raw_log_sha256_at_worker_exit": "e52e031c0de266744c9ee9a184eed491b86570f71379b05ea6d62adf4a5b16e5",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#5 [2/3] RUN apt-get update && apt-get install -y     python3     python3-pip     python3-venv     ffmpeg     curl     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#5 290.4 Get:175 http://archive.ubuntu.com/ubuntu noble/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2build7 [56.3 kB]",
+        "#5 290.4 Get:176 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libssh-4 amd64 0.10.6-2ubuntu0.5 [191 kB]",
+        "#5 290.5 Get:177 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libcurl4t64 amd64 8.5.0-2ubuntu10.15 [343 kB]"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false,
+      "missing_task_credential": true,
+      "required_environment": [
+        "SKILLSBENCH_TASK_PG_ESSAY_TO_AUDIOBOOK_OPENAI_API_KEY"
+      ],
+      "preflight_attempted": false
+    },
+    {
+      "task_id": "powerlifting-coef-calc",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 600.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/powerlifting-coef-calc.build.log",
+      "raw_log_sha256": "8f6f2c25570ee56c402627e0aaecf4f2ca4ab35b82bcad2de3823ae37bb9bffc",
+      "raw_log_sha256_at_worker_exit": "8f6f2c25570ee56c402627e0aaecf4f2ca4ab35b82bcad2de3823ae37bb9bffc",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#6 [2/9] RUN apt-get update && apt-get install -y     python3     python3-pip     python3-venv     libreoffice     gnumeric     curl     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#6 543.5 Get:203 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libnss3 amd64 2:3.98-1ubuntu0.2 [1445 kB]",
+        "#6 543.5 Get:204 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libopenjp2-7 amd64 2.5.0-2ubuntu0.5 [174 kB]",
+        "#6 543.6 Get:205 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libboost-iostreams1.83.0 amd64 1.83.0-2.1ubuntu3.2 [260 kB]"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "protein-expression-analysis",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 900.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/protein-expression-analysis.build.log",
+      "raw_log_sha256": "9f5f3919e587c42d88ada5533842f5a2567d5be78ffe6535a2fb1a52a2ec3264",
+      "raw_log_sha256_at_worker_exit": "713b8a05f6def2d5c83adf4f35991297e76f37dd23f3e97675299053cf0d4bd0",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#6 [2/6] RUN apt-get update && apt-get install -y     python3     python3-pip     python3-venv     curl     libreoffice     gnumeric     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#6 891.1 Get:564 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpipewire-0.3-common all 1.0.5-1ubuntu3.3 [19.5 kB]",
+        "#6 891.2 Get:565 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libpq5 amd64 16.15-0ubuntu0.24.04.1 [151 kB]",
+        "#6 891.2 Get:566 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 zlib1g-dev amd64 1:1.3.dfsg-3.1ubuntu2.2 [894 kB]"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "python-scala-translation",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 600.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/python-scala-translation.build.log",
+      "raw_log_sha256": "aefc486b42598509753f09d8b5c9746038a68ba943852bc83870e7e70e42aa9c",
+      "raw_log_sha256_at_worker_exit": "d9758f43153d5385d5bba7159371f0012b9ae635af5e3c14a23dbba31bb69df3",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#7 [3/8] RUN apt-get update -y &&     apt-get install -y default-jdk &&     apt-get install -y curl &&     apt-get clean",
+      "last_public_progress": [
+        "#7 213.4   shared-mime-info systemd systemd-dev systemd-resolved systemd-sysv",
+        "#7 213.4   systemd-timesyncd ubuntu-mono x11-common x11-utils x11proto-dev",
+        "#7 213.4   xdg-user-dirs xkb-data xorg-sgml-doctools xtrans-dev"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "reserves-at-risk-calc",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 600.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/reserves-at-risk-calc.build.log",
+      "raw_log_sha256": "118e6922c6a16baecdb638dfcc1db95b2c727673e7c4a3a4a15b2b003ac0d24a",
+      "raw_log_sha256_at_worker_exit": "118e6922c6a16baecdb638dfcc1db95b2c727673e7c4a3a4a15b2b003ac0d24a",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#6 [2/7] RUN apt-get update && apt-get install -y     python3     python3-pip     python3-venv     libreoffice     gnumeric     curl     wget     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#6 536.1 Ign:212 http://archive.ubuntu.com/ubuntu noble/main amd64 libmhash2 amd64 0.9.9.9-9build3",
+        "#6 591.3 Get:213 http://archive.ubuntu.com/ubuntu noble/main amd64 librasqal3t64 amd64 0.9.33-2.1build1 [188 kB]",
+        "#6 591.5 Get:214 http://archive.ubuntu.com/ubuntu noble/main amd64 librdf0t64 amd64 1.0.17-3.1ubuntu3 [102 kB]"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "shock-analysis-demand",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 600.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/shock-analysis-demand.build.log",
+      "raw_log_sha256": "2848d4e51807467c83e5010c0094baada752fb149b5668460955c29f87cf62ca",
+      "raw_log_sha256_at_worker_exit": "2848d4e51807467c83e5010c0094baada752fb149b5668460955c29f87cf62ca",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#6 [2/6] RUN apt-get update && apt-get install -y     python3     python3-pip     python3-venv     libreoffice     gnumeric     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#6 569.0 Get:101 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libavahi-common3 amd64 0.8-13ubuntu6.2 [23.4 kB]",
+        "#6 581.2 Get:102 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libavahi-client3 amd64 0.8-13ubuntu6.2 [26.8 kB]",
+        "#6 581.2 Get:103 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libkrb5support0 amd64 1.20.1-6ubuntu2.10 [34.9 kB]"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "shock-analysis-supply",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 600.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/shock-analysis-supply.build.log",
+      "raw_log_sha256": "b106b63434fe23adb87480d31fcd09c41428be8244ce566282ab97c714b57735",
+      "raw_log_sha256_at_worker_exit": "b106b63434fe23adb87480d31fcd09c41428be8244ce566282ab97c714b57735",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#6 [2/5] RUN apt-get update && apt-get install -y     python3     python3-pip     python3-venv     libreoffice     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#6 543.7 Ign:286 http://archive.ubuntu.com/ubuntu noble/main amd64 libpangoft2-1.0-0 amd64 1.52.1+ds-1build1",
+        "#6 572.3 Get:287 http://archive.ubuntu.com/ubuntu noble/main amd64 libpangocairo-1.0-0 amd64 1.52.1+ds-1build1 [28.8 kB]",
+        "#6 594.3 Get:288 http://archive.ubuntu.com/ubuntu noble/main amd64 libwayland-client0 amd64 1.22.0-2.1build1 [26.4 kB]"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "simpo-code-reproduction",
+      "reason": "official_grader_program_error",
+      "blocker_scope": "local_preflight_policy",
+      "stage": "preflight",
+      "timeout_seconds": 1500.0,
+      "timed_out": false,
+      "actual_return_code": 0,
+      "precise_root_cause_proven": true,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/simpo-code-reproduction.preflight.log",
+      "raw_log_sha256": "2ab7a21932c2002466c19e3aabe70b6b467d59d4c561dd02f34e68a4a810f388",
+      "raw_log_sha256_at_worker_exit": "2ab7a21932c2002466c19e3aabe70b6b467d59d4c561dd02f34e68a4a810f388",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "assessment": {
+        "schema": "skillsbench.environment-failure-assessment.v1",
+        "task_id": "simpo-code-reproduction",
+        "stage": "official_grader_collection",
+        "reason": "EMPTY_EPISODE_GRADER_MISSING_NUMPY",
+        "exception_type": "ModuleNotFoundError",
+        "missing_module": "numpy",
+        "candidate_failure": null,
+        "task_measurement": "NOT_MEASURED",
+        "task_reward": null,
+        "official_grader_process_exit": 0,
+        "native_cli_and_companion_passed": true,
+        "private_evidence_path": "data/skillsbench/private-grades/simpo-code-reproduction/6550de1be4c5483dba20e09c100c2977",
+        "private_capture_sha256": "5bea85f3e64baa087d3cd79bc45dc2a04974fb1ab285e94aaa88ceedbe168a26",
+        "raw_grader_evidence_publicly_exported": false,
+        "source_changes": false,
+        "grader_changes": false,
+        "required_interpreter": "/opt/py310/bin/python",
+        "declared_numpy_version": "1.24.2",
+        "evidence": "Empty-episode official native-Python grader collection cannot import numpy; no task agent or dependency installation has run. Native CLI and code-mode companion probes passed.",
+        "prior_assessment_sha256": "c4a91cc6c5a4bd74082130ab480d65d4ca3bbacbd09f45e77702abaad1942e3c",
+        "observed_error": "official_grader_program_error",
+        "blocker_scope": "local_preflight_policy",
+        "candidate_executed": false,
+        "agent_dependency_installation_permitted": true,
+        "task_unrunnable_proven": false,
+        "readiness": false,
+        "task_success_proven": false,
+        "correction": "The released instruction requires setting up the project. The author grades after agent execution in the same environment, where an agent may install numpy and further dependencies. This actual empty-episode collection error blocks the local stricter preflight, not proof that the released task cannot execute.",
+        "corrected_at": "2026-10-07T19:06:11.321617+00:00"
+      }
+    },
+    {
+      "task_id": "speaker-diarization-subtitles",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 900.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/speaker-diarization-subtitles.build.log",
+      "raw_log_sha256": "fac117ecfc7d4465a75996181371b8087cc5501890d492c818d998002727e6e2",
+      "raw_log_sha256_at_worker_exit": "fac117ecfc7d4465a75996181371b8087cc5501890d492c818d998002727e6e2",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#6 [ 2/10] RUN apt-get update && apt-get install -y     software-properties-common curl git build-essential ffmpeg sox libsndfile1     && add-apt-repository ppa:deadsnakes/ppa -y     && apt-get update && apt-get install -y     python3.11 python3.11-venv python3.11-dev     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#6 765.0 Get:243 http://archive.ubuntu.com/ubuntu noble/main amd64 libcairo-gobject2 amd64 1.18.0-3build1 [127 kB]",
+        "#6 826.8 Ign:244 http://archive.ubuntu.com/ubuntu noble/main amd64 fontconfig amd64 2.15.0-1.1ubuntu2",
+        "#6 889.2 Ign:245 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libgraphite2-3 amd64 1.3.14-2ubuntu0.24.04.1"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "threejs-structure-parser",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 600.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/threejs-structure-parser.build.log",
+      "raw_log_sha256": "731f4b0a8c9a3be6413008f06a370d71f994284a3b7013128590c5e5a803156a",
+      "raw_log_sha256_at_worker_exit": "731f4b0a8c9a3be6413008f06a370d71f994284a3b7013128590c5e5a803156a",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#6 [2/6] RUN apt-get update && apt-get install -y     curl     python3     python3-pip     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash -     && apt-get install -y nodejs     && apt-get clean     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#6 589.8 Get:128 http://archive.ubuntu.com/ubuntu noble/main amd64 libjpeg-turbo8 amd64 2.1.5-2ubuntu2 [150 kB]",
+        "#6 589.9 Get:129 http://archive.ubuntu.com/ubuntu noble/main amd64 libjpeg8 amd64 8c-2ubuntu11 [2148 B]",
+        "#6 589.9 Get:130 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libdeflate0 amd64 1.19-1build1.1 [43.9 kB]"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "deb.nodesource.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "threejs-to-obj",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 600.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/threejs-to-obj.build.log",
+      "raw_log_sha256": "511fc0d791c281c75568f2005e2d370890d1d2f38edcc662a7d10d9a23df9974",
+      "raw_log_sha256_at_worker_exit": "b85a38e0e73b0378b9bfa39f95ce31f1ef1eb8283a81a52b0ebb52d02cab4462",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#6 [2/6] RUN apt-get update && apt-get install -y     curl     python3     python3-pip     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash -     && apt-get install -y nodejs     && apt-get clean     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#6 632.4 ",
+        "#6 632.4 WARNING: apt does not have a stable CLI interface. Use with caution in scripts.",
+        "#6 632.4 "
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "deb.nodesource.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "video-tutorial-indexer",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 1200.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/video-tutorial-indexer.build.log",
+      "raw_log_sha256": "cb2d9c73adcba3107fb6a9e9b3238ab77cab971fc0a98ed372422e0199de5280",
+      "raw_log_sha256_at_worker_exit": "e8eb396b85c89849db3eabdc06ed931854c28deef0f8e492131fe5662c1bfcd5",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "build_step",
+      "last_public_build_command": "#8 [4/7] RUN python3 -c \"import whisper; whisper.load_model('tiny')\"",
+      "last_public_progress": [
+        "#11 DONE 0.0s",
+        "#12 exporting to image",
+        "#12 exporting layers"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "pip.pypa.io",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    },
+    {
+      "task_id": "weighted-gdp-calc",
+      "reason": "OFFICIAL_BUILD_TIMEOUT",
+      "blocker_scope": "preparation_deadline",
+      "stage": "build",
+      "timeout_seconds": 600.0,
+      "timed_out": true,
+      "actual_return_code": -2,
+      "precise_root_cause_proven": false,
+      "raw_log_private_path": "runs/readiness-skillsbench-full85-20261007-004/weighted-gdp-calc.build.log",
+      "raw_log_sha256": "26cbb6065e74b0158bc5293b17f4b934c7592bb2a64c6aad544683d044b27390",
+      "raw_log_sha256_at_worker_exit": "26cbb6065e74b0158bc5293b17f4b934c7592bb2a64c6aad544683d044b27390",
+      "benchmark_status": "NOT_MEASURED",
+      "reward": null,
+      "observed_stage": "package_download_or_installation",
+      "last_public_build_command": "#6 [2/6] RUN apt-get update && apt-get install -y     python3     python3-pip     python3-venv     libreoffice     gnumeric     && rm -rf /var/lib/apt/lists/*",
+      "last_public_progress": [
+        "#6 755.9 Get:202 http://archive.ubuntu.com/ubuntu noble/main amd64 libnspr4 amd64 2:4.35-1.1build1 [117 kB]",
+        "#6 756.0 Get:203 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libnss3 amd64 2:3.98-1ubuntu0.2 [1445 kB]",
+        "#6 756.2 Get:204 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libopenjp2-7 amd64 2.5.0-2ubuntu0.5 [174 kB]"
+      ],
+      "observed_public_download_hosts": [
+        "archive.ubuntu.com",
+        "security.ubuntu.com"
+      ],
+      "specific_build_errors": [],
+      "specific_network_failure_observed": false
+    }
+  ],
+  "general_network_probe_is_not_per_task_causal_proof": true,
+  "raw_logs_exported": false,
+  "benchmark_measured_tasks": 0
+}

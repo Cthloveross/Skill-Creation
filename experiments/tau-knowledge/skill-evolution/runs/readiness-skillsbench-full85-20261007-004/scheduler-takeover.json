@@ -1,0 +1,18 @@
+{
+  "state": "TAKEOVER_COMPLETED",
+  "original_scheduler_pid": 1260546,
+  "worker_pids": [
+    1306238,
+    1312116,
+    1314522,
+    1344269
+  ],
+  "workers_interrupted": false,
+  "source_changed": false,
+  "preflight_parallelism": 8,
+  "build_parallelism": 2,
+  "started_at": 1791397208.9636757,
+  "new_scheduler_pid": 1346767,
+  "original_scheduler_terminal": true,
+  "adopted_operations_repeated": false
+}

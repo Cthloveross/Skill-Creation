@@ -1,0 +1,16 @@
+{
+  "schema": "skillsbench.immutable-image-transfer-validation.v1",
+  "references": 108,
+  "unique_image_ids": 106,
+  "task_locks": 52,
+  "all_target_image_ids_match": true,
+  "source_images_unchanged": true,
+  "source_free_gib": 11.61,
+  "import_driver_terminal": true,
+  "batch_journal_sha256": "135805e547f0d8b039be7863dd5c48005cff8357946213696ee97739488d7865",
+  "source_daemon_modified": false,
+  "global_prune": false,
+  "model_calls": 0,
+  "credentials_read": false,
+  "timestamp": 1791398005.682371
+}
