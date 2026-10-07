@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import importlib.util
 import json
@@ -12,6 +13,7 @@ import shlex
 import shutil
 import stat
 import subprocess
+import sys
 import tarfile
 import tempfile
 import time
@@ -810,8 +812,10 @@ def _grader_errors(diagnostics: str) -> list[tuple[str, str | None, str]]:
             or line == "error: externally-managed-environment"
         ):
             errors.append(("DependencyInstallError", None, line))
-        elif re.match(r"(?:\S*/)?(?:pytest|uvx|python[\d.]*): error:", line) or line.startswith(
-            "ERROR: file or directory not found:"
+        elif (
+            re.match(r"(?:\S*/)?(?:pytest|uvx|python[\d.]*): error:", line)
+            or re.match(r"(?:\S*/)?python[\d.]*: No module named\b", line)
+            or line.startswith("ERROR: file or directory not found:")
         ):
             errors.append(("GraderInvocationError", None, line))
     if collecting and not errors:
@@ -947,7 +951,7 @@ def _standalone_python_layer() -> str:
 def prepare_docker(
     root: Path, task_id: str, *, runtime_lock_path: Path | None = None
 ) -> dict[str, Any]:
-    """Prepare locked public task images; readiness requires the fresh official-grade probe."""
+    """Prepare public task images without replacing a valid existing lock."""
     root = Path(root).resolve()
     if runtime_lock_path is not None and not Path(runtime_lock_path).name.startswith(
         "skillsbench-docker-"
@@ -965,6 +969,19 @@ def prepare_docker(
     config = task_config(directory)
     if config["environment"].get("gpus", 0):
         raise ContainerUnavailable("skillsbench_gpu_runtime_not_prepared")
+    if lock_path.exists() or lock_path.is_symlink():
+        if lock_path.is_symlink() or not lock_path.is_file():
+            raise ContainerUnavailable("skillsbench_docker_lock_not_regular")
+        runner = SkillsBenchRunner(root, task_id, demo=False, runtime_lock_path=lock_path)
+        locked = runner._docker_lock()
+        return {
+            **locked,
+            "prepared": True,
+            "ready": False,
+            "requires_fresh_preflight": True,
+            "reused": True,
+            "runtime_lock": str(lock_path),
+        }
     definition = _compose_definition(directory)
     images, recipes = {}, {}
     for service, settings in definition["services"].items():
@@ -976,6 +993,7 @@ def prepare_docker(
             subprocess.run(
                 [docker, "build", "-t", image, "-f", str(stage / build["dockerfile"]), str(stage)],
                 check=True,
+                stdout=sys.stderr,
             )
         metadata = json.loads(subprocess.check_output([docker, "image", "inspect", image]))[0]
         images[service] = {
@@ -1022,7 +1040,9 @@ def prepare_docker(
             f"USER {images['main']['user']}\n"
         )
         verify_base_tag()
-        subprocess.run([docker, "build", "-t", runtime_image, str(stage)], check=True)
+        subprocess.run(
+            [docker, "build", "-t", runtime_image, str(stage)], check=True, stdout=sys.stderr
+        )
         verify_base_tag()
     metadata = json.loads(subprocess.check_output([docker, "image", "inspect", runtime_image]))[0]
     runtime = {
@@ -1064,7 +1084,9 @@ def prepare_docker(
             )
             verify_base_tag()
             verify_runtime_tag()
-            subprocess.run([docker, "build", "-t", public_image, str(stage)], check=True)
+            subprocess.run(
+                [docker, "build", "-t", public_image, str(stage)], check=True, stdout=sys.stderr
+            )
             verify_base_tag()
             verify_runtime_tag()
         public_metadata = json.loads(
@@ -2184,6 +2206,17 @@ class SkillsBenchRunner:
             )
             if result.returncode or result.failure:
                 raise ContainerUnavailable("skillsbench_locked_image_missing")
+            try:
+                inspected = json.loads(result.stdout)
+            except (ValueError, UnicodeError) as exc:
+                raise ContainerUnavailable("skillsbench_locked_image_identity_invalid") from exc
+            if (
+                not isinstance(inspected, list)
+                or len(inspected) != 1
+                or not isinstance(inspected[0], dict)
+                or inspected[0].get("Id") != image["digest"]
+            ):
+                raise ContainerUnavailable("skillsbench_locked_image_identity_invalid")
         return value
 
     def _official_report_name(self) -> str:
@@ -2279,6 +2312,7 @@ class SkillsBenchRunner:
         empty.mkdir(exist_ok=True)
         deliverables: list[str] = []
         self.grader_diagnostics = None
+        self.grader_probe_context = None
         if self.use_bwrap:
             if self.runtime == "workspace" and self.task_id in _WORKSPACE_TEST_SCRIPT_SHA256:
                 self._lock().validate(self.task_id)
@@ -2388,6 +2422,11 @@ class SkillsBenchRunner:
                 if report.is_file() and not report.is_symlink()
                 else None
             )
+            self.grader_probe_context = {
+                "exit_code": result.returncode,
+                "reward": measured,
+                "report": data,
+            }
             public = self.source.task(self.task_id)
             candidate_modules = sorted(
                 set(
@@ -2453,6 +2492,107 @@ class SkillsBenchRunner:
                 "grader_exit_code": result.returncode,
             }
         )
+
+    def _deferred_task_setup(self, grade: Mapping[str, Any]) -> dict[str, Any] | None:
+        """An empty probe cannot require dependencies the public task asks an agent to install.
+
+        This is admission evidence, never a replacement for a measured official grade.
+        Require an actual collection failure and public source imports, rather than
+        accepting arbitrary missing grader dependencies or guessing from task names.
+        """
+        context = getattr(self, "grader_probe_context", None)
+        if (
+            grade.get("failure") != "official_grader_program_error"
+            or grade.get("grader_failure") != "skillsbench_warmup_dependency_or_collection_error"
+            or not isinstance(context, dict)
+            or context["exit_code"] not in {0, 1}
+            or context["reward"] != 0
+        ):
+            return None
+        report = context["report"]
+        if not isinstance(report, dict) or not isinstance(report.get("results"), dict):
+            return None
+        results = report["results"]
+        summary = results.get("summary")
+        if (
+            not isinstance(summary, dict)
+            or type(summary.get("tests")) is not int
+            or summary["tests"] != 0
+            or type(summary.get("passed")) is not int
+            or summary["passed"] != 0
+            or results.get("tests") != []
+            or any(
+                type(summary.get(name, 0)) is not int or summary.get(name, 0) < 0
+                for name in ("failed", "skipped", "pending", "other", "errors")
+            )
+            or any(summary.get(name, 0) != 0 for name in ("failed", "skipped", "pending", "other"))
+        ):
+            return None
+        diagnostics = self.grader_diagnostics or ""
+        if not re.search(r"(?:^|\n)\s*(?:_+\s*)?ERROR collecting\b", diagnostics):
+            return None
+        errors = _grader_errors(diagnostics)
+        public = self.source.task(self.task_id)
+        requirement = re.search(
+            r"\b(?:set\s*up|setup|install|configure|prepare|create)\b[^\n.!?]{0,180}"
+            r"\b(?:environment|dependencies|packages|requirements|virtualenv|venv)\b",
+            public["opening"],
+            re.IGNORECASE,
+        )
+        if not requirement or not errors:
+            return None
+        modules = set()
+        roots = ["/tests", *public["environment"]["workspace_roots"]]
+        for kind, frame, detail in errors:
+            missing = _missing_modules(detail)
+            if (
+                kind != "ModuleNotFoundError"
+                or not missing
+                or not frame
+                or not any(frame.startswith(root.rstrip("/") + "/") for root in roots)
+                or any(part in {"site-packages", ".venv"} for part in Path(frame).parts)
+            ):
+                return None
+            modules.update(missing)
+        evidence = {}
+        for entry in public["public_input_manifest"]:
+            if not entry["relative_path"].endswith(".py") or not entry["sandbox_paths"]:
+                continue
+            path = self.task_directory / _safe_path(entry["relative_path"])
+            if path.is_symlink() or _hash(path) != entry["sha256"]:
+                return None
+            try:
+                tree = ast.parse(path.read_text(encoding="utf-8"))
+            except (SyntaxError, UnicodeError):
+                continue
+            imported = set()
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    imported.update(alias.name.split(".")[0] for alias in node.names)
+                elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                    imported.add(node.module.split(".")[0])
+            for module in modules & imported:
+                evidence.setdefault(module, []).append(
+                    {"path": entry["relative_path"], "sha256": entry["sha256"]}
+                )
+        if set(evidence) != modules:
+            return None
+        return {"public_requirement": requirement.group(), "public_import_evidence": evidence}
+
+    def _record_grader_probe(self, checks: dict[str, Any], grade: Mapping[str, Any]) -> None:
+        measured = grade.get("status") == "MEASURED"
+        deferred = None if measured else self._deferred_task_setup(grade)
+        checks["official_grader"] = measured
+        checks["official_grader_admission"] = measured or deferred is not None
+        checks["official_grader_probe"] = {
+            "purpose": "runtime_admission",
+            "experiment_measurement": False,
+            "status": "PASSED" if measured else "DEFERRED_TASK_SETUP" if deferred else "FAILED",
+        }
+        if not measured:
+            checks["official_grader_error"] = grade.get("failure", "official_grader_not_measured")
+        if deferred:
+            checks["official_grader_probe"].update(deferred)
 
     def _public_artifacts(self, trace: Mapping[str, Any]) -> Path:
         path = Path(trace["public_artifacts_dir"]).resolve(strict=True)
@@ -2792,16 +2932,7 @@ class SkillsBenchRunner:
                         )
                         self.close_public(episode)
                         grade = self.grade(episode)
-                        checks["official_grader"] = grade.get("status") == "MEASURED"
-                        checks["official_grader_probe"] = {
-                            "purpose": "runtime_admission",
-                            "experiment_measurement": False,
-                            "status": "PASSED" if checks["official_grader"] else "FAILED",
-                        }
-                        if not checks["official_grader"]:
-                            checks["official_grader_error"] = grade.get(
-                                "failure", "official_grader_not_measured"
-                            )
+                        self._record_grader_probe(checks, grade)
                 else:
                     checks["main_cpu_memory_limits_configured"] = True
                     result = self._run(
@@ -2845,20 +2976,11 @@ class SkillsBenchRunner:
                     )
                     self.close_public(episode)
                     grade = self.grade(episode)
-                    checks["official_grader"] = grade.get("status") == "MEASURED"
-                    checks["official_grader_probe"] = {
-                        "purpose": "runtime_admission",
-                        "experiment_measurement": False,
-                        "status": "PASSED" if checks["official_grader"] else "FAILED",
-                    }
-                    if not checks["official_grader"]:
-                        checks["official_grader_error"] = grade.get(
-                            "failure", "official_grader_not_measured"
-                        )
+                    self._record_grader_probe(checks, grade)
             checks["ready"] = (
                 checks["dependencies"]
                 and checks.get("verifier_dependencies", True)
-                and checks.get("official_grader", True)
+                and checks.get("official_grader_admission", True)
                 and checks.get("author_codex_runtime", {}).get("ready", author_codex is None)
             )
         except (OSError, ValueError, RuntimeError) as exc:

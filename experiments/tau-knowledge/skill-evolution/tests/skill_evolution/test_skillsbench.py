@@ -2366,6 +2366,133 @@ def test_fresh_official_admission_runs_grade_in_executed_episode(
     assert commands[-1][-3:] == ["down", "--volumes", "--remove-orphans"]
 
 
+@pytest.fixture
+def task_setup_probe(docker_runner):
+    runner, docker, _lock = docker_runner
+    source = runner.source
+    path = runner.task_directory / "environment/project.py"
+    path.write_text("import project_dependency\n")
+    source.manifest["files"].append(
+        {
+            "task_id": runner.task_id,
+            "relative_path": "environment/project.py",
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "bytes": path.stat().st_size,
+        }
+    )
+    source.manifest["environments"][runner.task_id]["copies"].append(
+        {"source": "project.py", "destination": "/app/project.py"}
+    )
+    (runner.task_directory / "instruction.md").write_text(
+        "Please setup the environment for this project. Produce result.json."
+    )
+    docker.report = {"results": {"summary": {"tests": 0, "passed": 0}, "tests": []}}
+    docker.diagnostics = (
+        b"________________ ERROR collecting /tests/test_outputs.py ________________\n"
+        b"/tests/test_outputs.py:12: in <module>\n"
+        b"E   ModuleNotFoundError: No module named 'project_dependency'\n"
+    )
+    return runner, docker
+
+
+def test_preflight_defers_public_task_setup_without_weakening_official_grade(task_setup_probe):
+    runner, docker = task_setup_probe
+    admission = runner.preflight(validate_source=False)
+    assert admission["ready"] and admission["official_grader_admission"]
+    assert not admission["official_grader"]
+    probe = admission["official_grader_probe"]
+    assert probe["status"] == "DEFERRED_TASK_SETUP"
+    assert not probe["experiment_measurement"]
+    assert probe["public_import_evidence"] == {
+        "project_dependency": [
+            {
+                "path": "environment/project.py",
+                "sha256": hashlib.sha256(b"import project_dependency\n").hexdigest(),
+            }
+        ]
+    }
+    assert "test_outputs" not in json.dumps(admission)
+    with runner.episode(SkillBundle({"SKILL.md": "Unfixed public task"})) as episode:
+        runner.close_public(episode)
+        grade = runner.grade(episode)
+    assert grade["status"] == "NOT_MEASURED"
+    assert grade["reward"] is grade["utility"] is None
+    # Only an actual, fresh successful official execution can produce success.
+    docker.diagnostics, docker.reward = b"", "1"
+    docker.report = {"results": {"summary": {"tests": 1, "passed": 1}}}
+    with runner.episode(SkillBundle({"SKILL.md": "Install public project"})) as episode:
+        runner.close_public(episode)
+        grade = runner.grade(episode)
+    assert grade["status"] == "MEASURED" and grade["utility"] is True
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        "no_public_setup",
+        "unknown_dependency",
+        "no_collection_phase",
+        "grader_plugin_frame",
+        "no_report",
+        "invalid_report",
+        "missing_report_items",
+        "contradictory_reward",
+        "contradictory_summary",
+        "install_failure",
+        "runtime_failure",
+        "timeout",
+        "tampered_public_input",
+        "missing_pytest_driver",
+        "missing_ctrf_driver",
+        "missing_uv_driver",
+    ],
+)
+def test_task_setup_deferral_does_not_admit_broken_grader_or_unproven_dependency(
+    task_setup_probe, failure
+):
+    runner, docker = task_setup_probe
+    if failure == "no_public_setup":
+        (runner.task_directory / "instruction.md").write_text("Produce result.json.")
+    elif failure == "unknown_dependency":
+        docker.diagnostics = docker.diagnostics.replace(b"project_dependency", b"grader_driver")
+    elif failure == "no_collection_phase":
+        docker.diagnostics = docker.diagnostics.split(b"\n", 1)[1]
+    elif failure == "grader_plugin_frame":
+        docker.diagnostics = docker.diagnostics.replace(
+            b"/tests/test_outputs.py:12", b"/usr/lib/site-packages/pytest/plugin.py:12"
+        )
+    elif failure == "no_report":
+        docker.report = None
+    elif failure == "invalid_report":
+        docker.report = "malformed reporter data"
+    elif failure == "missing_report_items":
+        del docker.report["results"]["tests"]
+    elif failure == "contradictory_reward":
+        docker.reward = "1"
+    elif failure == "contradictory_summary":
+        docker.report["results"]["summary"]["passed"] = 1
+    elif failure == "install_failure":
+        docker.diagnostics += b"error: Failed to install pytest\n"
+    elif failure == "runtime_failure":
+        docker.diagnostics = docker.diagnostics.replace(b"ModuleNotFoundError", b"RuntimeError")
+    elif failure == "timeout":
+        docker.grader_failure = "timeout"
+    elif failure == "tampered_public_input":
+        (runner.task_directory / "environment/project.py").write_text("import unrelated\n")
+    elif failure == "missing_pytest_driver":
+        docker.report = None
+        docker.diagnostics = b"python3: No module named pytest\n"
+    elif failure == "missing_ctrf_driver":
+        docker.report = None
+        docker.diagnostics = b"pytest: error: unrecognized arguments: --ctrf\n"
+    elif failure == "missing_uv_driver":
+        docker.report = None
+        docker.diagnostics = b"/tests/test.sh: line 5: uvx: command not found\n"
+    report = runner.preflight(validate_source=False)
+    assert not report["ready"] and not report["official_grader_admission"]
+    assert report["official_grader_probe"]["status"] == "FAILED"
+
+
 def test_declared_grader_credentials_use_process_environment_not_arguments_or_disk(
     docker_runner, monkeypatch
 ):
@@ -2505,6 +2632,7 @@ def test_docker_preparation_restores_task_user_and_never_embeds_official_tests(
 
     def run(command, **_kwargs):
         if "build" in command:
+            assert _kwargs["stdout"] is runtime.sys.stderr
             recipe = (
                 Path(command[command.index("-f") + 1])
                 if "-f" in command
@@ -2588,6 +2716,22 @@ def test_docker_preparation_restores_task_user_and_never_embeds_official_tests(
         assert len(builds) == 2
     assert not any("tests/" in file or "warmup" in file for _, files in builds for file in files)
     assert "reward" not in result and "utility" not in result
+    original_bytes, build_count = written.read_bytes(), len(builds)
+    monkeypatch.setattr(
+        runtime.BoundedProcessTransport,
+        "run",
+        lambda _self, command, **_kwargs: ProcessResult(
+            0, stdout=json.dumps([{"Id": command[-1]}]).encode()
+        ),
+    )
+    reused = runtime.prepare_docker(
+        public_source.root,
+        "travel-planning",
+        runtime_lock_path=selected if separate_lock else None,
+    )
+    assert reused["prepared"] and reused["reused"] and not reused["ready"]
+    assert reused["requires_fresh_preflight"]
+    assert written.read_bytes() == original_bytes and len(builds) == build_count
 
 
 @pytest.mark.parametrize("drift_stage", ["before", "after"])
@@ -2784,9 +2928,20 @@ def test_old_baseline_grader_lock_cannot_admit_new_episode_runtime(
         "verifier_python_mode": "native",
     }
     path = runner.runtime_lock_path
-    runner.transport = SimpleNamespace(run=lambda *_args, **_kwargs: ProcessResult(0))
+    runner.transport = SimpleNamespace(
+        run=lambda command, **_kwargs: ProcessResult(
+            0, stdout=json.dumps([{"Id": command[-1]}]).encode()
+        )
+    )
     path.write_text(json.dumps(value))
     assert runner._docker_lock()["runtime_schema"] == "skillsbench.episode.v2"
+    runner.transport = SimpleNamespace(
+        run=lambda *_args, **_kwargs: ProcessResult(
+            0, stdout=json.dumps([{"Id": "sha256:" + "f" * 64}]).encode()
+        )
+    )
+    with pytest.raises(RuntimeError, match="locked_image_identity_invalid"):
+        runner._docker_lock()
     value["task_id"] = "3d-scan-calc"
     path.write_text(json.dumps(value))
     with pytest.raises(RuntimeError, match="runtime_not_prepared"):
@@ -2797,6 +2952,37 @@ def test_old_baseline_grader_lock_cannot_admit_new_episode_runtime(
     path.write_text(json.dumps(value))
     with pytest.raises(RuntimeError, match="runtime_not_prepared"):
         runner._docker_lock()
+
+
+@pytest.mark.parametrize(
+    "reason", ["skillsbench_episode_runtime_not_prepared", "skillsbench_locked_image_missing"]
+)
+def test_existing_invalid_runtime_lock_is_preserved_without_automatic_rebuild(
+    public_source, monkeypatch, reason
+):
+    from tau_skill_evolution import skillsbench_runtime as runtime
+    from tau_skill_evolution.container import ContainerUnavailable
+
+    directory = public_source.root / "runtime"
+    directory.mkdir()
+    lock = directory / "skillsbench-docker-travel-planning-v4-lock.json"
+    original = b'{"sealed": "original invalid or missing-image runtime"}\n'
+    lock.write_bytes(original)
+    monkeypatch.setattr(runtime.shutil, "which", lambda _: "docker")
+
+    def command(command, **_kwargs):
+        assert command == ["docker", "info"]
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(runtime.subprocess, "run", command)
+
+    def unavailable(_self):
+        raise ContainerUnavailable(reason)
+
+    monkeypatch.setattr(runtime.SkillsBenchRunner, "_docker_lock", unavailable)
+    with pytest.raises(ContainerUnavailable, match=reason):
+        runtime.prepare_docker(public_source.root, "travel-planning", runtime_lock_path=lock)
+    assert lock.read_bytes() == original
 
 
 @pytest.mark.parametrize(

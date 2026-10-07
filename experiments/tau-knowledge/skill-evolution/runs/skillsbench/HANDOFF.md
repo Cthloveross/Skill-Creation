@@ -13,7 +13,7 @@
 
 本交接不启动付费矩阵。**准备目录与验收记录不是模型成绩，也不代表85题已全部 READY。** 两套共用本目录的 [源码包](skillsbench-v4-source.tar.gz) 与 [文件/hash清单](transfer-manifest.json)，不各复制一套 pipeline。Git checkout 或源码包二选一；源码包解压后保留仓库相对目录。机器准备完成后冻结新身份，再开始收费运行。
 
-**交付状态：已完成全部85题的本机准备尝试，67题READY、18题NOT_READY；两型号真实 smoke 和矩阵均未测。** 交接包包含完整逐题清单及阻塞证据，不能直接宣布全85题可运行。接收机器仍需准备环境、冻结身份并通过对应模型的smoke。
+**交付状态：全部85题镜像已准备，84题通过本轮fresh准入；仅PG缺官方评分专用凭据，未就绪。两型号真实smoke和矩阵均未测。** 交接包包含完整逐题清单及验收证据；接收机器仍需准备环境、冻结新身份并通过对应模型的smoke，不能直接沿用本机READY。
 
 ## 2. 模型、方法与固定参数
 
@@ -46,7 +46,7 @@ Opus转换支持文本与规范 `input_image`（PNG/JPEG/GIF/WebP的base64或HTT
 
 ## 3. 准备状态与启动门槛
 
-“环境验收”是模型实验之前的一次本机预检。直接使用固定作者任务的Dockerfile/Compose、公开输入和官方grader，确认它们在本机能构建、启动、调用和评分；另检查接入我们pipeline所需的固定Codex及独立Verifier依赖。它不调用任务模型，也不要求任务做对。空工作区缺少交付物、官方给出有效负成绩，可以通过环境预检；缺库、服务起不来、评分结果无效则不能通过。
+“环境验收”是模型实验之前的一次本机预检。直接使用固定作者任务的Dockerfile/Compose、公开输入和官方grader，确认它们在本机能构建、启动、调用和评分；另检查接入我们pipeline所需的固定Codex及独立Verifier依赖。它不调用任务模型，也不要求任务做对。空工作区缺少交付物、官方给出有效负成绩，可以通过环境预检；评分驱动缺库、服务起不来、评分结果无效则不能通过。公开任务明确要求安装的依赖，按下述证据规则单独判断。
 
 | 检查 | 来源与目的 |
 |---|---|
@@ -57,31 +57,33 @@ Opus转换支持文本与规范 `input_image`（PNG/JPEG/GIF/WebP的base64或HTT
 
 因此，环境READY表示对应任务可开始模型实验，不表示任务成功或Skill有效；预检也不能替代两款真实模型各自的smoke。
 
-**当前准入有一个已确认的额外限制。** `simpo-code-reproduction` 的公开任务要求安装项目环境；官方镜像只建立`/opt/py310`，任务agent可以在执行中安装NumPy等项目依赖，作者随后在同一环境评分。我们的preflight却先在空工作区运行grader，其收集阶段缺NumPy会阻止启动。004保留该探针失败，标`NOT_READY`；这证明当前CLI门槛未通过，不能证明官方环境无法运行，也不能归为Docker构建失败或任务成绩。修正需区分任务内setup与真正的评分驱动故障，本轮固定源码的存储迁移未修改这段判断；不要绕过检查或直接把它改成READY。
+**任务内setup与评分驱动故障分开判断。** `simpo-code-reproduction` 的公开任务要求安装项目环境；官方镜像只建立`/opt/py310`，agent可以安装NumPy等项目依赖，再在同一环境评分。004曾因空工作区收集阶段缺NumPy而拒绝启动，该历史记录保留。新预检仅在公开setup要求、哈希绑定的公开Python imports、合法负reward及一致的零项collection错误同时成立时，标记`DEFERRED_TASK_SETUP`并允许进入任务；不按任务名或依赖名放行。`official_grader=false`保留，另用`official_grader_admission`记录准入，不能伪装成评分通过。pytest/报告插件等驱动缺失、坏报告或不明异常仍拒绝；正式grade仍严格，不能把程序错误改成测得的成绩。
 
 这项提前验收是本交接的工程检查，作者Harbor通常按题构建/启动容器，再进入agent循环，不要求85题全部准备完才能运行一道题。Generator进入持续容器后仍可安装任务依赖、调整服务、执行和修复；这些属于任务执行与演化。模型不能接管尚未启动的Docker daemon，也不能编辑私有grader来消除评分系统故障。
 
-当前项目内Docker实例已完成全部85题准备尝试，**68题镜像已准备、67题fresh准入通过、18题未就绪**。构建失败题没有进入fresh准入，不把未执行阶段记为通过。逐题结果见 [004最终状态](../readiness-skillsbench-full85-20261007-004/final-status.json)，过程见 [004操作记录](../readiness-skillsbench-full85-20261007-004/status.json)，失败阶段及原时限见 [准备失败证据](../readiness-skillsbench-full85-20261007-004/preparation-failure-assessment.json)。两套manifest绑定同一最终状态hash；源码包包含两套配置、清单和公开验收证据，历史001/002/003记录保留。
+当前项目内Docker实例已封存 **85题镜像、84题READY、1题凭据未就绪**。原17个构建超时任务均用原recipe补建成功，再用当前源码对全部85题重新做fresh准入；没有重试或未派发任务。逐题结果见 [005最终状态](../readiness-skillsbench-full85-20261007-005/final-status.json)，构建与准入分别见 [17题构建记录](../readiness-skillsbench-full85-20261007-005/status.json)、[85题准入记录](../readiness-skillsbench-full85-20261007-005/preflight-status.json)，源码、锁、清理及历史保护见 [验证证据](../readiness-skillsbench-full85-20261007-005/validation.json)。两套manifest绑定同一最终状态hash；源码包包含两套配置、清单和公开验收证据。
 
-| 本轮未就绪原因 | 数量与范围 | 如何处理 |
+| 本轮处理结果 | 数量与范围 | 当前状态 |
 |---|---|---|
-| 官方构建超时 | 17题，包含PG；16题停在APT准备步骤，video-tutorial-indexer的Python依赖安装步骤未完成 | 保留原recipe和逐题时限。网络探针不能证明每条超时的唯一原因；接收机器需实际重建并验收，不能据此填任务失败成绩 |
-| 本地空工作区评分门槛 | SimPO，1题 | 按上面的`local_preflight_policy`解释；本轮保持源码，未绕过门槛 |
-| 官方评分专用凭据缺失 | PG，已包含在17题构建失败内，不重复计题 | 本机没有独立OpenAI key；即使补key仍需完成构建与fresh准入 |
+| 原构建超时 | 17题全部补建成功 | 离线准备不套用正式任务时限；官方recipe及正式启动、模型、评分预算保持原值 |
+| 空工作区setup误判 | SimPO，1题 | 真实fresh准入通过，保留`DEFERRED_TASK_SETUP`及证据；不是官方任务成功 |
+| 官方评分专用凭据缺失 | PG，1题；镜像已准备 | 缺独立OpenAI key，未运行grader或任务API；Bedrock key不能替代 |
 
-READY要求fresh环境、公开终端、native Codex和官方grader探针通过，不能仅以镜像build成功代替。本机证据不能替代同事机器的preflight。已有共享代码测试与hash见 [acceptance.json](../readiness-skillsbench-full85-20261007-001/acceptance.json)。新项目Docker实例的三项native Codex/本地模拟provider检查也实际通过，见 [结果](../readiness-skillsbench-full85-20261007-004/native-codex-project-endpoint.json)；未使用真实key，不计模型成绩。
+004的 **68题镜像、67题READY、18题NOT_READY** 保留为历史截止快照，见 [原结果](../readiness-skillsbench-full85-20261007-004/final-status.json)及 [原交接包快照](../readiness-skillsbench-full85-20261007-004/handoff-snapshot/snapshot.json)。005没有覆盖原文件、历史锁或包，也未续接任何旧模型checkpoint。
+
+READY要求fresh环境、公开终端、native Codex通过，以及官方grader探针通过或满足上述任务setup延期证据；不能仅以镜像build成功代替。本机证据不能替代同事机器的preflight。本轮共享代码测试与hash见 [acceptance.json](../readiness-skillsbench-full85-20261007-005/acceptance.json)。新项目Docker实例的三项native Codex/本地模拟provider检查也实际通过，见 [结果](../readiness-skillsbench-full85-20261007-004/native-codex-project-endpoint.json)；未使用真实key，不计模型成绩。
 
 2026-10-07第一次准备快照为 **41题当前源码Docker准入通过，44题未就绪**。这44题包括43题尚未启动准备及1题被取消的Druid慢下载。实施侧为了交接提前停止了准备；这不是用户要求，也不是已测得的任务失败或磁盘阻塞。原记录的`DEFERRED_BY_HANDOFF_FREEZE`及`PREPARATION_FROZEN_AT_USER_HANDOFF`应按上述更正理解，保留原文件字节供追溯。Docker磁盘12GiB保护线当时未触发；原任务的构建/评分时限未改。该次85条状态记录中的`pending=0`仅表示调度停止，不表示85题完成准入。97份历史锁字节未变。原快照见 [summary](../readiness-skillsbench-full85-20261007-001/summary.json)，逐题锁/结果校验见 [validation](../readiness-skillsbench-full85-20261007-001/validation.json)。
 
 第二次准备留下 **51题READY、34题NOT_READY**；52题已构建并锁定，其中SimPO尚未通过fresh准入。新增尝试中18次构建、1次准入实际触发磁盘保护线；另15题未派发。该轮已停止，旧实例证据保持历史状态；不是完整85题已验收。详见 [补验摘要](../readiness-skillsbench-full85-20261007-002/summary.json)、[验证记录](../readiness-skillsbench-full85-20261007-002/validation.json)及 [原停止归因更正](../readiness-skillsbench-full85-20261007-002/prior-status-correction.json)。第一次交接包与manifest已按原字节保存在 [历史快照](../readiness-skillsbench-full85-20261007-001/handoff-snapshot/snapshot.json)。004重新做逐题fresh准入，历史READY不直接沿用。
 
-代码验收为 **1158 passed／54显式跳过**；25项真实Docker用例通过（银行/helper14、SkillsBench11），另有两型号native CLI模拟provider场景及512原图反例。跳过项不算通过，模拟用量和reward不算模型成绩。CLI图片fixture的文本计数为字符代理；另用固定Qwen tokenizer核验同尺寸图像，原base64全文约778K tokens，改为文本＋视觉预留后399/541；这些仍是输入估算验证，不是模型实际usage。第二名独立审查代理已复核接口、恢复和准确命令。
+当前共享回归 **1183 passed／54显式跳过**；本轮真实SkillsBench Docker检查 **8 passed／5项未启用workspace检查跳过**，全源码lint、编译及配置检查通过，见 [005代码验收](../readiness-skillsbench-full85-20261007-005/acceptance.json)。历史银行/helper Docker、两型号native CLI及原图输入反例保留在001/004证据中，不混称本轮重测。跳过项不算通过，模拟provider用量和fixture reward不算模型成绩。第二名独立审查者已复核代码、真实SimPO证据与接收机命令；最终交接包另有hash和成员复核。
 
 | 尚需运行者确认 | 处理方式 |
 |---|---|
 | 模型凭据及两型号权限 | 本机提供 Bedrock token；分别做模型 preflight 和付费单题 smoke。本次未读取实验key，真实新模型均 `NOT_MEASURED` |
-| pg-essay-to-audiobook | 本轮官方构建在原300秒时限内未完成；同时缺少官方 grader 必需的独立 OpenAI key。两项分别记录，提供key不能直接使其READY；Bedrock key不能替代 |
-| 85题Docker环境 | 本机67题READY、18题未就绪；接收机器按逐题manifest实际构建/验收，不能直接沿用本机READY |
+| pg-essay-to-audiobook | 镜像已真实准备；缺官方grader必需的独立OpenAI key。提供凭据后仍需fresh准入，不能只改状态字段；Bedrock key不能替代 |
+| 85题Docker环境 | 本机84题READY、PG凭据未就绪；接收机器按逐题manifest实际构建/验收，不能直接沿用本机READY |
 | 多服务 | fix-visual-stability、hvac-control必须保留官方sidecar、健康检查及内部域名 |
 | Dense | CUDA GPU、固定HF revision、vLLM依赖及索引；另一机器需实际重建和封存 |
 | native Codex | 固定Linux ELF 0.160.1及同release的code-mode companion，分别校验hash、MAIN ABI及pinned Harbor；npm JS launcher不合格 |
@@ -122,6 +124,29 @@ CHECK
 
 ## 5. 第二步：准备 Codex、Dense 与逐题环境
 
+**另一台机器首次准备时，先建立两份本地配置，再安装和检查下列环境。** 保持共同的本地锁模板，机器适配只写入`config.local.yaml`；不要改发布配置或沿用旧checkpoint。已有本地配置时先核对并选择它，不重复创建：
+
+```bash
+SB_LOCK_TEMPLATE='runtime/local/skillsbench-docker-{task_id}-v4-lock.json'
+.venv/bin/python - "$SB_CODE" "$SB_LOCK_TEMPLATE" <<'LOCAL'
+import sys
+from pathlib import Path
+import yaml
+root, template = Path(sys.argv[1]), sys.argv[2]
+directories = [root / "runs/skillsbench" / variant
+               for variant in ("full-85-gpt56-v4", "full-85-opus48-v4")]
+for directory in directories:
+    if (directory / "config.local.yaml").exists():
+        raise SystemExit(f"Existing local config: {directory}; inspect it before proceeding.")
+for directory in directories:
+    config = yaml.safe_load((directory / "config.yaml").read_text())
+    config["source"]["runtime_lock"] = template
+    target = directory / "config.local.yaml"
+    target.write_text(yaml.safe_dump(config, sort_keys=False))
+LOCAL
+SB_CFG="$SB_PACK/config.local.yaml"
+```
+
 native Codex可从官方固定release取得；先验证ELF binary hash，再加入PATH。以下安装到项目外，不把二进制混入源码包：
 
 ```bash
@@ -149,7 +174,7 @@ uv pip install --python "$SB_CODE/data/embedding/.venv/bin/python" -e . -r "$SB_
 "$SB_CODE/data/embedding/.venv/bin/python" "$SB_CODE/scripts/prepare_skillsbench.py" --pool
 ```
 
-先将**两份配置**的GPU UUID、embedding endpoint/vllm路径改成同事机器实际值，再保存配置。配置内其它方法参数不随意修改。embedding依赖固定vLLM/Transformers范围，尚非完整依赖hash锁，新机器仍需封存实际依赖版本。两模型可共用一个Dense服务和确定性索引。
+先将**两份本地配置**的GPU UUID、embedding endpoint/vllm路径改成同事机器实际值，再保存配置。配置内其它方法参数不随意修改。embedding依赖固定vLLM/Transformers范围，尚非完整依赖hash锁，新机器仍需封存实际依赖版本。两模型可共用一个Dense服务和确定性索引。
 
 在另一终端以所选配置启动Dense，避免默认读取τ配置：
 
@@ -157,6 +182,9 @@ uv pip install --python "$SB_CODE/data/embedding/.venv/bin/python" -e . -r "$SB_
 SB_CODE=experiments/tau-knowledge/skill-evolution
 SB_VARIANT=full-85-gpt56-v4  # Opus实验改为full-85-opus48-v4
 SB_CFG="$SB_CODE/runs/skillsbench/$SB_VARIANT/config.yaml"
+if [ -f "$SB_CODE/runs/skillsbench/$SB_VARIANT/config.local.yaml" ]; then
+    SB_CFG="$SB_CODE/runs/skillsbench/$SB_VARIANT/config.local.yaml"
+fi
 .venv/bin/python - "$SB_CFG" <<'EMBEDDING'
 import os, sys
 from pathlib import Path
@@ -179,7 +207,12 @@ print(json.dumps(load_spec(Path(sys.argv[1])).values["embedding"]))
 SETTINGS
 )
 "$SB_CODE/data/embedding/.venv/bin/python" "$SB_CODE/scripts/prepare_skillsbench.py" --index-settings "$SB_EMBEDDING"
-SB_LOCK_TEMPLATE='runtime/skillsbench-docker-{task_id}-v4-lock.json'
+SB_LOCK_TEMPLATE=$(.venv/bin/python - "$SB_CFG" <<'LOCK'
+import sys, yaml
+from pathlib import Path
+print(yaml.safe_load(Path(sys.argv[1]).read_text())["source"]["runtime_lock"])
+LOCK
+)
 ```
 
 下一步先选择Docker实例，再构建任务镜像。锁定真实image ID/digest后仍须fresh preflight；build成功不能代替准入。
@@ -239,7 +272,15 @@ SB_DOCKER_NAME=skill-evolution-project-$(id -un)
 SB_DOCKER_DATA="$SB_ROOT/data/docker"
 SB_DOCKER_RUN="$HOME/.local/share/skillsbench-docker/project-run"
 SB_PREP_TMP="$HOME/.cache/skillsbench-preparation-tmp"
-SB_LOCK_TEMPLATE='runtime/skillsbench-docker-{task_id}-v4-lock.json'
+if [ -f "$SB_PACK/config.local.yaml" ]; then
+    SB_CFG="$SB_PACK/config.local.yaml"
+fi
+SB_LOCK_TEMPLATE=$(.venv/bin/python - "$SB_CFG" <<'LOCK'
+import sys, yaml
+from pathlib import Path
+print(yaml.safe_load(Path(sys.argv[1]).read_text())["source"]["runtime_lock"])
+LOCK
+)
 export PATH="$HOME/.local/skillsbench-codex-0.160.1:$PATH"
 export AWS_REGION=us-east-1
 unset DOCKER_CONTEXT DOCKER_TLS_VERIFY DOCKER_CERT_PATH
@@ -257,13 +298,19 @@ df -h "$SB_DOCKER_DATA"
 
 **内层输出的`DockerRootDir=/var/lib/docker`是容器路径。** 不能在host对这个字符串运行df来判断新实例容量，必须核对外层Mounts后检查实际`$SB_DOCKER_DATA`。此前12GiB保护线是准备脚本的预留，并非Docker容量下限；被守线取消不等于实际发生ENOSPC，也不证明每个取消任务装不下。当前保留该准备阈值并检查实际home空间。home空余为共享可用空间，不保证个人quota；运行机器须实际验证。
 
-在已激活的新实例上构建任务镜像：
+本机已封存锁先验证并复用；实际镜像缺失或锁失效时明确报错，不覆盖历史锁。另一台机器使用本节开头准备的本地配置和本地锁目录。
+
+后续新终端的激活块会选择已有`config.local.yaml`与同一个本地锁目录。本机原实例继续使用已封存锁。两模型所需锁都准备好后才冻结运行身份，不能在第一套模型运行期间再补建；接收机器的镜像丢失时，导入精确image ID或使用新的本地锁目录和新trial，不重写旧锁。
+
+在已激活的新实例上并行准备任务镜像：
 
 ```bash
-.venv/bin/python "$SB_CODE/scripts/prepare_skillsbench.py" --docker --all-tasks --runtime-lock "$SB_LOCK_TEMPLATE"
+.venv/bin/python "$SB_CODE/scripts/prepare_skillsbench.py" --docker --all-tasks --jobs 8 --runtime-lock "$SB_LOCK_TEMPLATE"
 ```
 
-`--all-tasks`遇构建错误即停；按manifest用 `--task TASK_ID --docker --runtime-lock "$SB_LOCK_TEMPLATE"` 补齐。不要填虚构digest、改官方recipe或降级host。已有锁对应的镜像可按锁核对后逐题从旧实例复制；一次导出全部镜像会在旧daemon的磁盘生成大批临时layer tar，不能因为load目标在home就认为源盘不占空间。重型PyTorch/CUDA及服务题的实际占用和构建错误均记录在逐题准备证据，不全局prune其它实验镜像。
+`--jobs`控制离线准备并发，默认1；按运行机器资源调整。每题输出一条JSON结果，构建日志在stderr；任一失败返回非零，并保留其他题已完成结果。离线构建不套用任务的启动/执行/评分时限，也不自动重试。官方recipe不改，缓存可复用；正式实验仍用各题原时限。
+
+`--all-tasks`完成本批调度后汇总退出状态，失败不丢弃其它题的结果；按失败记录用 `--task TASK_ID --docker --runtime-lock "$SB_LOCK_TEMPLATE"` 补齐。不要填虚构digest、改官方recipe或降级host。已有锁对应的镜像可按锁核对后逐题从旧实例复制；一次导出全部镜像会在旧daemon的磁盘生成大批临时layer tar，不能因为load目标在home就认为源盘不占空间。重型PyTorch/CUDA及服务题的实际占用和构建错误均记录在逐题准备证据，不全局prune其它实验镜像。
 
 已有停止实例可用以下命令启动，然后重新检查身份及上述endpoint；禁止在活动链中删建替代实例来冒充恢复。
 
@@ -286,9 +333,9 @@ else
 fi
 ```
 
-该检查还须配合准备driver终态确认，`docker ps`为空不能证明没有镜像build/load。外层实例丢失后必须重新验收环境，旧学习进程/服务不能靠文件快照恢复。Docker版本、镜像digest、内外实例身份、实际挂载及机器检查记录在 [004准备证据](../readiness-skillsbench-full85-20261007-004/docker-bootstrap.json)。001/002/003证据保持历史原文，当前独立实例的任务READY只以004实际fresh结果为准。
+该检查还须配合准备driver终态确认，`docker ps`为空不能证明没有镜像build/load。外层实例丢失后必须重新验收环境，旧学习进程/服务不能靠文件快照恢复。Docker版本、镜像digest、内外实例身份、实际挂载及机器检查记录在 [004准备证据](../readiness-skillsbench-full85-20261007-004/docker-bootstrap.json)。001/002/003/004证据保持历史原文，当前独立实例的任务READY以005实际fresh结果为准。
 
-**所有SkillsBench runtime锁都进入运行身份。** 两套共用环境锁，必须先完成全部准备再开始模型实验；实验运行中不能增改锁、源码、提示或配置。旧锁保留原字节，新配置只选择 `skillsbench-docker-{task_id}-v4-lock.json`。
+**配置选中的SkillsBench runtime锁进入运行身份，runtime根目录的共享锁也会计入。** 两套共用环境锁，必须先完成全部准备再开始模型实验；实验运行中不能增改锁、源码、提示或配置。旧锁保留原字节；本机发布配置选择根目录v4锁，接收机器的本地配置选择上述`runtime/local/`锁。
 
 ## 6. 第三步：本机凭据与 preflight
 
@@ -377,4 +424,4 @@ NoSkill以同型号、同native执行器fresh完成任务，不创建Skill，不
 
 历史GPT5.4十题见 [REPORT](gpt54-direct-10-20261007-001/REPORT.md)：NoSkill10题4成功，S0实测7题3成功，Final实测6题4成功；coverage不同不能直接做3/7→4/6结论。DAPT某次修订损坏了公开端口统计；另有检查范围歧义，历史原始CTRF缺失不能补造具体官方失败项。新版已加强公开义务引用/范围、逐项原始证据封存、上下文输入和反馈隔离，但不保证单调提高。本次本机准备未调用两套新模型，模型兼容性和成绩为 `NOT_MEASURED`。
 
-同事另机的 [v4-terra-opus-run-20261007结果](https://github.com/Cthloveross/Skill-Creation/blob/bfa88e58/experiments/tau-knowledge/skill-evolution/runs/skillsbench/RESULTS-20261007.md)已有Docker测量，仍有4题未启动及阶段缺测。该分支增加了请求重发，包含S0超时或空输出，偏离本交接的单POST创建边界；其源码与镜像锁身份也不同。结果按该分支独立报告，不能当成本机004环境验收或本交接身份的模型成绩，当前不合并源码与checkpoint。
+同事另机的 [v4-terra-opus-run-20261007结果](https://github.com/Cthloveross/Skill-Creation/blob/bfa88e58/experiments/tau-knowledge/skill-evolution/runs/skillsbench/RESULTS-20261007.md)已有Docker测量，仍有4题未启动及阶段缺测。该分支增加了请求重发，包含S0超时或空输出，偏离本交接的单POST创建边界；其源码与镜像锁身份也不同。结果按该分支独立报告，不能当成本机005环境验收或本交接身份的模型成绩，当前不合并源码与checkpoint。

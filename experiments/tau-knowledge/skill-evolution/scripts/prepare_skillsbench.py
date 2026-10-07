@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -30,12 +31,22 @@ def main() -> None:
     )
     parser.add_argument("--task", default="3d-scan-calc")
     parser.add_argument(
+        "--jobs",
+        type=int,
+        default=1,
+        help="Parallel offline Docker builds; --docker --all-tasks only.",
+    )
+    parser.add_argument(
         "--runtime-lock",
         type=Path,
         help="Docker lock output; use {task_id} for --all-tasks. Relative to the experiment.",
     )
     parser.add_argument("--index-settings")
     args = parser.parse_args()
+    if args.jobs < 1:
+        parser.error("--jobs must be positive")
+    if args.jobs != 1 and not (args.docker and args.all_tasks):
+        parser.error("parallel --jobs requires --docker --all-tasks")
     if args.all_tasks and not (args.docker or args.workspace):
         parser.error("--all-tasks requires --docker or --workspace")
     if args.runtime_lock is not None:
@@ -74,9 +85,20 @@ def main() -> None:
             tasks = SkillsBenchSource(ROOT).manifest["tasks"]
         else:
             tasks = [args.task]
-        for task in tasks:
-            settings = {"runtime_lock_path": args.runtime_lock} if args.runtime_lock else {}
-            print(json.dumps(function(ROOT, task, **settings)), flush=True)
+        settings = {"runtime_lock_path": args.runtime_lock} if args.runtime_lock else {}
+        failed = False
+        with ThreadPoolExecutor(max_workers=args.jobs) as pool:
+            pending = {pool.submit(function, ROOT, task, **settings): task for task in tasks}
+            for future in as_completed(pending):
+                task = pending[future]
+                try:
+                    result = future.result()
+                except Exception as exc:
+                    failed = True
+                    result = {"task_id": task, "prepared": False, "ready": False, "error": str(exc)}
+                print(json.dumps({"task_id": task, **result}), flush=True)
+        if failed:
+            raise SystemExit(1)
     if args.index_settings:
         from tau_skill_evolution.skillsbench import prepare_dense
 

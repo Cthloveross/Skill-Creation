@@ -1,0 +1,156 @@
+{
+  "artifact": {
+    "all_archive_member_and_current_source_hashes_match": true,
+    "archive": "../skillsbench/skillsbench-v4-source.tar.gz",
+    "bytes": 2574388,
+    "regular_members": 648,
+    "review_remains_outside_archive": true,
+    "sha256": "f49f9605a9cf1dc72ab33a4d2eedbbd07c734890c95aaf802fbf92c38d157c34",
+    "transfer_manifest_sha256": "699c87015eed61aa469157b099e2488ce5e0db60d16afe3c6f5022dfd72f4126",
+    "unique_members": 648
+  },
+  "blocking_findings": [],
+  "evidence": {
+    "acceptance_sha256": "d61a1e4a7748f8eed9ce1c988ee1d9aa463d20ad15d3200fbbdb456ae333f5bf",
+    "all_102_actual_operations_terminal_and_unique": true,
+    "all_85_task_locks_and_preflight_result_hashes_match": true,
+    "all_recorded_operation_result_and_log_hashes_match": true,
+    "final_status_sha256": "b518841e86a28b6e75c2ad48cd28aa04f0622c98155d335c1e9e70a97c784c5e",
+    "not_ready": 1,
+    "only_runtime_blocker": {
+      "official_grader_dispatched": false,
+      "required_variable": "SKILLSBENCH_TASK_PG_ESSAY_TO_AUDIOBOOK_OPENAI_API_KEY",
+      "scope": "task_credentials",
+      "task_id": "pg-essay-to-audiobook"
+    },
+    "prepared": 85,
+    "ready": 84,
+    "validation_sha256": "a6b8d516aa9d3e4ffd252b37b5b37d715a62eee11def258ede867fa0f2490573"
+  },
+  "experiment_status": {
+    "benchmark_status": "NOT_MEASURED",
+    "credentials_read": false,
+    "model_calls": 0,
+    "paid_matrix": "NOT_MEASURED",
+    "real_model_smoke": "NOT_MEASURED",
+    "task_pass_rate": null
+  },
+  "export_boundary": {
+    "credential_files_opened": false,
+    "forbidden_paths_found": [],
+    "high_confidence_credential_pattern_matches": 0,
+    "model_calls_performed_by_reviewer": 0,
+    "official_upstream_task_tests_and_solutions_excluded": true,
+    "only_exported_logs": [
+      "offline-regression.log",
+      "docker-integration.log"
+    ],
+    "private_provider_grader_and_raw_preparation_logs_excluded": true
+  },
+  "historical_protection": {
+    "001_and_004_snapshot_files_sha256_and_size_verified": 8,
+    "004_original_final_summary_and_validation_hashes_verified": true,
+    "97_historical_skillsbench_lock_hashes_verified_from_004_snapshot_transfer": 97,
+    "original_68_v4_lock_hashes_verified": 68
+  },
+  "models": {
+    "full-85-gpt56-v4": {
+      "config_sha256": "38d4521c8e77dfbffcd8c5814f1d91545dd5ce005b510c23959aa400c611ed86",
+      "exact_85_tasks_and_benign_cells": true,
+      "identity_hash": "77416e5ec6a7253be912ede577755f03c513aad75d27b309357fa0e8ca481f67",
+      "identity_matches_load_spec": true,
+      "manifest_sha256": "abab5e7b914bfacf7ab86c950f050f35b0577a8ee5e0802bfe3d03402cae673e",
+      "matrix_started": false,
+      "model_compatibility": "NOT_MEASURED",
+      "runtime_not_ready": 1,
+      "runtime_ready": 84
+    },
+    "full-85-opus48-v4": {
+      "config_sha256": "aa9d0a065ab5c27fd5395840e5f862a5e81f0e95a117acc531c2494cda721b61",
+      "exact_85_tasks_and_benign_cells": true,
+      "identity_hash": "2ac4bf8c2be499044eecc8f2f206a52387c78b5cca1a04195f58a14eb1172e94",
+      "identity_matches_load_spec": true,
+      "manifest_sha256": "17540663b5b28fdf28ef1a0dfcea6995be7ab53e5f8ab3a079403e1c54d50463",
+      "matrix_started": false,
+      "model_compatibility": "NOT_MEASURED",
+      "runtime_not_ready": 1,
+      "runtime_ready": 84
+    }
+  },
+  "protected_user_changes": {
+    "byte_preservation_claimed": false,
+    "excluded_from_archive": true,
+    "excluded_from_staging": true,
+    "git_status": [
+      " M docs/dymalskill-static-review.md",
+      "?? experiments/tau-knowledge/skill-evolution/AUDIT-20261005.md"
+    ],
+    "initial_byte_hash_baseline_available": false,
+    "paths": [
+      "docs/dymalskill-static-review.md",
+      "experiments/tau-knowledge/skill-evolution/AUDIT-20261005.md"
+    ],
+    "reviewer_did_not_edit_these_files": true
+  },
+  "read_only_docker_inspection": {
+    "current_task_daemon": "unix:///home/tc442/.local/share/skillsbench-docker/project-run/docker.sock",
+    "current_unique_locked_image_ids_verified": 174,
+    "docker_mutations_performed_by_reviewer": 0,
+    "original_106_source_image_ids_verified_unchanged": 106,
+    "original_source_daemon": "unix:///var/run/docker.sock"
+  },
+  "receiving_machine_requirements": [
+    "Build or import exact task images into the receiving Docker instance using the local configuration and lock namespace.",
+    "Provide the independent PG task credential and pass fresh admission.",
+    "Freeze a new identity after environment preparation and pass one real smoke for each model before the paid matrix."
+  ],
+  "reviewed_at": "2026-10-07T21:04:33.042357+00:00",
+  "reviewer": "/root/environment_prep_review",
+  "schema": "skillsbench.independent-handoff-review.v1",
+  "simpo": {
+    "actual_fresh_admission": "DEFERRED_TASK_SETUP",
+    "benchmark_status": "NOT_MEASURED",
+    "formal_grade_not_relaxed": true,
+    "official_grader": false,
+    "official_grader_admission": true,
+    "public_setup_requirement_and_3_numpy_import_hashes_verified": true,
+    "ready": true
+  },
+  "source_provenance": {
+    "all_85_fresh_admission_before_after_hashes_match_current_source": true,
+    "cold_preparation_is_not_a_model_experiment_checkpoint": true,
+    "cold_preparation_operations_crossing_source_freeze": [
+      "mario-coin-counting.build.005",
+      "multilingual-video-dubbing.build.005",
+      "organize-messy-files.build.005",
+      "pdf-excel-diff.build.005",
+      "pedestrian-traffic-counting.build.005",
+      "pg-essay-to-audiobook.build.005",
+      "powerlifting-coef-calc.build.005",
+      "protein-expression-analysis.build.005",
+      "python-scala-translation.build.005",
+      "reserves-at-risk-calc.build.005",
+      "shock-analysis-demand.build.005",
+      "shock-analysis-supply.build.005"
+    ],
+    "cold_preparation_source_before_after_difference_preserved": true,
+    "fresh_admission_configuration": "runs/skillsbench/full-85-gpt56-v4/config.yaml",
+    "fresh_admission_source_hashes": {
+      "codex_runtime.py": "329e091b7e8b19215bffec13f749168a56689e86ec501fda2df259afd77d0a91",
+      "configuration": "38d4521c8e77dfbffcd8c5814f1d91545dd5ce005b510c23959aa400c611ed86",
+      "skillsbench_runtime.py": "1f441366d57ce180f519ff1059ed6f9fcec8c523ebec034e2baad4a2c1cb6f8c"
+    },
+    "original_official_recipe_and_formal_task_timeouts_preserved": true
+  },
+  "status": "PASS",
+  "verification": {
+    "acceptance_source_and_log_hashes_verified": true,
+    "handoff_bash_fences_syntax_checked": 15,
+    "real_docker_integration_passed": 8,
+    "real_docker_integration_skipped": 5,
+    "receiver_local_config_lock_selection_reviewed": true,
+    "shared_regression_passed": 1183,
+    "shared_regression_skipped": 54,
+    "staged_paths_reviewed": 127
+  }
+}
