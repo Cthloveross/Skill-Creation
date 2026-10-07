@@ -1,0 +1,100 @@
+{
+  "scope": "Documented product facts relevant to travel checking and frequently accessed savings. Null means the supplied evidence did not establish a value.",
+  "checking_options": [
+    {
+      "name": "Purple Account",
+      "foreign_transaction_fee_pct": 0,
+      "foreign_atm_withdrawal_fee": 0,
+      "out_of_network_atm_fee": 2.5,
+      "operator_rebate_cap": 30,
+      "conversion_markup_pct": 0.5,
+      "monthly_fee": 15,
+      "waiver_min_daily_balance": 3750,
+      "daily_atm_withdrawal_limit": 1000,
+      "caveats": [
+        "ATM operator surcharges and network fees are separate from the foreign transaction fee.",
+        "Rebates apply to eligible ATM operator fees after posting and are capped at $30 monthly.",
+        "A separate disclosure says the $2.50 out-of-network ATM fee applies per withdrawal and provides no international exception. Do not represent the $0 foreign ATM withdrawal fee as eliminating this fee.",
+        "Avoid optional dynamic currency conversion if the customer prefers local-currency billing; merchant/processor conversion is separate."
+      ]
+    },
+    {
+      "name": "Green Account (checking)",
+      "foreign_transaction_fee_pct": null,
+      "foreign_atm_withdrawal_fee": null,
+      "out_of_network_atm_fee": 3,
+      "operator_rebate_cap": null,
+      "conversion_markup_pct": null,
+      "monthly_fee": 22.5,
+      "waiver_min_daily_balance": 1350,
+      "linked_savings_boosts": {"Gold Account": 0.75, "Silver Account": 0.25},
+      "caveats": ["No foreign-transaction-fee benefit is established by the supplied Green checking disclosure."]
+    }
+  ],
+  "savings_options": [
+    {
+      "name": "Silver Plus Account",
+      "opening_min": 1000,
+      "ongoing_min": 2500,
+      "monthly_fee_below_min": 8,
+      "free_withdrawals": 15,
+      "excess_withdrawal_fee": 1,
+      "tier1_apy": 3.0,
+      "tier2_threshold": 15000,
+      "tier2_apy": 4.5,
+      "linked_boosts": {},
+      "caveats": [
+        "The 3.0% Tier 1 rate applies below $15,000; 4.5% Tier 2 applies at or above $15,000.",
+        "A 0.025% relationship bonus is described only when unspecified relationship criteria are met; do not include it absent confirmation.",
+        "The supplied eligible-pairings list does not list Green checking plus Silver Plus savings."
+      ]
+    },
+    {
+      "name": "Silver Account",
+      "opening_min": 500,
+      "ongoing_min": 1000,
+      "monthly_fee_below_min": 5,
+      "free_withdrawals": 10,
+      "excess_withdrawal_fee": 2,
+      "tier1_apy": 2.5,
+      "tier2_threshold": 10000,
+      "tier2_apy": 4.0,
+      "linked_boosts": {"Green Account (checking)": 0.25},
+      "caveats": [
+        "The Green checking plus Silver savings pairing is documented as eligible for a +0.25% checking-linked boost.",
+        "A 0.025% relationship bonus requires eligibility that has not been established.",
+        "A Platinum Rewards Card can increase withdrawals to 15, but card ownership/linkage must be confirmed before using that allowance."
+      ]
+    },
+    {
+      "name": "Bronze Savings Account",
+      "opening_min": null,
+      "ongoing_min": 0,
+      "monthly_fee_below_min": 0,
+      "free_withdrawals": 6,
+      "excess_withdrawal_fee": 3,
+      "tier1_apy": 2.0,
+      "tier2_threshold": null,
+      "tier2_apy": null,
+      "linked_boosts": {},
+      "caveats": ["Paper statements may cost $2 monthly."]
+    },
+    {
+      "name": "Gold Account",
+      "opening_min": 5000,
+      "ongoing_min": 10000,
+      "monthly_fee_below_min": null,
+      "free_withdrawals": 20,
+      "excess_withdrawal_fee": null,
+      "tier1_apy": 5.5,
+      "tier2_threshold": null,
+      "tier2_apy": null,
+      "linked_boosts": {"Green Account (checking)": 0.75},
+      "caveats": [
+        "Gold Rewards Card holders have a reduced $5,000 minimum balance and a +0.025% APY bonus, but card ownership and linkage must be confirmed.",
+        "Do not infer a below-minimum fee because none was supplied."
+      ]
+    }
+  ],
+  "general_linking_policy": "Only documented checking/savings pairings receive a linked APY boost. Where several checking boosts apply, only the highest checking boost applies; checking boosts do not stack with each other. Other bonuses need separately established eligibility."
+}

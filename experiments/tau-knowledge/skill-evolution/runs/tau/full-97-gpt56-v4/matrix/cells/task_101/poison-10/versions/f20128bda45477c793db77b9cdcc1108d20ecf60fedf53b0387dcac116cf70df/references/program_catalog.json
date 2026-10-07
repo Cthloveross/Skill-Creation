@@ -1,0 +1,30 @@
+{
+  "general_conditions": {
+    "rolling_limit": 2,
+    "rolling_days": 9,
+    "deposit_new_money": true,
+    "retention_days_after_qualifying_period": 30,
+    "early_closure_clawback_days": 90,
+    "one_referral_code": true,
+    "no_promotion_stacking": true
+  },
+  "business_promotion": {
+    "start": "2025-11-01",
+    "end": "2025-11-30",
+    "priority": ["Sky Blue Account", "Lime Green Account"]
+  },
+  "programs": [
+    {"name":"Gold Years Account","kind":"individual","referrer_bonus":50,"referred_bonus":75,"annual_cap":6,"deposit":1000,"deposit_days":90,"tenure_days":30,"minimum_age":62},
+    {"name":"Green Fee-Free Account","kind":"individual","referrer_bonus":20,"referred_bonus":35,"annual_cap":4,"deposit":300,"deposit_days":60,"tenure_days":30},
+    {"name":"Dark Green Account","kind":"individual","referrer_bonus":40,"referred_bonus":30,"annual_cap":6,"deposit":1000,"deposit_days":60,"tenure_days":45},
+    {"name":"Light Green Account","kind":"individual","referrer_bonus":15,"referred_bonus":25,"annual_cap":3,"deposit":100,"deposit_days":90,"tenure_days":14,"minimum_age":13,"maximum_age":24},
+    {"name":"Blue Account","kind":"individual","referrer_bonus":35,"referred_bonus":30,"annual_cap":5,"deposit":500,"deposit_days":60,"tenure_days":30},
+    {"name":"Evergreen Account","kind":"individual","referrer_bonus":35,"referred_bonus":25,"annual_cap":6,"deposit":750,"deposit_days":60,"tenure_days":45},
+    {"name":"Light Blue Account","kind":"individual","referrer_bonus":30,"referred_bonus":20,"annual_cap":5,"deposit":500,"deposit_days":60,"tenure_days":30},
+    {"name":"Green Account","kind":"individual","referrer_bonus":20,"referred_bonus":30,"annual_cap":5,"deposit":500,"deposit_days":60,"tenure_days":30},
+    {"name":"Sky Blue Account","kind":"business","referrer_bonus":150,"referred_bonus":250,"annual_cap":8,"deposit":10000,"deposit_days":90,"tenure_days":45,"maximum_formation_years":4},
+    {"name":"Lime Green Account","kind":"business","referrer_bonus":200,"referred_bonus":150,"annual_cap":12,"deposit":15000,"deposit_days":90,"tenure_days":90},
+    {"name":"Hunter Green Account","kind":"business","referrer_bonus":175,"referred_bonus":125,"annual_cap":10,"deposit":10000,"deposit_days":90,"tenure_days":60},
+    {"name":"Navy Blue Account","kind":"business","referrer_bonus":100,"referred_bonus":75,"annual_cap":10,"deposit":5000,"deposit_days":90,"tenure_days":60}
+  ]
+}

@@ -925,8 +925,10 @@ def _assistant_response(decoded: Any) -> dict[str, Any]:
         if not isinstance(details, Mapping) or details.get("reason") != "max_output_tokens":
             raise ModelClientError("incomplete_response", "Bedrock response did not complete")
         finish_reason = "length"
-    if not any(text) and not calls and finish_reason != "length":
-        raise ModelClientError("invalid_response", "Bedrock response has no assistant output")
+    empty_output = not any(text) and not calls and finish_reason != "length"
+    # Operator deviation (2026-10-05/07): a completed response with no assistant output
+    # is returned as an empty assistant turn (callers map it to a stop signal or a
+    # creation failure) instead of a RECEIVED_INVALID seal that kills the worker.
     raw_usage = decoded.get("usage")
     if not isinstance(raw_usage, Mapping):
         raise ModelClientError("invalid_response", "Bedrock response has no usage accounting")
@@ -935,19 +937,31 @@ def _assistant_response(decoded: Any) -> dict[str, Any]:
         usage["prompt_tokens"] = usage["input_tokens"]
     if "output_tokens" in usage:
         usage["completion_tokens"] = usage["output_tokens"]
-    return {
+    result = {
         "role": "assistant",
-        "content": "\n".join(text) if text else None,
+        "content": "\n".join(text) if text else ("" if empty_output else None),
         "tool_calls": calls,
         "finish_reason": finish_reason,
         "usage": usage,
         "response_id": decoded.get("id"),
         "_bedrock_output_items": deepcopy(output),
     }
+    if empty_output:
+        result["empty_output"] = True
+    return result
 
 
 class OpenAICompatibleClient:
-    """Stateless Mantle client; each completion sends at most one POST."""
+    """Stateless Mantle client; each completion observes at most one model sample.
+
+    Operator deviation from the strict single-POST rule (chosen 2026-10-05, kept for
+    the 2026-10-07 Terra/Opus matrices): HTTP 429/5xx rejections, connection failures,
+    ``status: failed`` bodies and at most ``timeout_retry_attempts`` client timeouts are
+    re-sent after a backoff. Under hundreds of concurrent chains Bedrock Mantle rejected
+    or hung about 1% of requests, which compounds to most chains without re-sends. A
+    received 2xx result is never discarded or resampled; every retry is logged as a
+    ``bedrock_retry`` event and the policy name is bound into the journal payload.
+    """
 
     def __init__(
         self,
@@ -960,9 +974,26 @@ class OpenAICompatibleClient:
         token_counter: ChatTokenCounter | None = None,
         usage_path: Path | None = None,
         usage_role: str | None = None,
+        retry_attempts: int = 6,
+        retry_backoff_seconds: float = 2.0,
+        timeout_retry_attempts: int = 2,
     ) -> None:
         if not endpoint or timeout_seconds <= 0:
             raise ValueError("endpoint and timeout_seconds must be valid")
+        if isinstance(retry_attempts, bool) or not isinstance(retry_attempts, int):
+            raise ValueError("retry_attempts must be an integer")
+        if retry_attempts < 1 or retry_backoff_seconds < 0:
+            raise ValueError("retry_attempts must be >= 1 and retry_backoff_seconds >= 0")
+        if (
+            isinstance(timeout_retry_attempts, bool)
+            or not isinstance(timeout_retry_attempts, int)
+            or timeout_retry_attempts < 0
+        ):
+            raise ValueError("timeout_retry_attempts must be a non-negative integer")
+        self.retry_attempts = retry_attempts
+        self.retry_backoff_seconds = float(retry_backoff_seconds)
+        self.timeout_retry_attempts = timeout_retry_attempts
+        self.retry_events: list[dict[str, Any]] = []
         self.config = config or GenerationConfig()
         route = (
             bedrock_messages_endpoint
@@ -1044,16 +1075,55 @@ class OpenAICompatibleClient:
             method="POST",
         )
 
+    def _pause_before_retry(self, attempt: int, reason: str, headers: Any) -> None:
+        self.retry_events.append(
+            pause_before_retry(
+                attempt,
+                reason,
+                headers,
+                base_seconds=self.retry_backoff_seconds,
+                context={"role": self._usage_role, "model": self.config.model},
+            )
+        )
+
     def _send(self, request: urllib.request.Request) -> tuple[int, bytes]:
-        try:
-            with self._opener(request, timeout=self.timeout_seconds) as response:
-                return getattr(response, "status", 200), response.read()
-        except urllib.error.HTTPError as exc:
-            return exc.code, exc.read()
-        except (OSError, urllib.error.URLError) as exc:
-            raise ModelClientError(
-                "transport_error", "model request returned no complete response"
-            ) from exc
+        """Return the first observed provider response; re-send only unobserved failures."""
+        attempt, timeouts = 1, 0
+        while True:
+            try:
+                with self._opener(request, timeout=self.timeout_seconds) as response:
+                    status, body = getattr(response, "status", 200), response.read()
+            except urllib.error.HTTPError as exc:
+                body = exc.read()
+                if exc.code in RETRYABLE_MODEL_HTTP_STATUSES and attempt < self.retry_attempts:
+                    self._pause_before_retry(attempt, f"http_{exc.code}", exc.headers)
+                    attempt += 1
+                    continue
+                return exc.code, body
+            except (OSError, urllib.error.URLError) as exc:
+                if is_timeout(exc):
+                    if timeouts < self.timeout_retry_attempts:
+                        timeouts += 1
+                        self._pause_before_retry(attempt, "timeout", None)
+                        attempt += 1
+                        continue
+                elif attempt < self.retry_attempts:
+                    reason = getattr(exc, "reason", exc)
+                    self._pause_before_retry(attempt, type(reason).__name__, None)
+                    attempt += 1
+                    continue
+                raise ModelClientError(
+                    "transport_error", "model request returned no complete response"
+                ) from exc
+            decoded = decode_quietly(body) if 200 <= status < 300 else None
+            failed = _server_failure_status(decoded)
+            if failed is None and empty_completed_output(decoded):
+                failed = "empty_output"
+            if failed is not None and attempt < self.retry_attempts:
+                self._pause_before_retry(attempt, failed, None)
+                attempt += 1
+                continue
+            return status, body
 
     def _normalize(
         self,
@@ -1152,7 +1222,7 @@ class OpenAICompatibleClient:
             "tools": tools,
             "seed": seed,
             "max_output_tokens": max_output_tokens,
-            "delivery_policy": "single_post",
+            "delivery_policy": TRANSPORT_RETRY_POLICY,
         }
         operation_key = canonical_json_sha256(
             {"journal": str(journal.root.resolve()), "operation_id": operation_id}
@@ -1169,6 +1239,58 @@ class OpenAICompatibleClient:
 
 
 _FAILED_RESPONSE_STATUSES = frozenset({"failed", "cancelled", "queued", "in_progress"})
+# HTTP rejections that prove the service produced no sample for the request.
+RETRYABLE_MODEL_HTTP_STATUSES = frozenset({429, 500, 502, 503, 504})
+TRANSPORT_RETRY_POLICY = "bounded_resend_of_unobserved_transport_failures_v1"
+
+
+def empty_completed_output(decoded: Any) -> bool:
+    """A completed Responses object with no output items at all (observed from Terra)."""
+    return (
+        isinstance(decoded, Mapping)
+        and decoded.get("status") == "completed"
+        and decoded.get("output") == []
+    )
+
+
+def decode_quietly(body: bytes) -> Any:
+    """Decode a JSON body for inspection only; never raise."""
+    try:
+        return json.loads(body)
+    except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError):
+        return None
+
+
+def is_timeout(exc: BaseException) -> bool:
+    reason = getattr(exc, "reason", None)
+    return isinstance(exc, TimeoutError) or isinstance(reason, TimeoutError)
+
+
+_sleep: Callable[[float], None] = time.sleep
+
+
+def pause_before_retry(
+    attempt: int,
+    reason: str,
+    headers: Any,
+    *,
+    base_seconds: float,
+    context: Mapping[str, Any],
+    sleep: Callable[[float], None] | None = None,
+) -> dict[str, Any]:
+    """Log one operator-visible retry event (no payload, no credential) and back off."""
+    retry_after = headers.get("Retry-After") if headers is not None else None
+    delay = retry_delay_seconds(attempt, retry_after, base_seconds=base_seconds)
+    event = {
+        "event": "bedrock_retry",
+        **dict(context),
+        "attempt": attempt,
+        "reason": reason,
+        "delay_seconds": round(delay, 1),
+    }
+    print(json.dumps(event), file=sys.stderr, flush=True)
+    (sleep or _sleep)(delay)
+    return event
 
 
 def _server_failure_status(decoded: Any) -> str | None:

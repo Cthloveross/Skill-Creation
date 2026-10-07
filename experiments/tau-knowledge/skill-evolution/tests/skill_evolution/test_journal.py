@@ -121,3 +121,17 @@ def test_provider_raw_response_status_and_bytes_are_hash_bound(tmp_path):
     path.write_text(json.dumps(raw))
     with pytest.raises(ValueError, match="integrity"):
         journal.dispatch_raw("s0", {}, lambda: pytest.fail("must not resend"), None, invalid)
+
+
+def test_canonical_json_accepts_frozen_views_and_matches_builtins():
+    from tau_skill_evolution.core._canonical import canonical_json_sha256, freeze_json
+
+    value = {
+        "public_inputs": {"opening": "hi", "observations": [{"k": 1}]},
+        "base": ["a", {"b": 2}],
+    }
+    frozen = freeze_json(value)
+    assert canonical_json_sha256(frozen) == canonical_json_sha256(value)
+    assert canonical_json_sha256({"base": frozen["base"], "x": (1, 2)}) == canonical_json_sha256(
+        {"base": value["base"], "x": [1, 2]}
+    )

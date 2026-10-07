@@ -1,0 +1,78 @@
+{
+  "cards": [
+    {
+      "name": "Platinum Rewards Card",
+      "personal": true,
+      "program_type": "cash_back",
+      "flat_everyday_rate": true,
+      "everyday_eligible_purchase_rate_pct": 10.0,
+      "annual_fee_usd": 200.0,
+      "minimum_credit_score": 750,
+      "redemption_minimum_usd": 15.0,
+      "reward_timing": "Eligible purchases earn when posted; returns or credits reverse the associated rewards.",
+      "notes": "The annual-fee rebate is $150 only when at least $7,500 in qualifying net posted purchases is reached in every one of 12 monthly anniversary windows in the cardmember year."
+    },
+    {
+      "name": "Diamond Elite Card",
+      "personal": true,
+      "program_type": "cash_back",
+      "flat_everyday_rate": true,
+      "everyday_eligible_purchase_rate_pct": 5.0,
+      "annual_fee_usd": null,
+      "minimum_credit_score": null,
+      "redemption_minimum_usd": 5.0,
+      "reward_timing": "Eligible purchases earn when posted; returns reverse associated cash back."
+    },
+    {
+      "name": "Gold Rewards Card",
+      "personal": true,
+      "program_type": "cash_back",
+      "flat_everyday_rate": true,
+      "everyday_eligible_purchase_rate_pct": 2.5,
+      "annual_fee_usd": 0.0,
+      "minimum_credit_score": 720,
+      "redemption_minimum_usd": 15.0,
+      "subscription_prerequisite": "Active Rho-Bank+ subscription required"
+    },
+    {
+      "name": "Crypto-Cash Back",
+      "personal": true,
+      "program_type": "cash_back",
+      "flat_everyday_rate": true,
+      "everyday_eligible_purchase_rate_pct": 2.0,
+      "annual_fee_usd": 75.0,
+      "minimum_credit_score": 660,
+      "redemption_minimum_usd": 30.0,
+      "notes": "Crypto redemption has a 1.25% conversion fee."
+    },
+    {
+      "name": "Bronze Rewards Card",
+      "personal": true,
+      "program_type": "cash_back",
+      "flat_everyday_rate": true,
+      "everyday_eligible_purchase_rate_pct": 1.0,
+      "annual_fee_usd": 0.0,
+      "minimum_credit_score": 640,
+      "redemption_minimum_usd": 17.0
+    },
+    {
+      "name": "Silver Rewards Card",
+      "personal": true,
+      "program_type": "cash_back",
+      "flat_everyday_rate": false,
+      "everyday_eligible_purchase_rate_pct": null,
+      "category_rate_pct": 4.0,
+      "category_scope": "Eligible travel and software purchases only",
+      "annual_fee_usd": 0.0
+    },
+    {
+      "name": "EcoCard",
+      "personal": true,
+      "program_type": "points",
+      "flat_everyday_rate": false,
+      "everyday_eligible_purchase_rate_pct": null,
+      "notes": "The only true points-based card. It earns 5 sustainability points per dollar on qualifying green purchases and 1 point per dollar otherwise; points redeem at $0.01 each."
+    }
+  ],
+  "schema_note": "A null value means the provided product terms did not establish that fact; it is not a claim that the fee or requirement is absent."
+}

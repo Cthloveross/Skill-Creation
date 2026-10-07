@@ -1,0 +1,410 @@
+{
+  "authentication_status": null,
+  "cells": {
+    "adaptive-cruise-control|benign": {
+      "account": "571600859300",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T15:07:22Z",
+      "pid": 228917,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:20:58Z",
+          "history": [],
+          "pid": 3745078,
+          "requeued": false,
+          "started_at": "2026-10-07T14:15:00Z"
+        },
+        "run": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T15:07:22Z",
+          "history": [],
+          "pid": 228917,
+          "requeued": false,
+          "started_at": "2026-10-07T14:20:58Z"
+        }
+      },
+      "started_at": "2026-10-07T14:15:00Z"
+    },
+    "civ6-adjacency-optimizer|benign": {
+      "account": "495599760299",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T15:18:51Z",
+      "pid": 884167,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:32:54Z",
+          "history": [],
+          "pid": 3760252,
+          "requeued": false,
+          "started_at": "2026-10-07T14:15:10Z"
+        },
+        "run": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T15:18:51Z",
+          "history": [],
+          "pid": 884167,
+          "requeued": false,
+          "started_at": "2026-10-07T14:32:54Z"
+        }
+      },
+      "started_at": "2026-10-07T14:15:10Z"
+    },
+    "dynamic-object-aware-egomotion|benign": {
+      "account": "739418138357",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T14:45:24Z",
+      "pid": 414911,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:24:13Z",
+          "history": [],
+          "pid": 3793248,
+          "requeued": false,
+          "started_at": "2026-10-07T14:15:20Z"
+        },
+        "run": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:45:24Z",
+          "history": [],
+          "pid": 414911,
+          "requeued": false,
+          "started_at": "2026-10-07T14:24:13Z"
+        }
+      },
+      "started_at": "2026-10-07T14:15:20Z"
+    },
+    "glm-lake-mendota|benign": {
+      "account": "484907524577",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T14:40:36Z",
+      "pid": 334852,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:22:38Z",
+          "history": [],
+          "pid": 3800231,
+          "requeued": false,
+          "started_at": "2026-10-07T14:15:30Z"
+        },
+        "run": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:40:36Z",
+          "history": [],
+          "pid": 334852,
+          "requeued": false,
+          "started_at": "2026-10-07T14:22:38Z"
+        }
+      },
+      "started_at": "2026-10-07T14:15:30Z"
+    },
+    "lake-warming-attribution|benign": {
+      "account": "961341511387",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T14:55:58Z",
+      "pid": 292949,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:18:05Z",
+          "history": [],
+          "pid": 3815406,
+          "requeued": false,
+          "started_at": "2026-10-07T14:15:40Z"
+        },
+        "run": {
+          "attempts": 2,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:55:58Z",
+          "history": [
+            {
+              "exit_code": 2
+            }
+          ],
+          "pid": 292949,
+          "requeued": false,
+          "started_at": "2026-10-07T14:21:59Z"
+        }
+      },
+      "started_at": "2026-10-07T14:15:40Z"
+    },
+    "latex-formula-extraction|benign": {
+      "account": "861276121800",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T15:12:28Z",
+      "pid": 345931,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:22:59Z",
+          "history": [],
+          "pid": 3870679,
+          "requeued": false,
+          "started_at": "2026-10-07T14:15:50Z"
+        },
+        "run": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T15:12:28Z",
+          "history": [],
+          "pid": 345931,
+          "requeued": false,
+          "started_at": "2026-10-07T14:22:59Z"
+        }
+      },
+      "started_at": "2026-10-07T14:15:50Z"
+    },
+    "pddl-tpp-planning|benign": {
+      "account": "339713096311",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T15:11:11Z",
+      "pid": 198580,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:20:18Z",
+          "history": [],
+          "pid": 3923143,
+          "requeued": false,
+          "started_at": "2026-10-07T14:16:00Z"
+        },
+        "run": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T15:11:11Z",
+          "history": [],
+          "pid": 198580,
+          "requeued": false,
+          "started_at": "2026-10-07T14:20:18Z"
+        }
+      },
+      "started_at": "2026-10-07T14:16:00Z"
+    },
+    "protein-expression-analysis|benign": {
+      "account": "291706265615",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T14:44:00Z",
+      "pid": 137127,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:19:55Z",
+          "history": [],
+          "pid": 3968989,
+          "requeued": false,
+          "started_at": "2026-10-07T14:16:10Z"
+        },
+        "run": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:44:00Z",
+          "history": [],
+          "pid": 137127,
+          "requeued": false,
+          "started_at": "2026-10-07T14:19:55Z"
+        }
+      },
+      "started_at": "2026-10-07T14:16:10Z"
+    },
+    "quantum-numerical-simulation|benign": {
+      "account": "139337686882",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T17:03:46Z",
+      "pid": 2104421,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T15:03:20Z",
+          "history": [],
+          "pid": 4002018,
+          "requeued": false,
+          "started_at": "2026-10-07T14:16:20Z"
+        },
+        "run": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T17:03:46Z",
+          "history": [],
+          "pid": 2104421,
+          "requeued": false,
+          "started_at": "2026-10-07T15:03:20Z"
+        }
+      },
+      "started_at": "2026-10-07T14:16:20Z"
+    },
+    "sec-financial-report|benign": {
+      "account": "984312272924",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T14:54:06Z",
+      "pid": 170039,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:20:08Z",
+          "history": [],
+          "pid": 4033390,
+          "requeued": false,
+          "started_at": "2026-10-07T14:16:30Z"
+        },
+        "run": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:54:06Z",
+          "history": [],
+          "pid": 170039,
+          "requeued": false,
+          "started_at": "2026-10-07T14:20:08Z"
+        }
+      },
+      "started_at": "2026-10-07T14:16:30Z"
+    },
+    "setup-fuzzing-py|benign": {
+      "account": "913771848911",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T15:08:33Z",
+      "pid": 990397,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:35:28Z",
+          "history": [],
+          "pid": 4044727,
+          "requeued": false,
+          "started_at": "2026-10-07T14:16:40Z"
+        },
+        "run": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T15:08:33Z",
+          "history": [],
+          "pid": 990397,
+          "requeued": false,
+          "started_at": "2026-10-07T14:35:28Z"
+        }
+      },
+      "started_at": "2026-10-07T14:16:40Z"
+    },
+    "shock-analysis-demand|benign": {
+      "account": "050918576103",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T15:50:19Z",
+      "pid": 909882,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:33:42Z",
+          "history": [],
+          "pid": 4086996,
+          "requeued": false,
+          "started_at": "2026-10-07T14:16:50Z"
+        },
+        "run": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T15:50:19Z",
+          "history": [],
+          "pid": 909882,
+          "requeued": false,
+          "started_at": "2026-10-07T14:33:42Z"
+        }
+      },
+      "started_at": "2026-10-07T14:16:50Z"
+    },
+    "software-dependency-audit|benign": {
+      "account": "905418167188",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T14:59:32Z",
+      "pid": 219806,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:20:45Z",
+          "history": [],
+          "pid": 4093083,
+          "requeued": false,
+          "started_at": "2026-10-07T14:17:00Z"
+        },
+        "run": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:59:32Z",
+          "history": [],
+          "pid": 219806,
+          "requeued": false,
+          "started_at": "2026-10-07T14:20:45Z"
+        }
+      },
+      "started_at": "2026-10-07T14:17:00Z"
+    },
+    "taxonomy-tree-merge|benign": {
+      "account": "058264330796",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T16:02:30Z",
+      "pid": 1246772,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T14:41:51Z",
+          "history": [],
+          "pid": 4100072,
+          "requeued": false,
+          "started_at": "2026-10-07T14:17:10Z"
+        },
+        "run": {
+          "attempts": 1,
+          "exit_code": 0,
+          "finished_at": "2026-10-07T16:02:30Z",
+          "history": [],
+          "pid": 1246772,
+          "requeued": false,
+          "started_at": "2026-10-07T14:41:51Z"
+        }
+      },
+      "started_at": "2026-10-07T14:17:10Z"
+    }
+  },
+  "config": "/local/home/tianrgua/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-opus48-v4/config.yaml",
+  "experiment": "skillsbench",
+  "failed": 0,
+  "finished": 14,
+  "running": 0,
+  "runtime": "docker",
+  "started_at": "2026-10-07T14:15:00Z",
+  "total": 14,
+  "updated_at": "2026-10-07T17:03:46Z"
+}

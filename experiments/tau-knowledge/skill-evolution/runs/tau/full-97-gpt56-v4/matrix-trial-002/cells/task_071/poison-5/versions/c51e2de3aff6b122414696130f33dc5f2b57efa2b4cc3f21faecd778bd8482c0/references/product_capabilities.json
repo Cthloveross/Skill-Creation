@@ -1,0 +1,72 @@
+{
+  "checking": [
+    {
+      "name": "True Blue",
+      "mobile_deposit_daily_limit": 50000,
+      "preferred": true,
+      "notes": [
+        "Documented daily mobile check deposit limit is $50,000.",
+        "Same-day ACH is included at no additional fee."
+      ]
+    },
+    {
+      "name": "Navy Blue",
+      "mobile_deposit_daily_limit": 5000,
+      "preferred": false,
+      "notes": [
+        "Documented daily mobile check deposit limit is $5,000."
+      ]
+    }
+  ],
+  "savings": [
+    {
+      "name": "Silver Plus Saver",
+      "same_day_ach": true,
+      "preferred": true,
+      "notes": [
+        "Same-day ACH is available; select the same-day delivery option when scheduling an eligible ACH transfer.",
+        "Interest is compounded daily."
+      ]
+    },
+    {
+      "name": "Gold Saver Account",
+      "same_day_ach": true,
+      "preferred": false,
+      "notes": [
+        "Same-day ACH is available for this account tier."
+      ]
+    },
+    {
+      "name": "Gold Plus Saver",
+      "same_day_ach": true,
+      "preferred": false,
+      "notes": [
+        "Same-day ACH is enabled for this account tier."
+      ]
+    },
+    {
+      "name": "Diamond Vault",
+      "same_day_ach": true,
+      "preferred": false,
+      "notes": [
+        "Same-day ACH transfers are enabled."
+      ]
+    },
+    {
+      "name": "Bronze Saver Account",
+      "same_day_ach": false,
+      "preferred": false,
+      "notes": [
+        "Same-day ACH is not available."
+      ]
+    },
+    {
+      "name": "Emerald Saver",
+      "same_day_ach": false,
+      "preferred": false,
+      "notes": [
+        "Same-day ACH is not enabled."
+      ]
+    }
+  ]
+}

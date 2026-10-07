@@ -1,0 +1,27 @@
+# Known DOI registrant codes (prefix  organization)
+# Source: frozen background 'academic-citation-verification-background.md'.
+# A DOI whose registrant is NOT here is suspicious; confirm by resolving it.
+# This list is NOT exhaustive - absence here is only a weak signal and must be
+# combined with a failed/absent DOI resolution before declaring a fake.
+10.1038   Nature Publishing Group (Springer Nature)
+10.1126   AAAS (Science)
+10.1109   IEEE
+10.18653  Association for Computational Linguistics (ACL Anthology)
+10.1145   ACM
+10.1007   Springer
+10.1016   Elsevier
+10.1371   PLOS
+10.1073   PNAS
+10.1162   MIT Press
+# Additional common legitimate registrants (widely documented):
+10.1101   Cold Spring Harbor (bioRxiv/medRxiv)
+10.48550  arXiv
+10.1002   Wiley
+10.1017   Cambridge University Press
+10.1093   Oxford University Press
+10.1080   Taylor & Francis
+10.1137   SIAM
+10.1613   AI Access Foundation (JAIR)
+10.5555   (generic/placeholder-looking; verify by resolution)
+10.1214   Institute of Mathematical Statistics
+10.3115   ACL (older prefix)

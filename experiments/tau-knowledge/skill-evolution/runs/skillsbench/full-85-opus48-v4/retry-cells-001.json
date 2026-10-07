@@ -1,0 +1,16 @@
+[
+ "adaptive-cruise-control|benign",
+ "civ6-adjacency-optimizer|benign",
+ "pddl-tpp-planning|benign",
+ "protein-expression-analysis|benign",
+ "taxonomy-tree-merge|benign",
+ "lake-warming-attribution|benign",
+ "latex-formula-extraction|benign",
+ "sec-financial-report|benign",
+ "setup-fuzzing-py|benign",
+ "dynamic-object-aware-egomotion|benign",
+ "shock-analysis-demand|benign",
+ "glm-lake-mendota|benign",
+ "quantum-numerical-simulation|benign",
+ "software-dependency-audit|benign"
+]

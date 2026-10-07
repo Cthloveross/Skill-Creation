@@ -287,7 +287,11 @@ def test_messages_unknown_post_stops_without_retries(factory):
         calls.append(req)
         raise TimeoutError("offline transport loss")
 
-    kwargs = {"provider": MESSAGES_PROVIDER, "controls": UNBOUNDED_CONTROLS}
+    kwargs = {
+        "provider": MESSAGES_PROVIDER,
+        "controls": UNBOUNDED_CONTROLS,
+        "timeout_retry_attempts": 0,
+    }
     with factory(opener, **kwargs) as gateway, pytest.raises(UnknownOperation):
         gateway.respond(json.dumps(payload()).encode())
     with factory(
@@ -585,11 +589,61 @@ def test_unknown_post_halts_same_episode_and_recovery_never_dispatches(factory):
         with pytest.raises(ModelClientError, match="halted"):
             gateway.respond(json.dumps(payload("different")).encode())
         assert gateway.statistics["unknown_operation"]
+        # One logical request; the timeout was re-sent twice before giving up.
+        assert gateway.statistics["requests"] == 1
+        assert gateway.statistics["request_attempts"] == 3
+        assert [event["reason"] for event in gateway.statistics["retries"]] == ["timeout"] * 2
     with factory(opener) as resumed:
         with pytest.raises(ModelClientError, match="halted"):
             resumed.respond(json.dumps(payload()).encode())
         assert resumed.statistics["unknown_operation"] and resumed.statistics["requests"] == 1
-    assert len(calls) == 1
+    assert len(calls) == 3
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        urllib.error.HTTPError("https://offline", 502, "bad gateway", {}, io.BytesIO(b"{}")),
+        urllib.error.HTTPError("https://offline", 429, "throttled", {}, io.BytesIO(b"{}")),
+        urllib.error.URLError(ConnectionResetError("offline reset")),
+        TimeoutError("offline timeout"),
+    ],
+)
+def test_rejection_then_success_counts_one_request_and_one_sample(factory, failure):
+    calls = []
+
+    def opener(req, timeout):
+        calls.append(req)
+        if len(calls) == 1:
+            raise failure
+        return Response(json.dumps(completed()).encode())
+
+    with factory(opener) as gateway:
+        gateway.respond(json.dumps(payload()).encode())
+        assert gateway.statistics["requests"] == 1
+        assert gateway.statistics["request_attempts"] == 2
+        assert len(gateway.statistics["retries"]) == 1
+        assert gateway.statistics["output_tokens"] == 2 and not gateway.statistics["halted"]
+    assert len(calls) == 2
+
+
+def test_failed_stream_is_resent_but_truncated_stream_is_not(factory):
+    calls = []
+    failed = b'event: response.failed\ndata: {"type":"response.failed"}\n\n'
+
+    def opener(req, timeout):
+        calls.append(req)
+        if len(calls) == 1:
+            return Response(failed)
+        return Response(json.dumps(completed()).encode())
+
+    with factory(opener) as gateway:
+        gateway.respond(json.dumps(payload()).encode())
+        assert gateway.statistics["requests"] == 1 and not gateway.statistics["halted"]
+        assert [event["reason"] for event in gateway.statistics["retries"]] == [
+            "provider_stream_failed"
+        ]
+    assert len(calls) == 2
 
 
 def test_completed_recovery_reuses_native_response_and_usage(factory):

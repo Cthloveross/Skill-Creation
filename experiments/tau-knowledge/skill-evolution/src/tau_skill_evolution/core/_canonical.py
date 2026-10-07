@@ -32,9 +32,10 @@ def require_sha256(name: str, value: object) -> str:
 
 
 def canonical_json_bytes(value: Any) -> bytes:
+    """Serialize JSON-compatible data; frozen views from freeze_json hash like builtins."""
     try:
         return json.dumps(
-            value,
+            thaw_json(value),
             ensure_ascii=False,
             allow_nan=False,
             sort_keys=True,

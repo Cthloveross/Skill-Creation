@@ -584,7 +584,7 @@ def test_launcher_dry_run_prints_plan_without_spawning(tmp_path, capsys):
         ]
     )
     out = capsys.readouterr().out
-    assert code == 0 and "planned 3 cells over 1 accounts" in out
+    assert code == 0 and "planned 3 cells x 1 stage(s) over 1 accounts" in out
     assert out.count("--no-interim-report") == 3 and "111111111111.json" in out
     assert not (tmp_path / "run").exists()
 
@@ -1168,3 +1168,102 @@ def test_trial_collection_rejects_mismatched_runtime_modes(mode, backend):
     report["run_mode"], report["execution"]["backend"] = mode, backend
     with pytest.raises(ValueError, match="matching Docker or workspace"):
         merge.validate_report(report, identity, "tau", "tau.skill-evolution.v3")
+
+
+def test_launcher_stage_commands_and_order():
+    launcher = _load_script("launch_matrix")
+    command = launcher.build_command(
+        None,
+        "skillsbench",
+        Path("/c.yaml"),
+        Path("/run"),
+        "dialogue-parser",
+        "benign",
+        stage="no-skill",
+    )
+    assert command[3] == "evaluate" and command[-2:] == ["--no-interim-report", "--no-skill"]
+    assert "--no-skill" not in launcher.build_command(
+        None, "skillsbench", Path("/c.yaml"), Path("/run"), "dialogue-parser", "benign"
+    )
+    assert launcher.parse_stages("no-skill,run") == ("no-skill", "run")
+    assert launcher.parse_stages("run") == ("run",)
+    for bad in ("run,no-skill", "run,run", "", "smoke"):
+        with pytest.raises(ValueError):
+            launcher.parse_stages(bad)
+
+
+def test_launcher_requeues_failed_stage_then_continues(tmp_path, monkeypatch):
+    launcher = _load_script("launch_matrix")
+    args = types.SimpleNamespace(
+        r2sp=None,
+        experiment="skillsbench",
+        config=DEFAULT_CONFIG,
+        run_dir=tmp_path,
+        token_dir=tmp_path,
+        accounts=["111"],
+        max_concurrent=1,
+        stagger_seconds=0,
+        stages=("no-skill", "run"),
+        max_attempts=2,
+        retry_delay_seconds=0,
+    )
+    instance = launcher.Launcher(args, [("t", "benign")])
+    started = []
+
+    class Process:
+        pid = 1
+
+        def __init__(self, code):
+            self.code = code
+
+        def poll(self):
+            return self.code
+
+    codes = iter([2, 0, 0])
+
+    def fake_start(task, arm):
+        key = launcher.cell_key(task, arm)
+        stage = instance.next_stage(key)
+        started.append(stage)
+        previous = instance.status_cells[key]["stages"].get(stage) or {}
+        instance.status_cells[key]["stages"][stage] = {
+            "pid": 1,
+            "started_at": "t",
+            "finished_at": None,
+            "exit_code": None,
+            "attempts": int(previous.get("attempts", 0)) + 1,
+            "history": list(previous.get("history", [])),
+            "requeued": False,
+        }
+        instance.status_cells[key].update(stage=stage, started_at="t")
+        instance.processes[key] = (Process(next(codes)), io.BytesIO())
+
+    instance.start = fake_start
+    assert instance.run() == 0
+    assert started == ["no-skill", "no-skill", "run"]
+    cell = instance.status_cells["t|benign"]
+    assert cell["stages"]["no-skill"]["attempts"] == 2
+    assert cell["stages"]["no-skill"]["history"] == [{"exit_code": 2}]
+    assert cell["exit_code"] == 0 and cell["finished_at"] is not None
+
+
+def test_launcher_live_concurrency_file_overrides_argument(tmp_path):
+    launcher = _load_script("launch_matrix")
+    control = tmp_path / "max.txt"
+    args = types.SimpleNamespace(
+        r2sp=None,
+        experiment="tau",
+        config=DEFAULT_CONFIG,
+        run_dir=tmp_path,
+        token_dir=tmp_path,
+        accounts=["111"],
+        max_concurrent=7,
+        stagger_seconds=0,
+        max_concurrent_file=control,
+    )
+    instance = launcher.Launcher(args, [("t", "benign")])
+    assert instance.max_concurrent() == 7
+    control.write_text("3\n")
+    assert instance.max_concurrent() == 3
+    control.write_text("garbage")
+    assert instance.max_concurrent() == 7

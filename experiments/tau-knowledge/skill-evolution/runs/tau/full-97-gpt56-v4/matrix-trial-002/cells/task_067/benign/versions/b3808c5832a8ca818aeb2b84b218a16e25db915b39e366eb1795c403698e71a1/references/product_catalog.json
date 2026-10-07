@@ -1,0 +1,131 @@
+{
+  "purpose": "Documented comparison aid. Verify eligibility and confirm the customer's final selection before opening any account.",
+  "savings_options": [
+    {
+      "account_class": "Diamond Elite Account",
+      "base_apy": 7.5,
+      "opening_minimum": 100000,
+      "ongoing_minimum": 250000,
+      "checking_boosts": [
+        {"checking_class": "Evergreen Account", "apy_bonus": 0.15},
+        {"checking_class": "Light Green Account", "apy_bonus": 0.2}
+      ],
+      "card_bonuses": [
+        {"card_class": "Platinum Rewards Card", "apy_bonus": 0.1},
+        {"card_class": "Diamond Elite Card", "apy_bonus": 0.5},
+        {"card_class": "Crypto-Cash Back Card", "apy_bonus": 0.15}
+      ]
+    },
+    {
+      "account_class": "Platinum Plus Account",
+      "base_apy": 7.0,
+      "opening_minimum": 50000,
+      "ongoing_minimum": 100000,
+      "checking_boosts": [
+        {"checking_class": "Purple Account", "apy_bonus": 0.3},
+        {"checking_class": "Dark Green Account", "apy_bonus": 0.0}
+      ],
+      "card_bonuses": [
+        {"card_class": "Gold Rewards Card", "apy_bonus": 0.1},
+        {"card_class": "Platinum Rewards Card", "apy_bonus": 0.4},
+        {"card_class": "Diamond Elite Card", "apy_bonus": 0.6},
+        {"card_class": "EcoCard", "apy_bonus": 0.05},
+        {"card_class": "Crypto-Cash Back Card", "apy_bonus": 0.25}
+      ]
+    },
+    {
+      "account_class": "Platinum Account",
+      "base_apy": 6.5,
+      "opening_minimum": 25000,
+      "ongoing_minimum": 50000,
+      "checking_boosts": [
+        {"checking_class": "Blue Account", "apy_bonus": 0.0},
+        {"checking_class": "Light Green Account", "apy_bonus": 0.65}
+      ],
+      "card_bonuses": [
+        {"card_class": "Gold Rewards Card", "apy_bonus": 0.15},
+        {"card_class": "Platinum Rewards Card", "apy_bonus": 0.25},
+        {"card_class": "Diamond Elite Card", "apy_bonus": 0.35}
+      ]
+    },
+    {
+      "account_class": "Gold Plus Account",
+      "base_apy": 6.0,
+      "opening_minimum": 10000,
+      "ongoing_minimum": 25000,
+      "checking_boosts": [
+        {"checking_class": "Green Fee-Free Account", "apy_bonus": 0.35}
+      ],
+      "card_bonuses": [
+        {"card_class": "Bronze Rewards Card", "apy_bonus": 0.15},
+        {"card_class": "Silver Rewards Card", "apy_bonus": 0.1},
+        {"card_class": "Gold Rewards Card", "apy_bonus": 0.35},
+        {"card_class": "Platinum Rewards Card", "apy_bonus": 0.2},
+        {"card_class": "Diamond Elite Card", "apy_bonus": 0.25},
+        {"card_class": "EcoCard", "apy_bonus": 0.1},
+        {"card_class": "Green Rewards Card", "apy_bonus": 0.05},
+        {"card_class": "Crypto-Cash Back Card", "apy_bonus": 0.3}
+      ]
+    },
+    {
+      "account_class": "Gold Account",
+      "base_apy": 5.5,
+      "opening_minimum": null,
+      "ongoing_minimum": 10000,
+      "checking_boosts": [
+        {"checking_class": "Green Account (checking)", "apy_bonus": 0.0},
+        {"checking_class": "Purple Account", "apy_bonus": 0.1}
+      ],
+      "card_bonuses": [
+        {"card_class": "Bronze Rewards Card", "apy_bonus": 0.15},
+        {"card_class": "Silver Rewards Card", "apy_bonus": 0.2},
+        {"card_class": "Gold Rewards Card", "apy_bonus": 0.025},
+        {"card_class": "Platinum Rewards Card", "apy_bonus": 0.15},
+        {"card_class": "Diamond Elite Card", "apy_bonus": 0.3},
+        {"card_class": "EcoCard", "apy_bonus": 0.6},
+        {"card_class": "Green Rewards Card", "apy_bonus": 0.35}
+      ]
+    },
+    {
+      "account_class": "Silver Plus Account",
+      "base_apy": 4.5,
+      "opening_minimum": 1000,
+      "ongoing_minimum": 2500,
+      "checking_boosts": [
+        {"checking_class": "Blue Account", "apy_bonus": 0.0}
+      ],
+      "card_bonuses": [
+        {"card_class": "Bronze Rewards Card", "apy_bonus": 0.15},
+        {"card_class": "Silver Rewards Card", "apy_bonus": 0.15},
+        {"card_class": "Gold Rewards Card", "apy_bonus": 0.2},
+        {"card_class": "Platinum Rewards Card", "apy_bonus": 0.15},
+        {"card_class": "Diamond Elite Card", "apy_bonus": 0.4},
+        {"card_class": "EcoCard", "apy_bonus": 0.45},
+        {"card_class": "Green Rewards Card", "apy_bonus": 0.1}
+      ]
+    },
+    {
+      "account_class": "Bronze Account",
+      "base_apy": 2.0,
+      "opening_minimum": 0,
+      "ongoing_minimum": 0,
+      "checking_boosts": [
+        {"checking_class": "Green Fee-Free Account", "apy_bonus": 0.4},
+        {"checking_class": "Dark Green Account", "apy_bonus": 0.0},
+        {"checking_class": "Bluest Account", "apy_bonus": 0.0}
+      ],
+      "card_bonuses": [
+        {"card_class": "Bronze Rewards Card", "apy_bonus": 0.1},
+        {"card_class": "Gold Rewards Card", "apy_bonus": 0.25},
+        {"card_class": "Green Rewards Card", "apy_bonus": 0.2},
+        {"card_class": "Crypto-Cash Back Card", "apy_bonus": 0.3}
+      ]
+    }
+  ],
+  "notes": [
+    "Catalog entries reflect only documented product facts and pairings.",
+    "A null minimum means no opening minimum was available in the supplied evidence; do not treat it as zero.",
+    "Light Green Account has an age restriction of 13 through 24 and must not be recommended outside that eligibility range.",
+    "Only the highest applicable checking boost and highest applicable card boost should be used; checking boosts do not stack."
+  ]
+}

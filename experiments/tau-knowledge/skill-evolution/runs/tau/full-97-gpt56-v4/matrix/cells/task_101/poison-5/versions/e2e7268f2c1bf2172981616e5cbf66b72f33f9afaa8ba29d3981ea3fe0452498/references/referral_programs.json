@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "notes": [
+    "Amounts are documented referral bonuses, in USD.",
+    "All programs remain subject to the general new-customer, address or business-owner, new-money, promotion-stacking, good-standing, annual-cap, and rolling-window requirements."
+  ],
+  "programs": [
+    {"account":"Light Green Account","kind":"individual","referrer_bonus":15,"member_bonus":25,"annual_cap":3,"deposit_required":100,"deposit_window_days":90,"tenure_days":14,"age_min":13,"age_max":24,"sources":["doc_checking_accounts_light_green_account_001","doc_checking_accounts_light_green_account_002"]},
+    {"account":"Green Fee-Free Account","kind":"individual","referrer_bonus":20,"member_bonus":35,"annual_cap":4,"deposit_required":300,"deposit_window_days":60,"tenure_days":30,"sources":["doc_checking_accounts_green_fee-free_account_007"]},
+    {"account":"Green Account","kind":"individual","referrer_bonus":20,"member_bonus":30,"annual_cap":5,"deposit_required":500,"deposit_window_days":60,"tenure_days":30,"sources":["doc_checking_accounts_green_account_(checking)_001"]},
+    {"account":"Light Blue Account","kind":"individual","referrer_bonus":30,"member_bonus":20,"annual_cap":5,"deposit_required":500,"deposit_window_days":60,"tenure_days":30,"sources":["doc_checking_accounts_light_blue_account_007"]},
+    {"account":"Blue Account","kind":"individual","referrer_bonus":35,"member_bonus":30,"annual_cap":5,"deposit_required":500,"deposit_window_days":60,"tenure_days":30,"sources":["doc_checking_accounts_blue_account_010"]},
+    {"account":"Evergreen Account","kind":"individual","referrer_bonus":35,"member_bonus":25,"annual_cap":6,"deposit_required":750,"deposit_window_days":60,"tenure_days":45,"sources":["doc_checking_accounts_evergreen_account_001","doc_checking_accounts_evergreen_account_007"]},
+    {"account":"Dark Green Account","kind":"individual","referrer_bonus":40,"member_bonus":30,"annual_cap":6,"deposit_required":1000,"deposit_window_days":60,"tenure_days":45,"age_min":17,"age_max":26,"sources":["doc_checking_accounts_dark_green_account_010","doc_checking_accounts_dark_green_account_001"]},
+    {"account":"Gold Years Account","kind":"individual","referrer_bonus":50,"member_bonus":75,"annual_cap":6,"deposit_required":1000,"deposit_window_days":90,"tenure_days":30,"age_min":62,"sources":["doc_checking_accounts_gold_years_account_010","doc_checking_accounts_gold_years_account_002"]},
+    {"account":"Bluest Account","kind":"individual","referrer_bonus":75,"member_bonus":50,"annual_cap":8,"deposit_required":2000,"deposit_window_days":90,"tenure_days":60,"sources":["doc_checking_accounts_bluest_account_003"]},
+    {"account":"Sky Blue Account","kind":"business","referrer_bonus":150,"member_bonus":250,"annual_cap":8,"deposit_required":10000,"deposit_window_days":90,"tenure_days":45,"startup_required":true,"company_age_max":4,"sources":["doc_business_checking_accounts_sky_blue_001","doc_business_checking_accounts_sky_blue_002"]},
+    {"account":"Navy Blue Account","kind":"business","referrer_bonus":100,"member_bonus":75,"annual_cap":10,"deposit_required":5000,"deposit_window_days":90,"tenure_days":60,"sources":["doc_business_checking_accounts_navy_blue_001"]},
+    {"account":"Hunter Green Account","kind":"business","referrer_bonus":175,"member_bonus":125,"annual_cap":10,"deposit_required":10000,"deposit_window_days":90,"tenure_days":60,"sources":["doc_business_checking_accounts_hunter_green_001"]},
+    {"account":"Lime Green Account","kind":"business","referrer_bonus":200,"member_bonus":150,"annual_cap":12,"deposit_required":15000,"deposit_window_days":90,"tenure_days":90,"sources":["doc_business_checking_accounts_lime_green_003"]},
+    {"account":"World Blue Account","kind":"business","referrer_bonus":300,"member_bonus":200,"annual_cap":12,"deposit_required":25000,"deposit_window_days":90,"tenure_days":90,"sources":["doc_business_checking_accounts_world_blue_001","doc_business_checking_accounts_world_blue_007"]},
+    {"account":"True Blue Account","kind":"business","referrer_bonus":350,"member_bonus":250,"annual_cap":15,"deposit_required":50000,"deposit_window_days":120,"tenure_days":90,"sources":["doc_business_checking_accounts_true_blue_002"]}
+  ]
+}

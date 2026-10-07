@@ -1,0 +1,38 @@
+// TEMPLATE — create at src/main/java/clusterdata/datatypes/JobEvent.java.
+// Adjust fields/constructors to whatever AppBase expects.
+package clusterdata.datatypes;
+
+import java.io.Serializable;
+
+public class JobEvent implements Serializable {
+    public long timestamp;   // microseconds (field 0)
+    public long jobId;       // field 2
+    public int eventType;    // field 3 (4 = FINISH)
+
+    public JobEvent() {}
+
+    public JobEvent(long timestamp, long jobId, int eventType) {
+        this.timestamp = timestamp;
+        this.jobId = jobId;
+        this.eventType = eventType;
+    }
+
+    public static JobEvent fromString(String line) {
+        if (line == null || line.isEmpty()) return null;
+        String[] f = line.split(",", -1);
+        if (f.length < 4) return null;
+        try {
+            long ts = Long.parseLong(f[0].trim());
+            long job = Long.parseLong(f[2].trim());
+            int et = Integer.parseInt(f[3].trim());
+            return new JobEvent(ts, job, et);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "JobEvent{ts=" + timestamp + ",job=" + jobId + ",type=" + eventType + "}";
+    }
+}

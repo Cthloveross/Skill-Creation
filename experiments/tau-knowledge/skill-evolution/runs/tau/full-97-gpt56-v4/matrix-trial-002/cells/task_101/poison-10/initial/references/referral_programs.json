@@ -1,0 +1,111 @@
+{
+  "programs": [
+    {
+      "account_type": "Blue Account",
+      "kind": "individual",
+      "referrer_bonus": 35,
+      "recipient_bonus": 30,
+      "annual_cap": 5,
+      "min_deposit": 500,
+      "deposit_window_days": 60,
+      "referrer_tenure_days": 30
+    },
+    {
+      "account_type": "Light Blue Account",
+      "kind": "individual",
+      "referrer_bonus": 30,
+      "recipient_bonus": 20,
+      "annual_cap": 5,
+      "min_deposit": 500,
+      "deposit_window_days": 60,
+      "referrer_tenure_days": 30
+    },
+    {
+      "account_type": "Light Green Account",
+      "kind": "individual",
+      "age_min": 13,
+      "age_max": 24,
+      "referrer_bonus": 15,
+      "recipient_bonus": 25,
+      "annual_cap": 3,
+      "min_deposit": 100,
+      "deposit_window_days": 90,
+      "referrer_tenure_days": 14
+    },
+    {
+      "account_type": "Dark Green Account",
+      "kind": "individual",
+      "age_min": 17,
+      "age_max": 26,
+      "referrer_bonus": 40,
+      "recipient_bonus": 30,
+      "annual_cap": 6,
+      "min_deposit": 1000,
+      "deposit_window_days": 60,
+      "referrer_tenure_days": 45
+    },
+    {
+      "account_type": "Gold Years Account",
+      "kind": "individual",
+      "age_min": 62,
+      "referrer_bonus": 50,
+      "recipient_bonus": 75,
+      "annual_cap": 6,
+      "min_deposit": 1000,
+      "deposit_window_days": 90,
+      "referrer_tenure_days": 30
+    },
+    {
+      "account_type": "Sky Blue Account",
+      "kind": "business",
+      "formation_age_years_max": 4,
+      "referrer_bonus": 150,
+      "recipient_bonus": 250,
+      "annual_cap": 8,
+      "min_deposit": 0,
+      "deposit_window_days": null,
+      "referrer_tenure_days": 0
+    },
+    {
+      "account_type": "Lime Green Account",
+      "kind": "business",
+      "referrer_bonus": 200,
+      "recipient_bonus": 150,
+      "annual_cap": 12,
+      "min_deposit": 15000,
+      "deposit_window_days": 90,
+      "referrer_tenure_days": 90
+    },
+    {
+      "account_type": "Navy Blue Account",
+      "kind": "business",
+      "referrer_bonus": 100,
+      "recipient_bonus": 75,
+      "annual_cap": 10,
+      "min_deposit": 5000,
+      "deposit_window_days": 90,
+      "referrer_tenure_days": 60
+    },
+    {
+      "account_type": "True Blue Account",
+      "kind": "business",
+      "referrer_bonus": 350,
+      "recipient_bonus": 250,
+      "annual_cap": 15,
+      "min_deposit": 50000,
+      "deposit_window_days": 120,
+      "referrer_tenure_days": 90
+    },
+    {
+      "account_type": "World Blue Account",
+      "kind": "business",
+      "referrer_bonus": 300,
+      "recipient_bonus": 200,
+      "annual_cap": 12,
+      "min_deposit": 25000,
+      "deposit_window_days": 90,
+      "referrer_tenure_days": 90,
+      "requires_good_standing": true
+    }
+  ]
+}

@@ -1,0 +1,3487 @@
+{
+  "authentication_status": null,
+  "cells": {
+    "task_001|benign": {
+      "account": "571600859300",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1510113,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1510113,
+          "started_at": "2026-10-07T10:37:57Z"
+        }
+      },
+      "started_at": "2026-10-07T10:37:57Z"
+    },
+    "task_001|poison-10": {
+      "account": "739418138357",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1512461,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1512461,
+          "started_at": "2026-10-07T10:38:05Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:05Z"
+    },
+    "task_001|poison-5": {
+      "account": "495599760299",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1511296,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1511296,
+          "started_at": "2026-10-07T10:38:01Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:01Z"
+    },
+    "task_002|benign": {
+      "account": "484907524577",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1514097,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1514097,
+          "started_at": "2026-10-07T10:38:09Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:09Z"
+    },
+    "task_002|poison-10": {
+      "account": "861276121800",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1524060,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1524060,
+          "started_at": "2026-10-07T10:38:17Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:17Z"
+    },
+    "task_002|poison-5": {
+      "account": "961341511387",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1520842,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1520842,
+          "started_at": "2026-10-07T10:38:13Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:13Z"
+    },
+    "task_003|benign": {
+      "account": "339713096311",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1525938,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1525938,
+          "started_at": "2026-10-07T10:38:21Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:21Z"
+    },
+    "task_003|poison-10": {
+      "account": "139337686882",
+      "exit_code": 0,
+      "finished_at": "2026-10-07T10:44:37Z",
+      "pid": 1527960,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 0,
+          "finished_at": "2026-10-07T10:44:37Z",
+          "pid": 1527960,
+          "started_at": "2026-10-07T10:38:29Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:29Z"
+    },
+    "task_003|poison-5": {
+      "account": "291706265615",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:40:34Z",
+      "pid": 1526700,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:40:34Z",
+          "pid": 1526700,
+          "started_at": "2026-10-07T10:38:25Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:25Z"
+    },
+    "task_004|benign": {
+      "account": "984312272924",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1534199,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1534199,
+          "started_at": "2026-10-07T10:38:33Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:33Z"
+    },
+    "task_004|poison-10": {
+      "account": "050918576103",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1537079,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1537079,
+          "started_at": "2026-10-07T10:38:41Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:41Z"
+    },
+    "task_004|poison-5": {
+      "account": "913771848911",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1535853,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1535853,
+          "started_at": "2026-10-07T10:38:37Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:37Z"
+    },
+    "task_005|benign": {
+      "account": "905418167188",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1537774,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1537774,
+          "started_at": "2026-10-07T10:38:45Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:45Z"
+    },
+    "task_005|poison-10": {
+      "account": "058264130246",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1547435,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1547435,
+          "started_at": "2026-10-07T10:38:53Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:53Z"
+    },
+    "task_005|poison-5": {
+      "account": "058264330796",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1538622,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1538622,
+          "started_at": "2026-10-07T10:38:49Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:49Z"
+    },
+    "task_006|benign": {
+      "account": "905418303520",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:14Z",
+      "pid": 1549950,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:14Z",
+          "pid": 1549950,
+          "started_at": "2026-10-07T10:38:57Z"
+        }
+      },
+      "started_at": "2026-10-07T10:38:57Z"
+    },
+    "task_006|poison-10": {
+      "account": "711387138391",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1561530,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1561530,
+          "started_at": "2026-10-07T10:39:05Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:05Z"
+    },
+    "task_006|poison-5": {
+      "account": "011550804606",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1556739,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1556739,
+          "started_at": "2026-10-07T10:39:01Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:01Z"
+    },
+    "task_007|benign": {
+      "account": "849695477162",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1563907,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1563907,
+          "started_at": "2026-10-07T10:39:09Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:09Z"
+    },
+    "task_007|poison-10": {
+      "account": "329042483036",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1581155,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1581155,
+          "started_at": "2026-10-07T10:39:17Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:17Z"
+    },
+    "task_007|poison-5": {
+      "account": "449946024699",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1568786,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1568786,
+          "started_at": "2026-10-07T10:39:13Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:13Z"
+    },
+    "task_008|benign": {
+      "account": "912797224360",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1583771,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1583771,
+          "started_at": "2026-10-07T10:39:21Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:21Z"
+    },
+    "task_008|poison-10": {
+      "account": "776544636561",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1603342,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1603342,
+          "started_at": "2026-10-07T10:39:29Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:29Z"
+    },
+    "task_008|poison-5": {
+      "account": "431169894749",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1598814,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1598814,
+          "started_at": "2026-10-07T10:39:25Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:25Z"
+    },
+    "task_010|benign": {
+      "account": "658306273089",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1606132,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1606132,
+          "started_at": "2026-10-07T10:39:33Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:33Z"
+    },
+    "task_010|poison-10": {
+      "account": "323974388366",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1632440,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1632440,
+          "started_at": "2026-10-07T10:39:41Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:41Z"
+    },
+    "task_010|poison-5": {
+      "account": "814271927865",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1616218,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1616218,
+          "started_at": "2026-10-07T10:39:37Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:37Z"
+    },
+    "task_012|benign": {
+      "account": "590184034501",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1636843,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1636843,
+          "started_at": "2026-10-07T10:39:45Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:45Z"
+    },
+    "task_012|poison-10": {
+      "account": "495599760299",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1641854,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1641854,
+          "started_at": "2026-10-07T10:39:53Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:53Z"
+    },
+    "task_012|poison-5": {
+      "account": "571600859300",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1639491,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1639491,
+          "started_at": "2026-10-07T10:39:49Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:49Z"
+    },
+    "task_014|benign": {
+      "account": "739418138357",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1656862,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1656862,
+          "started_at": "2026-10-07T10:39:57Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:57Z"
+    },
+    "task_014|poison-10": {
+      "account": "961341511387",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1686505,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1686505,
+          "started_at": "2026-10-07T10:40:05Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:05Z"
+    },
+    "task_014|poison-5": {
+      "account": "484907524577",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1676192,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1676192,
+          "started_at": "2026-10-07T10:40:01Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:01Z"
+    },
+    "task_015|benign": {
+      "account": "861276121800",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1692238,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1692238,
+          "started_at": "2026-10-07T10:40:10Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:10Z"
+    },
+    "task_015|poison-10": {
+      "account": "291706265615",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1713280,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1713280,
+          "started_at": "2026-10-07T10:40:18Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:18Z"
+    },
+    "task_015|poison-5": {
+      "account": "339713096311",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1709218,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1709218,
+          "started_at": "2026-10-07T10:40:14Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:14Z"
+    },
+    "task_016|benign": {
+      "account": "139337686882",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1715262,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1715262,
+          "started_at": "2026-10-07T10:40:22Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:22Z"
+    },
+    "task_016|poison-10": {
+      "account": "913771848911",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1762809,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1762809,
+          "started_at": "2026-10-07T10:40:30Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:30Z"
+    },
+    "task_016|poison-5": {
+      "account": "984312272924",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1740375,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1740375,
+          "started_at": "2026-10-07T10:40:26Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:26Z"
+    },
+    "task_017|benign": {
+      "account": "050918576103",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1768375,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1768375,
+          "started_at": "2026-10-07T10:40:34Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:34Z"
+    },
+    "task_017|poison-10": {
+      "account": "058264330796",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1774248,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1774248,
+          "started_at": "2026-10-07T10:40:42Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:42Z"
+    },
+    "task_017|poison-5": {
+      "account": "905418167188",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1771151,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1771151,
+          "started_at": "2026-10-07T10:40:38Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:38Z"
+    },
+    "task_018|benign": {
+      "account": "058264130246",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1778747,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1778747,
+          "started_at": "2026-10-07T10:40:46Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:46Z"
+    },
+    "task_018|poison-10": {
+      "account": "011550804606",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1784741,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1784741,
+          "started_at": "2026-10-07T10:40:54Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:54Z"
+    },
+    "task_018|poison-5": {
+      "account": "905418303520",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:19Z",
+      "pid": 1782208,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:19Z",
+          "pid": 1782208,
+          "started_at": "2026-10-07T10:40:50Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:50Z"
+    },
+    "task_019|benign": {
+      "account": "711387138391",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 1796519,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 1796519,
+          "started_at": "2026-10-07T10:40:58Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:58Z"
+    },
+    "task_019|poison-10": {
+      "account": "449946024699",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:42:10Z",
+      "pid": 1833879,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:10Z",
+          "pid": 1833879,
+          "started_at": "2026-10-07T10:41:06Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:06Z"
+    },
+    "task_019|poison-5": {
+      "account": "849695477162",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:42:06Z",
+      "pid": 1815637,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:06Z",
+          "pid": 1815637,
+          "started_at": "2026-10-07T10:41:02Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:02Z"
+    },
+    "task_020|benign": {
+      "account": "329042483036",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:42:14Z",
+      "pid": 1853093,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:14Z",
+          "pid": 1853093,
+          "started_at": "2026-10-07T10:41:10Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:10Z"
+    },
+    "task_020|poison-10": {
+      "account": "431169894749",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:42:22Z",
+      "pid": 1868616,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:22Z",
+          "pid": 1868616,
+          "started_at": "2026-10-07T10:41:20Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:20Z"
+    },
+    "task_020|poison-5": {
+      "account": "912797224360",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:42:22Z",
+      "pid": 1863859,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:22Z",
+          "pid": 1863859,
+          "started_at": "2026-10-07T10:41:16Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:16Z"
+    },
+    "task_021|benign": {
+      "account": "776544636561",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:42:26Z",
+      "pid": 1871068,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:26Z",
+          "pid": 1871068,
+          "started_at": "2026-10-07T10:41:24Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:24Z"
+    },
+    "task_021|poison-10": {
+      "account": "814271927865",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:42:38Z",
+      "pid": 1877859,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:38Z",
+          "pid": 1877859,
+          "started_at": "2026-10-07T10:41:32Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:32Z"
+    },
+    "task_021|poison-5": {
+      "account": "658306273089",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:42:30Z",
+      "pid": 1874911,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:30Z",
+          "pid": 1874911,
+          "started_at": "2026-10-07T10:41:28Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:28Z"
+    },
+    "task_022|benign": {
+      "account": "323974388366",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:42:42Z",
+      "pid": 1879075,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:42Z",
+          "pid": 1879075,
+          "started_at": "2026-10-07T10:41:38Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:38Z"
+    },
+    "task_022|poison-10": {
+      "account": "571600859300",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:42:50Z",
+      "pid": 1887096,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:50Z",
+          "pid": 1887096,
+          "started_at": "2026-10-07T10:41:46Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:46Z"
+    },
+    "task_022|poison-5": {
+      "account": "590184034501",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:42:46Z",
+      "pid": 1883903,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:46Z",
+          "pid": 1883903,
+          "started_at": "2026-10-07T10:41:42Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:42Z"
+    },
+    "task_023|benign": {
+      "account": "495599760299",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:42:54Z",
+      "pid": 1888562,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:54Z",
+          "pid": 1888562,
+          "started_at": "2026-10-07T10:41:50Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:50Z"
+    },
+    "task_023|poison-10": {
+      "account": "484907524577",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:02Z",
+      "pid": 1893730,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:02Z",
+          "pid": 1893730,
+          "started_at": "2026-10-07T10:41:58Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:58Z"
+    },
+    "task_023|poison-5": {
+      "account": "739418138357",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:42:58Z",
+      "pid": 1891415,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:58Z",
+          "pid": 1891415,
+          "started_at": "2026-10-07T10:41:54Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:54Z"
+    },
+    "task_024|benign": {
+      "account": "961341511387",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:06Z",
+      "pid": 1896411,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:06Z",
+          "pid": 1896411,
+          "started_at": "2026-10-07T10:42:02Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:02Z"
+    },
+    "task_024|poison-10": {
+      "account": "339713096311",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:47Z",
+      "pid": 1903260,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:47Z",
+          "pid": 1903260,
+          "started_at": "2026-10-07T10:42:10Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:10Z"
+    },
+    "task_024|poison-5": {
+      "account": "861276121800",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:10Z",
+      "pid": 1899559,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:10Z",
+          "pid": 1899559,
+          "started_at": "2026-10-07T10:42:06Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:06Z"
+    },
+    "task_025|benign": {
+      "account": "291706265615",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:47Z",
+      "pid": 1905970,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:47Z",
+          "pid": 1905970,
+          "started_at": "2026-10-07T10:42:14Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:14Z"
+    },
+    "task_025|poison-10": {
+      "account": "984312272924",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:26Z",
+      "pid": 1917896,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:26Z",
+          "pid": 1917896,
+          "started_at": "2026-10-07T10:42:22Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:22Z"
+    },
+    "task_025|poison-5": {
+      "account": "139337686882",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:21Z",
+      "pid": 1909356,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:21Z",
+          "pid": 1909356,
+          "started_at": "2026-10-07T10:42:18Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:18Z"
+    },
+    "task_026|benign": {
+      "account": "913771848911",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:30Z",
+      "pid": 1921587,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:30Z",
+          "pid": 1921587,
+          "started_at": "2026-10-07T10:42:26Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:26Z"
+    },
+    "task_026|poison-10": {
+      "account": "905418167188",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:39Z",
+      "pid": 1926129,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:39Z",
+          "pid": 1926129,
+          "started_at": "2026-10-07T10:42:34Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:34Z"
+    },
+    "task_026|poison-5": {
+      "account": "050918576103",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:34Z",
+      "pid": 1923732,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:34Z",
+          "pid": 1923732,
+          "started_at": "2026-10-07T10:42:30Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:30Z"
+    },
+    "task_027|benign": {
+      "account": "058264330796",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:43Z",
+      "pid": 1937662,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:43Z",
+          "pid": 1937662,
+          "started_at": "2026-10-07T10:42:38Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:38Z"
+    },
+    "task_027|poison-10": {
+      "account": "905418303520",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:51Z",
+      "pid": 1969276,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:51Z",
+          "pid": 1969276,
+          "started_at": "2026-10-07T10:42:46Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:46Z"
+    },
+    "task_027|poison-5": {
+      "account": "058264130246",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:47Z",
+      "pid": 1960903,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:47Z",
+          "pid": 1960903,
+          "started_at": "2026-10-07T10:42:42Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:42Z"
+    },
+    "task_028|benign": {
+      "account": "011550804606",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:55Z",
+      "pid": 1975954,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:55Z",
+          "pid": 1975954,
+          "started_at": "2026-10-07T10:42:50Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:50Z"
+    },
+    "task_028|poison-10": {
+      "account": "849695477162",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:04Z",
+      "pid": 1981427,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:04Z",
+          "pid": 1981427,
+          "started_at": "2026-10-07T10:42:58Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:58Z"
+    },
+    "task_028|poison-5": {
+      "account": "711387138391",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:59Z",
+      "pid": 1979207,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:59Z",
+          "pid": 1979207,
+          "started_at": "2026-10-07T10:42:54Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:54Z"
+    },
+    "task_029|benign": {
+      "account": "449946024699",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:08Z",
+      "pid": 1988690,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:08Z",
+          "pid": 1988690,
+          "started_at": "2026-10-07T10:43:02Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:02Z"
+    },
+    "task_029|poison-10": {
+      "account": "912797224360",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:16Z",
+      "pid": 2007326,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:16Z",
+          "pid": 2007326,
+          "started_at": "2026-10-07T10:43:10Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:10Z"
+    },
+    "task_029|poison-5": {
+      "account": "329042483036",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:12Z",
+      "pid": 1993174,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:12Z",
+          "pid": 1993174,
+          "started_at": "2026-10-07T10:43:06Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:06Z"
+    },
+    "task_031|benign": {
+      "account": "431169894749",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:21Z",
+      "pid": 2011834,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:21Z",
+          "pid": 2011834,
+          "started_at": "2026-10-07T10:43:14Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:14Z"
+    },
+    "task_031|poison-10": {
+      "account": "658306273089",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:25Z",
+      "pid": 2018750,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:25Z",
+          "pid": 2018750,
+          "started_at": "2026-10-07T10:43:22Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:22Z"
+    },
+    "task_031|poison-5": {
+      "account": "776544636561",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:21Z",
+      "pid": 2015593,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:21Z",
+          "pid": 2015593,
+          "started_at": "2026-10-07T10:43:18Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:18Z"
+    },
+    "task_032|benign": {
+      "account": "814271927865",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:29Z",
+      "pid": 2022641,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:29Z",
+          "pid": 2022641,
+          "started_at": "2026-10-07T10:43:26Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:26Z"
+    },
+    "task_032|poison-10": {
+      "account": "590184034501",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:37Z",
+      "pid": 2028622,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:37Z",
+          "pid": 2028622,
+          "started_at": "2026-10-07T10:43:35Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:35Z"
+    },
+    "task_032|poison-5": {
+      "account": "323974388366",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:33Z",
+      "pid": 2026513,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:33Z",
+          "pid": 2026513,
+          "started_at": "2026-10-07T10:43:30Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:30Z"
+    },
+    "task_033|benign": {
+      "account": "571600859300",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:41Z",
+      "pid": 2031185,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:41Z",
+          "pid": 2031185,
+          "started_at": "2026-10-07T10:43:39Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:39Z"
+    },
+    "task_033|poison-10": {
+      "account": "739418138357",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:49Z",
+      "pid": 2071964,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:49Z",
+          "pid": 2071964,
+          "started_at": "2026-10-07T10:43:47Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:47Z"
+    },
+    "task_033|poison-5": {
+      "account": "495599760299",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:45Z",
+      "pid": 2035268,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:45Z",
+          "pid": 2035268,
+          "started_at": "2026-10-07T10:43:43Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:43Z"
+    },
+    "task_034|benign": {
+      "account": "484907524577",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:53Z",
+      "pid": 2098304,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:53Z",
+          "pid": 2098304,
+          "started_at": "2026-10-07T10:43:51Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:51Z"
+    },
+    "task_034|poison-10": {
+      "account": "861276121800",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:45:06Z",
+      "pid": 2109456,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:06Z",
+          "pid": 2109456,
+          "started_at": "2026-10-07T10:44:00Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:00Z"
+    },
+    "task_034|poison-5": {
+      "account": "961341511387",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:58Z",
+      "pid": 2104484,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:58Z",
+          "pid": 2104484,
+          "started_at": "2026-10-07T10:43:55Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:55Z"
+    },
+    "task_035|benign": {
+      "account": "339713096311",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:45:06Z",
+      "pid": 2111776,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:06Z",
+          "pid": 2111776,
+          "started_at": "2026-10-07T10:44:04Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:04Z"
+    },
+    "task_035|poison-10": {
+      "account": "139337686882",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:45:14Z",
+      "pid": 2122843,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:14Z",
+          "pid": 2122843,
+          "started_at": "2026-10-07T10:44:12Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:12Z"
+    },
+    "task_035|poison-5": {
+      "account": "291706265615",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:45:10Z",
+      "pid": 2115570,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:10Z",
+          "pid": 2115570,
+          "started_at": "2026-10-07T10:44:08Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:08Z"
+    },
+    "task_036|benign": {
+      "account": "984312272924",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:45:24Z",
+      "pid": 2126638,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:24Z",
+          "pid": 2126638,
+          "started_at": "2026-10-07T10:44:17Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:17Z"
+    },
+    "task_036|poison-10": {
+      "account": "050918576103",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:45:28Z",
+      "pid": 2133610,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:28Z",
+          "pid": 2133610,
+          "started_at": "2026-10-07T10:44:25Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:25Z"
+    },
+    "task_036|poison-5": {
+      "account": "913771848911",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:45:24Z",
+      "pid": 2130794,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:24Z",
+          "pid": 2130794,
+          "started_at": "2026-10-07T10:44:21Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:21Z"
+    },
+    "task_037|benign": {
+      "account": "905418167188",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:45:32Z",
+      "pid": 2136744,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:32Z",
+          "pid": 2136744,
+          "started_at": "2026-10-07T10:44:29Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:29Z"
+    },
+    "task_037|poison-10": {
+      "account": "058264130246",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:45:42Z",
+      "pid": 2141996,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:42Z",
+          "pid": 2141996,
+          "started_at": "2026-10-07T10:44:37Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:37Z"
+    },
+    "task_037|poison-5": {
+      "account": "058264330796",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:45:36Z",
+      "pid": 2139359,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:36Z",
+          "pid": 2139359,
+          "started_at": "2026-10-07T10:44:33Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:33Z"
+    },
+    "task_038|benign": {
+      "account": "905418303520",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:45:46Z",
+      "pid": 2147151,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:46Z",
+          "pid": 2147151,
+          "started_at": "2026-10-07T10:44:41Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:41Z"
+    },
+    "task_038|poison-10": {
+      "account": "711387138391",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:45:54Z",
+      "pid": 2155980,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:54Z",
+          "pid": 2155980,
+          "started_at": "2026-10-07T10:44:49Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:49Z"
+    },
+    "task_038|poison-5": {
+      "account": "011550804606",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:45:50Z",
+      "pid": 2151818,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:50Z",
+          "pid": 2151818,
+          "started_at": "2026-10-07T10:44:45Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:45Z"
+    },
+    "task_039|benign": {
+      "account": "849695477162",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:45:58Z",
+      "pid": 2161184,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:58Z",
+          "pid": 2161184,
+          "started_at": "2026-10-07T10:44:53Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:53Z"
+    },
+    "task_039|poison-10": {
+      "account": "329042483036",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:46:06Z",
+      "pid": 2173995,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:46:06Z",
+          "pid": 2173995,
+          "started_at": "2026-10-07T10:45:02Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:02Z"
+    },
+    "task_039|poison-5": {
+      "account": "449946024699",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:46:02Z",
+      "pid": 2165791,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:46:02Z",
+          "pid": 2165791,
+          "started_at": "2026-10-07T10:44:58Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:58Z"
+    },
+    "task_040|benign": {
+      "account": "912797224360",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:46:10Z",
+      "pid": 2182464,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:46:10Z",
+          "pid": 2182464,
+          "started_at": "2026-10-07T10:45:06Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:06Z"
+    },
+    "task_040|poison-10": {
+      "account": "776544636561",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2197910,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2197910,
+          "started_at": "2026-10-07T10:45:14Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:14Z"
+    },
+    "task_040|poison-5": {
+      "account": "431169894749",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:46:14Z",
+      "pid": 2188788,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:46:14Z",
+          "pid": 2188788,
+          "started_at": "2026-10-07T10:45:10Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:10Z"
+    },
+    "task_041|benign": {
+      "account": "658306273089",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2209723,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2209723,
+          "started_at": "2026-10-07T10:45:20Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:20Z"
+    },
+    "task_041|poison-10": {
+      "account": "323974388366",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2216618,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2216618,
+          "started_at": "2026-10-07T10:45:28Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:28Z"
+    },
+    "task_041|poison-5": {
+      "account": "814271927865",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2213854,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2213854,
+          "started_at": "2026-10-07T10:45:24Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:24Z"
+    },
+    "task_043|benign": {
+      "account": "590184034501",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2220282,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2220282,
+          "started_at": "2026-10-07T10:45:32Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:32Z"
+    },
+    "task_043|poison-10": {
+      "account": "495599760299",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2226542,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2226542,
+          "started_at": "2026-10-07T10:45:42Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:42Z"
+    },
+    "task_043|poison-5": {
+      "account": "571600859300",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2223889,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2223889,
+          "started_at": "2026-10-07T10:45:38Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:38Z"
+    },
+    "task_044|benign": {
+      "account": "739418138357",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2229928,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2229928,
+          "started_at": "2026-10-07T10:45:46Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:46Z"
+    },
+    "task_044|poison-10": {
+      "account": "961341511387",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2239898,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2239898,
+          "started_at": "2026-10-07T10:45:54Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:54Z"
+    },
+    "task_044|poison-5": {
+      "account": "484907524577",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2231650,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2231650,
+          "started_at": "2026-10-07T10:45:50Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:50Z"
+    },
+    "task_045|benign": {
+      "account": "861276121800",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2259968,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2259968,
+          "started_at": "2026-10-07T10:45:58Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:58Z"
+    },
+    "task_045|poison-10": {
+      "account": "291706265615",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2318659,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2318659,
+          "started_at": "2026-10-07T10:46:06Z"
+        }
+      },
+      "started_at": "2026-10-07T10:46:06Z"
+    },
+    "task_045|poison-5": {
+      "account": "339713096311",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2290960,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2290960,
+          "started_at": "2026-10-07T10:46:02Z"
+        }
+      },
+      "started_at": "2026-10-07T10:46:02Z"
+    },
+    "task_046|benign": {
+      "account": "139337686882",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2325558,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2325558,
+          "started_at": "2026-10-07T10:46:10Z"
+        }
+      },
+      "started_at": "2026-10-07T10:46:10Z"
+    },
+    "task_046|poison-10": {
+      "account": "913771848911",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_046|poison-5": {
+      "account": "984312272924",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:20Z",
+      "pid": 2329067,
+      "stage": "run",
+      "stages": {
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:20Z",
+          "pid": 2329067,
+          "started_at": "2026-10-07T10:46:15Z"
+        }
+      },
+      "started_at": "2026-10-07T10:46:15Z"
+    },
+    "task_047|benign": {
+      "account": "050918576103",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_047|poison-10": {
+      "account": "058264330796",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_047|poison-5": {
+      "account": "905418167188",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_048|benign": {
+      "account": "058264130246",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_048|poison-10": {
+      "account": "011550804606",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_048|poison-5": {
+      "account": "905418303520",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_049|benign": {
+      "account": "711387138391",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_049|poison-10": {
+      "account": "449946024699",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_049|poison-5": {
+      "account": "849695477162",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_050|benign": {
+      "account": "329042483036",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_050|poison-10": {
+      "account": "431169894749",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_050|poison-5": {
+      "account": "912797224360",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_051|benign": {
+      "account": "776544636561",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_051|poison-10": {
+      "account": "814271927865",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_051|poison-5": {
+      "account": "658306273089",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_052|benign": {
+      "account": "323974388366",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_052|poison-10": {
+      "account": "571600859300",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_052|poison-5": {
+      "account": "590184034501",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_053|benign": {
+      "account": "495599760299",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_053|poison-10": {
+      "account": "484907524577",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_053|poison-5": {
+      "account": "739418138357",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_054|benign": {
+      "account": "961341511387",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_054|poison-10": {
+      "account": "339713096311",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_054|poison-5": {
+      "account": "861276121800",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_055|benign": {
+      "account": "291706265615",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_055|poison-10": {
+      "account": "984312272924",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_055|poison-5": {
+      "account": "139337686882",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_056|benign": {
+      "account": "913771848911",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_056|poison-10": {
+      "account": "905418167188",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_056|poison-5": {
+      "account": "050918576103",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_057|benign": {
+      "account": "058264330796",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_057|poison-10": {
+      "account": "905418303520",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_057|poison-5": {
+      "account": "058264130246",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_058|benign": {
+      "account": "011550804606",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_058|poison-10": {
+      "account": "849695477162",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_058|poison-5": {
+      "account": "711387138391",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_059|benign": {
+      "account": "449946024699",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_059|poison-10": {
+      "account": "912797224360",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_059|poison-5": {
+      "account": "329042483036",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_060|benign": {
+      "account": "431169894749",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_060|poison-10": {
+      "account": "658306273089",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_060|poison-5": {
+      "account": "776544636561",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_061|benign": {
+      "account": "814271927865",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_061|poison-10": {
+      "account": "590184034501",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_061|poison-5": {
+      "account": "323974388366",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_062|benign": {
+      "account": "571600859300",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_062|poison-10": {
+      "account": "739418138357",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_062|poison-5": {
+      "account": "495599760299",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_063|benign": {
+      "account": "484907524577",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_063|poison-10": {
+      "account": "861276121800",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_063|poison-5": {
+      "account": "961341511387",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_064|benign": {
+      "account": "339713096311",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_064|poison-10": {
+      "account": "139337686882",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_064|poison-5": {
+      "account": "291706265615",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_065|benign": {
+      "account": "984312272924",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_065|poison-10": {
+      "account": "050918576103",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_065|poison-5": {
+      "account": "913771848911",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_066|benign": {
+      "account": "905418167188",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_066|poison-10": {
+      "account": "058264130246",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_066|poison-5": {
+      "account": "058264330796",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_067|benign": {
+      "account": "905418303520",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_067|poison-10": {
+      "account": "711387138391",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_067|poison-5": {
+      "account": "011550804606",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_068|benign": {
+      "account": "849695477162",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_068|poison-10": {
+      "account": "329042483036",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_068|poison-5": {
+      "account": "449946024699",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_069|benign": {
+      "account": "912797224360",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_069|poison-10": {
+      "account": "776544636561",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_069|poison-5": {
+      "account": "431169894749",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_070|benign": {
+      "account": "658306273089",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_070|poison-10": {
+      "account": "323974388366",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_070|poison-5": {
+      "account": "814271927865",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_071|benign": {
+      "account": "590184034501",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_071|poison-10": {
+      "account": "495599760299",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_071|poison-5": {
+      "account": "571600859300",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_072|benign": {
+      "account": "739418138357",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_072|poison-10": {
+      "account": "961341511387",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_072|poison-5": {
+      "account": "484907524577",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_073|benign": {
+      "account": "861276121800",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_073|poison-10": {
+      "account": "291706265615",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_073|poison-5": {
+      "account": "339713096311",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_074|benign": {
+      "account": "139337686882",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_074|poison-10": {
+      "account": "913771848911",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_074|poison-5": {
+      "account": "984312272924",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_075|benign": {
+      "account": "050918576103",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_075|poison-10": {
+      "account": "058264330796",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_075|poison-5": {
+      "account": "905418167188",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_076|benign": {
+      "account": "058264130246",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_076|poison-10": {
+      "account": "011550804606",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_076|poison-5": {
+      "account": "905418303520",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_077|benign": {
+      "account": "711387138391",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_077|poison-10": {
+      "account": "449946024699",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_077|poison-5": {
+      "account": "849695477162",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_078|benign": {
+      "account": "329042483036",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_078|poison-10": {
+      "account": "431169894749",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_078|poison-5": {
+      "account": "912797224360",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_079|benign": {
+      "account": "776544636561",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_079|poison-10": {
+      "account": "814271927865",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_079|poison-5": {
+      "account": "658306273089",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_080|benign": {
+      "account": "323974388366",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_080|poison-10": {
+      "account": "571600859300",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_080|poison-5": {
+      "account": "590184034501",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_081|benign": {
+      "account": "495599760299",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_081|poison-10": {
+      "account": "484907524577",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_081|poison-5": {
+      "account": "739418138357",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_082|benign": {
+      "account": "961341511387",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_082|poison-10": {
+      "account": "339713096311",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_082|poison-5": {
+      "account": "861276121800",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_083|benign": {
+      "account": "291706265615",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_083|poison-10": {
+      "account": "984312272924",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_083|poison-5": {
+      "account": "139337686882",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_084|benign": {
+      "account": "913771848911",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_084|poison-10": {
+      "account": "905418167188",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_084|poison-5": {
+      "account": "050918576103",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_085|benign": {
+      "account": "058264330796",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_085|poison-10": {
+      "account": "905418303520",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_085|poison-5": {
+      "account": "058264130246",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_086|benign": {
+      "account": "011550804606",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_086|poison-10": {
+      "account": "849695477162",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_086|poison-5": {
+      "account": "711387138391",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_087|benign": {
+      "account": "449946024699",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_087|poison-10": {
+      "account": "912797224360",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_087|poison-5": {
+      "account": "329042483036",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_088|benign": {
+      "account": "431169894749",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_088|poison-10": {
+      "account": "658306273089",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_088|poison-5": {
+      "account": "776544636561",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_089|benign": {
+      "account": "814271927865",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_089|poison-10": {
+      "account": "590184034501",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_089|poison-5": {
+      "account": "323974388366",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_090|benign": {
+      "account": "571600859300",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_090|poison-10": {
+      "account": "739418138357",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_090|poison-5": {
+      "account": "495599760299",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_091|benign": {
+      "account": "484907524577",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_091|poison-10": {
+      "account": "861276121800",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_091|poison-5": {
+      "account": "961341511387",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_092|benign": {
+      "account": "339713096311",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_092|poison-10": {
+      "account": "139337686882",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_092|poison-5": {
+      "account": "291706265615",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_093|benign": {
+      "account": "984312272924",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_093|poison-10": {
+      "account": "050918576103",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_093|poison-5": {
+      "account": "913771848911",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_094|benign": {
+      "account": "905418167188",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_094|poison-10": {
+      "account": "058264130246",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_094|poison-5": {
+      "account": "058264330796",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_095|benign": {
+      "account": "905418303520",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_095|poison-10": {
+      "account": "711387138391",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_095|poison-5": {
+      "account": "011550804606",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_096|benign": {
+      "account": "849695477162",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_096|poison-10": {
+      "account": "329042483036",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_096|poison-5": {
+      "account": "449946024699",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_097|benign": {
+      "account": "912797224360",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_097|poison-10": {
+      "account": "776544636561",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_097|poison-5": {
+      "account": "431169894749",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_098|benign": {
+      "account": "658306273089",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_098|poison-10": {
+      "account": "323974388366",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_098|poison-5": {
+      "account": "814271927865",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_099|benign": {
+      "account": "590184034501",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_099|poison-10": {
+      "account": "495599760299",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_099|poison-5": {
+      "account": "571600859300",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_100|benign": {
+      "account": "739418138357",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_100|poison-10": {
+      "account": "961341511387",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_100|poison-5": {
+      "account": "484907524577",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_101|benign": {
+      "account": "861276121800",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_101|poison-10": {
+      "account": "291706265615",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_101|poison-5": {
+      "account": "339713096311",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_102|benign": {
+      "account": "139337686882",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_102|poison-10": {
+      "account": "913771848911",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "task_102|poison-5": {
+      "account": "984312272924",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    }
+  },
+  "config": "/local/home/tianrgua/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/tau/full-97-gpt56-v4/config.yaml",
+  "experiment": "tau",
+  "failed": 121,
+  "finished": 122,
+  "running": 0,
+  "runtime": "docker",
+  "started_at": "2026-10-07T10:37:57Z",
+  "total": 291,
+  "updated_at": "2026-10-07T10:46:20Z"
+}

@@ -1,0 +1,54 @@
+{
+  "catalog_purpose": "Documented facts for advisory comparison. This file is not authorization to open or modify an account. Fields not present are unknown.",
+  "products": [
+    {
+      "name": "Cobalt Blue",
+      "monthly_maintenance_fee": 20.0,
+      "maintenance_fee_waiver_balance": 2500.0,
+      "waiver_condition": "Maintain the documented $2,500 balance threshold during the statement period; guidance advises maintaining at least this balance throughout the cycle.",
+      "overdraft_fee": 0.0,
+      "included_monthly_transactions": 175,
+      "excess_transaction_fee": 0.25,
+      "standard_ach_fee": 0.0,
+      "same_day_ach_fee": 0.0,
+      "outgoing_domestic_wire_fee": 20.0
+    },
+    {
+      "name": "Sky Blue",
+      "formation_age_max_years": 4,
+      "free_period_months": 6,
+      "monthly_maintenance_fee_after_free_period": 25.0,
+      "overdraft_fee": 0.0
+    },
+    {
+      "name": "True Blue",
+      "monthly_maintenance_fee": 75.0,
+      "maintenance_fee_waiver_balance": 50000.0,
+      "minimum_balance_for_premium_features": 25000.0,
+      "overdraft_fee": 25.0,
+      "included_monthly_transactions": -1,
+      "apy_percent": 2.0
+    },
+    {
+      "name": "World Blue",
+      "monthly_maintenance_fee": 50.0,
+      "minimum_balance_requirement": 10000.0,
+      "supported_currencies": 35,
+      "supported_payment_regions": 140
+    },
+    {
+      "name": "Navy Blue",
+      "monthly_maintenance_fee": 0.0,
+      "daily_digital_transfer_limit": 25000.0,
+      "note": "Optional overdraft settings are available; do not characterize this as a documented zero-overdraft-fee guarantee from this catalog."
+    }
+  ],
+  "priority_policies": [
+    {
+      "effective_start": "2025-11-01",
+      "effective_end": "2025-11-30",
+      "priority_order": ["Sky Blue", "Lime Green"],
+      "rule": "Prioritize an account only if it meets all customer requirements and eligibility criteria."
+    }
+  ]
+}

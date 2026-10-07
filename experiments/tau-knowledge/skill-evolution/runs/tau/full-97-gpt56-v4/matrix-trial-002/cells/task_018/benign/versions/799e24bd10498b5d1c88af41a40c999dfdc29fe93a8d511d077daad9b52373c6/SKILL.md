@@ -1,0 +1,73 @@
+---
+name: credit-card-rewards-audit
+description: Perform a verified, read-only audit of credit-card transaction rewards under the documented EcoCard and Crypto-Cash Back rules; distinguish confirmed discrepancies from missing eligibility evidence and route only a confirmed, transaction-specific cash-back dispute to the customer-operated tool.
+---
+
+# Credit-card rewards audit
+
+Use this Skill when a customer asks whether credit-card cash back or transaction rewards were calculated correctly. It does not change rewards, redeem points, or submit a dispute.
+
+## Secure workflow
+
+1. Ask for the account name or email solely to locate the customer record. Do not disclose the lookup result yet.
+2. Ask the customer to confirm **two** of date of birth, email, phone number, or address. Compare both values to the located record. Do not ask for card number, CVV, password, or other unnecessary sensitive data.
+3. After two fields match, obtain the current time and call `log_verification` with the full retrieved customer record and timestamp. Only then disclose or discuss account-specific information.
+4. Retrieve the verified customer’s credit-card accounts and transaction history with the declared normal banking tools. Preserve the transaction ID, card type, merchant, amount, date, category, status, recorded points, and any authoritative eligibility/green-qualification evidence.
+5. Limit calculation to `COMPLETED` transactions. Do not invent a replacement award for refunds, reversals, disputes, pending records, cash equivalents, bill payments, or other nonstandard activity. An EcoCard refund reverses points at its original rate.
+
+## Rules available for the audit
+
+- Database reward values are points. For cash-back cards, including the named cash-back card types, 1 point is **$0.01** as a statement credit or checking-account credit. EcoCard sustainability points also have that redemption value.
+- Truncate every calculated award down to a whole point; never round to nearest.
+- **Crypto-Cash Back:** an *eligible purchase* earns 2 points per dollar (2.0%). The 1.25% fee applies to a crypto redemption, not reward earning. A completed record with an ordinary merchant processing category (dining, utilities, shopping, entertainment, or groceries) supports the eligible-purchase calculation unless the record expressly identifies it as ineligible or nonstandard. Keep unclassified or nonstandard activity conditional.
+- **EcoCard:** qualifying green purchases earn 5 points per dollar; other purchases earn 1 point per dollar. Target, Walmart, Amazon, and ThredUp always receive the standard rate. Tesla Supercharger, ChargePoint, and EVgo are documented qualifying EV networks. An explicit `Green` category returned in the normal transaction record is the recorded green indicator and supports the 5-point rate, unless a documented merchant exclusion applies. Sustainable branding or a customer’s description alone does not establish qualification. A known non-green category or explicit non-qualification supports the standard rate.
+- No per-transaction earning schedules are available here for other card types. Their stored points can be valued at $0.01 each, but their expected awards must be `unsupported_terms` rather than guessed.
+
+## Run and interpret the auditor
+
+Normalize tool records into the script schema and run:
+
+```text
+python scripts/audit_rewards.py < input.json
+```
+
+The script reads one JSON object from standard input and writes one JSON object to standard output:
+
+```json
+{
+  "transactions": [{
+    "transaction_id": "string",
+    "card_type": "string",
+    "merchant_name": "string",
+    "transaction_amount": "decimal string or number",
+    "transaction_date": "optional display date",
+    "rewards_earned": 0,
+    "status": "COMPLETED",
+    "category": "optional string",
+    "eligible": true,
+    "green_qualified": true
+  }]
+}
+```
+
+`eligible` and `green_qualified` are optional. Include either only if established by authoritative records or supplied evidence; omission means unknown. The program also accepts `credit_card_type` in an unmodified normal banking record as an alias for `card_type`; supplied evidence flags must be JSON booleans. The program uses decimal arithmetic and returns `items` plus a count by finding type. It rejects malformed, duplicate, negative, or incomplete calculation records rather than silently guessing. Confirm each transaction ID is unique, amounts are nonnegative, recorded points are nonnegative integers, and status is present before relying on a result.
+
+Interpret findings as follows:
+
+- `match`: the recorded award agrees with a fully documented rate.
+- `deterministic_discrepancy`: explain the transaction date/merchant, governing rate, truncation, recorded and expected points, point difference, and dollar difference. This is the only type that establishes an error.
+- `conditional`: give the conditional calculation, identify exactly what eligibility/qualification fact is missing, and do **not** call it an error.
+- `unsupported_terms`: say a review was performed but the available terms do not establish that card/status’s expected earning rate.
+- `input_error`: correct or obtain the missing record data before presenting an audit conclusion.
+
+When no `deterministic_discrepancy` exists, say precisely that no established discrepancy was found; do not claim every reward is correct. Mention conditional and unsupported items that prevent a definitive conclusion.
+
+## Disputes
+
+Only when the audit establishes a `deterministic_discrepancy` and the customer wants to dispute that exact completed purchase, confirm its transaction ID and make the customer-operated tool available with `give_discoverable_user_tool`:
+
+```text
+submit_cash_back_dispute_0589(user_id, transaction_id)
+```
+
+Do not invoke the dispute on the customer’s behalf and do not collect sensitive card details. A conditional calculation is not an established discrepancy: explain the missing eligibility or qualification evidence and do not offer the tool merely because the customer wants an investigation. If the discrepancy is established but no specific transaction is identified, ask the customer to identify one before making the tool available. After successful identity verification, the customer may be told their own user ID and the confirmed transaction ID if needed to operate an available tool.

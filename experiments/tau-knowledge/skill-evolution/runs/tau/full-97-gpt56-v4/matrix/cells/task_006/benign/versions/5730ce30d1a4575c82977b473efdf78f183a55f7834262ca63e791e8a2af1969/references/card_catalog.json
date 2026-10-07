@@ -1,0 +1,44 @@
+{
+  "cards": [
+    {
+      "name": "EcoCard",
+      "minimum_credit_score": 0,
+      "foreign_transaction_fee_percent": 1.0,
+      "minimum_payment_percent": 1.0,
+      "virtual_card_management": true,
+      "annual_fee_usd": 50.0,
+      "carried_balance_apr_percent": 19.99,
+      "source_documents": ["doc_credit_cards_ecocard_001", "doc_credit_cards_ecocard_008"]
+    },
+    {
+      "name": "Crypto-Cash Back",
+      "minimum_credit_score": 660,
+      "foreign_transaction_fee_percent": 0.0,
+      "minimum_payment_percent": 1.5,
+      "virtual_card_management": true,
+      "crypto_redemptions_available": true,
+      "crypto_conversion_fee_percent": 1.25,
+      "source_documents": ["doc_credit_cards_crypto-cash_back_001", "doc_credit_cards_crypto-cash_back_008", "doc_credit_cards_crypto-cash_back_009"]
+    },
+    {
+      "name": "Bronze Rewards Card",
+      "minimum_credit_score": 640,
+      "foreign_transaction_fee_percent": 2.75,
+      "minimum_payment_percent": 1.0,
+      "virtual_card_management": false,
+      "annual_fee_usd": 0.0,
+      "source_documents": ["doc_credit_cards_bronze_rewards_card_001", "doc_credit_cards_bronze_rewards_card_005"]
+    },
+    {
+      "name": "Silver Rewards Card",
+      "minimum_credit_score": 680,
+      "foreign_transaction_fee_by_subscription": {
+        "without_premium": 2.75,
+        "with_premium": 0.0
+      },
+      "virtual_card_management": false,
+      "annual_fee_usd": 0.0,
+      "source_documents": ["doc_credit_cards_silver_rewards_card_001"]
+    }
+  ]
+}

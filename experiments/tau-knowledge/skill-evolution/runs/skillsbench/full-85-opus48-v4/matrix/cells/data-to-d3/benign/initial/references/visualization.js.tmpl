@@ -1,0 +1,196 @@
+/* D3 v6 stock bubble chart + linked table.
+ * FIELD_MAP is injected by build_viz.py from the CSV header; JS also
+ * re-resolves field names at runtime (case-insensitive) as a fallback. */
+(function () {
+  "use strict";
+
+  var FIELD_MAP = __FIELD_MAP__;
+
+  var CANDIDATES = {
+    ticker: ["symbol", "ticker", "tickerSymbol", "Symbol", "Ticker"],
+    name: ["longName", "shortName", "companyName", "name", "Name", "longname", "company"],
+    sector: ["sector", "Sector", "gicsSector"],
+    marketCap: ["marketCap", "market_cap", "marketcap", "MarketCap", "MarketCapitalization", "marketCapitalization"]
+  };
+
+  function resolveField(sample, kind) {
+    if (FIELD_MAP && FIELD_MAP[kind] && sample && (FIELD_MAP[kind] in sample)) {
+      return FIELD_MAP[kind];
+    }
+    var keys = sample ? Object.keys(sample) : [];
+    var cands = CANDIDATES[kind] || [];
+    for (var i = 0; i < cands.length; i++) {
+      if (sample && (cands[i] in sample)) return cands[i];
+    }
+    for (var j = 0; j < cands.length; j++) {
+      for (var k = 0; k < keys.length; k++) {
+        if (keys[k].toLowerCase() === cands[j].toLowerCase()) return keys[k];
+      }
+    }
+    return null;
+  }
+
+  function fmtCap(v) {
+    if (v === null || v === undefined || isNaN(v)) return "-";
+    var a = Math.abs(v);
+    if (a >= 1e12) return (v / 1e12).toFixed(2) + "T";
+    if (a >= 1e9) return (v / 1e9).toFixed(2) + "B";
+    if (a >= 1e6) return (v / 1e6).toFixed(2) + "M";
+    if (a >= 1e3) return (v / 1e3).toFixed(2) + "K";
+    return String(v);
+  }
+
+  var WIDTH = 720;
+  var HEIGHT = 600;
+  var MIN_R = 14;
+  var MAX_R = 55;
+  var ETF_R = 16;
+  var PAD = 2;
+
+  d3.csv("data/stock-descriptions.csv").then(function (raw) {
+    if (!raw || !raw.length) {
+      console.error("No rows loaded from stock-descriptions.csv");
+      return;
+    }
+    var sample = raw[0];
+    var fT = resolveField(sample, "ticker");
+    var fN = resolveField(sample, "name");
+    var fS = resolveField(sample, "sector");
+    var fC = resolveField(sample, "marketCap");
+
+    var data = raw.map(function (d) {
+      var capRaw = fC ? d[fC] : "";
+      var cap = null;
+      if (capRaw !== undefined && capRaw !== null && String(capRaw).trim() !== "") {
+        var n = +capRaw;
+        cap = isNaN(n) ? null : n;
+      }
+      var isETF = (cap === null);
+      var sec = fS && d[fS] && String(d[fS]).trim() !== "" ? String(d[fS]).trim() : "ETF";
+      return {
+        ticker: fT ? d[fT] : "",
+        name: fN ? d[fN] : "",
+        sector: sec,
+        marketCap: cap,
+        isETF: isETF,
+        raw: d
+      };
+    });
+
+    // ----- scales -----
+    var caps = data.filter(function (d) { return d.marketCap !== null; })
+      .map(function (d) { return d.marketCap; });
+    var rScale = d3.scaleSqrt()
+      .domain([d3.min(caps) || 1, d3.max(caps) || 1])
+      .range([MIN_R, MAX_R]);
+    data.forEach(function (d) {
+      d.radius = d.marketCap !== null ? rScale(d.marketCap) : ETF_R;
+    });
+
+    var sectors = Array.from(new Set(data.map(function (d) { return d.sector; }))).sort();
+    var color = d3.scaleOrdinal().domain(sectors)
+      .range(d3.schemeTableau10.concat(d3.schemeSet3 || []));
+
+    var clusterX = d3.scalePoint().domain(sectors)
+      .range([WIDTH * 0.15, WIDTH * 0.85]).padding(0.5);
+    var cy = HEIGHT / 2;
+
+    // initialize near cluster centers for faster convergence
+    data.forEach(function (d) {
+      d.x = clusterX(d.sector) + (Math.random() - 0.5) * 20;
+      d.y = cy + (Math.random() - 0.5) * 20;
+    });
+
+    // ----- force simulation (pre-ticked for a stable layout) -----
+    var simulation = d3.forceSimulation(data)
+      .force("x", d3.forceX(function (d) { return clusterX(d.sector); }).strength(0.35))
+      .force("y", d3.forceY(cy).strength(0.12))
+      .force("collide", d3.forceCollide(function (d) { return d.radius + PAD; }).iterations(3))
+      .force("charge", d3.forceManyBody().strength(1))
+      .stop();
+    for (var i = 0; i < 400; i++) simulation.tick();
+
+    // ----- legend (HTML) -----
+    var legend = d3.select("#legend");
+    sectors.forEach(function (s) {
+      var item = legend.append("div").attr("class", "legend-item");
+      item.append("span").attr("class", "legend-swatch")
+        .style("background-color", color(s));
+      item.append("span").attr("class", "legend-label").text(s);
+    });
+
+    // ----- chart -----
+    var svg = d3.select("#chart")
+      .attr("width", WIDTH).attr("height", HEIGHT)
+      .attr("viewBox", "0 0 " + WIDTH + " " + HEIGHT);
+
+    var tooltip = d3.select("#tooltip");
+    var selected = null;
+
+    var node = svg.append("g").selectAll("g.node")
+      .data(data).join("g")
+      .attr("class", "node")
+      .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+    node.append("circle")
+      .attr("r", function (d) { return d.radius; })
+      .attr("fill", function (d) { return color(d.sector); });
+
+    node.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", "0.35em")
+      .style("font-size", function (d) { return Math.max(7, Math.min(d.radius * 0.7, 14)) + "px"; })
+      .text(function (d) { return d.ticker; });
+
+    node
+      .on("mouseover", function (event, d) {
+        if (d.isETF) return; // no tooltip for ETFs (no name/sector/marketCap)
+        tooltip.html(
+          "<strong>" + d.ticker + "</strong><br/>" +
+          (d.name || "") + "<br/>Sector: " + d.sector
+        ).classed("visible", true);
+      })
+      .on("mousemove", function (event, d) {
+        if (d.isETF) return;
+        tooltip.style("left", (event.pageX + 12) + "px")
+          .style("top", (event.pageY + 12) + "px");
+      })
+      .on("mouseout", function () {
+        tooltip.classed("visible", false);
+      })
+      .on("click", function (event, d) {
+        selectTicker(d.ticker);
+      });
+
+    // ----- table -----
+    var tbody = d3.select("#data-table tbody");
+    var rows = tbody.selectAll("tr").data(data).join("tr")
+      .attr("data-ticker", function (d) { return d.ticker; })
+      .on("click", function (event, d) { selectTicker(d.ticker); });
+    rows.append("td").text(function (d) { return d.ticker; });
+    rows.append("td").text(function (d) { return d.name || "-"; });
+    rows.append("td").text(function (d) { return d.sector; });
+    rows.append("td").text(function (d) { return fmtCap(d.marketCap); });
+
+    // ----- coordinated highlight -----
+    function selectTicker(t) {
+      selected = (selected === t) ? null : t;
+      node.classed("selected", function (d) { return d.ticker === selected; });
+      tbody.selectAll("tr").classed("selected", function () {
+        return this.getAttribute("data-ticker") === selected;
+      });
+      if (selected) {
+        var el = tbody.selectAll("tr").filter(function () {
+          return this.getAttribute("data-ticker") === selected;
+        }).node();
+        if (el && el.scrollIntoView) {
+          el.scrollIntoView({ block: "nearest" });
+        }
+      }
+    }
+
+    window.__vizReady = true;
+  }).catch(function (err) {
+    console.error("Failed to build visualization:", err);
+  });
+})();

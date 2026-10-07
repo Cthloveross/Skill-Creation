@@ -1,0 +1,74 @@
+[
+  {
+    "name": "World Blue",
+    "referrer_bonus": 300,
+    "required_deposit": 25000,
+    "deposit_window_days": 90,
+    "tenure_days": 90,
+    "annual_limit": 12,
+    "notes": "Referred business must open World Blue."
+  },
+  {
+    "name": "True Blue",
+    "referrer_bonus": 350,
+    "required_deposit": 50000,
+    "deposit_window_days": 120,
+    "tenure_days": 90,
+    "annual_limit": 15,
+    "notes": "Referred business must open True Blue."
+  },
+  {
+    "name": "Beige Account",
+    "referrer_bonus": 500,
+    "required_deposit": 100000,
+    "deposit_window_days": 120,
+    "tenure_days": 120,
+    "annual_limit": 15,
+    "notes": "For qualifying enterprise referrals; product-specific enterprise suitability must be confirmed."
+  },
+  {
+    "name": "Hunter Green",
+    "referrer_bonus": 175,
+    "required_deposit": 10000,
+    "deposit_window_days": 90,
+    "tenure_days": 60,
+    "annual_limit": 10,
+    "notes": "Referred business must open Hunter Green."
+  },
+  {
+    "name": "Lime Green",
+    "referrer_bonus": 200,
+    "required_deposit": 15000,
+    "deposit_window_days": 90,
+    "tenure_days": 90,
+    "annual_limit": 12,
+    "notes": "Referred business must open Lime Green."
+  },
+  {
+    "name": "Navy Blue",
+    "referrer_bonus": 100,
+    "required_deposit": 5000,
+    "deposit_window_days": 90,
+    "tenure_days": 60,
+    "annual_limit": 10,
+    "notes": "Referred business must open Navy Blue."
+  },
+  {
+    "name": "Cobalt Blue",
+    "referrer_bonus": 150,
+    "required_deposit": 7500,
+    "deposit_window_days": 90,
+    "tenure_days": 60,
+    "annual_limit": 10,
+    "notes": "Published Cobalt Blue materials provide the bonus and a separate published qualification detail."
+  },
+  {
+    "name": "Sky Blue",
+    "referrer_bonus": 150,
+    "required_deposit": 10000,
+    "deposit_window_days": 90,
+    "tenure_days": 45,
+    "annual_limit": 8,
+    "notes": "For qualifying startups; confirm all startup/product admission requirements separately."
+  }
+]

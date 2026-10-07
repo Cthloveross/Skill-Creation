@@ -1,0 +1,51 @@
+{
+  "catalog_version": "supported_product_facts",
+  "cards": [
+    {
+      "name": "Platinum Rewards Card",
+      "general_cash_back_percent": 10.0,
+      "eligible_purchase_scope": "all eligible purchases; point-of-sale and online purchases posted to the account",
+      "foreign_transaction_fee_percent": 0.0,
+      "annual_fee_usd": 200.0,
+      "typical_credit_limit_min_usd": 25000.0,
+      "typical_credit_limit_max_usd": 150000.0,
+      "purchase_protection_days": 135,
+      "purchase_protection_claim_cap_usd": 17500.0,
+      "minimum_credit_score": 750,
+      "prerequisites": ["Minimum credit score of 750."],
+      "approval_caveat": "Exact credit limit appears in approval details and is subject to approval.",
+      "source_notes": ["Cash back excludes cash advances, balance transfers, fees, interest, and cash-equivalent transactions.", "Protection is for eligible items and subject to policy terms and exclusions."]
+    },
+    {
+      "name": "Gold Rewards Card",
+      "general_cash_back_percent": 2.5,
+      "eligible_purchase_scope": "all purchases after activation",
+      "foreign_transaction_fee_percent": 0.0,
+      "annual_fee_usd": 0.0,
+      "typical_credit_limit_min_usd": 17500.0,
+      "typical_credit_limit_max_usd": 112500.0,
+      "purchase_protection_days": 105,
+      "purchase_protection_claim_cap_usd": 7500.0,
+      "minimum_credit_score": 720,
+      "prerequisites": ["Active Rho-Bank+ premium subscription required.", "Minimum credit score of 720."],
+      "approval_caveat": "Initial limit is determined during underwriting based on the credit profile and supplied financial information.",
+      "source_notes": ["Protection is for covered claims."]
+    },
+    {
+      "name": "Silver Rewards Card",
+      "general_cash_back_percent": 1.0,
+      "eligible_purchase_scope": "purchases outside top categories",
+      "foreign_transaction_fee_percent": 0.0,
+      "foreign_fee_condition": "0% only with a premium subscription; otherwise 2.75%.",
+      "annual_fee_usd": 0.0,
+      "typical_credit_limit_min_usd": 10000.0,
+      "typical_credit_limit_max_usd": 100000.0,
+      "purchase_protection_days": 90,
+      "purchase_protection_claim_cap_usd": 3000.0,
+      "minimum_credit_score": 680,
+      "prerequisites": ["Minimum credit score of 680.", "Premium subscription is needed for a 0% foreign transaction fee."],
+      "approval_caveat": "Initial credit limits are subject to approval.",
+      "source_notes": ["Protection applies to eligible items."]
+    }
+  ]
+}

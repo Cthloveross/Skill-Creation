@@ -1,0 +1,35 @@
+{
+  "_about": "Reviewed analyte registry for lab unit harmonization. Each entry: keywords (matched against lowercased column name + description, longest match wins), exclude (disambiguation), conventional_unit (US), min/max (physiologic plausibility bounds in the conventional unit; intentionally generous to admit diseased values), alt_factors (multipliers that turn an alternative-unit value into the conventional unit; applied only when the raw value is out of range and the product lands in range). Factors are derived from molar mass / SI prefixes per NIST SP 811 and UCUM. This file holds no dataset rows, assignments, or expected outputs; tune bounds/factors per analyte during revision.",
+  "_references": [
+    "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-8",
+    "https://unitsofmeasure.org/ucum"
+  ],
+  "analytes": [
+    {"name": "creatinine", "keywords": ["creatinine"], "exclude": ["clearance", "urine", "ratio"], "conventional_unit": "mg/dL", "min": 0.2, "max": 25.0, "alt_factors": [0.0113122]},
+    {"name": "glucose", "keywords": ["glucose", "blood sugar", "sugar"], "exclude": ["urine"], "conventional_unit": "mg/dL", "min": 40.0, "max": 700.0, "alt_factors": [18.0182]},
+    {"name": "urea", "keywords": ["urea", "blood urea"], "exclude": ["nitrogen", "bun"], "conventional_unit": "mg/dL", "min": 5.0, "max": 300.0, "alt_factors": [6.006]},
+    {"name": "bun", "keywords": ["urea nitrogen", "blood urea nitrogen", "bun"], "exclude": [], "conventional_unit": "mg/dL", "min": 2.0, "max": 150.0, "alt_factors": [2.801]},
+    {"name": "hemoglobin", "keywords": ["hemoglobin", "haemoglobin"], "exclude": ["a1c", "glycated", "glycosylated"], "conventional_unit": "g/dL", "min": 3.0, "max": 20.0, "alt_factors": [0.1]},
+    {"name": "hematocrit", "keywords": ["hematocrit", "haematocrit", "packed cell volume"], "exclude": [], "conventional_unit": "%", "min": 10.0, "max": 65.0, "alt_factors": [100.0]},
+    {"name": "albumin", "keywords": ["albumin"], "exclude": ["globulin", "urine", "microalbumin", "ratio"], "conventional_unit": "g/dL", "min": 1.0, "max": 6.0, "alt_factors": [0.1]},
+    {"name": "ionized_calcium", "keywords": ["ionized calcium", "ionised calcium"], "exclude": [], "conventional_unit": "mg/dL", "min": 3.0, "max": 7.0, "alt_factors": [4.008]},
+    {"name": "calcium", "keywords": ["calcium"], "exclude": ["ionized", "ionised", "urine"], "conventional_unit": "mg/dL", "min": 4.0, "max": 15.0, "alt_factors": [4.008]},
+    {"name": "phosphorus", "keywords": ["phosphorus", "phosphate"], "exclude": ["alkaline"], "conventional_unit": "mg/dL", "min": 2.0, "max": 11.0, "alt_factors": [3.097]},
+    {"name": "magnesium", "keywords": ["magnesium"], "exclude": [], "conventional_unit": "mg/dL", "min": 0.5, "max": 5.0, "alt_factors": [2.431]},
+    {"name": "sodium", "keywords": ["sodium"], "exclude": ["urine"], "conventional_unit": "mEq/L", "min": 110.0, "max": 170.0, "alt_factors": []},
+    {"name": "potassium", "keywords": ["potassium"], "exclude": ["urine"], "conventional_unit": "mEq/L", "min": 2.0, "max": 8.0, "alt_factors": []},
+    {"name": "chloride", "keywords": ["chloride"], "exclude": ["urine"], "conventional_unit": "mEq/L", "min": 80.0, "max": 120.0, "alt_factors": []},
+    {"name": "bicarbonate", "keywords": ["bicarbonate", "carbon dioxide", "co2"], "exclude": [], "conventional_unit": "mEq/L", "min": 8.0, "max": 45.0, "alt_factors": []},
+    {"name": "direct_bilirubin", "keywords": ["direct bilirubin", "conjugated bilirubin"], "exclude": [], "conventional_unit": "mg/dL", "min": 0.0, "max": 20.0, "alt_factors": [0.05848]},
+    {"name": "total_bilirubin", "keywords": ["bilirubin", "total bilirubin"], "exclude": ["direct", "conjugated"], "conventional_unit": "mg/dL", "min": 0.1, "max": 30.0, "alt_factors": [0.05848]},
+    {"name": "total_protein", "keywords": ["total protein", "serum protein"], "exclude": ["urine", "c-reactive", "c reactive", "c reactive protein"], "conventional_unit": "g/dL", "min": 3.0, "max": 10.0, "alt_factors": [0.1]},
+    {"name": "globulin", "keywords": ["globulin"], "exclude": ["immuno"], "conventional_unit": "g/dL", "min": 1.0, "max": 7.0, "alt_factors": [0.1]},
+    {"name": "uric_acid", "keywords": ["uric acid", "urate"], "exclude": ["urine"], "conventional_unit": "mg/dL", "min": 1.0, "max": 15.0, "alt_factors": [0.016806]},
+    {"name": "cholesterol", "keywords": ["cholesterol", "total cholesterol"], "exclude": ["hdl", "ldl", "vldl", "non-hdl"], "conventional_unit": "mg/dL", "min": 50.0, "max": 450.0, "alt_factors": [38.67]},
+    {"name": "hdl", "keywords": ["hdl"], "exclude": [], "conventional_unit": "mg/dL", "min": 10.0, "max": 120.0, "alt_factors": [38.67]},
+    {"name": "ldl", "keywords": ["ldl"], "exclude": [], "conventional_unit": "mg/dL", "min": 20.0, "max": 320.0, "alt_factors": [38.67]},
+    {"name": "triglycerides", "keywords": ["triglyceride"], "exclude": [], "conventional_unit": "mg/dL", "min": 20.0, "max": 800.0, "alt_factors": [88.57]},
+    {"name": "iron", "keywords": ["iron", "serum iron"], "exclude": ["binding", "tibc", "saturation"], "conventional_unit": "ug/dL", "min": 10.0, "max": 300.0, "alt_factors": [5.587]},
+    {"name": "vitamin_d", "keywords": ["vitamin d", "25-hydroxy", "25 hydroxy", "calcidiol"], "exclude": [], "conventional_unit": "ng/mL", "min": 4.0, "max": 120.0, "alt_factors": [0.4006]}
+  ]
+}

@@ -1,0 +1,120 @@
+"""Generic starting point; adapt _extract_pool_names after inspecting the PDF.
+No molecule names or name-to-SMILES mapping are embedded here.
+"""
+from __future__ import annotations
+
+from functools import lru_cache
+import json
+import re
+from typing import List, Tuple
+from urllib.parse import quote
+from urllib.request import Request, urlopen
+
+
+@lru_cache(maxsize=4096)
+def _pubchem_smiles(name: str) -> str:
+    """Resolve a name dynamically through PubChem, retaining stereo when supplied."""
+    clean = " ".join(name.split())
+    if not clean:
+        raise ValueError("empty chemical name")
+    url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/%s/property/IsomericSMILES,CanonicalSMILES/JSON" % quote(clean, safe="")
+    request = Request(url, headers={"User-Agent": "pdf-morgan-similarity/1.0"})
+    try:
+        with urlopen(request, timeout=30) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        props = payload["PropertyTable"]["Properties"][0]
+    except Exception as exc:
+        raise ValueError("PubChem could not resolve %r: %s" % (clean, exc)) from exc
+    # Current PubChem responses may use SMILES for the isomeric representation.
+    for key in ("IsomericSMILES", "SMILES", "CanonicalSMILES"):
+        value = props.get(key)
+        if value:
+            return value
+    raise ValueError("PubChem returned no SMILES for %r" % clean)
+
+
+def _pdf_text(path: str) -> str:
+    """Use a text-aware extractor first, then a second supported extractor."""
+    errors = []
+    try:
+        import pdfplumber
+        with pdfplumber.open(path) as pdf:
+            text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+        if text.strip():
+            return text
+        errors.append("pdfplumber returned empty text")
+    except Exception as exc:
+        errors.append("pdfplumber: %s" % exc)
+    try:
+        from pypdf import PdfReader
+        text = "\n".join(page.extract_text() or "" for page in PdfReader(path).pages)
+        if text.strip():
+            return text
+        errors.append("pypdf returned empty text")
+    except Exception as exc:
+        errors.append("pypdf: %s" % exc)
+    raise RuntimeError("PDF text extraction failed; consider OCR only if scanned: " + "; ".join(errors))
+
+
+def _extract_pool_names(pdf_path: str) -> List[str]:
+    """Generic line-oriented fallback. Replace based on evidence from pdf_probe.py.
+
+    For a real table, prefer extracting the confirmed name column with pdfplumber
+    rather than relying on this fallback. This function intentionally avoids a
+    fixed list of source molecules.
+    """
+    candidates = []
+    for raw in _pdf_text(pdf_path).splitlines():
+        value = re.sub(r"^\s*\d+\s*[.)]\s*", "", raw).strip()
+        folded = value.casefold()
+        if not value or folded in {"name", "chemical name", "compound", "compound name", "molecule", "molecule name"}:
+            continue
+        # This is only appropriate after PDF inspection confirms one name per line.
+        if len(value) <= 200 and not re.fullmatch(r"(?:page\s*)?\d+", value, re.I):
+            candidates.append(value)
+    unique, seen = [], set()
+    for value in candidates:
+        key = " ".join(value.split()).casefold()
+        if key and key not in seen:
+            seen.add(key)
+            unique.append(" ".join(value.split()))
+    if not unique:
+        raise ValueError("No molecule names extracted from PDF")
+    return unique
+
+
+def topk_tanimoto_similarity_molecules(
+    target_molecule_name: str, molecule_pool_filepath: str, top_k: int
+) -> List[Tuple[str, float]]:
+    if isinstance(top_k, bool) or not isinstance(top_k, int):
+        raise TypeError("top_k must be an integer")
+    if top_k < 0:
+        raise ValueError("top_k must be nonnegative")
+    if top_k == 0:
+        return []
+
+    try:
+        from rdkit import Chem, DataStructs
+        from rdkit.Chem import AllChem
+    except ImportError as exc:
+        raise RuntimeError("RDKit is required for Morgan/Tanimoto similarity") from exc
+
+    def fingerprint(name: str):
+        smiles = _pubchem_smiles(name)
+        molecule = Chem.MolFromSmiles(smiles)
+        if molecule is None:
+            raise ValueError("invalid SMILES returned for %r" % name)
+        return AllChem.GetMorganFingerprintAsBitVect(molecule, radius=2, nBits=2048, useChirality=True)
+
+    target_fp = fingerprint(target_molecule_name)
+    results = []
+    for candidate in _extract_pool_names(molecule_pool_filepath):
+        try:
+            score = float(DataStructs.TanimotoSimilarity(target_fp, fingerprint(candidate)))
+            results.append((candidate, score))
+        except ValueError as exc:
+            # A malformed/unresolved pool record cannot be structurally compared.
+            # Replace with logging in an application that needs a reject report.
+            continue
+    results.sort(key=lambda row: (-row[1], row[0].casefold(), row[0]))
+    return results[:top_k]

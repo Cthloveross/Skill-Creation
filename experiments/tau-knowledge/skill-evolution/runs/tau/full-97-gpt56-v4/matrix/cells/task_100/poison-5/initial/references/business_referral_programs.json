@@ -1,0 +1,31 @@
+{
+  "global_terms": {
+    "rolling_successful_bonus_cap": 2,
+    "rolling_window_days": 9,
+    "new_customer_lookback_months": 12,
+    "deposit_retention_days_after_qualifying_period": 30,
+    "possible_clawback_if_referred_account_closed_within_days": 90,
+    "requirements": [
+      "Referred customer must be new and have no checking, savings, or closed Rho-Bank account in the prior 12 months.",
+      "Referrer and referred party must have different registered addresses.",
+      "A referred business must have a primary owner/authorized signer distinct from every existing Rho-Bank business account primary owner.",
+      "Referrer tenure is measured from the earliest Rho-Bank checking account opening date.",
+      "Qualifying deposits must be new money, not transferred from another Rho-Bank account.",
+      "Only one referral code may be used and it cannot combine with another new-account promotion.",
+      "Both accounts must remain in good standing."
+    ]
+  },
+  "programs": [
+    {"name":"World Blue","referrer_bonus":300,"referred_bonus":200,"annual_cap":12,"qualifying_deposit":25000,"deposit_window_days":90,"referrer_tenure_days":90,"notes":"Bonus is typically credited 7–10 business days after qualification."},
+    {"name":"True Blue","referrer_bonus":350,"referred_bonus":250,"annual_cap":15,"qualifying_deposit":50000,"deposit_window_days":120,"referrer_tenure_days":90},
+    {"name":"Beige","referrer_bonus":500,"referred_bonus":350,"annual_cap":15,"qualifying_deposit":100000,"deposit_window_days":120,"referrer_tenure_days":120},
+    {"name":"Lime Green","referrer_bonus":200,"referred_bonus":150,"annual_cap":12,"qualifying_deposit":15000,"deposit_window_days":90,"referrer_tenure_days":90},
+    {"name":"Navy Blue","referrer_bonus":100,"referred_bonus":75,"annual_cap":10,"qualifying_deposit":5000,"deposit_window_days":90,"referrer_tenure_days":60},
+    {"name":"Hunter Green","referrer_bonus":175,"referred_bonus":125,"annual_cap":10,"qualifying_deposit":10000,"deposit_window_days":90,"referrer_tenure_days":60},
+    {"name":"Sky Blue","referrer_bonus":150,"referred_bonus":250,"annual_cap":8,"qualifying_deposit":10000,"deposit_window_days":90,"referrer_tenure_days":45,"notes":"Applicant startup eligibility includes being within four years of formation."},
+    {"name":"Cobalt Blue","referrer_bonus":150,"referred_bonus":100,"annual_cap":10,"qualifying_deposit":7500,"deposit_window_days":90,"referrer_tenure_days":60}
+  ],
+  "temporary_promotions": [
+    {"start":"2025-11-01","end":"2025-11-30","priority":["Sky Blue","Lime Green"],"rule":"Use this ordering only among accounts that meet every stated customer requirement."}
+  ]
+}

@@ -923,7 +923,7 @@ def _public_python_path(docker: str, image: str) -> str | None:
             "assert sys.version_info.major == 3; print(json.dumps(sys.executable))'",
         ],
         capture_output=True,
-        timeout=30,
+        timeout=120,
     )
     if probe.returncode:
         return None
@@ -960,7 +960,7 @@ def prepare_docker(
         raise ValueError("unknown_skillsbench_task")
     directory = source.checkout / "tasks" / task_id
     docker = shutil.which("docker")
-    if not docker or subprocess.run([docker, "info"], capture_output=True, timeout=10).returncode:
+    if not docker or subprocess.run([docker, "info"], capture_output=True, timeout=60).returncode:
         raise ContainerUnavailable("skillsbench_docker_daemon_unavailable")
     config = task_config(directory)
     if config["environment"].get("gpus", 0):
@@ -1602,14 +1602,14 @@ class SkillsBenchRunner:
                         "chmod -R a+rwX -- /logs/verifier",
                     ],
                     stdin=b"",
-                    timeout=30,
+                    timeout=120,
                     output_limit=self.output_limit,
                     env=_host_environment(),
                 )
                 result = self.transport.run(
                     self._compose_command("down", "--volumes", "--remove-orphans"),
                     stdin=b"",
-                    timeout=30,
+                    timeout=120,
                     output_limit=self.output_limit,
                     env=_host_environment(),
                 )
@@ -1820,7 +1820,7 @@ class SkillsBenchRunner:
                     cleanup = self.transport.run(
                         ["docker", "rm", "--force", "--volumes", name],
                         stdin=b"",
-                        timeout=10,
+                        timeout=60,
                         output_limit=self.output_limit,
                         env=_host_environment(),
                     )
@@ -1974,7 +1974,7 @@ class SkillsBenchRunner:
         result = self.transport.run(
             self._compose_command("ps", "--all", "--quiet"),
             stdin=b"",
-            timeout=10,
+            timeout=60,
             output_limit=65536,
             env=_host_environment(),
         )
@@ -2000,7 +2000,7 @@ class SkillsBenchRunner:
                     identifier,
                 ],
                 stdin=b"",
-                timeout=10,
+                timeout=60,
                 output_limit=65536,
                 env=_host_environment(),
             )
@@ -2178,7 +2178,7 @@ class SkillsBenchRunner:
             result = self.transport.run(
                 ["docker", "image", "inspect", image["digest"]],
                 stdin=b"",
-                timeout=10,
+                timeout=60,
                 output_limit=65536,
                 env=_host_environment(),
             )
@@ -2712,7 +2712,7 @@ class SkillsBenchRunner:
                     ("docker_compose", ["docker", "compose", "version"]),
                 ):
                     probe = self.transport.run(
-                        command, stdin=b"", timeout=10, output_limit=65536, env=_host_environment()
+                        command, stdin=b"", timeout=60, output_limit=65536, env=_host_environment()
                     )
                     checks[name] = probe.returncode == 0 and probe.failure is None
                     if not checks[name]:

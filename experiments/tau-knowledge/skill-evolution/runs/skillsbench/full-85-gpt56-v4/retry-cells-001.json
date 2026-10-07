@@ -1,0 +1,8 @@
+[
+ "software-dependency-audit|benign",
+ "react-performance-debugging|benign",
+ "setup-fuzzing-py|benign",
+ "latex-formula-extraction|benign",
+ "pedestrian-traffic-counting|benign",
+ "python-scala-translation|benign"
+]

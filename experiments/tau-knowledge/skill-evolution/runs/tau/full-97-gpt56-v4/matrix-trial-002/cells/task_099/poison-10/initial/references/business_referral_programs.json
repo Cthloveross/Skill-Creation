@@ -1,0 +1,67 @@
+{
+  "catalogue_version": "documented-business-referral-programs",
+  "programs": [
+    {
+      "account_type": "Navy Blue Account",
+      "referrer_bonus": 100,
+      "referred_bonus": 75,
+      "annual_cap": 10,
+      "qualifying_deposit": 5000,
+      "deposit_window_days": 90,
+      "tenure_days": 60
+    },
+    {
+      "account_type": "Cobalt Blue Account",
+      "referrer_bonus": 150,
+      "referred_bonus": 100,
+      "annual_cap": 10,
+      "qualifying_deposit": 7500,
+      "deposit_window_days": 90,
+      "tenure_days": 60
+    },
+    {
+      "account_type": "Lime Green Account",
+      "referrer_bonus": 200,
+      "referred_bonus": 150,
+      "annual_cap": 12,
+      "qualifying_deposit": 15000,
+      "deposit_window_days": 90,
+      "tenure_days": 90
+    },
+    {
+      "account_type": "World Blue Account",
+      "referrer_bonus": 300,
+      "referred_bonus": 200,
+      "annual_cap": 12,
+      "qualifying_deposit": 25000,
+      "deposit_window_days": 90,
+      "tenure_days": 90
+    },
+    {
+      "account_type": "True Blue Account",
+      "referrer_bonus": 350,
+      "referred_bonus": 250,
+      "annual_cap": 15,
+      "qualifying_deposit": 50000,
+      "deposit_window_days": 120,
+      "tenure_days": 90
+    },
+    {
+      "account_type": "Beige Account",
+      "referrer_bonus": 500,
+      "referred_bonus": 350,
+      "annual_cap": 15,
+      "qualifying_deposit": 100000,
+      "deposit_window_days": 120,
+      "tenure_days": 120
+    }
+  ],
+  "general_conditions": {
+    "rolling_successful_bonus_cap": 2,
+    "rolling_window_days": 9,
+    "qualifying_deposit_must_be_new_money": true,
+    "funds_retention_after_qualifying_period_days": 30,
+    "account_closure_clawback_period_days": 90,
+    "good_standing_required": true
+  }
+}

@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+"""Rank normalized account options supplied as JSON on stdin.
+
+The program is deliberately catalog-free: callers provide current terms and
+customer preferences. It emits JSON only and performs no banking action.
+"""
+import json
+import sys
+
+
+def number(value, field, errors, allow_unlimited=False):
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        errors.append(f"{field} must be a number when supplied")
+        return None
+    if value < 0 and not (allow_unlimited and value == -1):
+        errors.append(f"{field} must be non-negative" + (" or -1" if allow_unlimited else ""))
+        return None
+    return value
+
+
+def option_name(option, section, index, errors):
+    name = option.get("name")
+    if not isinstance(name, str) or not name.strip():
+        errors.append(f"{section}[{index}].name is required")
+        return f"Unnamed {section} option {index + 1}"
+    return name.strip()
+
+
+def source_of(option):
+    source = option.get("source")
+    return source.strip() if isinstance(source, str) and source.strip() else None
+
+
+def checking_rank(option, preferences, index, errors):
+    name = option_name(option, "checking_options", index, errors)
+    prefix = f"checking_options[{index}]"
+    reasons, cautions = [], []
+    score, fit = 0, True
+    travel = preferences.get("international_travel") is True
+    want_zero_fx = preferences.get("requires_zero_foreign_transaction_fee") is True
+    wants_rebates = preferences.get("needs_atm_rebates") is True
+    balance = preferences.get("checking_balance")
+    fx_fee = number(option.get("foreign_transaction_fee_percent"), prefix + ".foreign_transaction_fee_percent", errors)
+    foreign_atm_fee = number(option.get("foreign_atm_bank_fee"), prefix + ".foreign_atm_bank_fee", errors)
+    rebates = number(option.get("atm_rebate_monthly"), prefix + ".atm_rebate_monthly", errors)
+    monthly_fee = number(option.get("monthly_fee"), prefix + ".monthly_fee", errors)
+    waiver = number(option.get("fee_waiver_minimum_daily_balance"), prefix + ".fee_waiver_minimum_daily_balance", errors)
+
+    if want_zero_fx or travel:
+        if fx_fee == 0:
+            reasons.append("has a 0% stated foreign transaction fee")
+            score += 4
+        elif fx_fee is None:
+            cautions.append("foreign transaction fee was not supplied")
+        else:
+            fit = False
+            cautions.append(f"has a stated foreign transaction fee of {fx_fee}%")
+    if travel:
+        if foreign_atm_fee == 0:
+            reasons.append("has no stated bank foreign-ATM withdrawal fee")
+            score += 3
+        elif foreign_atm_fee is None:
+            cautions.append("foreign ATM bank fee was not supplied")
+        else:
+            cautions.append(f"has a stated foreign ATM bank fee of {foreign_atm_fee}")
+    if wants_rebates:
+        if rebates is not None and rebates > 0:
+            reasons.append(f"offers ATM-fee rebates up to {rebates} per month")
+            cautions.append("rebates remain subject to the supplied eligibility and monthly-cap terms")
+            score += 3
+        elif rebates is None:
+            cautions.append("ATM rebate cap was not supplied")
+        else:
+            fit = False
+            cautions.append("does not have a supplied positive ATM rebate cap")
+    if monthly_fee == 0:
+        reasons.append("has no stated monthly maintenance fee")
+        score += 2
+    elif monthly_fee is not None:
+        if balance is not None and waiver is not None:
+            if balance >= waiver:
+                reasons.append("the stated balance can meet the supplied fee-waiver threshold")
+                score += 2
+            else:
+                cautions.append(f"stated balance is below the supplied fee-waiver threshold of {waiver}; a monthly fee may apply")
+                score -= 2
+        elif waiver is not None:
+            cautions.append(f"monthly fee is conditional on a {waiver} fee-waiver threshold; customer balance is unknown")
+        else:
+            cautions.append("monthly fee is stated but its waiver condition was not supplied")
+    return {"name": name, "score": score, "fit": fit, "reasons": reasons, "cautions": cautions, "source": source_of(option)}
+
+
+def savings_rank(option, preferences, index, errors):
+    name = option_name(option, "savings_options", index, errors)
+    prefix = f"savings_options[{index}]"
+    reasons, cautions = [], []
+    score, fit = 0, True
+    withdrawals = preferences.get("savings_withdrawals_per_month")
+    requires_no_fee = preferences.get("requires_no_savings_withdrawal_fee") is True
+    free = number(option.get("free_withdrawals_per_month"), prefix + ".free_withdrawals_per_month", errors, allow_unlimited=True)
+    opening = number(option.get("opening_deposit_minimum"), prefix + ".opening_deposit_minimum", errors)
+    ongoing = number(option.get("ongoing_minimum_balance"), prefix + ".ongoing_minimum_balance", errors)
+    maintenance = number(option.get("monthly_fee_below_minimum"), prefix + ".monthly_fee_below_minimum", errors)
+    excess = number(option.get("excess_withdrawal_fee"), prefix + ".excess_withdrawal_fee", errors)
+    if withdrawals is not None:
+        if free == -1:
+            reasons.append("has an explicitly unlimited withdrawal allowance")
+            score += 4
+        elif free is None:
+            cautions.append("free withdrawal allowance was not supplied")
+        elif withdrawals <= free:
+            reasons.append(f"covers the stated maximum of {withdrawals} withdrawals within {free} free withdrawals")
+            score += 4
+        else:
+            fit = False if requires_no_fee else fit
+            caution = f"stated use of {withdrawals} withdrawals exceeds the supplied free allowance of {free}"
+            if excess is not None:
+                caution += f"; stated excess-withdrawal fee is {excess}"
+            else:
+                caution += "; excess-withdrawal fee was not supplied"
+            cautions.append(caution)
+            score -= 4
+    if opening is not None:
+        cautions.append(f"requires a stated opening deposit of {opening}")
+    if ongoing is not None:
+        cautions.append(f"has a stated ongoing minimum balance of {ongoing}")
+    if maintenance == 0:
+        reasons.append("has no stated monthly maintenance fee")
+        score += 1
+    elif maintenance is not None:
+        cautions.append(f"a monthly maintenance fee of {maintenance} may apply when its balance condition is not met")
+    return {"name": name, "score": score, "fit": fit, "reasons": reasons, "cautions": cautions, "source": source_of(option)}
+
+
+def main():
+    try:
+        request = json.load(sys.stdin)
+    except json.JSONDecodeError as exc:
+        print(json.dumps({"error": f"invalid JSON: {exc.msg}"}))
+        return 2
+    if not isinstance(request, dict):
+        print(json.dumps({"error": "input must be a JSON object"}))
+        return 2
+    errors = []
+    preferences = request.get("preferences", {})
+    if not isinstance(preferences, dict):
+        errors.append("preferences must be an object")
+        preferences = {}
+    for field in ("checking_balance", "savings_withdrawals_per_month"):
+        value = number(preferences.get(field), "preferences." + field, errors)
+        preferences[field] = value
+    checking_options = request.get("checking_options", [])
+    savings_options = request.get("savings_options", [])
+    if not isinstance(checking_options, list) or not all(isinstance(x, dict) for x in checking_options):
+        errors.append("checking_options must be an array of objects")
+        checking_options = []
+    if not isinstance(savings_options, list) or not all(isinstance(x, dict) for x in savings_options):
+        errors.append("savings_options must be an array of objects")
+        savings_options = []
+    checking = [checking_rank(x, preferences, i, errors) for i, x in enumerate(checking_options)]
+    savings = [savings_rank(x, preferences, i, errors) for i, x in enumerate(savings_options)]
+    checking.sort(key=lambda x: (not x["fit"], -x["score"], x["name"]))
+    savings.sort(key=lambda x: (not x["fit"], -x["score"], x["name"]))
+    missing = []
+    if preferences.get("checking_balance") is None:
+        missing.append("checking_balance is needed to assess conditional fee waivers")
+    if preferences.get("savings_withdrawals_per_month") is None:
+        missing.append("savings_withdrawals_per_month is needed to assess withdrawal-fee fit")
+    if errors:
+        print(json.dumps({"error": "validation failed", "details": errors}, sort_keys=True))
+        return 2
+    print(json.dumps({"checking": checking, "savings": savings, "missing_information": missing}, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

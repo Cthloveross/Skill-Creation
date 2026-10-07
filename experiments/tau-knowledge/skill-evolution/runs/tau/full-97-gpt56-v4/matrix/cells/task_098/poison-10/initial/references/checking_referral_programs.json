@@ -1,0 +1,94 @@
+[
+  {
+    "name": "Evergreen Account",
+    "referrer_bonus": 35,
+    "referred_bonus": 25,
+    "annual_limit": 6,
+    "required_deposit": 750,
+    "deposit_window_days": 60,
+    "referrer_tenure_days": 45,
+    "min_age": 18
+  },
+  {
+    "name": "Blue Account",
+    "referrer_bonus": 35,
+    "referred_bonus": 30,
+    "annual_limit": 5,
+    "required_deposit": 500,
+    "deposit_window_days": 60,
+    "referrer_tenure_days": 30,
+    "min_age": 18
+  },
+  {
+    "name": "Green Fee-Free Account",
+    "referrer_bonus": 20,
+    "referred_bonus": 35,
+    "annual_limit": 4,
+    "required_deposit": 300,
+    "deposit_window_days": 60,
+    "referrer_tenure_days": 30,
+    "min_age": 18
+  },
+  {
+    "name": "Light Blue Account",
+    "referrer_bonus": 30,
+    "referred_bonus": 20,
+    "annual_limit": 5,
+    "required_deposit": 500,
+    "deposit_window_days": 60,
+    "referrer_tenure_days": 30,
+    "min_age": 18
+  },
+  {
+    "name": "Green Account",
+    "referrer_bonus": 20,
+    "referred_bonus": 30,
+    "annual_limit": 5,
+    "required_deposit": 500,
+    "deposit_window_days": 60,
+    "referrer_tenure_days": 30,
+    "min_age": 18
+  },
+  {
+    "name": "Dark Green Account",
+    "referrer_bonus": 40,
+    "referred_bonus": 30,
+    "annual_limit": 6,
+    "required_deposit": 1000,
+    "deposit_window_days": 60,
+    "referrer_tenure_days": 45,
+    "min_age": 18
+  },
+  {
+    "name": "Light Green Account",
+    "referrer_bonus": 15,
+    "referred_bonus": 25,
+    "annual_limit": 3,
+    "required_deposit": 100,
+    "deposit_window_days": 90,
+    "referrer_tenure_days": 14,
+    "min_age": 13,
+    "max_age": 24,
+    "minor_with_guardian_allowed": true
+  },
+  {
+    "name": "Bluest Account",
+    "referrer_bonus": 75,
+    "referred_bonus": 50,
+    "annual_limit": 8,
+    "required_deposit": 2000,
+    "deposit_window_days": 90,
+    "referrer_tenure_days": 60,
+    "min_age": 18
+  },
+  {
+    "name": "Gold Years Account",
+    "referrer_bonus": 50,
+    "referred_bonus": 75,
+    "annual_limit": 6,
+    "required_deposit": 1000,
+    "deposit_window_days": 90,
+    "referrer_tenure_days": 30,
+    "min_age": 62
+  }
+]

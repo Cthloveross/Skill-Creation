@@ -27,6 +27,9 @@ from typing import Any
 
 TOKEN_FILE_ENV = "AWS_BEARER_TOKEN_BEDROCK_FILE"
 DROPPED_ENV = ("AWS_PROFILE", "AWS_BEARER_TOKEN_BEDROCK")
+# Per-cell stage order. "no-skill" is the SkillsBench control (`evaluate --no-skill`),
+# which the handoff runs before any Skill is created; "run" is create/evolve/evaluate.
+STAGES = ("no-skill", "run")
 DEFAULT_R2SP = None
 TERMINATE_GRACE_SECONDS = 30.0
 
@@ -83,6 +86,19 @@ def entrypoint(r2sp: str | None) -> list[str]:
     return [r2sp] if r2sp else [sys.executable, "-m", "tau_skill_evolution.cli"]
 
 
+def parse_stages(value: str) -> tuple[str, ...]:
+    stages = tuple(item.strip() for item in value.split(",") if item.strip())
+    if (
+        not stages
+        or any(stage not in STAGES for stage in stages)
+        or len(set(stages)) != len(stages)
+    ):
+        raise ValueError("--stages must be a comma-separated subset of " + ",".join(STAGES))
+    if list(stages) != [stage for stage in STAGES if stage in stages]:
+        raise ValueError("--stages must keep the order " + ",".join(STAGES))
+    return stages
+
+
 def build_command(
     r2sp: str | None,
     experiment: str,
@@ -91,10 +107,13 @@ def build_command(
     task: str,
     arm: str,
     runtime: str = "docker",
+    stage: str = "run",
 ) -> list[str]:
-    return [
+    if stage not in STAGES:
+        raise ValueError(f"unknown stage {stage!r}")
+    command = [
         *entrypoint(r2sp),
-        "run",
+        "evaluate" if stage == "no-skill" else "run",
         "--runtime",
         runtime,
         "--experiment",
@@ -109,6 +128,9 @@ def build_command(
         str(run_dir),
         "--no-interim-report",
     ]
+    if stage == "no-skill":
+        command.append("--no-skill")
+    return command
 
 
 def build_env(base: dict[str, str], token_file: Path) -> dict[str, str]:
@@ -192,6 +214,7 @@ class Launcher:
         self.args = args
         self.cells = cells
         self.accounts = assign_accounts(cells, args.accounts)
+        self.stages: tuple[str, ...] = tuple(getattr(args, "stages", None) or ("run",))
         self.started_at = now_iso()
         self.status_cells: dict[str, dict[str, Any]] = {
             cell_key(task, arm): {
@@ -200,6 +223,8 @@ class Launcher:
                 "started_at": None,
                 "finished_at": None,
                 "exit_code": None,
+                "stage": None,
+                "stages": {},
             }
             for task, arm in cells
         }
@@ -207,6 +232,36 @@ class Launcher:
         self.stop = False
         self.authentication_status: int | None = None
         self.runtime = getattr(args, "runtime", "docker")
+        # Bounded re-queue of a stage that exited non-zero: `r2sp` resumes from the
+        # cell journal, so a repeat never re-dispatches a sealed model request. This
+        # absorbs transient admission failures (Docker probes under load).
+        self.max_attempts = int(getattr(args, "max_attempts", 3) or 1)
+        # Optional live throttle: an integer in this file overrides --max-concurrent
+        # on every scheduling pass, so the operator can raise or lower admission
+        # without restarting (restarting would kill the running cells).
+        self.max_concurrent_file = getattr(args, "max_concurrent_file", None)
+        self.retry_delay_seconds = float(getattr(args, "retry_delay_seconds", 60.0) or 0.0)
+        self.deferred: list[tuple[float, str, str]] = []
+
+    def max_concurrent(self) -> int:
+        limit = int(self.args.max_concurrent)
+        path = self.max_concurrent_file
+        if path:
+            try:
+                value = int(Path(path).read_text().strip())
+                if value > 0:
+                    limit = value
+            except (OSError, ValueError):
+                pass
+        return limit
+
+    def next_stage(self, key: str) -> str | None:
+        done = self.status_cells[key]["stages"]
+        for stage in self.stages:
+            record = done.get(stage)
+            if record is None or record.get("requeued"):
+                return stage
+        return None
 
     def write_status(self) -> None:
         status = build_status(
@@ -222,6 +277,9 @@ class Launcher:
     def start(self, task: str, arm: str) -> None:
         key = cell_key(task, arm)
         account = self.accounts[key]
+        stage = self.next_stage(key)
+        if stage is None:
+            return
         command = build_command(
             self.args.r2sp,
             self.args.experiment,
@@ -230,18 +288,34 @@ class Launcher:
             task,
             arm,
             runtime=self.runtime,
+            stage=stage,
         )
         env = build_env(dict(os.environ), token_path(self.args.token_dir, account))
         log_file = log_path(self.args.run_dir, task, arm)
         log_file.parent.mkdir(parents=True, exist_ok=True)
         stream = log_file.open("ab")
+        stream.write(f"=== {now_iso()} stage={stage} ===\n".encode())
+        stream.flush()
         process = subprocess.Popen(
             command, stdout=stream, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, env=env
         )
         self.processes[key] = (process, stream)
-        self.status_cells[key].update(pid=process.pid, started_at=now_iso())
+        cell = self.status_cells[key]
+        previous = cell["stages"].get(stage) or {}
+        cell["stages"][stage] = {
+            "pid": process.pid,
+            "started_at": now_iso(),
+            "finished_at": None,
+            "exit_code": None,
+            "attempts": int(previous.get("attempts", 0)) + 1,
+            "history": list(previous.get("history", [])),
+            "requeued": False,
+        }
+        cell.update(pid=process.pid, stage=stage)
+        if cell["started_at"] is None:
+            cell["started_at"] = now_iso()
         self.write_status()
-        print(f"started {key} account={account} pid={process.pid}", flush=True)
+        print(f"started {key} stage={stage} account={account} pid={process.pid}", flush=True)
 
     def reap(self) -> None:
         for key, (process, stream) in list(self.processes.items()):
@@ -250,7 +324,18 @@ class Launcher:
                 continue
             stream.close()
             del self.processes[key]
-            self.status_cells[key].update(finished_at=now_iso(), exit_code=code)
+            cell = self.status_cells[key]
+            stage = cell["stage"] or self.stages[-1]
+            record = cell["stages"].setdefault(
+                stage,
+                {
+                    "pid": getattr(process, "pid", None),
+                    "started_at": cell["started_at"],
+                    "finished_at": None,
+                    "exit_code": None,
+                },
+            )
+            record.update(finished_at=now_iso(), exit_code=code)
             task, arm = key.split("|", 1)
             journal = Path(self.args.run_dir) / "cells" / task / arm / "journal"
             for path in journal.glob("*/failure.json"):
@@ -262,8 +347,26 @@ class Launcher:
                     self.authentication_status = failure["status"]
                     self.stop = True
                     break
+            print(f"finished {key} stage={stage} exit={code}", flush=True)
+            if code and not self.stop and record.get("attempts", 1) < self.max_attempts:
+                record["history"] = [*record.get("history", []), {"exit_code": code}]
+                record["requeued"] = True
+                self.deferred.append((time.monotonic() + self.retry_delay_seconds, task, arm))
+                self.write_status()
+                print(
+                    f"requeue {key} stage={stage} attempt={record['attempts']} "
+                    f"in {self.retry_delay_seconds:.0f}s",
+                    flush=True,
+                )
+                continue
+            if not self.stop and self.next_stage(key) is not None:
+                # A control failure is journaled as NOT_MEASURED; the chain still runs.
+                self.start(task, arm)
+                continue
+            # The cell's exit code is the main chain's when it ran, else the last stage's.
+            final = cell["stages"].get("run") or cell["stages"][stage]
+            cell.update(finished_at=now_iso(), exit_code=final["exit_code"])
             self.write_status()
-            print(f"finished {key} exit={code}", flush=True)
 
     def terminate_children(self) -> None:
         for process, _ in self.processes.values():
@@ -283,11 +386,19 @@ class Launcher:
         pending = list(self.cells)
         self.write_status()
         try:
-            while (pending or self.processes) and not self.stop:
+            while (pending or self.processes or self.deferred) and not self.stop:
                 self.reap()
                 if self.stop:
                     break
-                if pending and len(self.processes) < self.args.max_concurrent:
+                now = time.monotonic()
+                ready = [item for item in self.deferred if item[0] <= now]
+                limit = self.max_concurrent()
+                if ready and len(self.processes) < limit:
+                    self.deferred.remove(ready[0])
+                    self.start(ready[0][1], ready[0][2])
+                    time.sleep(max(0.0, self.args.stagger_seconds))
+                    continue
+                if pending and len(self.processes) < limit:
                     task, arm = pending.pop(0)
                     self.start(task, arm)
                     time.sleep(max(0.0, self.args.stagger_seconds))
@@ -310,15 +421,27 @@ def _dry_run(args: argparse.Namespace, cells: list[tuple[str, str]]) -> None:
     accounts = assign_accounts(cells, args.accounts)
     for task, arm in cells:
         account = accounts[cell_key(task, arm)]
-        command = build_command(
-            args.r2sp, args.experiment, args.config, args.run_dir, task, arm, runtime=args.runtime
-        )
-        print(
-            f"{TOKEN_FILE_ENV}={token_path(args.token_dir, account)} "
-            + " ".join(command)
-            + f"  # log={log_path(args.run_dir, task, arm)}"
-        )
-    print(f"planned {len(cells)} cells over {len(args.accounts)} accounts", flush=True)
+        for stage in args.stages:
+            command = build_command(
+                args.r2sp,
+                args.experiment,
+                args.config,
+                args.run_dir,
+                task,
+                arm,
+                runtime=args.runtime,
+                stage=stage,
+            )
+            print(
+                f"{TOKEN_FILE_ENV}={token_path(args.token_dir, account)} "
+                + " ".join(command)
+                + f"  # log={log_path(args.run_dir, task, arm)}"
+            )
+    print(
+        f"planned {len(cells)} cells x {len(args.stages)} stage(s) "
+        f"over {len(args.accounts)} accounts",
+        flush=True,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -339,16 +462,39 @@ def main(argv: list[str] | None = None) -> int:
         help='JSON list of exact "task|arm" cells to run (intersected with --task/--arm)',
     )
     parser.add_argument("--r2sp", default=DEFAULT_R2SP)
+    parser.add_argument(
+        "--stages",
+        default="run",
+        help='comma-separated per-cell stage order; "no-skill,run" adds the SkillsBench control',
+    )
+    parser.add_argument(
+        "--max-attempts",
+        type=int,
+        default=3,
+        help="re-queue a stage that exits non-zero up to this many starts (journal resume)",
+    )
+    parser.add_argument("--retry-delay-seconds", type=float, default=60.0)
+    parser.add_argument(
+        "--max-concurrent-file",
+        type=Path,
+        help="file holding an integer that overrides --max-concurrent while running",
+    )
     parser.add_argument("--skip-final-report", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
     args.config = args.config.resolve()
     args.run_dir = args.run_dir.resolve()
     args.token_dir = args.token_dir.resolve()
+    try:
+        args.stages = parse_stages(args.stages)
+    except ValueError as exc:
+        parser.error(str(exc))
     if args.max_concurrent is None:
         args.max_concurrent = 1 if args.runtime == "workspace" else 96
     if args.max_concurrent <= 0:
         parser.error("--max-concurrent must be positive")
+    if args.max_attempts <= 0 or args.retry_delay_seconds < 0:
+        parser.error("--max-attempts must be positive and --retry-delay-seconds non-negative")
     if args.r2sp is not None and not executable(args.r2sp):
         parser.error(f"--r2sp is not an executable file: {args.r2sp}")
     args.accounts = (
@@ -374,6 +520,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--task must belong to the frozen experiment task population")
     if args.arm and set(args.arm) - set(spec.arms):
         parser.error("--arm is not supported by this experiment")
+    if "no-skill" in args.stages and spec.experiment != "skillsbench":
+        parser.error("the no-skill control stage exists only for skillsbench")
     cells = filter_cells(spec.cells, args.task, args.arm)
     if args.cells_file is not None:
         wanted = json.loads(args.cells_file.read_text(encoding="utf-8"))

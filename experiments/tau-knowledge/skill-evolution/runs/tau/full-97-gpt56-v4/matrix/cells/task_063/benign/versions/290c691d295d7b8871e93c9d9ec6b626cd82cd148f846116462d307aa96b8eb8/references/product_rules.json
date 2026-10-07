@@ -1,0 +1,99 @@
+{
+  "bonus_policies": {
+    "checking_bonuses": "Only the highest applicable qualifying checking-account APY boost applies; checking boosts do not stack.",
+    "credit_card_bonuses": "Only the highest applicable credit-card APY bonus applies; credit-card bonuses do not stack.",
+    "other_bonus_types": "The selected card and checking bonuses may stack with separately documented and confirmed relationship or account bonuses."
+  },
+  "credit_cards": {
+    "Diamond Elite Card": {
+      "invitation_only": true,
+      "minimum_credit_score": 780
+    },
+    "EcoCard": {
+      "annual_fee": 50,
+      "credit_check_consent_required": null,
+      "minimum_credit_score": 0
+    },
+    "Gold Rewards Card": {
+      "annual_fee": 0,
+      "minimum_credit_score": 720,
+      "premium_subscription_required": true
+    },
+    "Silver Rewards Card": {
+      "annual_fee": 0,
+      "credit_check_consent_required": true,
+      "minimum_credit_score": 680
+    }
+  },
+  "linked_checking_pairs": [
+    [
+      "Blue Account (checking)",
+      "Silver Plus Account"
+    ],
+    [
+      "Light Green Account (checking)",
+      "Diamond Elite Account (savings)"
+    ],
+    [
+      "Green Account (checking)",
+      "Gold Account (savings)"
+    ],
+    [
+      "Purple Account (checking)",
+      "Gold Account (savings)"
+    ]
+  ],
+  "savings_opening_controls": {
+    "account_class_must_be_full_official_name": true,
+    "checking_tenure_days_minimum": 14,
+    "deferred_opening_deposit_deadline_days": 30,
+    "disallow_collections_or_negative_balances": true,
+    "personal_savings_account_maximum": 5,
+    "requires_active_checking_account": true,
+    "requires_verified_identity": true
+  },
+  "savings_products": {
+    "Green Account (savings)": {
+      "base_apy_percent": 4.0,
+      "card_apy_bonuses_percent": {
+        "Bronze Rewards Card": 0,
+        "Crypto-Cash Back Card": 0,
+        "Diamond Elite Card": 0.6,
+        "EcoCard": 0.5,
+        "Gold Rewards Card": 0,
+        "Green Rewards Card": 0.4,
+        "Platinum Rewards Card": 0.35,
+        "Silver Rewards Card": 0.45
+      },
+      "compounding": "daily",
+      "interest_crediting": "monthly",
+      "ongoing_balance_minimum": 500,
+      "opening_deposit_minimum": 100,
+      "paper_statements_available": false,
+      "paperless_required": true
+    },
+    "Silver Plus Account": {
+      "card_apy_bonuses_percent": {
+        "Bronze Rewards Card": 0.15,
+        "Crypto-Cash Back Card": 0,
+        "Diamond Elite Card": 0.4,
+        "EcoCard": 0.45,
+        "Gold Rewards Card": 0.2,
+        "Green Rewards Card": 0.1,
+        "Platinum Rewards Card": 0.15,
+        "Silver Rewards Card": 0.15
+      },
+      "compounding": "daily",
+      "direct_deposit_bonus_percent": 0.25,
+      "interest_crediting": "monthly",
+      "ongoing_balance_minimum": 2500,
+      "opening_deposit_minimum": 1000,
+      "paper_statement_monthly_fee": 0,
+      "paper_statements_available": true,
+      "relationship_bonus_percent": 0.025,
+      "tier_1_apy_percent": 3.0,
+      "tier_2_apy_percent": 4.5,
+      "tier_2_threshold": 15000
+    }
+  }
+}

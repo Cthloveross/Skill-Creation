@@ -1,4 +1,4 @@
-"""Only deterministic helpers retry; a dispatched model request is never resent."""
+"""Bounded re-sends of unobserved transport failures; a received sample is never resent."""
 
 from __future__ import annotations
 
@@ -52,15 +52,17 @@ def _http_error(code):
 
 
 @pytest.mark.parametrize(
-    "failure",
+    "failure,posts",
     [
-        TimeoutError("offline timeout"),
-        urllib.error.URLError(TimeoutError("offline timeout")),
-        ConnectionResetError("offline reset"),
-        urllib.error.URLError(ConnectionRefusedError("offline")),
+        (TimeoutError("offline timeout"), 3),
+        (urllib.error.URLError(TimeoutError("offline timeout")), 3),
+        (ConnectionResetError("offline reset"), 6),
+        (urllib.error.URLError(ConnectionRefusedError("offline")), 6),
     ],
 )
-def test_dispatched_transport_failure_is_unknown_and_never_resent(tmp_path, failure):
+def test_exhausted_transport_failure_is_unknown_and_never_resent_on_resume(
+    tmp_path, failure, posts
+):
     calls = []
 
     def opener(request, timeout):
@@ -72,11 +74,82 @@ def test_dispatched_transport_failure_is_unknown_and_never_resent(tmp_path, fail
     for _ in range(2):
         with pytest.raises(UnknownOperation):
             client.complete_journaled(journal, "s0", {}, MESSAGES)
-    assert len(calls) == 1 and journal.status("s0") == "UNKNOWN"
+    # Timeouts are re-sent at most twice, other transport failures up to the attempt
+    # budget; once the budget is spent the operation is UNKNOWN and resume never posts.
+    assert len(calls) == posts and journal.status("s0") == "UNKNOWN"
+    assert [event["reason"] for event in client.retry_events][:1] in (
+        ["timeout"],
+        [type(getattr(failure, "reason", failure)).__name__],
+    )
 
 
-@pytest.mark.parametrize("code", [400, 401, 403, 429, 500, 502, 503, 504])
-def test_received_http_error_is_preserved_and_not_retried(tmp_path, code):
+def test_empty_completed_output_is_resent_then_returned_as_empty_turn(tmp_path):
+    empty = json.dumps({"status": "completed", "output": [], "usage": {"input_tokens": 1}})
+    calls = []
+
+    def opener(request, timeout):
+        calls.append(request)
+        return _Response(empty.encode())
+
+    client = OpenAICompatibleClient(ENDPOINT, api_key="offline", opener=opener)
+    journal = Journal(tmp_path)
+    result = client.complete_journaled(journal, "s0", {}, MESSAGES)
+    assert result["content"] == "" and result["empty_output"] and result["tool_calls"] == []
+    assert len(calls) == client.retry_attempts and journal.status("s0") == "COMPLETED"
+    assert {event["reason"] for event in client.retry_events} == {"empty_output"}
+    # Resume reuses the sealed empty turn without another POST.
+    assert client.complete_journaled(journal, "s0", {}, MESSAGES)["content"] == ""
+    assert len(calls) == client.retry_attempts
+
+
+def test_empty_output_then_real_output_observes_one_sample(tmp_path):
+    empty = json.dumps({"status": "completed", "output": [], "usage": {"input_tokens": 1}})
+    calls = []
+
+    def opener(request, timeout):
+        calls.append(request)
+        return _Response((empty if len(calls) == 1 else json.dumps(_completed())).encode())
+
+    client = OpenAICompatibleClient(ENDPOINT, api_key="offline", opener=opener)
+    assert client.complete_journaled(Journal(tmp_path), "s0", {}, MESSAGES)["content"] == "ok"
+    assert len(calls) == 2
+
+
+def test_transport_failure_then_success_observes_exactly_one_sample(tmp_path):
+    calls = []
+
+    def opener(request, timeout):
+        calls.append(request)
+        if len(calls) < 3:
+            raise urllib.error.URLError(ConnectionResetError("offline reset"))
+        return _Response(json.dumps(_completed()).encode())
+
+    client = OpenAICompatibleClient(ENDPOINT, api_key="offline", opener=opener)
+    journal = Journal(tmp_path)
+    assert client.complete_journaled(journal, "s0", {}, MESSAGES)["content"] == "ok"
+    assert len(calls) == 3 and journal.status("s0") == "COMPLETED"
+    assert len(client.usage_history) == 1 and len(client.retry_events) == 2
+
+
+def test_retry_budget_can_be_disabled_for_single_post_semantics(tmp_path):
+    calls = []
+
+    def opener(request, timeout):
+        calls.append(request)
+        raise TimeoutError("offline timeout")
+
+    client = OpenAICompatibleClient(
+        ENDPOINT, api_key="offline", opener=opener, retry_attempts=1, timeout_retry_attempts=0
+    )
+    with pytest.raises(UnknownOperation):
+        client.complete_journaled(Journal(tmp_path), "s0", {}, MESSAGES)
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize(
+    "code,posts", [(400, 1), (401, 1), (403, 1), (429, 6), (500, 6), (502, 6), (503, 6), (504, 6)]
+)
+def test_received_http_error_is_preserved_after_bounded_resends(tmp_path, code, posts):
     calls = []
 
     def opener(request, timeout):
@@ -89,7 +162,9 @@ def test_received_http_error_is_preserved_and_not_retried(tmp_path, code):
         with pytest.raises(ModelClientError) as error:
             client.complete_journaled(journal, "s0", {}, MESSAGES)
         assert error.value.status == code
-    assert len(calls) == 1 and journal.status("s0") == "RECEIVED_INVALID"
+    # Rejections (429/5xx) prove no sample was produced and are re-sent up to the
+    # budget; client errors are final. The last received status is sealed once.
+    assert len(calls) == posts and journal.status("s0") == "RECEIVED_INVALID"
     if code in (401, 403):
         assert journal.authentication_failure() == code
         with pytest.raises(ModelClientError):
@@ -98,25 +173,26 @@ def test_received_http_error_is_preserved_and_not_retried(tmp_path, code):
 
 
 @pytest.mark.parametrize(
-    "body,code",
+    "body,code,posts",
     [
-        (b"not JSON", "invalid_json"),
-        (json.dumps({"status": "in_progress", "output": []}).encode(), "server_failed_response"),
-        (json.dumps({"status": "queued", "output": []}).encode(), "server_failed_response"),
-        (json.dumps({"status": "failed", "output": []}).encode(), "server_failed_response"),
+        (b"not JSON", "invalid_json", 1),
         (
-            json.dumps({"status": "completed", "output": [], "usage": {}}).encode(),
-            "invalid_response",
+            json.dumps({"status": "in_progress", "output": []}).encode(),
+            "server_failed_response",
+            6,
         ),
+        (json.dumps({"status": "queued", "output": []}).encode(), "server_failed_response", 6),
+        (json.dumps({"status": "failed", "output": []}).encode(), "server_failed_response", 6),
         (
             json.dumps(
                 {"status": "completed", "output": [{"type": "unexpected"}], "usage": {}}
             ).encode(),
             "invalid_response",
+            1,
         ),
     ],
 )
-def test_provider_bytes_survive_received_invalid_and_recovery(tmp_path, body, code):
+def test_provider_bytes_survive_received_invalid_and_recovery(tmp_path, body, code, posts):
     calls = []
 
     def opener(request, timeout):
@@ -131,7 +207,9 @@ def test_provider_bytes_survive_received_invalid_and_recovery(tmp_path, body, co
         assert error.value.code == code
     raw = json.loads(next(tmp_path.glob("*/raw-response.json")).read_text())
     assert base64.b64decode(raw["body_base64"]) == body
-    assert len(calls) == 1 and journal.status("s0") == "RECEIVED_INVALID"
+    # Server-side failed/unfinished bodies carry no sample and are re-sent up to the
+    # budget; completed-but-invalid bodies are received results and sealed once.
+    assert len(calls) == posts and journal.status("s0") == "RECEIVED_INVALID"
 
 
 def test_received_bytes_are_durable_before_normalization_and_resume(tmp_path):
@@ -241,7 +319,7 @@ def test_pre_admission_and_credential_errors_are_not_sent_and_can_resume(tmp_pat
     assert len(calls) == 1
 
 
-def test_response_read_reset_does_not_trigger_a_second_post(tmp_path):
+def test_response_read_reset_is_resent_within_budget_then_unknown(tmp_path):
     class BrokenResponse(_Response):
         def read(self):
             raise ConnectionResetError("offline response interrupted")
@@ -255,7 +333,7 @@ def test_response_read_reset_does_not_trigger_a_second_post(tmp_path):
     client = OpenAICompatibleClient(ENDPOINT, api_key="offline", opener=opener)
     with pytest.raises(UnknownOperation):
         client.complete_journaled(Journal(tmp_path), "s0", {}, MESSAGES)
-    assert len(calls) == 1
+    assert len(calls) == client.retry_attempts
 
 
 @pytest.mark.parametrize("timeout", [False, True])
@@ -292,7 +370,7 @@ def test_initial_generator_real_client_is_one_post_across_resume(tmp_path, timeo
                 generate_initial(client, base.public_inputs, base, journal=journal)
         else:
             bundles.append(generate_initial(client, base.public_inputs, base, journal=journal))
-    assert len(calls) == 1
+    assert len(calls) == (3 if timeout else 1)
     if bundles:
         assert bundles[0].bundle_hash == bundles[1].bundle_hash
 

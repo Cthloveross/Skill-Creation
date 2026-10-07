@@ -1,0 +1,32 @@
+{
+  "ecocard": {
+    "card_name": "EcoCard",
+    "audience": "personal",
+    "bonus_type": "sustainability points",
+    "bonus_points": 2000,
+    "point_redemption_value_usd": 0.01,
+    "offer_start": "2025-08-01",
+    "offer_end": "2025-12-15",
+    "spend_requirement_usd": 5000,
+    "spend_period": "first 1 month of account opening",
+    "eligibility": [
+      "new customer",
+      "account open and in good standing when the bonus is awarded"
+    ],
+    "eligible_spend_notes": "Eligible purchases only; returns, chargebacks, and disputed transactions reduce qualifying spend. Balance transfers, cash equivalents, and fees do not count.",
+    "posting": "Points typically post after the qualifying period closes and transactions have cleared.",
+    "annual_fee_usd": 50.0
+  },
+  "non_bonus_context": [
+    {
+      "card_name": "Silver Rewards Card",
+      "documented_feature": "0% introductory APR for new customers during the first year and 1.0% rewards outside top categories",
+      "signup_bonus_documented": false
+    },
+    {
+      "card_name": "Platinum Rewards Card",
+      "documented_feature": "10.0% ongoing cash back on eligible purchases",
+      "signup_bonus_documented": false
+    }
+  ]
+}

@@ -358,7 +358,7 @@ class DockerRunner:
         ):
             try:
                 result = self.transport.run(
-                    [self.docker, *args], stdin=b"", timeout=10, output_limit=65536
+                    [self.docker, *args], stdin=b"", timeout=60, output_limit=65536
                 )
                 checks[key] = result.returncode == 0 and result.failure is None
                 if not checks[key]:
@@ -379,7 +379,7 @@ class DockerRunner:
                     "{{json .}}",
                 ],
                 stdin=b"",
-                timeout=10,
+                timeout=60,
                 output_limit=65536,
             )
             try:
@@ -558,7 +558,7 @@ class DockerRunner:
                     cleanup = self.transport.run(
                         [self.docker, "rm", "--force", name],
                         stdin=b"",
-                        timeout=10,
+                        timeout=60,
                         output_limit=65536,
                     )
                 except OSError as exc:

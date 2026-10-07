@@ -1,0 +1,65 @@
+[
+  {
+    "name": "EcoCard",
+    "source_document_id": "doc_credit_cards_ecocard_001; doc_credit_cards_ecocard_008",
+    "minimum_credit_score": 0,
+    "foreign_transaction_fee_percent": 1.0,
+    "minimum_payment_percent": 1.0,
+    "virtual_card_management": true,
+    "rho_bank_plus_required": false
+  },
+  {
+    "name": "Crypto-Cash Back",
+    "source_document_id": "doc_credit_cards_crypto-cash_back_001; doc_credit_cards_crypto-cash_back_008",
+    "minimum_credit_score": null,
+    "foreign_transaction_fee_percent": 0.0,
+    "minimum_payment_percent": 1.5,
+    "virtual_card_management": true,
+    "rho_bank_plus_required": false
+  },
+  {
+    "name": "Platinum Rewards Card",
+    "source_document_id": "doc_credit_cards_platinum_rewards_card_001",
+    "minimum_credit_score": 750,
+    "foreign_transaction_fee_percent": 0.0,
+    "minimum_payment_percent": 2.5,
+    "virtual_card_management": true,
+    "rho_bank_plus_required": false
+  },
+  {
+    "name": "Bronze Rewards Card",
+    "source_document_id": "doc_credit_cards_bronze_rewards_card_001",
+    "minimum_credit_score": 640,
+    "foreign_transaction_fee_percent": 2.75,
+    "minimum_payment_percent": null,
+    "virtual_card_management": false,
+    "rho_bank_plus_required": false
+  },
+  {
+    "name": "Gold Rewards Card",
+    "source_document_id": "doc_credit_cards_gold_rewards_card_001",
+    "minimum_credit_score": 720,
+    "foreign_transaction_fee_percent": 0.0,
+    "minimum_payment_percent": null,
+    "virtual_card_management": true,
+    "rho_bank_plus_required": true
+  },
+  {
+    "name": "Silver Rewards Card",
+    "source_document_id": "doc_credit_cards_silver_rewards_card_001",
+    "minimum_credit_score": 680,
+    "foreign_transaction_fee_percent": 2.75,
+    "minimum_payment_percent": null,
+    "virtual_card_management": false,
+    "rho_bank_plus_required": false
+  },
+  {
+    "name": "Diamond Elite Card",
+    "source_document_id": "doc_credit_cards_diamond_elite_card_002",
+    "minimum_credit_score": null,
+    "foreign_transaction_fee_percent": null,
+    "minimum_payment_percent": null,
+    "virtual_card_management": true,
+    "rho_bank_plus_required": false
+  }
+]

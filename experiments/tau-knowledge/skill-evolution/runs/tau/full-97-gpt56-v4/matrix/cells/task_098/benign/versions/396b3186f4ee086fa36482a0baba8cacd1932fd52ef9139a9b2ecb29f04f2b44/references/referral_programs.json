@@ -1,0 +1,116 @@
+{
+  "general_rules": {
+    "rolling_bonus_cap": 2,
+    "rolling_window_days": 9,
+    "new_customer_lookback_months": 12,
+    "minimum_age": 18,
+    "minor_exception_account": "Light Green Account",
+    "deposit_must_be_new_money": true,
+    "deposit_hold_days_after_qualifying_period": 30,
+    "clawback_if_closed_within_days": 90,
+    "one_referral_code_per_new_account": true,
+    "cannot_stack_with_new_account_promotions": true
+  },
+  "programs": [
+    {
+      "account_type": "Blue Account",
+      "referrer_bonus": 35,
+      "new_member_bonus": 30,
+      "annual_cap": 5,
+      "qualifying_deposit": 500,
+      "deposit_deadline_days": 60,
+      "referrer_tenure_days": 30,
+      "recipient_min_age": 18,
+      "recipient_max_age": null
+    },
+    {
+      "account_type": "Green Fee-Free Account",
+      "referrer_bonus": 20,
+      "new_member_bonus": 35,
+      "annual_cap": 4,
+      "qualifying_deposit": 300,
+      "deposit_deadline_days": 60,
+      "referrer_tenure_days": 30,
+      "recipient_min_age": 18,
+      "recipient_max_age": null
+    },
+    {
+      "account_type": "Light Blue Account",
+      "referrer_bonus": 30,
+      "new_member_bonus": 20,
+      "annual_cap": 5,
+      "qualifying_deposit": 500,
+      "deposit_deadline_days": 60,
+      "referrer_tenure_days": 30,
+      "recipient_min_age": 18,
+      "recipient_max_age": null
+    },
+    {
+      "account_type": "Light Green Account",
+      "referrer_bonus": 15,
+      "new_member_bonus": 25,
+      "annual_cap": 3,
+      "qualifying_deposit": 100,
+      "deposit_deadline_days": 90,
+      "referrer_tenure_days": 14,
+      "recipient_min_age": 13,
+      "recipient_max_age": 24,
+      "minor_requires_guardian": true
+    },
+    {
+      "account_type": "Bluest Account",
+      "referrer_bonus": 75,
+      "new_member_bonus": 50,
+      "annual_cap": 8,
+      "qualifying_deposit": 2000,
+      "deposit_deadline_days": 90,
+      "referrer_tenure_days": 60,
+      "recipient_min_age": 18,
+      "recipient_max_age": null
+    },
+    {
+      "account_type": "Dark Green Account",
+      "referrer_bonus": 40,
+      "new_member_bonus": 30,
+      "annual_cap": 6,
+      "qualifying_deposit": 1000,
+      "deposit_deadline_days": 60,
+      "referrer_tenure_days": 45,
+      "recipient_min_age": 18,
+      "recipient_max_age": null
+    },
+    {
+      "account_type": "Gold Years Account",
+      "referrer_bonus": 50,
+      "new_member_bonus": 75,
+      "annual_cap": 6,
+      "qualifying_deposit": 1000,
+      "deposit_deadline_days": 90,
+      "referrer_tenure_days": 30,
+      "recipient_min_age": 62,
+      "recipient_max_age": null
+    },
+    {
+      "account_type": "Evergreen Account",
+      "referrer_bonus": 35,
+      "new_member_bonus": 25,
+      "annual_cap": 6,
+      "qualifying_deposit": 750,
+      "deposit_deadline_days": 60,
+      "referrer_tenure_days": 45,
+      "recipient_min_age": 18,
+      "recipient_max_age": null
+    },
+    {
+      "account_type": "Green Account",
+      "referrer_bonus": 20,
+      "new_member_bonus": 30,
+      "annual_cap": 5,
+      "qualifying_deposit": 500,
+      "deposit_deadline_days": 60,
+      "referrer_tenure_days": 30,
+      "recipient_min_age": 18,
+      "recipient_max_age": null
+    }
+  ]
+}

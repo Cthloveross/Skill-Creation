@@ -788,23 +788,25 @@ def test_only_requested_bedrock_model_and_valid_settings(settings):
 
 
 @pytest.mark.parametrize(
-    "raw,code",
+    "raw,code,posts",
     [
-        (TimeoutError("private-api-secret unknown result"), "transport_error"),
-        (b"not-json", "invalid_json"),
-        ({"status": "weird"}, "invalid_response"),
-        ({"status": "completed", "output": "not-a-list", "usage": {}}, "invalid_response"),
+        # A client timeout is re-sent at most twice (bounded operator policy), then unknown.
+        (TimeoutError("private-api-secret unknown result"), "transport_error", 3),
+        (b"not-json", "invalid_json", 1),
+        ({"status": "weird"}, "invalid_response", 1),
+        ({"status": "completed", "output": "not-a-list", "usage": {}}, "invalid_response", 1),
         (
             _response([{"type": "message", "role": "assistant", "content": ["bad"]}]),
             "invalid_response",
+            1,
         ),
     ],
 )
-def test_unknown_or_invalid_response_is_never_retried(raw, code):
+def test_invalid_received_response_is_never_retried(raw, code, posts):
     client, requests = _client(raw=raw)
     with pytest.raises(ModelClientError) as error:
         client.complete([{"role": "user", "content": "hello"}])
-    assert error.value.code == code and len(requests) == 1
+    assert error.value.code == code and len(requests) == posts
     assert "private-api-secret" not in str(error.value)
     assert client.usage_history == ()
 

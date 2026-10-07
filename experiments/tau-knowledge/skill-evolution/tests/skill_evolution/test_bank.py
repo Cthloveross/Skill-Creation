@@ -288,7 +288,8 @@ def factory(task_id, toolkit, config, policy, sidecar=None, *, episode_id=None):
     client = w.RecordedBankClient(
         "https://bedrock-mantle.us-east-1.api.aws/openai/v1", api_key=token,
         config=GenerationConfig(model="openai.gpt-5.5", max_output_tokens=64),
-        journal=Journal(root / "models" / episode_id), opener=opener)
+        journal=Journal(root / "models" / episode_id), opener=opener,
+        retry_attempts=1, timeout_retry_attempts=0)  # journal semantics, not re-send policy
     return r.build_runtime(task_id, toolkit, policy=policy, tasks_root=r.TASKS_ROOT,
         allowed_task_ids=["task_001"], runtime_controls=controls,
         model="openai.gpt-5.5", model_client=NeverCalledClient(),

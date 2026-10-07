@@ -1,0 +1,1480 @@
+{
+  "authentication_status": null,
+  "cells": {
+    "3d-scan-calc|benign": {
+      "account": "571600859300",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:42:34Z",
+      "pid": 1773826,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 0,
+          "finished_at": "2026-10-07T10:40:42Z",
+          "pid": 1567268,
+          "started_at": "2026-10-07T10:39:11Z"
+        },
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:34Z",
+          "pid": 1773826,
+          "started_at": "2026-10-07T10:40:42Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:11Z"
+    },
+    "adaptive-cruise-control|benign": {
+      "account": "495599760299",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1579034,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1579034,
+          "started_at": "2026-10-07T10:39:16Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:16Z"
+    },
+    "azure-bgp-oscillation-route-leak|benign": {
+      "account": "739418138357",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2054614,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 0,
+          "finished_at": "2026-10-07T10:43:45Z",
+          "pid": 1583774,
+          "started_at": "2026-10-07T10:39:21Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2054614,
+          "started_at": "2026-10-07T10:43:45Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:21Z"
+    },
+    "citation-check|benign": {
+      "account": "484907524577",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1938363,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 0,
+          "finished_at": "2026-10-07T10:42:39Z",
+          "pid": 1600502,
+          "started_at": "2026-10-07T10:39:26Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1938363,
+          "started_at": "2026-10-07T10:42:39Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:26Z"
+    },
+    "civ6-adjacency-optimizer|benign": {
+      "account": "961341511387",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1605322,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1605322,
+          "started_at": "2026-10-07T10:39:31Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:31Z"
+    },
+    "court-form-filling|benign": {
+      "account": "861276121800",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2142422,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 0,
+          "finished_at": "2026-10-07T10:44:38Z",
+          "pid": 1610918,
+          "started_at": "2026-10-07T10:39:36Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2142422,
+          "started_at": "2026-10-07T10:44:38Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:36Z"
+    },
+    "crystallographic-wyckoff-position-analysis|benign": {
+      "account": "339713096311",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2031575,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 0,
+          "finished_at": "2026-10-07T10:43:40Z",
+          "pid": 1632462,
+          "started_at": "2026-10-07T10:39:41Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2031575,
+          "started_at": "2026-10-07T10:43:40Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:41Z"
+    },
+    "dapt-intrusion-detection|benign": {
+      "account": "291706265615",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2166104,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 0,
+          "finished_at": "2026-10-07T10:44:58Z",
+          "pid": 1637490,
+          "started_at": "2026-10-07T10:39:46Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2166104,
+          "started_at": "2026-10-07T10:44:58Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:46Z"
+    },
+    "data-to-d3|benign": {
+      "account": "139337686882",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2231652,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 0,
+          "finished_at": "2026-10-07T10:45:50Z",
+          "pid": 1640682,
+          "started_at": "2026-10-07T10:39:51Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2231652,
+          "started_at": "2026-10-07T10:45:50Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:51Z"
+    },
+    "dialogue-parser|benign": {
+      "account": "984312272924",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1650335,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1650335,
+          "started_at": "2026-10-07T10:39:56Z"
+        }
+      },
+      "started_at": "2026-10-07T10:39:56Z"
+    },
+    "dynamic-object-aware-egomotion|benign": {
+      "account": "913771848911",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1676334,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1676334,
+          "started_at": "2026-10-07T10:40:01Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:01Z"
+    },
+    "earthquake-phase-association|benign": {
+      "account": "050918576103",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:40:17Z",
+      "pid": 1700228,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:40:12Z",
+          "pid": 1686688,
+          "started_at": "2026-10-07T10:40:06Z"
+        },
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:40:17Z",
+          "pid": 1700228,
+          "started_at": "2026-10-07T10:40:12Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:06Z"
+    },
+    "earthquake-plate-calculation|benign": {
+      "account": "905418167188",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1700229,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1700229,
+          "started_at": "2026-10-07T10:40:12Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:12Z"
+    },
+    "econ-detrending-correlation|benign": {
+      "account": "058264330796",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1712225,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1712225,
+          "started_at": "2026-10-07T10:40:17Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:17Z"
+    },
+    "energy-ac-optimal-power-flow|benign": {
+      "account": "058264130246",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1714799,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1714799,
+          "started_at": "2026-10-07T10:40:22Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:22Z"
+    },
+    "energy-market-pricing|benign": {
+      "account": "905418303520",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2213905,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:25Z",
+          "pid": 1742675,
+          "started_at": "2026-10-07T10:40:27Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2213905,
+          "started_at": "2026-10-07T10:45:25Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:27Z"
+    },
+    "enterprise-information-search|benign": {
+      "account": "011550804606",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1964040,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:44Z",
+          "pid": 1765751,
+          "started_at": "2026-10-07T10:40:32Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1964040,
+          "started_at": "2026-10-07T10:42:44Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:32Z"
+    },
+    "exceltable-in-ppt|benign": {
+      "account": "711387138391",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1964096,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:44Z",
+          "pid": 1769870,
+          "started_at": "2026-10-07T10:40:37Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1964096,
+          "started_at": "2026-10-07T10:42:44Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:37Z"
+    },
+    "exoplanet-detection-period|benign": {
+      "account": "849695477162",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1964186,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:44Z",
+          "pid": 1773828,
+          "started_at": "2026-10-07T10:40:42Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1964186,
+          "started_at": "2026-10-07T10:42:44Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:42Z"
+    },
+    "financial-modeling-qa|benign": {
+      "account": "449946024699",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2054631,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:45Z",
+          "pid": 1778818,
+          "started_at": "2026-10-07T10:40:47Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2054631,
+          "started_at": "2026-10-07T10:43:45Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:47Z"
+    },
+    "find-topk-similiar-chemicals|benign": {
+      "account": "329042483036",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1964293,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:42:44Z",
+          "pid": 1783579,
+          "started_at": "2026-10-07T10:40:53Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1964293,
+          "started_at": "2026-10-07T10:42:44Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:53Z"
+    },
+    "fix-build-agentops|benign": {
+      "account": "912797224360",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1793142,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1793142,
+          "started_at": "2026-10-07T10:40:58Z"
+        }
+      },
+      "started_at": "2026-10-07T10:40:58Z"
+    },
+    "fix-build-google-auto|benign": {
+      "account": "431169894749",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1816277,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1816277,
+          "started_at": "2026-10-07T10:41:03Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:03Z"
+    },
+    "fix-druid-loophole-cve|benign": {
+      "account": "776544636561",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2325559,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:46:10Z",
+          "pid": 1842614,
+          "started_at": "2026-10-07T10:41:08Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2325559,
+          "started_at": "2026-10-07T10:46:10Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:08Z"
+    },
+    "fix-erlang-ssh-cve|benign": {
+      "account": "658306273089",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1860464,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1860464,
+          "started_at": "2026-10-07T10:41:13Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:13Z"
+    },
+    "fix-visual-stability|benign": {
+      "account": "814271927865",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1866159,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1866159,
+          "started_at": "2026-10-07T10:41:18Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:18Z"
+    },
+    "flink-query|benign": {
+      "account": "323974388366",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1870613,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1870613,
+          "started_at": "2026-10-07T10:41:23Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:23Z"
+    },
+    "flood-risk-analysis|benign": {
+      "account": "590184034501",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2209724,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:20Z",
+          "pid": 1874977,
+          "started_at": "2026-10-07T10:41:28Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2209724,
+          "started_at": "2026-10-07T10:45:20Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:28Z"
+    },
+    "gh-repo-analytics|benign": {
+      "account": "571600859300",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1878223,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1878223,
+          "started_at": "2026-10-07T10:41:33Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:33Z"
+    },
+    "glm-lake-mendota|benign": {
+      "account": "495599760299",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1879643,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1879643,
+          "started_at": "2026-10-07T10:41:38Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:38Z"
+    },
+    "gravitational-wave-detection|benign": {
+      "account": "739418138357",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2231653,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:50Z",
+          "pid": 1884690,
+          "started_at": "2026-10-07T10:41:43Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2231653,
+          "started_at": "2026-10-07T10:45:50Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:43Z"
+    },
+    "grid-dispatch-operator|benign": {
+      "account": "484907524577",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1887683,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1887683,
+          "started_at": "2026-10-07T10:41:48Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:48Z"
+    },
+    "hvac-control|benign": {
+      "account": "961341511387",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1890456,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1890456,
+          "started_at": "2026-10-07T10:41:53Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:53Z"
+    },
+    "invoice-fraud-detection|benign": {
+      "account": "861276121800",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1893750,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1893750,
+          "started_at": "2026-10-07T10:41:58Z"
+        }
+      },
+      "started_at": "2026-10-07T10:41:58Z"
+    },
+    "jax-computing-basics|benign": {
+      "account": "339713096311",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1897326,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1897326,
+          "started_at": "2026-10-07T10:42:03Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:03Z"
+    },
+    "jpg-ocr-stat|benign": {
+      "account": "291706265615",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1901669,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1901669,
+          "started_at": "2026-10-07T10:42:08Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:08Z"
+    },
+    "lab-unit-harmonization|benign": {
+      "account": "139337686882",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1905445,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1905445,
+          "started_at": "2026-10-07T10:42:13Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:13Z"
+    },
+    "lake-warming-attribution|benign": {
+      "account": "984312272924",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1911411,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1911411,
+          "started_at": "2026-10-07T10:42:18Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:18Z"
+    },
+    "latex-formula-extraction|benign": {
+      "account": "913771848911",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1918596,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1918596,
+          "started_at": "2026-10-07T10:42:23Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:23Z"
+    },
+    "lean4-proof|benign": {
+      "account": "050918576103",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1922866,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1922866,
+          "started_at": "2026-10-07T10:42:28Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:28Z"
+    },
+    "manufacturing-codebook-normalization|benign": {
+      "account": "905418167188",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2224925,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:45:40Z",
+          "pid": 1925746,
+          "started_at": "2026-10-07T10:42:34Z"
+        },
+        "run": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2224925,
+          "started_at": "2026-10-07T10:45:40Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:34Z"
+    },
+    "manufacturing-equipment-maintenance|benign": {
+      "account": "058264330796",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1938370,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1938370,
+          "started_at": "2026-10-07T10:42:39Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:39Z"
+    },
+    "manufacturing-fjsp-optimization|benign": {
+      "account": "058264130246",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1964410,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1964410,
+          "started_at": "2026-10-07T10:42:44Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:44Z"
+    },
+    "mario-coin-counting|benign": {
+      "account": "905418303520",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:16Z",
+      "pid": 1975579,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:16Z",
+          "pid": 1975579,
+          "started_at": "2026-10-07T10:42:49Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:49Z"
+    },
+    "mars-clouds-clustering|benign": {
+      "account": "011550804606",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 1979209,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 1979209,
+          "started_at": "2026-10-07T10:42:54Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:54Z"
+    },
+    "multilingual-video-dubbing|benign": {
+      "account": "711387138391",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 1983449,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 1983449,
+          "started_at": "2026-10-07T10:42:59Z"
+        }
+      },
+      "started_at": "2026-10-07T10:42:59Z"
+    },
+    "offer-letter-generator|benign": {
+      "account": "849695477162",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 1989986,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 1989986,
+          "started_at": "2026-10-07T10:43:04Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:04Z"
+    },
+    "organize-messy-files|benign": {
+      "account": "449946024699",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2006534,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2006534,
+          "started_at": "2026-10-07T10:43:09Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:09Z"
+    },
+    "paper-anonymizer|benign": {
+      "account": "329042483036",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2011844,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2011844,
+          "started_at": "2026-10-07T10:43:14Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:14Z"
+    },
+    "parallel-tfidf-search|benign": {
+      "account": "912797224360",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2016028,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2016028,
+          "started_at": "2026-10-07T10:43:19Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:19Z"
+    },
+    "pddl-tpp-planning|benign": {
+      "account": "431169894749",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2020739,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2020739,
+          "started_at": "2026-10-07T10:43:24Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:24Z"
+    },
+    "pdf-excel-diff|benign": {
+      "account": "776544636561",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2025368,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2025368,
+          "started_at": "2026-10-07T10:43:29Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:29Z"
+    },
+    "pedestrian-traffic-counting|benign": {
+      "account": "658306273089",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2028619,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2028619,
+          "started_at": "2026-10-07T10:43:35Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:35Z"
+    },
+    "pg-essay-to-audiobook|benign": {
+      "account": "814271927865",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:43:50Z",
+      "pid": 2054639,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:45Z",
+          "pid": 2031576,
+          "started_at": "2026-10-07T10:43:40Z"
+        },
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:43:50Z",
+          "pid": 2054639,
+          "started_at": "2026-10-07T10:43:45Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:40Z"
+    },
+    "powerlifting-coef-calc|benign": {
+      "account": "323974388366",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2054642,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2054642,
+          "started_at": "2026-10-07T10:43:45Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:45Z"
+    },
+    "pptx-reference-formatting|benign": {
+      "account": "590184034501",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2094518,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2094518,
+          "started_at": "2026-10-07T10:43:50Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:50Z"
+    },
+    "protein-expression-analysis|benign": {
+      "account": "571600859300",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2104516,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2104516,
+          "started_at": "2026-10-07T10:43:55Z"
+        }
+      },
+      "started_at": "2026-10-07T10:43:55Z"
+    },
+    "python-scala-translation|benign": {
+      "account": "495599760299",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2109871,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2109871,
+          "started_at": "2026-10-07T10:44:01Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:01Z"
+    },
+    "quantum-numerical-simulation|benign": {
+      "account": "739418138357",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2114265,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2114265,
+          "started_at": "2026-10-07T10:44:06Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:06Z"
+    },
+    "r2r-mpc-control|benign": {
+      "account": "484907524577",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2121121,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2121121,
+          "started_at": "2026-10-07T10:44:11Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:11Z"
+    },
+    "react-performance-debugging|benign": {
+      "account": "961341511387",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2126635,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2126635,
+          "started_at": "2026-10-07T10:44:17Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:17Z"
+    },
+    "reserves-at-risk-calc|benign": {
+      "account": "861276121800",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2131271,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2131271,
+          "started_at": "2026-10-07T10:44:22Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:22Z"
+    },
+    "sales-pivot-analysis|benign": {
+      "account": "339713096311",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2135622,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2135622,
+          "started_at": "2026-10-07T10:44:27Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:27Z"
+    },
+    "sec-financial-report|benign": {
+      "account": "291706265615",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2139265,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2139265,
+          "started_at": "2026-10-07T10:44:33Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:33Z"
+    },
+    "seismic-phase-picking|benign": {
+      "account": "139337686882",
+      "exit_code": 2,
+      "finished_at": "2026-10-07T10:44:48Z",
+      "pid": 2148759,
+      "stage": "run",
+      "stages": {
+        "no-skill": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:43Z",
+          "pid": 2142423,
+          "started_at": "2026-10-07T10:44:38Z"
+        },
+        "run": {
+          "exit_code": 2,
+          "finished_at": "2026-10-07T10:44:48Z",
+          "pid": 2148759,
+          "started_at": "2026-10-07T10:44:43Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:38Z"
+    },
+    "setup-fuzzing-py|benign": {
+      "account": "984312272924",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2148762,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2148762,
+          "started_at": "2026-10-07T10:44:43Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:43Z"
+    },
+    "shock-analysis-demand|benign": {
+      "account": "913771848911",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2154061,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2154061,
+          "started_at": "2026-10-07T10:44:48Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:48Z"
+    },
+    "shock-analysis-supply|benign": {
+      "account": "050918576103",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2160634,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2160634,
+          "started_at": "2026-10-07T10:44:53Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:53Z"
+    },
+    "simpo-code-reproduction|benign": {
+      "account": "905418167188",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2166117,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2166117,
+          "started_at": "2026-10-07T10:44:58Z"
+        }
+      },
+      "started_at": "2026-10-07T10:44:58Z"
+    },
+    "software-dependency-audit|benign": {
+      "account": "058264330796",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2176669,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2176669,
+          "started_at": "2026-10-07T10:45:03Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:03Z"
+    },
+    "speaker-diarization-subtitles|benign": {
+      "account": "058264130246",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2185624,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2185624,
+          "started_at": "2026-10-07T10:45:08Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:08Z"
+    },
+    "spring-boot-jakarta-migration|benign": {
+      "account": "905418303520",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2197017,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2197017,
+          "started_at": "2026-10-07T10:45:14Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:14Z"
+    },
+    "suricata-custom-exfil|benign": {
+      "account": "011550804606",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2209728,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2209728,
+          "started_at": "2026-10-07T10:45:20Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:20Z"
+    },
+    "syzkaller-ppdev-syzlang|benign": {
+      "account": "711387138391",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2213907,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2213907,
+          "started_at": "2026-10-07T10:45:25Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:25Z"
+    },
+    "taxonomy-tree-merge|benign": {
+      "account": "849695477162",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2219188,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2219188,
+          "started_at": "2026-10-07T10:45:30Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:30Z"
+    },
+    "threejs-structure-parser|benign": {
+      "account": "449946024699",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2221908,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2221908,
+          "started_at": "2026-10-07T10:45:35Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:35Z"
+    },
+    "threejs-to-obj|benign": {
+      "account": "329042483036",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2224926,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2224926,
+          "started_at": "2026-10-07T10:45:40Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:40Z"
+    },
+    "travel-planning|benign": {
+      "account": "912797224360",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2229231,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2229231,
+          "started_at": "2026-10-07T10:45:45Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:45Z"
+    },
+    "trend-anomaly-causal-inference|benign": {
+      "account": "431169894749",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2231654,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2231654,
+          "started_at": "2026-10-07T10:45:50Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:50Z"
+    },
+    "video-filler-word-remover|benign": {
+      "account": "776544636561",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2243027,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2243027,
+          "started_at": "2026-10-07T10:45:55Z"
+        }
+      },
+      "started_at": "2026-10-07T10:45:55Z"
+    },
+    "video-silence-remover|benign": {
+      "account": "658306273089",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2274640,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2274640,
+          "started_at": "2026-10-07T10:46:00Z"
+        }
+      },
+      "started_at": "2026-10-07T10:46:00Z"
+    },
+    "video-tutorial-indexer|benign": {
+      "account": "814271927865",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2315509,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2315509,
+          "started_at": "2026-10-07T10:46:05Z"
+        }
+      },
+      "started_at": "2026-10-07T10:46:05Z"
+    },
+    "virtualhome-agent-planning|benign": {
+      "account": "323974388366",
+      "exit_code": -15,
+      "finished_at": "2026-10-07T10:46:17Z",
+      "pid": 2325560,
+      "stage": "no-skill",
+      "stages": {
+        "no-skill": {
+          "exit_code": -15,
+          "finished_at": "2026-10-07T10:46:17Z",
+          "pid": 2325560,
+          "started_at": "2026-10-07T10:46:10Z"
+        }
+      },
+      "started_at": "2026-10-07T10:46:10Z"
+    },
+    "weighted-gdp-calc|benign": {
+      "account": "590184034501",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    },
+    "xlsx-recover-data|benign": {
+      "account": "571600859300",
+      "exit_code": null,
+      "finished_at": null,
+      "pid": null,
+      "stage": null,
+      "stages": {},
+      "started_at": null
+    }
+  },
+  "config": "/local/home/tianrgua/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-opus48-v4/config.yaml",
+  "experiment": "skillsbench",
+  "failed": 83,
+  "finished": 83,
+  "running": 0,
+  "runtime": "docker",
+  "started_at": "2026-10-07T10:39:11Z",
+  "total": 85,
+  "updated_at": "2026-10-07T10:46:17Z"
+}

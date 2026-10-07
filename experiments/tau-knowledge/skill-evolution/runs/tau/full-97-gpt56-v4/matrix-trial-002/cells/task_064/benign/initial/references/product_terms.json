@@ -1,0 +1,48 @@
+{
+  "calculation_policy": {
+    "credit_card_bonus_stacking": "Only the highest applicable credit-card APY bonus applies; card bonuses do not stack with one another.",
+    "checking_boost_stacking": "Only the highest applicable checking APY boost applies; checking boosts do not stack with one another.",
+    "cross_type_stacking": "The selected card bonus may stack with a qualifying checking boost and other documented relationship or tier bonuses.",
+    "estimate_formula": "For a balance held for one year, estimate net return as balance * effective APY / 100 - annual card fee."
+  },
+  "savings_accounts": [
+    {
+      "name": "Gold Plus Account",
+      "base_apy_pct": 6.0,
+      "opening_minimum": 10000,
+      "ongoing_minimum": 25000,
+      "below_minimum_monthly_fee": 15.0,
+      "card_bonuses_pct": {"Gold Rewards Card": 0.35},
+      "notes": "Interest compounds daily. Gold Rewards Card bonus is automatically applied when products are under the same customer profile."
+    },
+    {
+      "name": "Platinum Account",
+      "base_apy_pct": 6.5,
+      "opening_minimum": 25000,
+      "ongoing_minimum": 50000,
+      "below_minimum_monthly_fee": 25.0,
+      "card_bonuses_pct": {"Gold Rewards Card": 0.15},
+      "notes": "Interest compounds daily."
+    },
+    {
+      "name": "Platinum Plus Account",
+      "base_apy_pct": 7.0,
+      "opening_minimum": 50000,
+      "ongoing_minimum": 100000,
+      "below_minimum_monthly_fee": 50.0,
+      "card_bonuses_pct": {"Gold Rewards Card": 0.1},
+      "notes": "Interest compounds daily."
+    }
+  ],
+  "credit_cards": [
+    {
+      "name": "Gold Rewards Card",
+      "annual_fee": 0.0,
+      "minimum_credit_score": 720,
+      "requires_subscription": true,
+      "cash_back_pct": 2.5,
+      "notes": "Approval and initial credit limit remain subject to underwriting."
+    }
+  ],
+  "checking_pairing_note": "Only enumerated checking/savings pairings qualify for a linked-checking APY boost. A Light Blue checking account is not an enumerated qualifying pairing for Gold Plus Account, so its Gold Plus checking boost is 0%."
+}

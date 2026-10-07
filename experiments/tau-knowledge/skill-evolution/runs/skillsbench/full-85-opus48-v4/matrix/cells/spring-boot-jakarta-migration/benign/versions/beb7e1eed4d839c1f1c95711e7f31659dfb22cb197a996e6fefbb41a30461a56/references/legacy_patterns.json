@@ -1,0 +1,91 @@
+[
+  {
+    "name": "javax.persistence",
+    "category": "namespace",
+    "regex": "javax\\.persistence",
+    "replace": "jakarta.persistence",
+    "suggestion": "Rename javax.persistence -> jakarta.persistence (Jakarta Persistence / Hibernate 6)"
+  },
+  {
+    "name": "javax.validation",
+    "category": "namespace",
+    "regex": "javax\\.validation",
+    "replace": "jakarta.validation",
+    "suggestion": "Rename javax.validation -> jakarta.validation; ensure spring-boot-starter-validation is on the classpath"
+  },
+  {
+    "name": "javax.servlet",
+    "category": "namespace",
+    "regex": "javax\\.servlet",
+    "replace": "jakarta.servlet",
+    "suggestion": "Rename javax.servlet -> jakarta.servlet"
+  },
+  {
+    "name": "javax.annotation.PostConstruct/PreDestroy",
+    "category": "namespace",
+    "regex": "javax\\.annotation\\.(PostConstruct|PreDestroy)",
+    "replace": "jakarta.annotation.\\1",
+    "suggestion": "Rename javax.annotation.PostConstruct/PreDestroy -> jakarta.annotation.*"
+  },
+  {
+    "name": "javax.transaction",
+    "category": "namespace",
+    "regex": "javax\\.transaction",
+    "replace": "jakarta.transaction",
+    "suggestion": "Rename javax.transaction -> jakarta.transaction (or use org.springframework Transactional)"
+  },
+  {
+    "name": "WebSecurityConfigurerAdapter",
+    "category": "security",
+    "regex": "WebSecurityConfigurerAdapter",
+    "suggestion": "REMOVED in Spring Security 6: replace with a @Bean SecurityFilterChain(HttpSecurity) and bean-based AuthenticationManager/UserDetailsService/PasswordEncoder"
+  },
+  {
+    "name": "authorizeRequests",
+    "category": "security",
+    "regex": "authorizeRequests\\s*\\(",
+    "suggestion": "Replace authorizeRequests() with authorizeHttpRequests(auth -> ...) lambda DSL"
+  },
+  {
+    "name": "antMatchers/mvcMatchers",
+    "category": "security",
+    "regex": "(antMatchers|mvcMatchers)\\s*\\(",
+    "suggestion": "Replace antMatchers/mvcMatchers with requestMatchers(...)"
+  },
+  {
+    "name": "EnableGlobalMethodSecurity",
+    "category": "security",
+    "regex": "EnableGlobalMethodSecurity",
+    "suggestion": "Replace @EnableGlobalMethodSecurity(prePostEnabled=true) with @EnableMethodSecurity (prePost on by default)"
+  },
+  {
+    "name": "security.and()-chaining",
+    "category": "security",
+    "regex": "\\.and\\(\\)",
+    "suggestion": "Prefer the lambda DSL instead of chained .and() in HttpSecurity configuration"
+  },
+  {
+    "name": "csrf().disable()",
+    "category": "security",
+    "regex": "csrf\\(\\)\\s*\\.disable\\(\\)",
+    "suggestion": "Use http.csrf(csrf -> csrf.disable()) lambda form"
+  },
+  {
+    "name": "RestTemplate",
+    "category": "http-client",
+    "regex": "RestTemplate",
+    "suggestion": "Migrate RestTemplate to RestClient; preserve URI expansion, headers, auth, bodies, response typing, and 4xx/5xx error handling"
+  },
+  {
+    "name": "WebMvcConfigurerAdapter",
+    "category": "web",
+    "regex": "WebMvcConfigurerAdapter",
+    "suggestion": "REMOVED: implement WebMvcConfigurer interface directly (default methods)"
+  },
+  {
+    "name": "Hibernate custom @Type",
+    "category": "persistence",
+    "regex": "org\\.hibernate\\.annotations\\.Type",
+    "suggestion": "Hibernate 6 changed @Type/UserType API; replace custom types or use standard Jakarta mappings"
+  }
+]

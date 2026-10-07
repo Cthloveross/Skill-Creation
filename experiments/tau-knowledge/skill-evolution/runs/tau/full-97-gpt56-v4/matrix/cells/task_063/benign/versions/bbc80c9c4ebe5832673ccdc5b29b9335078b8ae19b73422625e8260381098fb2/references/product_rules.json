@@ -1,0 +1,75 @@
+{
+  "savings_products": {
+    "Silver Plus Account": {
+      "opening_deposit_minimum": 1000,
+      "ongoing_balance_minimum": 2500,
+      "tier_1_apy_percent": 3.0,
+      "tier_2_apy_percent": 4.5,
+      "tier_2_threshold": 15000,
+      "compounding": "daily",
+      "interest_crediting": "monthly",
+      "paper_statements_available": true,
+      "paper_statement_monthly_fee": 0,
+      "relationship_bonus_percent": 0.025,
+      "direct_deposit_bonus_percent": 0.25,
+      "card_apy_bonuses_percent": {
+        "Bronze Rewards Card": 0.15,
+        "Silver Rewards Card": 0.15,
+        "Gold Rewards Card": 0.2,
+        "Platinum Rewards Card": 0.15,
+        "Diamond Elite Card": 0.4,
+        "EcoCard": 0.45,
+        "Green Rewards Card": 0.1,
+        "Crypto-Cash Back Card": 0
+      }
+    },
+    "Green Account (savings)": {
+      "base_apy_percent": 4.0,
+      "opening_deposit_minimum": 100,
+      "ongoing_balance_minimum": 500,
+      "paperless_required": true,
+      "paper_statements_available": false
+    }
+  },
+  "credit_cards": {
+    "Silver Rewards Card": {
+      "minimum_credit_score": 680,
+      "credit_check_consent_required": true,
+      "annual_fee": 0
+    },
+    "EcoCard": {
+      "minimum_credit_score": 0,
+      "credit_check_consent_required": null,
+      "annual_fee": 50
+    },
+    "Gold Rewards Card": {
+      "minimum_credit_score": 720,
+      "premium_subscription_required": true,
+      "annual_fee": 0
+    },
+    "Diamond Elite Card": {
+      "minimum_credit_score": 780,
+      "invitation_only": true
+    }
+  },
+  "bonus_policies": {
+    "credit_card_bonuses": "Only the highest applicable credit-card APY bonus applies; credit-card bonuses do not stack.",
+    "checking_bonuses": "Only the highest applicable qualifying checking-account APY boost applies; checking boosts do not stack.",
+    "other_bonus_types": "The selected card and checking bonuses may stack with separately documented and confirmed relationship or account bonuses."
+  },
+  "linked_checking_pairs": [
+    ["Blue Account (checking)", "Silver Plus Account"],
+    ["Light Green Account (checking)", "Diamond Elite Account (savings)"],
+    ["Green Account (checking)", "Gold Account (savings)"],
+    ["Purple Account (checking)", "Gold Account (savings)"]
+  ],
+  "savings_opening_controls": {
+    "requires_verified_identity": true,
+    "requires_active_checking_account": true,
+    "checking_tenure_days_minimum": 14,
+    "personal_savings_account_maximum": 5,
+    "disallow_collections_or_negative_balances": true,
+    "deferred_opening_deposit_deadline_days": 30,
+    "account_class_must_be_full_official_name": true
+  }
+}

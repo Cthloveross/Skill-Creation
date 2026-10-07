@@ -1,0 +1,7 @@
+{
+  "_doc": "Keyword hints used only to split climate.csv variables into Wind vs Heat. Mapping is primarily by source table: land_cover.csv->Human, hydrology.csv->Flow, climate.csv wind-keyword->Wind else Heat. Extend 'wind' if a wind variable has an unusual name.",
+  "wind": ["wind", "gust", "ws", "windspeed", "wind_speed"],
+  "heat_hints": ["temp", "temperature", "air_temp", "solar", "radiation", "shortwave", "longwave", "sw", "lw", "heat", "sunshine", "net_rad"],
+  "flow_hints": ["inflow", "outflow", "discharge", "runoff", "flow", "streamflow", "river", "water_level", "level", "precip", "precipitation", "rain"],
+  "human_hints": ["urban", "agric", "crop", "forest", "impervious", "population", "pop", "land", "built", "settlement", "industr", "developed"]
+}

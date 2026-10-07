@@ -1,0 +1,26 @@
+{
+  "programs": [
+    {"name":"Blue Account","referrer_bonus":35,"new_member_bonus":30,"annual_cap":5,"deposit_required":500,"deposit_days":60,"tenure_days":30},
+    {"name":"Green Fee-Free Account","referrer_bonus":20,"new_member_bonus":35,"annual_cap":4,"deposit_required":300,"deposit_days":60,"tenure_days":30},
+    {"name":"Light Blue Account","referrer_bonus":30,"new_member_bonus":20,"annual_cap":5,"deposit_required":500,"deposit_days":60,"tenure_days":30},
+    {"name":"Green Account","referrer_bonus":20,"new_member_bonus":30,"annual_cap":5,"deposit_required":500,"deposit_days":60,"tenure_days":30},
+    {"name":"Evergreen Account","referrer_bonus":35,"new_member_bonus":25,"annual_cap":6,"deposit_required":750,"deposit_days":60,"tenure_days":45},
+    {"name":"Light Green Account","referrer_bonus":15,"new_member_bonus":25,"annual_cap":3,"deposit_required":100,"deposit_days":90,"tenure_days":14,"min_age":13,"max_age":24,"minor_guardian_required":true},
+    {"name":"Dark Green Account","referrer_bonus":40,"new_member_bonus":30,"annual_cap":6,"deposit_required":1000,"deposit_days":60,"tenure_days":45},
+    {"name":"Gold Years Account","referrer_bonus":50,"new_member_bonus":75,"annual_cap":6,"deposit_required":1000,"deposit_days":90,"tenure_days":30,"min_age":62},
+    {"name":"Bluest Account","referrer_bonus":75,"new_member_bonus":50,"annual_cap":8,"deposit_required":2000,"deposit_days":90,"tenure_days":60}
+  ],
+  "general_rules": {
+    "rolling_successful_bonus_cap":2,
+    "rolling_window_days":9,
+    "prospect_must_be_new_customer":true,
+    "closed_account_lookback_months":12,
+    "different_registered_address_required":true,
+    "qualifying_deposit_must_be_new_money":true,
+    "qualifying_deposit_retention_days_after_period":30,
+    "early_closure_clawback_days":90,
+    "other_new_account_promotions_allowed":false,
+    "max_referral_codes_per_account":1,
+    "good_standing_required":true
+  }
+}

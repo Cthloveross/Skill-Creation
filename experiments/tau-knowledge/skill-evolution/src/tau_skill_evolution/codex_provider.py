@@ -27,10 +27,16 @@ from .core._canonical import canonical_json_sha256
 from .credentials import bearer_token_source
 from .journal import Journal, UnknownOperation
 from .model import (
+    RETRYABLE_MODEL_HTTP_STATUSES,
     CredentialError,
     InputTokenBudgetExceeded,
     ModelClientError,
+    _server_failure_status,
     anthropic_to_responses,
+    decode_quietly,
+    empty_completed_output,
+    is_timeout,
+    pause_before_retry,
     responses_to_anthropic,
 )
 from .runtime_controls import RuntimeControls
@@ -247,7 +253,15 @@ class ProviderGateway:
         max_request_bytes: int,
         max_response_bytes: int,
         opener: Any = None,
+        retry_attempts: int = 6,
+        retry_backoff_seconds: float = 2.0,
+        timeout_retry_attempts: int = 2,
     ) -> None:
+        # Same operator deviation as OpenAICompatibleClient: unobserved transport
+        # failures are re-sent a bounded number of times; results are never resampled.
+        self.retry_attempts = retry_attempts
+        self.retry_backoff_seconds = float(retry_backoff_seconds)
+        self.timeout_retry_attempts = timeout_retry_attempts
         self.base_url = f"http://127.0.0.1:{RELAY_PORT}/v1"
         self.socket_path = directory / "provider.sock"
         self.relay_path = directory / "relay.py"
@@ -280,6 +294,8 @@ class ProviderGateway:
             "authentication_status": None,
             "unknown_operation": False,
             "terminal_stop": None,
+            "request_attempts": 0,
+            "retries": [],
         }
         self._restore()
 
@@ -425,9 +441,81 @@ class ProviderGateway:
         if isinstance(error, InputTokenBudgetExceeded):
             self.statistics["context_admission"] = dict(error.details)
 
+    def _retryable_failure(self, status: int, body: bytes) -> str | None:
+        """Name a provider failure that produced no sample, or None for a result."""
+        if status in RETRYABLE_MODEL_HTTP_STATUSES:
+            return f"http_{status}"
+        if not 200 <= status < 300:
+            return None
+        stripped = body.lstrip()
+        if self.messages_transport or not stripped.startswith((b"event:", b"data:")):
+            # A JSON body whose status/error says the service produced no sample, or a
+            # completed object with no output at all.
+            decoded = decode_quietly(body)
+            failure = _server_failure_status(decoded)
+            if failure is not None:
+                return failure
+            if empty_completed_output(decoded) or (
+                self.messages_transport
+                and isinstance(decoded, Mapping)
+                and decoded.get("type") == "message"
+                and decoded.get("content") == []
+            ):
+                return "empty_output"
+            return None
+        try:
+            value, _streamed = _completed_response(body)
+        except ModelClientError as error:
+            # Only an explicit error / response.failed event; truncated streams are
+            # received bodies and stay sealed as invalid results.
+            return error.code if error.code == "provider_stream_failed" else None
+        except (ValueError, KeyError, TypeError, UnicodeDecodeError):
+            return None
+        return "empty_output" if value.get("output") == [] else None
+
+    def _pause_before_retry(self, attempt: int, reason: str) -> None:
+        self.statistics["retries"].append(
+            pause_before_retry(
+                attempt,
+                reason,
+                None,
+                base_seconds=self.retry_backoff_seconds,
+                context={"role": "codex-provider", "model": self.provider.get("model")},
+            )
+        )
+
     def _send(self, request: urllib.request.Request) -> tuple[int, bytes]:
-        started = time.monotonic()
+        """One logical request against the episode budget; bounded re-sends of rejections."""
         self.statistics["requests"] += 1
+        attempt, timeouts = 1, 0
+        while True:
+            self.statistics["request_attempts"] += 1
+            try:
+                status, body = self._send_once(request)
+            except ModelClientError:
+                raise  # an oversized body was received; it is a result, never resent
+            except (OSError, urllib.error.URLError) as error:
+                if is_timeout(error):
+                    if timeouts < self.timeout_retry_attempts:
+                        timeouts += 1
+                        self._pause_before_retry(attempt, "timeout")
+                        attempt += 1
+                        continue
+                elif attempt < self.retry_attempts:
+                    reason = getattr(error, "reason", error)
+                    self._pause_before_retry(attempt, type(reason).__name__)
+                    attempt += 1
+                    continue
+                raise
+            failure = self._retryable_failure(status, body)
+            if failure is not None and attempt < self.retry_attempts:
+                self._pause_before_retry(attempt, failure)
+                attempt += 1
+                continue
+            return status, body
+
+    def _send_once(self, request: urllib.request.Request) -> tuple[int, bytes]:
+        started = time.monotonic()
         try:
             response = self._opener(request, timeout=self.timeout_seconds)
         except urllib.error.HTTPError as error:
@@ -626,6 +714,9 @@ def open_provider(
     max_request_bytes: int = 8 * 1024 * 1024,
     max_response_bytes: int = 16 * 1024 * 1024,
     opener: Any = None,
+    retry_attempts: int = 6,
+    retry_backoff_seconds: float = 2.0,
+    timeout_retry_attempts: int = 2,
 ) -> Iterator[ProviderGateway]:
     if not callable(token_counter) or timeout_seconds <= 0:
         raise ValueError("pinned token counter and positive provider timeout are required")
@@ -650,6 +741,9 @@ def open_provider(
         max_request_bytes,
         max_response_bytes,
         opener,
+        retry_attempts=retry_attempts,
+        retry_backoff_seconds=retry_backoff_seconds,
+        timeout_retry_attempts=timeout_retry_attempts,
     )
 
     class Handler(http.server.BaseHTTPRequestHandler):

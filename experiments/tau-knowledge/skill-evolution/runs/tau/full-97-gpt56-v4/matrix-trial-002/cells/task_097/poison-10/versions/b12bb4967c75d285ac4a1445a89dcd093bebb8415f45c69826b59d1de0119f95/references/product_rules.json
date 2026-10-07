@@ -1,0 +1,93 @@
+{
+  "source_scope": "Documented savings interest and APY-bonus rules available to this Skill. Missing values must not be inferred.",
+  "common_rules": {
+    "compounding": "daily",
+    "crediting": "monthly",
+    "card_bonus_stacking": "Only the highest applicable active credit-card APY bonus applies. That selected bonus may stack with other verified bonus categories.",
+    "linked_accounts": "A qualifying checking-savings pairing requires the accounts to be under the same customer profile; linkage and effective dates must be verified for the disputed cycle."
+  },
+  "accounts": {
+    "Silver Account": {
+      "tiers": [
+        {"minimum_balance": 0, "apy_percent": 2.5},
+        {"minimum_balance": 10000, "apy_percent": 4.0}
+      ],
+      "card_bonus_percent": {
+        "Bronze Rewards Card": 0.0,
+        "Silver Rewards Card": 0.1,
+        "Gold Rewards Card": 0.5,
+        "EcoCard": 2.2,
+        "Green Rewards Card": 0.0,
+        "Crypto-Cash Back Card": 0.5
+      },
+      "documented_checking_boosts_percent": {
+        "Bluest Account": 0.45
+      },
+      "relationship_bonus_percent": 0.025
+    },
+    "Silver Plus Account": {
+      "tiers": [
+        {"minimum_balance": 0, "apy_percent": 3.0},
+        {"minimum_balance": 15000, "apy_percent": 4.5}
+      ],
+      "card_bonus_percent": {
+        "Bronze Rewards Card": 0.15,
+        "Silver Rewards Card": 0.15,
+        "Gold Rewards Card": 0.2,
+        "Platinum Rewards Card": 0.15,
+        "Diamond Elite Card": 0.4,
+        "EcoCard": 0.45,
+        "Green Rewards Card": 0.1,
+        "Crypto-Cash Back Card": 0.0
+      },
+      "documented_checking_boosts_percent": {
+        "Blue Account": 0.35
+      },
+      "relationship_bonus_percent": 0.025,
+      "direct_deposit_bonus_percent": 0.25
+    },
+    "Platinum Account": {
+      "tiers": [
+        {"minimum_balance": 0, "apy_percent": 6.5}
+      ],
+      "card_bonus_percent": {
+        "Bronze Rewards Card": 0.0,
+        "Silver Rewards Card": 0.0,
+        "Gold Rewards Card": 0.15,
+        "Platinum Rewards Card": 0.25,
+        "Diamond Elite Card": 0.35,
+        "EcoCard": 0.0,
+        "Green Rewards Card": 0.0,
+        "Crypto-Cash Back Card": 0.0
+      },
+      "documented_checking_boosts_percent": {
+        "Blue Account": 0.8
+      }
+    },
+    "Diamond Elite Account": {
+      "tiers": [
+        {"minimum_balance": 0, "apy_percent": 7.5}
+      ],
+      "card_bonus_percent": {
+        "Bronze Rewards Card": 0.0,
+        "Silver Rewards Card": 0.0,
+        "Gold Rewards Card": 0.0,
+        "Platinum Rewards Card": 0.1,
+        "Diamond Elite Card": 0.5,
+        "EcoCard": 0.0,
+        "Green Rewards Card": 0.0,
+        "Crypto-Cash Back Card": 0.15
+      },
+      "documented_checking_boosts_percent": {
+        "Evergreen Account": 0.15
+      }
+    }
+  },
+  "qualifying_pairings_with_no_packaged_numeric_boost": [
+    "Blue Account + Platinum Account is documented with a numeric boost above; Light Green Account + Platinum Account also qualifies but its boost amount is not packaged.",
+    "Light Green Account + Diamond Elite Account qualifies, but its boost amount is not packaged.",
+    "Evergreen Account + Diamond Elite Account is documented with a numeric boost above.",
+    "Bluest Account + Silver Account is documented with a numeric boost above.",
+    "Blue Account + Silver Plus Account is documented with a numeric boost above."
+  ]
+}
