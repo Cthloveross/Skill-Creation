@@ -8,12 +8,12 @@
 
 | 实验 | 配置与逐题清单 | 正式结果目录 |
 |---|---|---|
-| GPT-5.6 Terra | [config.yaml](full-85-gpt56-v4/config.yaml)、[manifest.json](full-85-gpt56-v4/manifest.json) | `full-85-gpt56-v4/matrix/` |
-| Claude Opus 4.8 | [config.yaml](full-85-opus48-v4/config.yaml)、[manifest.json](full-85-opus48-v4/manifest.json) | `full-85-opus48-v4/matrix/` |
+| GPT-5.6 Terra | [config.yaml](full-85-gpt56-v4/config.yaml)、[manifest.json](full-85-gpt56-v4/manifest.json) | `full-85-gpt56-v4/matrix-verifier-fix-001/` |
+| Claude Opus 4.8 | [config.yaml](full-85-opus48-v4/config.yaml)、[manifest.json](full-85-opus48-v4/manifest.json) | `full-85-opus48-v4/matrix-verifier-fix-001/` |
 
 本交接不启动付费矩阵。**准备目录与验收记录不是模型成绩，也不代表85题已全部 READY。** 两套共用本目录的 [源码包](skillsbench-v4-source.tar.gz) 与 [文件/hash清单](transfer-manifest.json)，不各复制一套 pipeline。Git checkout 或源码包二选一；源码包解压后保留仓库相对目录。机器准备完成后冻结新身份，再开始收费运行。
 
-**交付状态：全部85题镜像已准备，84题通过本轮fresh准入；仅PG缺官方评分专用凭据，未就绪。两型号真实smoke和矩阵均未测。** 交接包包含完整逐题清单及验收证据；接收机器仍需准备环境、冻结新身份并通过对应模型的smoke，不能直接沿用本机READY。
+**交付状态：005历史准备记录中85题镜像已准备、84题准入通过；PG缺官方评分专用凭据。此次Verifier修复单独验收，未重新验收全部85题；当前修复身份的两型号真实smoke和矩阵均未测。** 交接包包含完整逐题清单及验收证据；接收机器仍需准备环境、冻结新身份并通过对应模型的smoke，不能直接沿用本机READY。
 
 ## 2. 模型、方法与固定参数
 
@@ -61,7 +61,7 @@ Opus转换支持文本与规范 `input_image`（PNG/JPEG/GIF/WebP的base64或HTT
 
 这项提前验收是本交接的工程检查，作者Harbor通常按题构建/启动容器，再进入agent循环，不要求85题全部准备完才能运行一道题。Generator进入持续容器后仍可安装任务依赖、调整服务、执行和修复；这些属于任务执行与演化。模型不能接管尚未启动的Docker daemon，也不能编辑私有grader来消除评分系统故障。
 
-当前项目内Docker实例已封存 **85题镜像、84题READY、1题凭据未就绪**。原17个构建超时任务均用原recipe补建成功，再用当前源码对全部85题重新做fresh准入；没有重试或未派发任务。逐题结果见 [005最终状态](../readiness-skillsbench-full85-20261007-005/final-status.json)，构建与准入分别见 [17题构建记录](../readiness-skillsbench-full85-20261007-005/status.json)、[85题准入记录](../readiness-skillsbench-full85-20261007-005/preflight-status.json)，源码、锁、清理及历史保护见 [验证证据](../readiness-skillsbench-full85-20261007-005/validation.json)。两套manifest绑定同一最终状态hash；源码包包含两套配置、清单和公开验收证据。
+005历史准备时，项目内Docker实例封存了 **85题镜像、84题READY、1题凭据未就绪**。原17个构建超时任务用原recipe补建成功，并以005对应源码完成全85题fresh准入；这不是此次修复源码的全85题复验。逐题结果见 [005最终状态](../readiness-skillsbench-full85-20261007-005/final-status.json)，构建与准入分别见 [17题构建记录](../readiness-skillsbench-full85-20261007-005/status.json)、[85题准入记录](../readiness-skillsbench-full85-20261007-005/preflight-status.json)，源码、锁、清理及历史保护见 [验证证据](../readiness-skillsbench-full85-20261007-005/validation.json)。两套manifest绑定同一最终状态hash；源码包包含两套配置、清单和公开验收证据。
 
 | 本轮处理结果 | 数量与范围 | 当前状态 |
 |---|---|---|
@@ -71,13 +71,19 @@ Opus转换支持文本与规范 `input_image`（PNG/JPEG/GIF/WebP的base64或HTT
 
 004的 **68题镜像、67题READY、18题NOT_READY** 保留为历史截止快照，见 [原结果](../readiness-skillsbench-full85-20261007-004/final-status.json)及 [原交接包快照](../readiness-skillsbench-full85-20261007-004/handoff-snapshot/snapshot.json)。005没有覆盖原文件、历史锁或包，也未续接任何旧模型checkpoint。
 
-READY要求fresh环境、公开终端、native Codex通过，以及官方grader探针通过或满足上述任务setup延期证据；不能仅以镜像build成功代替。本机证据不能替代同事机器的preflight。本轮共享代码测试与hash见 [acceptance.json](../readiness-skillsbench-full85-20261007-005/acceptance.json)。新项目Docker实例的三项native Codex/本地模拟provider检查也实际通过，见 [结果](../readiness-skillsbench-full85-20261007-004/native-codex-project-endpoint.json)；未使用真实key，不计模型成绩。
+READY要求fresh环境、公开终端、native Codex通过，以及官方grader探针通过或满足上述任务setup延期证据；不能仅以镜像build成功代替。本机证据不能替代同事机器的preflight。005源码的共享代码测试与hash见 [历史acceptance.json](../readiness-skillsbench-full85-20261007-005/acceptance.json)。新项目Docker实例的三项native Codex/本地模拟provider检查也实际通过，见 [结果](../readiness-skillsbench-full85-20261007-004/native-codex-project-endpoint.json)；未使用真实key，不计模型成绩。
 
 2026-10-07第一次准备快照为 **41题当前源码Docker准入通过，44题未就绪**。这44题包括43题尚未启动准备及1题被取消的Druid慢下载。实施侧为了交接提前停止了准备；这不是用户要求，也不是已测得的任务失败或磁盘阻塞。原记录的`DEFERRED_BY_HANDOFF_FREEZE`及`PREPARATION_FROZEN_AT_USER_HANDOFF`应按上述更正理解，保留原文件字节供追溯。Docker磁盘12GiB保护线当时未触发；原任务的构建/评分时限未改。该次85条状态记录中的`pending=0`仅表示调度停止，不表示85题完成准入。97份历史锁字节未变。原快照见 [summary](../readiness-skillsbench-full85-20261007-001/summary.json)，逐题锁/结果校验见 [validation](../readiness-skillsbench-full85-20261007-001/validation.json)。
 
 第二次准备留下 **51题READY、34题NOT_READY**；52题已构建并锁定，其中SimPO尚未通过fresh准入。新增尝试中18次构建、1次准入实际触发磁盘保护线；另15题未派发。该轮已停止，旧实例证据保持历史状态；不是完整85题已验收。详见 [补验摘要](../readiness-skillsbench-full85-20261007-002/summary.json)、[验证记录](../readiness-skillsbench-full85-20261007-002/validation.json)及 [原停止归因更正](../readiness-skillsbench-full85-20261007-002/prior-status-correction.json)。第一次交接包与manifest已按原字节保存在 [历史快照](../readiness-skillsbench-full85-20261007-001/handoff-snapshot/snapshot.json)。004重新做逐题fresh准入，历史READY不直接沿用。
 
-当前共享回归 **1183 passed／54显式跳过**；本轮真实SkillsBench Docker检查 **8 passed／5项未启用workspace检查跳过**，全源码lint、编译及配置检查通过，见 [005代码验收](../readiness-skillsbench-full85-20261007-005/acceptance.json)。历史银行/helper Docker、两型号native CLI及原图输入反例保留在001/004证据中，不混称本轮重测。跳过项不算通过，模拟provider用量和fixture reward不算模型成绩。第二名独立审查者已复核代码、真实SimPO证据与接收机命令；最终交接包另有hash和成员复核。
+当前共享回归 **1231 passed、56 skipped**；lint、格式、编译及两域/两型号配置检查通过。本次修复的代码、回归、真实Docker检查及交叉审查集中在 [acceptance.json](../readiness-skillsbench-verifier-20261007-001/acceptance.json)。005的1183项共享回归和8项SkillsBench Docker检查为旧源码记录，保留在原路径，不混称新代码验收。跳过项不算通过，模拟provider和fixture reward不算模型成绩。本次Docker检查中，26项真实容器检查通过、11项清理单元/mock检查通过、5项folder/workspace检查未启用。真实项覆盖固定Python runner、3d-scan-calc、fix-visual-stability及dialogue-parser清理；环境与镜像hash见 [docker-checks.json](../readiness-skillsbench-verifier-20261007-001/docker-checks.json)。这不是全85题重新准入，也没有真实模型调用。
+
+本次修复统一了Verifier调试提交与最终封存的校验，非法提交可在原30轮内纠正；正式验证使用与调试一致的scratch目录和挂载。原测试及正式修复运行、逐阶段失败和提交拒绝原因进入机器证据；通过后的报告不再复制旧失败诊断。包只接受UTF-8文本；非法修订可在同一次尝试内修正，原字节hash保留。S0只接受完整JSON或完整单一JSON fence，仍最多一个POST，不接受夹带解释的输出，不对UNKNOWN重发。
+
+这些修复不能保证公开测试理解每题正确，也不能保证演化单调提升。Verifier须以当前任务公开要求和实际输入为依据，背景算法例子不能直接变成唯一正确性要求。正式成功仍由fresh官方评分决定。公开审计保留测试、运行和失败证据，Generator仍只获得受限失败类别与oracle布尔结果；不将原始诊断、测试源码或隐藏评分回流。
+
+必须使用新的空运行目录（下文`matrix-verifier-fix-001`及`smoke/verifier-fix-001`）。源码与提示变化产生新identity，旧未完成checkpoint不能续接；完整旧结果继续只读。上一个交接包、manifest及HANDOFF的原字节保存在 [修复前快照](../readiness-skillsbench-verifier-20261007-001/handoff-snapshot/snapshot.json)。
 
 | 尚需运行者确认 | 处理方式 |
 |---|---|
@@ -104,7 +110,7 @@ SB_CODE=experiments/tau-knowledge/skill-evolution
 SB_VARIANT=full-85-gpt56-v4
 SB_PACK="$SB_CODE/runs/skillsbench/$SB_VARIANT"
 SB_CFG="$SB_PACK/config.yaml"
-SB_RUN="$SB_PACK/matrix"
+SB_RUN="$SB_PACK/matrix-verifier-fix-001"
 export AWS_REGION=us-east-1
 docker version
 docker compose version
@@ -265,7 +271,7 @@ SB_CODE=experiments/tau-knowledge/skill-evolution
 SB_VARIANT=full-85-gpt56-v4  # Opus实验改为full-85-opus48-v4
 SB_PACK="$SB_CODE/runs/skillsbench/$SB_VARIANT"
 SB_CFG="$SB_PACK/config.yaml"
-SB_RUN="$SB_PACK/matrix"
+SB_RUN="$SB_PACK/matrix-verifier-fix-001"
 SB_ROOT=$(realpath "$SB_CODE")
 SB_OUTER_HOST=unix:///var/run/docker.sock
 SB_DOCKER_NAME=skill-evolution-project-$(id -un)
@@ -361,7 +367,7 @@ unset AWS_BEARER_TOKEN_BEDROCK
 先以 dialogue-parser 跑baseline及完整链；这里开始收费。smoke和matrix隔离，不拿smoke checkpoint续正式矩阵，不用smoke结果挑任务或改方法。
 
 ```bash
-SB_SMOKE="$SB_PACK/smoke/trial-001"
+SB_SMOKE="$SB_PACK/smoke/verifier-fix-001"
 set -e
 mkdir -p "$SB_PACK/smoke"
 .venv/bin/r2sp preflight --experiment skillsbench --runtime docker --config "$SB_CFG" --task dialogue-parser > "$SB_PACK/smoke/preflight.json"
@@ -374,7 +380,7 @@ mkdir -p "$SB_PACK/smoke"
 
 ## 8. 第五步：NoSkill 与85条完整链
 
-全部85题preflight通过且smoke机制确认后，在空 `matrix/` 中按以下顺序运行。建议先只跑一套模型，避免互相争用资源；两套用各自的 `SB_CFG/SB_RUN` 重复全部步骤。NoSkill可能耗时，完整矩阵不保证一小时key完成，需持续有效凭据。
+全部85题preflight通过且smoke机制确认后，在空 `matrix-verifier-fix-001/` 中按以下顺序运行。建议先只跑一套模型，避免互相争用资源；两套用各自的 `SB_CFG/SB_RUN` 重复全部步骤。NoSkill可能耗时，完整矩阵不保证一小时key完成，需持续有效凭据。
 
 ```bash
 set -e
@@ -391,9 +397,9 @@ NoSkill以同型号、同native执行器fresh完成任务，不创建Skill，不
 
 | 位置 | 用途 |
 |---|---|
-| `matrix/launcher-status.json`、`matrix/logs/` | 每题进程/退出/鉴权停止与运行日志；exit0不等于utility1 |
-| `matrix/report.json`、`matrix/REPORT.md` | 正式任务/版本/配对汇总；运行中避免和cell锁冲突，最好结束后统一report |
-| `matrix/journal/identity.json` | 源码、配置、提示、数据、环境身份；不手动改hash |
+| `matrix-verifier-fix-001/launcher-status.json`、`matrix-verifier-fix-001/logs/` | 每题进程/退出/鉴权停止与运行日志；exit0不等于utility1 |
+| `matrix-verifier-fix-001/report.json`、`matrix-verifier-fix-001/REPORT.md` | 正式任务/版本/配对汇总；运行中避免和cell锁冲突，最好结束后统一report |
+| `matrix-verifier-fix-001/journal/identity.json` | 源码、配置、提示、数据、环境身份；不手动改hash |
 | cell中的FrozenBase、sealed包、submission、tests、evolution、evaluation | 逐步封存、父版本/快照/测试/评分依据，实际路径以report和journal引用为准 |
 | `data/skillsbench/private-models/.../official-grader/` | 私有逐项CTRF、reward、stdout/stderr/hash，审计用，不给模型或公开交接包 |
 
@@ -417,11 +423,11 @@ NoSkill以同型号、同native执行器fresh完成任务，不创建Skill，不
 | 每题 S0、S1、S2… | 全部实际内容hash的utility、reward、GT passed/total/rate及计数单位，不补造早停版本 |
 | 相邻版本 Δ | 对每个实际相邻内容版本算Δutility、Δreward、ΔGT；同题双方均实测，GT单位/总数/来源一致，否则null及原因 |
 | NoSkill→S0、S0→Final | 同样配对；各指标分别报paired_n、均值、救回/退化数量；Final=S0注明共享一次测量 |
-| Surrogate | 实际pytest用例通过数/收集数，不是assert数量；只在同suite比较，升级后的分母不能当连续进步 |
-| 演化成本与停止 | 修订尝试、unique内容、提交、learning execution、terminal、suite、oracle有效/错误次数、停止原因、provider usage；金额无账单/报价则未测 |
+| Surrogate | 实际pytest用例通过数/收集数；只在同suite比较，升级后的分母不能当连续进步 |
+| 演化成本与停止 | 修订尝试、unique内容、提交、learning execution、terminal、suite、oracle有效/错误次数、停止原因、provider usage、逻辑请求状态及delivery policy；逐HTTP尝试无封存记录时为NOT_MEASURED，不能把逻辑请求数当POST数；金额无账单/报价则未测 |
 
 本pipeline原生报告已支持相邻版本和两端增量，不需手工补S1–S5。S编号是去重后的内容版本，**不是**执行次数或修订尝试；invalid/unchanged仍耗M，A→B→A最终父版本指B，但内容仅两个。缺测写null/`NOT_MEASURED`，不能当实测0；公开通过不能替代官方成绩。SkillsBench不报告银行ASR/Action Recall。
 
 历史GPT5.4十题见 [REPORT](gpt54-direct-10-20261007-001/REPORT.md)：NoSkill10题4成功，S0实测7题3成功，Final实测6题4成功；coverage不同不能直接做3/7→4/6结论。DAPT某次修订损坏了公开端口统计；另有检查范围歧义，历史原始CTRF缺失不能补造具体官方失败项。新版已加强公开义务引用/范围、逐项原始证据封存、上下文输入和反馈隔离，但不保证单调提高。本次本机准备未调用两套新模型，模型兼容性和成绩为 `NOT_MEASURED`。
 
-同事另机的 [v4-terra-opus-run-20261007结果](https://github.com/Cthloveross/Skill-Creation/blob/bfa88e58/experiments/tau-knowledge/skill-evolution/runs/skillsbench/RESULTS-20261007.md)已有Docker测量，仍有4题未启动及阶段缺测。该分支增加了请求重发，包含S0超时或空输出，偏离本交接的单POST创建边界；其源码与镜像锁身份也不同。结果按该分支独立报告，不能当成本机005环境验收或本交接身份的模型成绩，当前不合并源码与checkpoint。
+同事另机的 [v4-terra-opus-run-20261007结果](https://github.com/Cthloveross/Skill-Creation/blob/bfa88e58/experiments/tau-knowledge/skill-evolution/runs/skillsbench/RESULTS-20261007.md)已有Docker测量，仍有4题未启动及阶段缺测。该分支增加了请求重发，包含S0超时或空输出，偏离本交接的单POST创建边界；其源码与镜像锁身份也不同。结果按该分支独立报告，不能当成本机005环境验收或本交接身份的模型成绩，当前不合并源码与checkpoint。当前修复身份尚未运行真实模型，不能把同事分支成绩写成修复后结果。

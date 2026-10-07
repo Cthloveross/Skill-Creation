@@ -1,0 +1,30 @@
+{
+  "schema": "skillsbench.packet-verification.v1",
+  "status": "PASS",
+  "artifact": "../skillsbench/skillsbench-v4-source.tar.gz",
+  "sha256": "09f2888083a0b224f01671452d968483e27cc7fcacd357f26d1f365164a880ad",
+  "bytes": 2569832,
+  "file_count": 690,
+  "all_regular": true,
+  "all_member_hashes_match": true,
+  "source_bytes_unchanged": true,
+  "acceptance_sha256": "43311c8557058c1d89593fdd0f4c9c4e6fea8295a7c5681ef3812d25a29be593",
+  "variants": [
+    "full-85-gpt56-v4",
+    "full-85-opus48-v4"
+  ],
+  "old_packet_preserved": "handoff-snapshot/snapshot.json",
+  "credentials_copied": false,
+  "independent_review": {
+    "reviewer": "colleague_method_review",
+    "status": "PASS",
+    "scope": [
+      "archive SHA and 690 member hashes",
+      "acceptance attachment hashes",
+      "two manifest reference hashes and exact spec identities",
+      "old snapshots unchanged",
+      "public data unchanged; no added credentials or private grader sources"
+    ],
+    "additional_tests": 0
+  }
+}

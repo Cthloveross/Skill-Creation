@@ -1,0 +1,4 @@
+/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/configs/experiment.yaml tau.skill-evolution.v4 97 8d65a541734253e9d986c3f939246ce2f1d3c09315f8fdac7f11040ff5f03ded
+/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/configs/skillsbench.yaml skillsbench.skill-evolution.v4 85 a6dfd9de4b15bcb5628cf334eee8c9e53911e687ec5d312cc881ec2cbf2cf42e
+/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-gpt56-v4/config.yaml skillsbench.skill-evolution.v4 85 e152b339a58b4a45bc99bedf939e3d76a31e4f3e0a586ad8b5b380080ba9abd4
+/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-opus48-v4/config.yaml skillsbench.skill-evolution.v4 85 aee5f030a4c8ee32212b51ae9c4b19a36ae99d1a1cbf530431e3f7a96dca1016

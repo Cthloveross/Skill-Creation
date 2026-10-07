@@ -296,6 +296,120 @@ def test_legacy_final_result_can_be_read_without_fabricating_lineage():
     assert restored.final_bundle_ref is None and restored.final_bundle == result.versions[0]
 
 
+@pytest.mark.parametrize(
+    "stage,operation,reason,stop",
+    [
+        (
+            "initial_execution",
+            "evolution-initial-execution",
+            "invalid_initial",
+            "initial_execution_failed",
+        ),
+        (
+            "verifier_initialization",
+            "evolution-turn-0-suite",
+            "missing_test_obligations",
+            "verifier_initialization_failed",
+        ),
+        ("verification", "evolution-turn-0-verify", "invalid_test_report", "verification_failed"),
+        (
+            "test_escalation",
+            "evolution-turn-0-escalate",
+            "escalation_only_renamed_checks",
+            "test_escalation_failed",
+        ),
+    ],
+)
+def test_phase_exception_retains_exact_failure_audit(stage, operation, reason, stop):
+    class BrokenVerifier(Verifier):
+        def create_suite(self, *args, previous_tests=None, **kwargs):
+            if stage == "verifier_initialization" or (
+                stage == "test_escalation" and previous_tests is not None
+            ):
+                raise ValueError(reason)
+            return super().create_suite(*args, previous_tests=previous_tests, **kwargs)
+
+        def verify(self, *args, **kwargs):
+            if stage == "verification":
+                raise ValueError(reason)
+            return super().verify(*args, **kwargs)
+
+    def execute_initial(*args, **kwargs):
+        if stage == "initial_execution":
+            raise ValueError(reason)
+        return _initial_submission(*args, **kwargs)
+
+    result = EvolutionEngine(
+        execute_initial=execute_initial,
+        oracle=lambda _: False,
+        verifier=BrokenVerifier([True]),
+        revise=lambda *a, **k: pytest.fail("phase failure cannot revise"),
+    ).run({}, FrozenBase((), {}), SkillBundle({"SKILL.md": "initial"}))
+    assert result.stop_reason == stop
+    assert result.stage_failures == (
+        {
+            "stage": stage,
+            "operation_id": operation,
+            "exception_type": "ValueError",
+            "reason": reason,
+            "detail": f"ValueError: {reason}",
+        },
+    )
+    assert EvolutionResult.from_dict(result.to_dict()).to_dict() == result.to_dict()
+    legacy = result.to_dict()
+    del legacy["stage_failures"]
+    assert EvolutionResult.from_dict(legacy).stage_failures == ()
+
+
+@pytest.mark.parametrize(
+    "reason,detail",
+    [
+        ("test_change_without_justification", "test_change_without_justification"),
+        ("non_utf8_package_file", "non_utf8_package_file: tests/test_public.py"),
+    ],
+)
+def test_wrapped_verifier_exception_keeps_stable_underlying_reason(reason, detail):
+    class BrokenVerifier:
+        def create_suite(self, *args, **kwargs):
+            try:
+                raise ValueError(detail)
+            except ValueError as exc:
+                raise RuntimeError("authoring rejected after submission") from exc
+
+    result = EvolutionEngine(
+        execute_initial=_initial_submission,
+        oracle=None,
+        verifier=BrokenVerifier(),
+        revise=None,
+    ).run({}, FrozenBase((), {}), SkillBundle({"SKILL.md": "initial"}))
+    failure = result.stage_failures[0]
+    assert failure["exception_type"] == "RuntimeError"
+    assert failure["reason"] == reason
+    assert f"ValueError: {detail}" in failure["detail"]
+
+
+def test_verifier_budget_stop_exports_rejection_evidence_without_sending_it_to_generator():
+    from test_verifier import PublicRunner, ToolModel, call, submission
+
+    invalid = submission()
+    invalid["recommendations"] = [42]
+    model = ToolModel([call("submit_tests", invalid)] * 30)
+    result = EvolutionEngine(
+        execute_initial=_initial_submission,
+        oracle=lambda _: pytest.fail("invalid tests cannot call oracle"),
+        verifier=SurrogateVerifier(model, PublicRunner()),
+        revise=lambda *a, **k: pytest.fail("invalid tests cannot reach generator"),
+    ).run(
+        {"request": "complete the action"}, FrozenBase((), {}), SkillBundle({"SKILL.md": "initial"})
+    )
+    failure = result.to_dict()["stage_failures"][0]
+    assert failure["reason"] == "verifier_episode_budget_exhausted"
+    assert len(failure["rejections"]) == 30
+    assert failure["rejections"][-1]["reason"] == "invalid_test_recommendations"
+    assert failure["rejections"][-1]["operation_id"] == "evolution-turn-0-suite-turn-29-tool-0"
+    assert result.revision_attempts == result.oracle_calls == 0
+
+
 def test_old_final_result_checkpoint_is_not_resumed(tmp_path):
     initial, base = SkillBundle({"SKILL.md": "initial"}), FrozenBase((), {})
     result, _, _, _ = run([True], [True], revised)
@@ -548,6 +662,10 @@ def test_verifier_diagnosis_auth_failure_stops_before_skill_revision_or_oracle(t
     )
     result = engine.run({}, base, initial)
     assert result.stop_reason == "authentication_failed"
+    failure = result.stage_failures[0]
+    assert failure["stage"] == "verification" and failure["reason"] == "authentication_failed"
+    assert failure["test_runs"][0]["operation_id"] == "evolution-turn-0-verify-tests"
+    assert failure["test_runs"][0]["program"]["output"]["results"][0]["outcome"] == "failed"
     assert result.revision_attempts == result.oracle_calls == 0
     assert calls == ["initial", "pytest", "diagnosis"]
     assert journal.completed("evolution-result")

@@ -7,6 +7,7 @@ from tau_skill_evolution.artifacts import (
     EvolutionSubmission,
     FrozenBase,
     SkillBundle,
+    decode_package_text,
     load_base,
     load_bundle,
     normalize_document,
@@ -131,6 +132,24 @@ def test_seals_never_replace_different_artifacts_and_reject_old_protocol(tmp_pat
 def test_file_directory_path_collision_rejected():
     with pytest.raises(ValueError, match="both"):
         SkillBundle({"SKILL.md": "ok", "references/a": "file", "references/a/b": "nested"})
+
+
+@pytest.mark.parametrize("relative", ["SKILL.md", "references/data.bin", "manifest.json"])
+def test_non_utf8_sealed_package_is_a_known_validation_error(tmp_path, relative):
+    path = seal_bundle(
+        tmp_path / "package", SkillBundle({"SKILL.md": "ok", "references/data.bin": "text"})
+    )
+    (path / relative).write_bytes(b"\xff\xfe\x00")
+    with pytest.raises(ValueError, match=f"non_utf8_package_file: {relative}") as failure:
+        load_bundle(path)
+    assert not isinstance(failure.value, UnicodeError)
+
+
+def test_text_package_rejects_surrogates_without_replacing_bytes():
+    with pytest.raises(ValueError, match="non_utf8_package_file: SKILL.md") as failure:
+        SkillBundle({"SKILL.md": "\udcff"})
+    assert not isinstance(failure.value, UnicodeError)
+    assert decode_package_text("café\r\n".encode(), "SKILL.md") == "café\r\n"
 
 
 def test_submission_binds_package_execution_and_public_snapshot():

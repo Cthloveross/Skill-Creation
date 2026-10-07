@@ -5,6 +5,7 @@ from contextlib import contextmanager
 
 import pytest
 from tau_skill_evolution.artifacts import FrozenBase
+from tau_skill_evolution.constants import EXPERIMENT_ROOT
 from tau_skill_evolution.container import (
     _PYTEST_HARNESS,
     ContainerUnavailable,
@@ -18,6 +19,7 @@ from tau_skill_evolution.model import ModelClientError, authentication_status
 from tau_skill_evolution.verifier import (
     SurrogateVerifier,
     TestSuite,
+    VerificationReport,
     _inheritance,
     _report,
     _suite_structure,
@@ -671,6 +673,78 @@ def test_repair_cannot_reduce_parameter_cases():
         and "repair_removed_collected_checks" in report.diagnosis
     )
     assert len(report.results) == 2
+    assert len(report.test_runs) == 2
+    assert report.test_runs[0]["program"]["output"]["collected"] == 2
+    assert report.test_runs[1]["program"]["output"]["collected"] == 1
+    assert report.stage_failures[0]["reason"] == "repair_removed_collected_checks"
+    assert report.stage_failures[0]["operation_id"] == "verification-repaired-tests"
+
+
+def test_repair_rejection_retains_original_run_and_exact_metadata_error():
+    original = TestSuite(suite().files, obligations=(submission()["obligations"][0],))
+
+    class Runner:
+        def run_verifier(self, *args):
+            return program("failed", exception="NameError", requirement_failure=False)
+
+    raw = submission()
+    raw["obligations"][0]["requirement"] = "weakened requirement"
+    raw["files"] = [{"path": "tests/test_public.py", "content": SOURCE}]
+    report = SurrogateVerifier(lambda _: raw, Runner()).verify(
+        {"request": "complete the action"}, FrozenBase((), {}), {}, original
+    )
+    assert report.failure == "test_repair_failed" and report.suite == TestSuite(
+        original.files, repairs=1, obligations=original.obligations
+    )
+    assert report.results[0]["exception"] == "NameError"
+    assert len(report.test_runs) == 1
+    assert report.stage_failures == (
+        {
+            "stage": "repair",
+            "operation_id": "verification-repair",
+            "exception_type": "ValueError",
+            "reason": "removed_or_changed_test_obligation",
+            "detail": "ValueError: removed_or_changed_test_obligation",
+        },
+    )
+    assert VerificationReport.from_dict(report.to_dict()).to_dict() == report.to_dict()
+
+
+@pytest.mark.parametrize("repair", [False, True])
+def test_current_pass_does_not_repeat_previous_failure_diagnosis(repair):
+    stale = TestSuite(
+        suite().files,
+        diagnosis="four pass, plaintiff-name fails",
+        recommendations=("fill plaintiff-name",),
+    )
+
+    class Runner:
+        calls = 0
+
+        def run_verifier(self, *args):
+            self.calls += 1
+            if repair and self.calls == 1:
+                return program("failed", exception="NameError", requirement_failure=False)
+            return program()
+
+    report = SurrogateVerifier(
+        lambda _: {
+            "files": [{"path": "tests/test_public.py", "content": SOURCE}],
+            "diagnosis": stale.diagnosis,
+            "recommendations": list(stale.recommendations),
+        },
+        Runner(),
+    ).verify({}, FrozenBase((), {}), {}, stale)
+    assert report.passed and report.diagnosis == "" and report.recommendations == ()
+    assert len(report.test_runs) == 1 + int(repair)
+
+
+def test_verification_report_legacy_audit_fields_default_to_empty():
+    value = _report(suite(), program()).to_dict()
+    del value["test_runs"]
+    del value["stage_failures"]
+    report = VerificationReport.from_dict(value)
+    assert report.test_runs == report.stage_failures == ()
 
 
 def _harness_program(tmp_path, source, trace=None):
@@ -947,6 +1021,142 @@ def test_interactive_initial_checks_can_be_debugged_before_sealing():
     assert "NameError" in model.requests[-1][0][-1]["content"]
 
 
+def test_active_skillsbench_prompt_reaches_model_with_corrected_verification_contract():
+    prompt = (EXPERIMENT_ROOT / "prompts/verifier-skillsbench.md").read_text()
+    model = ToolModel(
+        [call("terminal", {"command": "write checks"}), call("submit_tests", submission())]
+    )
+    SurrogateVerifier(model, PublicRunner(), system_prompt=prompt).create_suite(
+        {"request": "complete the action"}, FrozenBase((), {}), {}
+    )
+    sent = model.requests[0][0][0]
+    assert sent == {"role": "system", "content": prompt}
+    assert "heuristic unless the task expressly makes it mandatory" in sent["content"]
+    assert "multiple reasonable preprocessing, phase, and duration choices" in sent["content"]
+    assert "A rejected submission returns the specific reason" in sent["content"]
+    assert "Diagnosis and recommendations describe the current measured run" in sent["content"]
+
+
+@pytest.mark.parametrize(
+    "field,value,reason",
+    [
+        ("diagnosis", 42, "invalid_test_diagnosis"),
+        ("recommendations", [42], "invalid_test_recommendations"),
+        ("diagnosis", None, "missing_test_submission_metadata"),
+    ],
+)
+def test_interactive_submission_metadata_errors_can_be_corrected(field, value, reason):
+    invalid = submission()
+    if value is None:
+        del invalid[field]
+    else:
+        invalid[field] = value
+    model = ToolModel(
+        [
+            call("terminal", {"command": "write checks"}),
+            call("submit_tests", invalid),
+            call("submit_tests", submission()),
+        ]
+    )
+    created = SurrogateVerifier(model, PublicRunner()).create_suite(
+        {"request": "complete the action"}, FrozenBase((), {}), {}
+    )
+    assert created.files == suite().files and len(model.requests) == 3
+    assert reason in model.requests[-1][0][-1]["content"]
+
+
+@pytest.mark.parametrize(
+    "violation,reason",
+    [
+        ("obligation", "removed_or_changed_test_obligation"),
+        ("change_notes", "test_change_without_justification"),
+        ("rename", "escalation_only_renamed_checks"),
+        ("empty_cases", "escalation_added_no_collected_checks"),
+    ],
+)
+def test_interactive_escalation_returns_full_validation_error_then_accepts_correction(
+    violation, reason
+):
+    original = TestSuite(suite().files, obligations=(submission()["obligations"][0],))
+    valid_source = SOURCE + "\ndef test_complete(trace): assert trace['complete']"
+    if violation == "rename":
+        invalid_source = SOURCE.replace("test_public", "test_renamed")
+    elif violation == "empty_cases":
+        invalid_source = (
+            SOURCE + "\nimport pytest\n@pytest.mark.parametrize('value', [])\n"
+            "def test_complete(value): assert value"
+        )
+    else:
+        invalid_source = valid_source
+
+    class Runner(PublicRunner):
+        def _terminal(self, package, work, command):
+            (work / "tests/test_public.py").write_text(
+                invalid_source if command == "invalid upgrade" else valid_source
+            )
+            return ProgramResult(0, {})
+
+        def _run(self, package, work, args):
+            source = (work / "tests/test_public.py").read_text()
+            ids = ["tests/test_public.py::test_public"]
+            if source == valid_source:
+                ids.append("tests/test_public.py::test_complete")
+            return program(ids=ids)
+
+    valid = submission()
+    valid["obligations"][0]["checks"].append("tests/test_public.py::test_complete")
+    valid["change_notes"] = {
+        "tests/test_public.py": {"reason": "check completion", "evidence": ["complete the action"]}
+    }
+    invalid = json.loads(json.dumps(valid))
+    if violation == "obligation":
+        invalid["obligations"][0]["requirement"] = "weakened action"
+    elif violation == "change_notes":
+        del invalid["change_notes"]
+    elif violation == "rename":
+        invalid["obligations"][0]["checks"] = ["tests/test_public.py::test_renamed"]
+    model = ToolModel(
+        [
+            call("terminal", {"command": "invalid upgrade"}),
+            call("submit_tests", invalid),
+            call("terminal", {"command": "valid upgrade"}),
+            call("submit_tests", valid),
+        ]
+    )
+    upgraded = SurrogateVerifier(model, Runner()).create_suite(
+        {"request": "complete the action"}, FrozenBase((), {}), {}, original
+    )
+    assert upgraded.version == 1 and upgraded.files["tests/test_public.py"] == valid_source
+    rejected = json.loads(model.requests[2][0][-1]["content"])
+    assert rejected == {"failure": "ValueError", "detail": reason}
+    assert upgraded.obligations[0]["requirement"] == original.obligations[0]["requirement"]
+    assert len(model.requests) == 4
+
+
+def test_interactive_repair_can_correct_obligation_error_before_sealing():
+    original = TestSuite(suite().files, obligations=(submission()["obligations"][0],))
+    invalid = submission()
+    invalid["obligations"][0]["requirement"] = "weakened action"
+
+    class Runner(PublicRunner):
+        calls = 0
+
+        def run_verifier(self, *args):
+            self.calls += 1
+            return (
+                program("failed", exception="NameError", requirement_failure=False)
+                if self.calls == 1
+                else program()
+            )
+
+    model = ToolModel([call("submit_tests", invalid), call("submit_tests", submission())])
+    report = SurrogateVerifier(model, Runner()).verify(
+        {"request": "complete the action"}, FrozenBase((), {}), {}, original
+    )
+    assert report.passed and report.suite.repairs == 1 and len(report.test_runs) == 2
+    assert "removed_or_changed_test_obligation" in model.requests[1][0][-1]["content"]
+
+
 def test_interactive_diagnosis_uses_readonly_tests_and_eight_turn_budget():
     runner = PublicRunner()
     model = ToolModel([call("terminal", {"command": "inspect public"})] * 8)
@@ -965,6 +1175,26 @@ def test_interactive_initial_turn_budget_is_thirty():
     with pytest.raises(ValueError, match="verifier_episode_budget_exhausted"):
         SurrogateVerifier(model, runner).create_suite({}, FrozenBase((), {}), {})
     assert len(model.requests) == 30
+
+
+def test_thirty_turn_budget_exception_retains_every_known_submission_rejection():
+    invalid = submission()
+    invalid["recommendations"] = [42]
+    model = ToolModel([call("submit_tests", invalid)] * 30)
+    with pytest.raises(ValueError, match="verifier_episode_budget_exhausted") as raised:
+        SurrogateVerifier(model, PublicRunner()).create_suite(
+            {"request": "complete the action"}, FrozenBase((), {}), {}
+        )
+    assert len(model.requests) == len(raised.value.rejections) == 30
+    rejection = raised.value.rejections[-1]
+    assert rejection == {
+        "stage": "test_submission",
+        "operation_id": "verifier-initial-turn-29-tool-0",
+        "exception_type": "ValueError",
+        "reason": "invalid_test_recommendations",
+        "detail": "ValueError: invalid_test_recommendations",
+    }
+    assert "rejections" not in model.requests[-1][0][-1]["content"]
 
 
 def test_persistent_verifier_workspace_tampering_stops_replay(tmp_path):

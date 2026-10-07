@@ -125,6 +125,14 @@ def validate_relative_path(value: str) -> str:
     return value
 
 
+def decode_package_text(content: bytes, relative_path: str) -> str:
+    """Reject non-text package bytes as a known validation failure."""
+    try:
+        return content.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ValueError(f"non_utf8_package_file: {relative_path}") from exc
+
+
 @dataclass(frozen=True)
 class SkillBundle:
     files: Mapping[str, str]
@@ -139,7 +147,10 @@ class SkillBundle:
             validate_relative_path(path)
             if not isinstance(content, str):
                 raise ValueError("package content must be UTF-8 text")
-            content.encode("utf-8")
+            try:
+                content.encode("utf-8")
+            except UnicodeEncodeError as exc:
+                raise ValueError(f"non_utf8_package_file: {path}") from exc
             copied[path] = content
         for path in copied:
             if any(
@@ -368,8 +379,10 @@ def load_bundle(path: str | Path) -> SkillBundle:
         if relative == "manifest.json":
             continue
         validate_relative_path(relative)
-        files[relative] = item.read_text(encoding="utf-8")
-    manifest = json.loads((path / "manifest.json").read_text(encoding="utf-8"))
+        files[relative] = decode_package_text(item.read_bytes(), relative)
+    manifest = json.loads(
+        decode_package_text((path / "manifest.json").read_bytes(), "manifest.json")
+    )
     return SkillBundle.from_dict({**manifest, "files": files})
 
 

@@ -1,0 +1,15 @@
+{
+  "exit_code": 0,
+  "output": {
+    "previous": null,
+    "helper": 7,
+    "reference": "public policy",
+    "versions": {
+      "numpy": "2.2.6",
+      "pandas": "2.2.3",
+      "pytest": "8.4.2"
+    }
+  },
+  "stderr": "",
+  "failure": null
+}

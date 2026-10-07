@@ -1,10 +1,10 @@
 {
   "schema": "skillsbench.source-transfer.v2",
-  "created_at": "2026-10-07T20:59:12.951308+00:00",
+  "created_at": "2026-10-07T22:05:41.638887+00:00",
   "artifact": "skillsbench-v4-source.tar.gz",
-  "artifact_sha256": "f49f9605a9cf1dc72ab33a4d2eedbbd07c734890c95aaf802fbf92c38d157c34",
-  "artifact_bytes": 2574388,
-  "file_count": 648,
+  "artifact_sha256": "09f2888083a0b224f01671452d968483e27cc7fcacd357f26d1f365164a880ad",
+  "artifact_bytes": 2569832,
+  "file_count": 690,
   "source": "Frozen implementation and public data; member hashes verified",
   "method": "skillsbench.skill-evolution.v4",
   "models": [
@@ -28,7 +28,8 @@
   },
   "historical_handoff_preserved": [
     "../readiness-skillsbench-full85-20261007-001/handoff-snapshot/snapshot.json",
-    "../readiness-skillsbench-full85-20261007-004/handoff-snapshot/snapshot.json"
+    "../readiness-skillsbench-full85-20261007-004/handoff-snapshot/snapshot.json",
+    "../readiness-skillsbench-verifier-20261007-001/handoff-snapshot/snapshot.json"
   ],
   "current_public_corpus_chunks": 122,
   "original_public_backgrounds": 85,
@@ -79,8 +80,8 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/PROTOCOL.md",
-      "sha256": "b06d7f00c75b82b6b0a9eeccaaf154866b9c6c72d6d36eafefeaf0e43ab37873",
-      "bytes": 26540
+      "sha256": "4b76c5043f5f2cb26677b24a11d7b279175b3c63624698915e1a4a1eaa5432d6",
+      "bytes": 28332
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/README.md",
@@ -1214,13 +1215,13 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/prompts/verifier-skillsbench.md",
-      "sha256": "3f61b94678758faa6fe48b33713973560207efdaa6b2a5d7cc402f115604f714",
-      "bytes": 5037
+      "sha256": "acb36d9fbac4ddb4a1c1acd98ca6b39f9e3ddeeaa748c061e1662ffbe0ae4a2c",
+      "bytes": 6294
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/prompts/verifier.md",
-      "sha256": "7f52c8d470fee3c817682fe376572281280b73e12802c498018894ed2ebec6a8",
-      "bytes": 5886
+      "sha256": "3345e5e86da72976ccff6e1393c6614c05a4ce7984b461284817803902095020",
+      "bytes": 6387
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-direct-evolution-v4-20261007-001/acceptance.json",
@@ -1818,9 +1819,219 @@
       "bytes": 1364
     },
     {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/acceptance.json",
+      "sha256": "43311c8557058c1d89593fdd0f4c9c4e6fea8295a7c5681ef3812d25a29be593",
+      "bytes": 4069
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/cleanup-invalid_json.json",
+      "sha256": "0ba8cd917088623afcf92450246af1ebb1f1f7820f3e4c0cccd60d70071a3454",
+      "bytes": 128
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/cleanup-nonzero_exit.json",
+      "sha256": "5e7022ee76a3b0818c48a994c90cb62e79ae56a0fd51bae0b3887eeeae95dd9a",
+      "bytes": 128
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/cleanup-output_limit.json",
+      "sha256": "210313ad60b86252b34af4333ebf7a1f25e85575e5cbe41b7b626765751b7b91",
+      "bytes": 128
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/cleanup-timeout.json",
+      "sha256": "869598d607b99dba3ca7fbce9360270c63bbb099d06245fa3c699c467575ba49",
+      "bytes": 128
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/compile.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/config-check.log",
+      "sha256": "e637744061cdf70282cc60e774e1f4a2ebf80968e96838153ebc02138416d8ca",
+      "bytes": 842
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/cross-review.json",
+      "sha256": "56f56d96e28b6c51d2771009355be63bf23374d6bf2b94ea4d70a01201ac0ce1",
+      "bytes": 2342
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/dependencies-helper-reference.json",
+      "sha256": "33950357f37de87a791a025302094fafb44ff3de60df12a91f32b298b0062de1",
+      "bytes": 245
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/diff-check.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/docker-checks.json",
+      "sha256": "d014651fec5598e3c59130300ff23ea5f4af734eb9afd8c6c19b110b9d6ef622",
+      "bytes": 8305
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/docker-checks.log",
+      "sha256": "3d37179f4f549d752c8de905a68fa3a3722b97ab173baee68bc51b8f56d3bdb7",
+      "bytes": 746
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/environment.json",
+      "sha256": "4e099d5131c13f8e2cc2e8f1c63f1f18ef613ad082f5fed09ac634f2baceefbc",
+      "bytes": 342
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/format.log",
+      "sha256": "40be2b843808698b792420e7f7e2ecc59008bc39e9de2ea0c999ada5b5c4aa48",
+      "bytes": 27
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/lint.log",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "bytes": 19
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/network-host-environment-isolation.json",
+      "sha256": "d338a7bff5190fe6c2f992a3afb1c6acdfb05d933dfedc2c75e983d9c47a2467",
+      "bytes": 278
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/preflight-environment-not-ready.json",
+      "sha256": "d793caa0dc2fab96c39b6fb3654c4de7b19afc264b713001e71ef9d6c4061d23",
+      "bytes": 141
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/preflight.json",
+      "sha256": "95f7d0b2ccf8b9857cc61df55d9ff6ec0ef1c47fcccce1dbfc750d1aeb3e7a6a",
+      "bytes": 138
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/report-regressions.log",
+      "sha256": "72d5b164a31a4e04730410557c59cd25561c84bc446db2c4ac5b3b50fb265ef9",
+      "bytes": 113
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/resource-limits-readonly-bundle.json",
+      "sha256": "12c6f8d4baa165f24061b5cd76485117395d5ec285a5e916f3ab47c30dd9066d",
+      "bytes": 218
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/revision-parent-public-isolation.json",
+      "sha256": "7058e747243c6fc34ee7db1634c5d9f48a01a8ad8882c1962eef960d3f63081c",
+      "bytes": 344
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/script-failure-invalid_json.json",
+      "sha256": "0aaca8df7840e3bef084697dfbe1d5885cb6b2ad2cd5690fdf1b8e1aa527447a",
+      "bytes": 84
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/script-failure-nonzero_exit.json",
+      "sha256": "34f5b554fa2b95d86783ee3a13b16209959243d6451ca4992347be2292249f6a",
+      "bytes": 299
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/script-failure-output_limit.json",
+      "sha256": "2f2aac37a88ca6015c5b52a64e573bc63763ff4af823e19ebd2e893ec18b8027",
+      "bytes": 1109
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/script-failure-timeout.json",
+      "sha256": "2df37e06df4dda5189d9c025dcf52dc715286ed61aed7381c428c8f0e624daf1",
+      "bytes": 80
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/shared-tests.log",
+      "sha256": "b94c8ac7e5cb5f752512a4ed6c041ba7bbe705d55d9a17756b80de541c48c1cd",
+      "bytes": 8171
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/skillsbench-cleanup-normal.json",
+      "sha256": "3373832c83c612857c9c3035268f87468d0cdcee3376df65cc8e9a9e3d2615c3",
+      "bytes": 5219
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/skillsbench-cleanup-output_limit.json",
+      "sha256": "9dbf5dd1a7667a61009541410f0ac5fb4504559b182ff910eae274fd856814a4",
+      "bytes": 3825
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/skillsbench-cleanup-timeout.json",
+      "sha256": "f7d94a023e0b5b65640caee5626c3d24d705f406a9a692b51088785a5c80b60f",
+      "bytes": 2748
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/skillsbench-direct-generator-docker.json",
+      "sha256": "aa53d386b38ca452585e5da2854d5d9d508d8314cdca8ae1eaa7128fd3d06b82",
+      "bytes": 538
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/skillsbench-generator-local-provider-docker.json",
+      "sha256": "b272d5606cc5cf62bf4fe0b3bf8e7024f83b14c63751fa8cc21a2aec939c5ac7",
+      "bytes": 657
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/skillsbench-public-export-rebuild-counterexample.json",
+      "sha256": "d8ca561f1fd0ed784dfdf19eb65e2e2c93e991a631fa0409c3a18c1adc15119d",
+      "bytes": 5214
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/skillsbench-verifier-scratch.json",
+      "sha256": "062b846ea518ada222084015110eefa894dd6425fb74742ef203f8807bdd03c4",
+      "bytes": 1840
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/source-hashes.json",
+      "sha256": "7f869d67b5ff25f654ac20c5528d5fdadc38ecd48fee8f9772a9d65a442f0063",
+      "bytes": 11786
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/verifier-assertion-failure.json",
+      "sha256": "421bba1b9e37a79ed5073dbb58837edb08a5ed7231deee050e7a974425144f33",
+      "bytes": 2461
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/verifier-pass.json",
+      "sha256": "9f62047334425acb385ad670ea8bcdee24e5dfac619de53eaa8d8b92bbb8757b",
+      "bytes": 573
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/verifier-public-file-authoring.json",
+      "sha256": "9f62047334425acb385ad670ea8bcdee24e5dfac619de53eaa8d8b92bbb8757b",
+      "bytes": 573
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/verifier-readonly-diagnosis.json",
+      "sha256": "3a7e0e9be2ccdb981abb9893bba654034c50862da33306e1a09d18393e87d8d0",
+      "bytes": 778
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/verifier-serializer-contamination.json",
+      "sha256": "4a0c1a2202e5b9b01ea11c243d42f9d7eee760266e1d6f7607e7336437eb2327",
+      "bytes": 5224
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/verifier-shared-scratch-contract.json",
+      "sha256": "57a25bad75382e096492392166506cb82052cee36d439b160d658de5518d9f60",
+      "bytes": 1308
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/verifier-skip.json",
+      "sha256": "42de9ce2da5a36aa62e061299900dcb974a33f65833dbd9da642b65de8b68537",
+      "bytes": 1768
+    },
+    {
+      "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-verifier-20261007-001/verifier-xfail.json",
+      "sha256": "e262f802d9da4d247a922dfa002fd93b6ba9eb47d1a8cda5dde56bcb9780a000",
+      "bytes": 2021
+    },
+    {
       "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md",
-      "sha256": "03ca7981ef9c95e94547364a3cd1fb1fb79434001369bb6ffa6b56309b5b1e12",
-      "bytes": 39664
+      "sha256": "7f410a79b48e803ac070a95112a403e74ed0fb344960759920b2c5ae6a59b443",
+      "bytes": 41758
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-gpt56-v4/config.yaml",
@@ -1829,8 +2040,8 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-gpt56-v4/manifest.json",
-      "sha256": "abab5e7b914bfacf7ab86c950f050f35b0577a8ee5e0802bfe3d03402cae673e",
-      "bytes": 458294
+      "sha256": "24428e6240a33a1ce3a55af1ef1cc7dc0af32812dff96af6b66cc3655f648065",
+      "bytes": 459131
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-opus48-v4/config.yaml",
@@ -1839,8 +2050,8 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-opus48-v4/manifest.json",
-      "sha256": "17540663b5b28fdf28ef1a0dfcea6995be7ab53e5f8ab3a079403e1c54d50463",
-      "bytes": 458302
+      "sha256": "0e92d750b8d0af847bceb3d4124577040cbd528f3a20794433eae5e10dab58f8",
+      "bytes": 459139
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/gpt54-direct-10-20261007-001/REPORT.md",
@@ -2884,8 +3095,8 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/artifacts.py",
-      "sha256": "f9db531fc47fd5470c6098b6f34b7fda851dc90e94961a269a5518a20035cfa1",
-      "bytes": 14776
+      "sha256": "1add740b08ceda792f1070d11ca74319d08f4ad19dfc4f314149f95ea8c79656",
+      "bytes": 15276
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/LICENSE",
@@ -2939,8 +3150,8 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/container.py",
-      "sha256": "905ec1fe58307ba8773d760b3c9886fd0f21cb959543449aa257d1656bbfa420",
-      "bytes": 36492
+      "sha256": "c865d7697e73393a7e6b788e33e1ebaacf137bb5fa0b96ce7f38ac1832af9aa1",
+      "bytes": 37322
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/core/__init__.py",
@@ -3014,13 +3225,13 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/evolution.py",
-      "sha256": "3eefb54f61f4fab3c2821e8830d904a9c28c9eeb6750be4443fc298ba715e64d",
-      "bytes": 19734
+      "sha256": "a497c0f09e60e606f0a89fcde48667fd80621383dac4ed278fb13e695f4bfd17",
+      "bytes": 20961
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/generator.py",
-      "sha256": "f365985631342df805c8a8dbcdfbe88d2acd171a61938189e4013bdb0eafac8c",
-      "bytes": 37093
+      "sha256": "4e0f9549548777cbff69460294b4d4d44565070474fe1349b0766701acc30000",
+      "bytes": 37676
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/journal.py",
@@ -3064,13 +3275,13 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/skillsbench.py",
-      "sha256": "e60358d1420fc4a57b3d44f91d3b13a99a3acd2b3af7c1df960b6d85e29a2f3b",
-      "bytes": 73634
+      "sha256": "f208158126d0b9b74faba4c67c8faf20bbc0b78a7f850ffcd29b2481dac8559f",
+      "bytes": 73978
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/skillsbench_runtime.py",
-      "sha256": "1f441366d57ce180f519ff1059ed6f9fcec8c523ebec034e2baad4a2c1cb6f8c",
-      "bytes": 131513
+      "sha256": "e4ef3eed2c85db32efb4d7691e030b605c6d0084749f0f66e4755dcafa8b4349",
+      "bytes": 132356
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/spec.py",
@@ -3079,8 +3290,8 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/verifier.py",
-      "sha256": "780306979bc15cee47d9d23901f8a6f2ee40b3a742577c3287135b97febf3543",
-      "bytes": 46060
+      "sha256": "ddcd696947e7839e879f3aed4be3c006bb0927c0ec9a232ceb817b908531d8d5",
+      "bytes": 50809
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/worker.py",
@@ -3089,8 +3300,8 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/workflow.py",
-      "sha256": "0a263cd3a20e9dfeec47f31cbb863adad102f78cfdca6a8584d590666d78a45a",
-      "bytes": 84266
+      "sha256": "6f0c583d6fdd5ff85bf293c65920ee66e93755b67298e6f4b5a1abc9858d1a48",
+      "bytes": 87750
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/__init__.py",
@@ -3104,8 +3315,8 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_artifacts.py",
-      "sha256": "7be4a468fd90c18a0169eef3d5f70a703ad09b3d8154efe6e35958ac50d90e6b",
-      "bytes": 5935
+      "sha256": "d5237d735f88443bd375f9132c4f3bd2b4ce7192e1a4ac0ed622976a29438846",
+      "bytes": 6818
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_bank.py",
@@ -3139,13 +3350,13 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_container.py",
-      "sha256": "423590719a0f220227bdb1b90e536dcd8792025673e493781634751a0dbd0916",
-      "bytes": 19638
+      "sha256": "ae3c2992a7382120bd9e2dfd64d7dec30e3b0070a3f2ca27d3887bc10470bbb5",
+      "bytes": 23648
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_container_integration.py",
-      "sha256": "a2d51b74dca7742210c79be6529c2913566ad20a97fff8c1a6ff507d4cc2fb10",
-      "bytes": 14942
+      "sha256": "993667103d9fa22252ef999b7815568f84e48a9e0463cf7562d2a65525f3c917",
+      "bytes": 15910
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_data.py",
@@ -3169,13 +3380,13 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_evolution.py",
-      "sha256": "143a560baa0c28a233d4960f8ca9e7f6de2a7d7eed48081107e24eec06e2e0ed",
-      "bytes": 28192
+      "sha256": "09948efd589119893ae4ac7363756471c8c48ed45aa9bf09f2a93141887af642",
+      "bytes": 32911
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_generator.py",
-      "sha256": "3e4ae305d3cbbc4693d0ce636400161701c1d8a004fb87cdf268cfefdee22d82",
-      "bytes": 47090
+      "sha256": "1b766f7a51a0422638c9d4a06ddf87bba0ecdee853ac970c1d1d595661b8f457",
+      "bytes": 50546
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_journal.py",
@@ -3184,8 +3395,8 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_model.py",
-      "sha256": "5704eb069c342c798c0f3721a5bf4b77da3f7ea28d5bdc3e5744b68c3d45d372",
-      "bytes": 31515
+      "sha256": "b9853864fe90299d67d0822de9a59ef9e91bba97181ef50f543b73df242f7d89",
+      "bytes": 33238
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_model_retry.py",
@@ -3219,18 +3430,18 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench.py",
-      "sha256": "b06fde139b76dee6e7a588cede66b231983e99a4601bb816fb08250cd82efe57",
-      "bytes": 145483
+      "sha256": "edcd25cd8629f13b0bb02652fb734240acc97674488dc1c87488263671d4ac89",
+      "bytes": 147832
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_cleanup.py",
-      "sha256": "f601cf94fb0da8d7f3b0554b2af00a51dbf330b2219bebccd390e2995d16122d",
-      "bytes": 7205
+      "sha256": "ed16259b0b1b2890f0ee9c7e3c24b1e33f4b0d14e64d19d42c8d3fdea9023892",
+      "bytes": 9036
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py",
-      "sha256": "13ffea6c6113695441be01d1c3c0e7f9931671f42fc97b077802535be7483e24",
-      "bytes": 51031
+      "sha256": "b28e77eb05663ee1327545f5245a5a396bfa6cfc4998b3243ac64cfdb0014a9c",
+      "bytes": 55368
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_partial_trace.py",
@@ -3249,13 +3460,13 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_verifier.py",
-      "sha256": "dbefd0bff7a0c8f8b6e2491f232720b156f7c67e9cb3f48129a19d2ea639b6bf",
-      "bytes": 38917
+      "sha256": "2c3ff7cc79c715f52ba6d97ed090b4e2eb44bde0c24396ca00665d992e4aa509",
+      "bytes": 48469
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_workflow.py",
-      "sha256": "6e191ae1583aea28f9a7f3bfb110b817c9313adb5ab21db9b8ee1ff87fec6ab3",
-      "bytes": 69148
+      "sha256": "6c862520efca4f411abfb3fa19300cb3cce8a789ea305b74e741de2eb8500ab1",
+      "bytes": 72970
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/test_attack_payload.py",
@@ -3302,5 +3513,9 @@
       "sha256": "a3360fbf3a4f262f43c43999131a47ffc149f8fc01572f02ba1349a38e6d9eb3",
       "bytes": 788055
     }
-  ]
+  ],
+  "pipeline_validation_evidence": "../readiness-skillsbench-verifier-20261007-001/acceptance.json",
+  "pipeline_validation_evidence_sha256": "43311c8557058c1d89593fdd0f4c9c4e6fea8295a7c5681ef3812d25a29be593",
+  "readiness_scope": "Historical 005 environment snapshot; fixed-source full85 admission NOT_MEASURED",
+  "suggested_new_run_directory": "matrix-verifier-fix-001"
 }

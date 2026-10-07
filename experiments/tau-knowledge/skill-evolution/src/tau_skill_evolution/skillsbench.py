@@ -1499,17 +1499,25 @@ class SkillsBenchEvolutionSession:
         from .container import _tree_manifest
         from .core._canonical import canonical_json_sha256
 
-        files = self.files()
-        return {
-            "files": files,
+        candidate = _tree_manifest(self.public.target)
+        snapshot = {
+            "candidate_manifest": candidate,
             "workspace_hash": canonical_json_sha256(
                 {
                     "fixed_inputs": _tree_manifest(self.public.package),
-                    "candidate": files,
+                    "candidate": candidate,
                     "execution_id": self.state["execution_id"],
                 }
             ),
         }
+        try:
+            snapshot["files"] = self.files()
+        except ValueError as exc:
+            if not str(exc).startswith("non_utf8_package_file: "):
+                raise
+            snapshot["files"] = None
+            snapshot["invalid_package"] = str(exc)
+        return snapshot
 
     def begin_attempt(self, parent: Any, initial: bool, *, operation_id: str) -> dict[str, Any]:
         attempt = {

@@ -1,0 +1,61 @@
+{
+  "program": {
+    "exit_code": 1,
+    "output": {
+      "exit_code": 1,
+      "collected": 1,
+      "collected_nodeids": [
+        "tests/test_trace.py::test_trace"
+      ],
+      "collection_errors": 0,
+      "results": [
+        {
+          "nodeid": "tests/test_trace.py::test_trace",
+          "stage": "call",
+          "outcome": "failed",
+          "exception": "AssertionError",
+          "requirement_failure": true,
+          "xfail": false,
+          "detail": "trace = {'ok': False}\n\n>   def test_trace(trace): assert trace['ok']\n                           ^^^^^^^^^^^^^^^^^^\nE   assert False\n\n/bundle/tests/test_trace.py:1: AssertionError"
+        }
+      ]
+    },
+    "stderr": "F                                                                        [100%]\n=================================== FAILURES ===================================\n__________________________________ test_trace __________________________________\n\ntrace = {'ok': False}\n\n>   def test_trace(trace): assert trace['ok']\n                           ^^^^^^^^^^^^^^^^^^\nE   assert False\n\n/bundle/tests/test_trace.py:1: AssertionError\n=========================== short test summary info ============================\nFAILED ../../bundle/tests/test_trace.py::test_trace - assert False\n1 failed in 0.01s\n",
+    "failure": "nonzero_exit"
+  },
+  "report": {
+    "suite": {
+      "files": {
+        "tests/test_trace.py": "def test_trace(trace): assert trace['ok']\n"
+      },
+      "version": 0,
+      "repairs": 0,
+      "test_hash": "259cc160ff3302bddd8cc202a03ccf85c741ccd2854129490e72fded2494a5e4",
+      "diagnosis": "",
+      "recommendations": [],
+      "obligations": [],
+      "inheritance": []
+    },
+    "passed": false,
+    "pass_rate": 0.0,
+    "results": [
+      {
+        "nodeid": "tests/test_trace.py::test_trace",
+        "stage": "call",
+        "outcome": "failed",
+        "exception": "AssertionError",
+        "requirement_failure": true,
+        "xfail": false,
+        "detail": "trace = {'ok': False}\n\n>   def test_trace(trace): assert trace['ok']\n                           ^^^^^^^^^^^^^^^^^^\nE   assert False\n\n/bundle/tests/test_trace.py:1: AssertionError"
+      }
+    ],
+    "diagnosis": "",
+    "recommendations": [],
+    "failure": null,
+    "program_error": false,
+    "test_version": 0,
+    "test_hash": "259cc160ff3302bddd8cc202a03ccf85c741ccd2854129490e72fded2494a5e4",
+    "test_runs": [],
+    "stage_failures": []
+  }
+}

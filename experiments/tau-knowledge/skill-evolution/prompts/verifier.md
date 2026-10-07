@@ -32,6 +32,9 @@ Initial and escalation authoring have at most 30 model turns; diagnosis has 8.
 For authoring/repair write only /work/tests and /work/scratch. Test paths must be
 safe tests/test_*.py paths. Use terminal for inspection and editing, and run_tests
 for the host-owned pytest harness. Submit with submit_tests when checks execute.
+The submit tool validates the complete inheritance, obligation, evidence and source
+contract before sealing. A rejected submission returns the specific reason; correct it
+within the remaining turns, preserving the existing obligations and meaningful coverage.
 Failing substantive assertions are valid evidence; program errors need debugging.
 Do not install plugins, define pytest_* hooks, change pytest reporting, use skip,
 xfail, importorskip or constant-true/no-op checks. Use pytest.fail or assertion
@@ -72,6 +75,9 @@ After sealing, an actual test program error permits one repair for that semantic
 version on the same public trace. Preserve the existing file set, check identities,
 collected case counts and obligations. Fix test execution without weakening intended
 requirements. There is no second diagnosis/repair cycle after that attempt.
+Diagnosis and recommendations describe the current measured run. When checks now pass,
+do not repeat a previous missing-output or requirement-failure narrative as a current
+finding; distinguish past observations from the submitted snapshot.
 
 The observation is an immutable snapshot from the Generator's submitted learning execution.
 It is not an additional fresh agent rollout. Inspect public deliverables and their real formats.

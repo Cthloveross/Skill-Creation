@@ -6,6 +6,17 @@
   "config_sha256": "aa9d0a065ab5c27fd5395840e5f862a5e81f0e95a117acc531c2494cda721b61",
   "credentials_copied": false,
   "experiment": "skillsbench",
+  "historical_environment_validation_evidence": "../../readiness-skillsbench-full85-20261007-005/validation.json",
+  "historical_environment_validation_evidence_sha256": "a6b8d516aa9d3e4ffd252b37b5b37d715a62eee11def258ede867fa0f2490573",
+  "historical_preparation_validation": {
+    "additional_build_attempts": 17,
+    "config_loaded": true,
+    "exact_85_benign_cells": true,
+    "exact_85_tasks": true,
+    "fresh_preflight_attempts": 85,
+    "live_model_calls": 0,
+    "task_population_matches_original": true
+  },
   "identity_at_handoff": {
     "experiment": "skillsbench",
     "files": {
@@ -20,8 +31,8 @@
       "prompts/execution-skillsbench.md": "8acdc73942cc8dbdbb121a9174b7e8b5df77d17db5feb7208d83edb10b60c787",
       "prompts/execution.md": "8ab9835325ef8322e75bb9da198a8885395fad72c14f1cf80144515d9a1ad2d5",
       "prompts/generator.md": "284083f949a35df3ca411834db60271b1269131dde43eefd80b8aabe7045fc89",
-      "prompts/verifier-skillsbench.md": "3f61b94678758faa6fe48b33713973560207efdaa6b2a5d7cc402f115604f714",
-      "prompts/verifier.md": "7f52c8d470fee3c817682fe376572281280b73e12802c498018894ed2ebec6a8",
+      "prompts/verifier-skillsbench.md": "acb36d9fbac4ddb4a1c1acd98ca6b39f9e3ddeeaa748c061e1662ffbe0ae4a2c",
+      "prompts/verifier.md": "3345e5e86da72976ccff6e1393c6614c05a4ce7984b461284817803902095020",
       "runtime/skillsbench-bubblewrap-lock.json": "2503047c85253596c753b24a78c94977045bf29cbba2dc6ac4d10b76e89e5e05",
       "runtime/skillsbench-docker-3d-scan-calc-lock.json": "39239fe0431d69b12f43ef261a21b271469e6ff2e244e3b8356398a31b6087ac",
       "runtime/skillsbench-docker-3d-scan-calc-v2-20261006-lock.json": "dc8a5a2271a1e4a4cd12f8559fb0250c1f7645d6d929ebb388539056ea21754c",
@@ -208,7 +219,7 @@
       "runtime/skillsbench-workspace-manufacturing-codebook-normalization-lock.json": "a4472ab203c862186850ad6e1443dc3a3718f25cf6fb17753213d6f7af511c49",
       "src/tau_skill_evolution/__init__.py": "9c287277ba979471d93b77abf95a3baff7ecc7f03c1bb552229a80659b063eb7",
       "src/tau_skill_evolution/acquisition.py": "35c850347566574cb1c2e442a973bb9415224a7b1e66a6f62f1bc8db13d39545",
-      "src/tau_skill_evolution/artifacts.py": "f9db531fc47fd5470c6098b6f34b7fda851dc90e94961a269a5518a20035cfa1",
+      "src/tau_skill_evolution/artifacts.py": "1add740b08ceda792f1070d11ca74319d08f4ad19dfc4f314149f95ea8c79656",
       "src/tau_skill_evolution/author/LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
       "src/tau_skill_evolution/author/SOURCE.json": "13d49355217d1a76c9210871fabcc505ae454a648e6d6e4eb16351a507d4b547",
       "src/tau_skill_evolution/author/__init__.py": "0103f5b877224c0ef5e31d903a55b02ea228c0a3d7e47217e8e5fc427a1e2781",
@@ -219,7 +230,7 @@
       "src/tau_skill_evolution/codex_provider.py": "cf300a46df5d933afbab48d052f9e295ca906d718e2ca613a2b92b75844dc138",
       "src/tau_skill_evolution/codex_runtime.py": "329e091b7e8b19215bffec13f749168a56689e86ec501fda2df259afd77d0a91",
       "src/tau_skill_evolution/constants.py": "d1b2a58e578c69e9bb934e522b4946b2b4e064d4f83684e72f3f34bbf1fafe3c",
-      "src/tau_skill_evolution/container.py": "905ec1fe58307ba8773d760b3c9886fd0f21cb959543449aa257d1656bbfa420",
+      "src/tau_skill_evolution/container.py": "c865d7697e73393a7e6b788e33e1ebaacf137bb5fa0b96ce7f38ac1832af9aa1",
       "src/tau_skill_evolution/core/__init__.py": "402ccefac05b6e46bba756fafefba1a4689cf612ac38cb877200e1f391bbffb9",
       "src/tau_skill_evolution/core/_canonical.py": "586e985d79f289e97b7a25cdfc40b2982faef1118952d00b5c018b92936c1e21",
       "src/tau_skill_evolution/core/attack_payload.py": "f98863907f1d4d988d4078bd8e3098de41484169cd5d8b5faaee45a100198001",
@@ -234,8 +245,8 @@
       "src/tau_skill_evolution/dense.py": "7e442e2a86f58a94ef9cfc25fb15056d90ef476d0fff9f5fd76e39550b5e021e",
       "src/tau_skill_evolution/dense_worker.py": "ab2ac60b5cf46e3e22fc6fac41f856be70daf1a7ea51da635225488f67e761b3",
       "src/tau_skill_evolution/evaluation.py": "7ffefa1a20009728260f45c21c57ad7107657fa1ccee9bc2e985fd76bd4060b3",
-      "src/tau_skill_evolution/evolution.py": "3eefb54f61f4fab3c2821e8830d904a9c28c9eeb6750be4443fc298ba715e64d",
-      "src/tau_skill_evolution/generator.py": "f365985631342df805c8a8dbcdfbe88d2acd171a61938189e4013bdb0eafac8c",
+      "src/tau_skill_evolution/evolution.py": "a497c0f09e60e606f0a89fcde48667fd80621383dac4ed278fb13e695f4bfd17",
+      "src/tau_skill_evolution/generator.py": "4e0f9549548777cbff69460294b4d4d44565070474fe1349b0766701acc30000",
       "src/tau_skill_evolution/journal.py": "2641177480c233a8baf781cd2c14df2fedf013d0a6a359075c87fff20e5b6b3c",
       "src/tau_skill_evolution/materialize.py": "59d66f7b7f00e7656576e750d6135f8a1652f8ac4904b944755b4651ef6104aa",
       "src/tau_skill_evolution/model.py": "b9a9d744d3fcaf9e3150a9a9d08501f79ee54d22a2226f588e45e716d45d5f8d",
@@ -244,14 +255,14 @@
       "src/tau_skill_evolution/retrieval.py": "bf48af3fc85b271fa83391ebaba06464a073fc77fc6d3ffc156fd94b49d4023b",
       "src/tau_skill_evolution/runtime_controls.py": "371222ec0358c43472387341b328506a68fc26f15f6aec5222242bb83cbd7487",
       "src/tau_skill_evolution/sidecar.py": "3d87ecbf6cd5ec5ed45d63398d589acaf1a4f9243579aade799af0d4b335a2bc",
-      "src/tau_skill_evolution/skillsbench.py": "e60358d1420fc4a57b3d44f91d3b13a99a3acd2b3af7c1df960b6d85e29a2f3b",
-      "src/tau_skill_evolution/skillsbench_runtime.py": "1f441366d57ce180f519ff1059ed6f9fcec8c523ebec034e2baad4a2c1cb6f8c",
+      "src/tau_skill_evolution/skillsbench.py": "f208158126d0b9b74faba4c67c8faf20bbc0b78a7f850ffcd29b2481dac8559f",
+      "src/tau_skill_evolution/skillsbench_runtime.py": "e4ef3eed2c85db32efb4d7691e030b605c6d0084749f0f66e4755dcafa8b4349",
       "src/tau_skill_evolution/spec.py": "f499dc2eae9bb7bec6f19e08e55da0d160914f947056d7ffba595bb021022e7e",
-      "src/tau_skill_evolution/verifier.py": "780306979bc15cee47d9d23901f8a6f2ee40b3a742577c3287135b97febf3543",
+      "src/tau_skill_evolution/verifier.py": "ddcd696947e7839e879f3aed4be3c006bb0927c0ec9a232ceb817b908531d8d5",
       "src/tau_skill_evolution/worker.py": "9373264cec4a05f97c51e41bce9397c635ad0665bf86eb57f1fdec71bcad4dac",
-      "src/tau_skill_evolution/workflow.py": "0a263cd3a20e9dfeec47f31cbb863adad102f78cfdca6a8584d590666d78a45a"
+      "src/tau_skill_evolution/workflow.py": "6f0c583d6fdd5ff85bf293c65920ee66e93755b67298e6f4b5a1abc9858d1a48"
     },
-    "identity_hash": "2ac4bf8c2be499044eecc8f2f206a52387c78b5cca1a04195f58a14eb1172e94",
+    "identity_hash": "aee5f030a4c8ee32212b51ae9c4b19a36ae99d1a1cbf530431e3f7a96dca1016",
     "namespace": "skillsbench.skill-evolution.v4",
     "provider": {
       "model": "anthropic.claude-opus-4-8",
@@ -305,6 +316,7 @@
   ],
   "readiness_evidence": "../../readiness-skillsbench-full85-20261007-005/final-status.json",
   "readiness_evidence_sha256": "b518841e86a28b6e75c2ad48cd28aa04f0622c98155d335c1e9e70a97c784c5e",
+  "readiness_scope": "Historical 005 environment preparation; not full85 admission under this fixed source",
   "receiving_machine_environment_status": "NOT_MEASURED",
   "region": "us-east-1",
   "runtime_selection": {
@@ -317,6 +329,8 @@
   "shared_source_archive": "../skillsbench-v4-source.tar.gz",
   "shared_transfer_manifest": "../transfer-manifest.json",
   "status": "PREPARED_WITH_READINESS_REQUIREMENTS",
+  "suggested_new_run_directory": "matrix-verifier-fix-001",
+  "suggested_new_smoke_directory": "smoke/verifier-fix-001",
   "task_denominator": 85,
   "task_population_sha256": "1afe3b8bb2a9f1055ea7a341fee43d02245cc32ce8ae5f151cee226aa3119224",
   "tasks": [
@@ -8899,16 +8913,18 @@
     }
   ],
   "transport": "bedrock-messages",
+  "updated_at": "2026-10-07T22:05:40.971878+00:00",
   "upstream_commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
   "validation": {
-    "additional_build_attempts": 17,
     "config_loaded": true,
     "exact_85_benign_cells": true,
     "exact_85_tasks": true,
-    "fresh_preflight_attempts": 85,
+    "full85_admission_rerun": false,
     "live_model_calls": 0,
+    "real_docker_checks_passed": 26,
+    "shared_tests_passed": 1231,
     "task_population_matches_original": true
   },
-  "validation_evidence": "../../readiness-skillsbench-full85-20261007-005/validation.json",
-  "validation_evidence_sha256": "a6b8d516aa9d3e4ffd252b37b5b37d715a62eee11def258ede867fa0f2490573"
+  "validation_evidence": "../../readiness-skillsbench-verifier-20261007-001/acceptance.json",
+  "validation_evidence_sha256": "43311c8557058c1d89593fdd0f4c9c4e6fea8295a7c5681ef3812d25a29be593"
 }

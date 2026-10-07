@@ -309,6 +309,27 @@ pathlib.Path('/work/scratch/diagnosis').write_text('public inspection')
         assert _report(TestSuite(session.files()), result).passed and session.files() == tests
 
 
+def test_real_formal_and_interactive_verifier_share_writable_scratch(runner):
+    tests = {
+        "tests/test_scratch.py": "from pathlib import Path\n"
+        "def test_scratch(trace):\n"
+        " assert Path.cwd()==Path('/work/scratch')\n"
+        " path=Path('result.bin'); path.write_bytes(bytes([0,255,128]))\n"
+        " assert path.read_bytes()==bytes(trace['bytes'])\n"
+    }
+    trace = {"bytes": [0, 255, 128]}
+    with runner.public_verifier_session({}, {}, trace, tests) as session:
+        program = session.run_tests()
+        assert _report(TestSuite(tests), program).passed, program.to_dict()
+        assert session.snapshot()["manifest"]["work"]["scratch/result.bin"]
+    formal = runner.run_verifier({}, {}, trace, tests)
+    assert _report(TestSuite(tests), formal).passed, formal.to_dict()
+    _record(
+        "verifier-shared-scratch-contract",
+        {"interactive": program.to_dict(), "formal": formal.to_dict(), "model_calls": 0},
+    )
+
+
 @pytest.mark.parametrize(
     ("source", "failure"),
     [

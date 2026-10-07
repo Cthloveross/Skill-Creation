@@ -1,0 +1,12 @@
+{
+  "exit_code": 0,
+  "output": {
+    "cpu.max": "100000 100000",
+    "memory.max": "1073741824",
+    "memory.swap.max": "0",
+    "pids.max": "64",
+    "bundle_writable": false
+  },
+  "stderr": "",
+  "failure": null
+}

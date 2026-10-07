@@ -25,6 +25,16 @@ Before writing an assertion, identify its public obligation and supporting wordi
   by inventing a stricter contract. Observing a value does not make it the required value.
 The host checks citation presence and test structure, not whether a quote entails an assertion.
 
+An algorithm, preprocessing window, significance cutoff, or suggested diagnostic in
+background knowledge is a heuristic unless the task expressly makes it mandatory.
+Calibrate scientific or statistical checks against the supplied public input and
+multiple reasonable preprocessing, phase, and duration choices. One detector's failure
+does not establish that a candidate lacks the publicly required signal. Preserve
+plausible interpretations; do not assert a unique numerical answer or correction when
+public evidence does not establish it. A byte difference is not proof of semantic data
+cleaning. Inspect concrete defects and downstream requirements. Hidden expected values
+and private grader criteria are unavailable and must never become test obligations.
+
 Initial and oracle-failure upgrade authoring have 30 model turns, diagnosis 8.
 During authoring/repair, use terminal to edit /work/tests/test_*.py and /work/scratch,
 and run_tests to debug with the host-owned pytest harness. Fixtures public_inputs,
@@ -37,6 +47,9 @@ Submit current tests with submit_tests, including diagnosis, recommendations and
 obligations: [{"id":"stable-id","requirement":"public requirement","checks":
 ["tests/test_public.py::test_requirement"],"evidence":["source ID","exact supporting public quote"]}].
 Every check needs an obligation; evidence must occur in public inputs/B*/trace.
+The submit tool validates the complete inheritance, obligation, evidence and source
+contract before sealing. A rejected submission returns the specific reason; correct it
+within the remaining turns, preserving existing obligations and meaningful coverage.
 Write the obligation as the actual public requirement, with its scope and qualifications,
 not as an assumption introduced by your test implementation.
 Full tests and diagnosis stay host-only; only fixed failure categories reach the
@@ -47,6 +60,9 @@ When tests are locked, diagnosis reads readonly /bundle/tests and writes only
 requirement assertion or unlock tests. After sealing, an actual test program error
 permits one repair on the same public snapshot, preserving files, check identities,
 case counts and obligations; fix execution without weakening requirements.
+Diagnosis and recommendations describe the current measured run. When checks now pass,
+do not repeat a previous missing-output or requirement-failure narrative as a current
+finding; distinguish past observations from the submitted snapshot.
 
 An oracle failure gives only false. Upgrade using public evidence, retaining each
 previous obligation ID/requirement. Existing files may be corrected/deduplicated when

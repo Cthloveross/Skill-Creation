@@ -109,6 +109,8 @@ class VerificationReport:
     recommendations: tuple[str, ...] = ()
     failure: str | None = None
     program_error: bool = False
+    test_runs: tuple[Mapping[str, Any], ...] = ()
+    stage_failures: tuple[Mapping[str, Any], ...] = ()
 
     @property
     def test_version(self) -> int:
@@ -126,6 +128,8 @@ class VerificationReport:
             "program_error": self.program_error,
             "test_version": self.suite.version,
             "test_hash": self.suite.test_hash,
+            "test_runs": thaw_json(self.test_runs),
+            "stage_failures": thaw_json(self.stage_failures),
         }
 
     @classmethod
@@ -139,6 +143,8 @@ class VerificationReport:
             recommendations=tuple(value.get("recommendations", [])),
             failure=value.get("failure"),
             program_error=value.get("program_error", False),
+            test_runs=tuple(value.get("test_runs", ())),
+            stage_failures=tuple(value.get("stage_failures", ())),
         )
 
 
@@ -345,6 +351,7 @@ class SurrogateVerifier:
         )
         tools = [_TERMINAL, _DIAGNOSE] if diagnosis else [_TERMINAL, _RUN_TESTS, _SUBMIT]
         limit = self.diagnosis_episodes if diagnosis else self.max_episodes
+        rejections: list[Mapping[str, Any]] = []
         kwargs = {} if workspace is None else {"workspace": workspace}
         with self.runner.public_verifier_session(
             payload["public_inputs"],
@@ -398,22 +405,24 @@ class SurrogateVerifier:
                             return args
                         if name == "submit_tests" and not diagnosis:
                             current = session.files()
-                            _validate_test_source(current)
-                            _obligations(args, current, payload, require=True)
+                            candidate = _validate_submission(
+                                args, payload, files=current, require_obligations=True
+                            )
                             # Collect and execute actual checks before sealing: a comments-only
                             # upgrade or empty parametrization cannot count as new coverage.
                             measured = self._session_operation(
                                 session, operation_id, episode, index, "run_tests", {}
                             )
-                            probe = _report(TestSuite(current), ProgramResult(**measured))
+                            probe = _report(candidate, ProgramResult(**measured))
                             if probe.program_error:
                                 raise ValueError(probe.failure or "test_program_error")
-                            old_nodes = set(
-                                _declared_checks(files or {}, tolerate_syntax_error=True)
+                            _validate_submission(
+                                args,
+                                payload,
+                                files=current,
+                                require_obligations=True,
+                                observed=probe,
                             )
-                            new_nodes = set(_observed_checks(probe))
-                            if payload["action"] == "escalation" and not new_nodes - old_nodes:
-                                raise ValueError("escalation_added_no_collected_checks")
                             return dict(
                                 args,
                                 files=[
@@ -435,6 +444,13 @@ class SurrogateVerifier:
                             or is_credential_error(exc)
                         ):
                             raise
+                        rejections.append(
+                            _stage_failure(
+                                "test_submission" if name == "submit_tests" else "verifier_tool",
+                                f"{operation_id}-turn-{episode}-tool-{index}",
+                                exc,
+                            )
+                        )
                         result = {"failure": type(exc).__name__, "detail": str(exc)[:2000]}
                     messages.append(
                         {
@@ -445,7 +461,9 @@ class SurrogateVerifier:
                             ),
                         }
                     )
-        raise ValueError("verifier_episode_budget_exhausted")
+        error = ValueError("verifier_episode_budget_exhausted")
+        error.rejections = tuple(rejections)
+        raise error
 
     def _session_operation(
         self,
@@ -552,27 +570,8 @@ class SurrogateVerifier:
         if previous_tests is not None:
             payload["oracle_pass"] = False
         raw = self._call(payload, operation_id, host_trace=trace)
-        files = _parse_files(raw)
-        _validate_test_source(files)
-        if previous_tests is not None:
-            # Callable fixtures may return additions; an interactive session returns
-            # its whole current tree and can justify changes/deduplication in place.
-            if not hasattr(self.model, "complete"):
-                files = {**previous_tests.files, **files}
-            _validate_test_source(files)
-        obligations = _obligations(raw, files, payload)
-        inheritance = (
-            ()
-            if previous_tests is None
-            else _inheritance(previous_tests, files, obligations, raw, payload)
-        )
-        return TestSuite(
-            files,
-            version=0 if previous_tests is None else previous_tests.version + 1,
-            diagnosis=str(raw.get("diagnosis", "")),
-            recommendations=_recommendations(raw),
-            obligations=obligations,
-            inheritance=inheritance,
+        return _validate_submission(
+            raw, payload, merge_previous=not hasattr(self.model, "complete")
         )
 
     def verify(
@@ -584,7 +583,9 @@ class SurrogateVerifier:
         *,
         operation_id: str = "verification",
     ) -> VerificationReport:
-        def execute(suite: TestSuite, suffix: str) -> tuple[VerificationReport, int]:
+        test_runs: list[Mapping[str, Any]] = []
+
+        def execute(suite: TestSuite, suffix: str) -> VerificationReport:
             payload = self._payload(public_inputs, frozen_base, trace, suite, "execute_tests")
             if "public_artifacts_dir" in trace:
                 # Bind the actual snapshot in the host journal without passing its host
@@ -603,18 +604,25 @@ class SurrogateVerifier:
                 else run()
             )
             program = ProgramResult(**result)
+            test_runs.append(
+                {
+                    "operation_id": f"{operation_id}-{suffix}",
+                    "test_hash": suite.test_hash,
+                    "test_version": suite.version,
+                    "program": program.to_dict(),
+                }
+            )
             if program.failure == "cleanup_failed":
-                raise ContainerUnavailable("verifier_cleanup_failed")
-            collected = (
-                program.output.get("collected", 0) if isinstance(program.output, Mapping) else 0
+                error = ContainerUnavailable("verifier_cleanup_failed")
+                error.test_runs = tuple(test_runs)
+                raise error
+            return replace(
+                _report(suite, program),
+                test_runs=(test_runs[-1],),
             )
-            count = (
-                collected if isinstance(collected, int) and not isinstance(collected, bool) else 0
-            )
-            return _report(suite, program), count
 
         suite = previous_tests
-        report, collected = execute(suite, "tests")
+        report = execute(suite, "tests")
         if not report.passed and not report.program_error:
             payload = self._payload(public_inputs, frozen_base, trace, suite, "diagnosis")
             payload["test_results"] = report.to_dict()
@@ -635,40 +643,29 @@ class SurrogateVerifier:
                         and self.journal.authentication_failure() is not None
                     )
                 ):
+                    exc.test_runs = tuple(test_runs)
                     raise
                 # Optional diagnosis cannot erase an actual measured failure.
-                pass
+                report = replace(
+                    report,
+                    stage_failures=(_stage_failure("diagnosis", f"{operation_id}-diagnosis", exc),),
+                )
         if report.program_error and suite.repairs == 0:
             original = suite
             payload = self._payload(public_inputs, frozen_base, trace, suite, "repair")
             payload["test_results"] = report.to_dict()
+            repaired = None
+            repair_operation = f"{operation_id}-repair"
             try:
-                raw = self._call(payload, f"{operation_id}-repair", host_trace=trace)
-                files = _parse_files(raw)
-                _validate_repair_files(original.files, files)
-                _validate_test_source(files)
-                obligations = _obligations(raw, files, payload)
-                if original.obligations:
-                    _preserve_obligations(original, obligations)
-                suite = TestSuite(
-                    files,
-                    version=original.version,
-                    repairs=1,
-                    diagnosis=str(raw.get("diagnosis", "")),
-                    recommendations=_recommendations(raw),
-                    obligations=obligations,
-                    inheritance=original.inheritance,
-                )
-                repaired, repaired_count = execute(suite, "repaired-tests")
-                old_checks, new_checks = _observed_checks(report), _observed_checks(repaired)
-                if repaired_count < collected or any(
-                    count > new_checks[check] for check, count in old_checks.items()
-                ):
-                    raise ValueError("repair_removed_collected_checks")
+                raw = self._call(payload, repair_operation, host_trace=trace)
+                suite = _validate_submission(raw, payload)
+                repair_operation = f"{operation_id}-repaired-tests"
+                repaired = execute(suite, "repaired-tests")
+                _validate_submission(raw, payload, observed=repaired)
                 # Both measured runs remain sealed in separate journal responses.
                 # Use repair advice for any remaining Skill failure, without another
                 # diagnosis/repair cycle on this same public trace.
-                return repaired
+                return replace(repaired, test_runs=report.test_runs + repaired.test_runs)
             except Exception as exc:
                 if (
                     isinstance(exc, (UnknownOperation, ContainerUnavailable))
@@ -679,6 +676,7 @@ class SurrogateVerifier:
                         and self.journal.authentication_failure() is not None
                     )
                 ):
+                    exc.test_runs = tuple(test_runs)
                     raise
                 return replace(
                     report,
@@ -687,8 +685,116 @@ class SurrogateVerifier:
                     diagnosis=f"test repair failed: {type(exc).__name__}: {exc}",
                     failure="test_repair_failed",
                     program_error=True,
+                    test_runs=report.test_runs + (() if repaired is None else repaired.test_runs),
+                    stage_failures=report.stage_failures
+                    + (_stage_failure("repair", repair_operation, exc),),
                 )
         return report
+
+
+def _validate_submission(
+    raw: Mapping[str, Any],
+    payload: Mapping[str, Any],
+    *,
+    files: Mapping[str, str] | None = None,
+    require_obligations: bool = False,
+    merge_previous: bool = False,
+    observed: VerificationReport | None = None,
+) -> TestSuite:
+    """Apply the same seal rules inside the tool loop and after model return."""
+    if require_obligations and not {"diagnosis", "recommendations"} <= raw.keys():
+        raise ValueError("missing_test_submission_metadata")
+    if not isinstance(raw.get("diagnosis", ""), str):
+        raise ValueError("invalid_test_diagnosis")
+    recommendations = raw.get("recommendations", [])
+    if not isinstance(recommendations, list) or any(
+        not isinstance(value, str) for value in recommendations
+    ):
+        raise ValueError("invalid_test_recommendations")
+    current = dict(files) if files is not None else _parse_files(raw)
+    previous_value = payload.get("previous_tests")
+    previous = None if previous_value is None else TestSuite.from_dict(previous_value)
+    action = payload["action"]
+    if action == "repair":
+        if previous is None:
+            raise ValueError("repair_requires_previous_tests")
+        _validate_repair_files(previous.files, current)
+    _validate_test_source(current)
+    # Callable offline fixtures may return additions; tool sessions return the full tree.
+    if merge_previous and previous is not None and action == "escalation":
+        current = {**previous.files, **current}
+    obligations = _obligations(raw, current, payload, require=require_obligations)
+    inheritance = ()
+    if action == "escalation":
+        if previous is None:
+            raise ValueError("escalation_requires_previous_tests")
+        inheritance = _inheritance(previous, current, obligations, raw, payload)
+        if observed is not None and not set(_observed_checks(observed)) - _declared_checks(
+            previous.files, tolerate_syntax_error=True
+        ):
+            raise ValueError("escalation_added_no_collected_checks")
+    elif action == "repair":
+        _preserve_obligations(previous, obligations)
+        inheritance = previous.inheritance
+        if observed is not None:
+            original = VerificationReport.from_dict(payload["test_results"])
+            old_checks, new_checks = _observed_checks(original), _observed_checks(observed)
+
+            def collected(report: VerificationReport) -> int:
+                if report.test_runs:
+                    output = report.test_runs[-1]["program"].get("output")
+                    if isinstance(output, Mapping):
+                        count = output.get("collected")
+                        if isinstance(count, int) and not isinstance(count, bool):
+                            return count
+                return sum(_observed_checks(report).values())
+
+            if collected(observed) < collected(original) or any(
+                count > new_checks[check] for check, count in old_checks.items()
+            ):
+                raise ValueError("repair_removed_collected_checks")
+    return TestSuite(
+        current,
+        version=0 if previous is None else previous.version + int(action == "escalation"),
+        repairs=int(action == "repair"),
+        diagnosis=str(raw.get("diagnosis", "")),
+        recommendations=_recommendations(raw),
+        obligations=obligations,
+        inheritance=inheritance,
+    )
+
+
+def _stage_failure(stage: str, operation_id: str, exc: Exception) -> dict[str, Any]:
+    """Keep a bounded exception audit without changing phase control or retry rules."""
+    reason = "authentication_failed" if authentication_status(exc) is not None else None
+    details = []
+    seen = set()
+    current: BaseException | None = exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        message = str(current)
+        if reason is None:
+            candidate = getattr(current, "reason", None) or getattr(current, "code", None)
+            if candidate is None and isinstance(current, ValueError):
+                candidate = message.partition(":")[0]
+            if isinstance(candidate, str) and re.fullmatch(r"[a-z][a-z0-9_]*", candidate):
+                reason = candidate
+        details.append(f"{type(current).__name__}: {message}")
+        current = current.__cause__ or current.__context__
+    failure = {
+        "stage": stage,
+        "operation_id": operation_id,
+        "exception_type": type(exc).__name__,
+        "reason": reason or f"{stage}_failed",
+        "detail": "\n".join(details)[:2000],
+    }
+    runs = getattr(exc, "test_runs", ())
+    if runs:
+        failure["test_runs"] = thaw_json(runs)
+    rejections = getattr(exc, "rejections", ())
+    if rejections:
+        failure["rejections"] = thaw_json(rejections)
+    return failure
 
 
 def _declared_checks(files: Mapping[str, str], *, tolerate_syntax_error: bool) -> set[str]:
@@ -1148,8 +1254,8 @@ def _report(suite: TestSuite, program: ProgramResult) -> VerificationReport:
         passed,
         passed_count / collected,
         tuple(items),
-        suite.diagnosis,
-        suite.recommendations,
+        "" if passed else suite.diagnosis,
+        () if passed else suite.recommendations,
         failure,
         errors,
     )

@@ -306,6 +306,7 @@ def test_verifier_mount_contains_no_skill_source(tmp_path):
                 package = Path(mounts[0].split("src=", 1)[1].split(",", 1)[0])
                 assert sorted(path.name for path in package.iterdir()) == [
                     "_harness.py",
+                    "_workspace_policy.json",
                     "base.json",
                     "public_inputs.json",
                     "tests",
@@ -313,7 +314,14 @@ def test_verifier_mount_contains_no_skill_source(tmp_path):
                 ]
                 assert not (package / "SKILL.md").exists()
                 assert "private" not in (package / "trace.json").read_text()
-            return super().run(command, **kwargs)
+                work = Path(mounts[1].split("src=", 1)[1].split(",", 1)[0])
+                assert (work / "scratch").is_dir()
+                assert json.loads((package / "_workspace_policy.json").read_text()) == ["scratch"]
+                assert mounts[1].endswith(",readonly")
+                assert mounts[2].endswith("dst=/work/scratch")
+                assert command[command.index("--workdir") + 1] == "/work/scratch"
+                return ProcessResult(0, b'{"collected":1}')
+            return ProcessResult(0)
 
     runner = DockerRunner(locked(tmp_path), transport=VerifierTransport())
     runner.run_verifier(
@@ -468,3 +476,81 @@ def test_generated_caches_are_hashed_but_not_harvested_as_sources(tmp_path, role
         unsafe.symlink_to(tmp_path / "outside")
         with pytest.raises(ValueError, match="unsafe_workspace_file"):
             session.snapshot()
+
+
+def test_public_snapshot_hashes_binary_and_private_modes_without_following_scratch_links(tmp_path):
+    runner = DockerRunner(locked(tmp_path), transport=Transport())
+    with runner.public_verifier_session(
+        {}, {}, {}, {"tests/test_public.py": "def test_ok(): pass"}
+    ) as session:
+        private = session.work / "scratch/private"
+        private.mkdir(mode=0o700)
+        data = private / "data.bin"
+        data.write_bytes(b"\x00\xff\x80")
+        data.chmod(0o600)
+        link = session.work / "scratch/data-link"
+        link.symlink_to("private/data.bin")
+        before = session.snapshot()
+        assert (
+            before["manifest"]["work"]["scratch/private/data.bin"]
+            == hashlib.sha256(data.read_bytes()).hexdigest()
+        )
+        assert before["manifest"]["work"]["scratch/data-link"] == "symlink:private/data.bin"
+        assert data.stat().st_mode & 0o777 == 0o600
+        assert private.stat().st_mode & 0o777 == 0o700
+        data.write_bytes(b"different bytes")
+        assert session.snapshot()["workspace_hash"] != before["workspace_hash"]
+
+
+@pytest.mark.parametrize("target", ["../../outside", "/etc/passwd", "../tests/test_public.py"])
+def test_public_snapshot_rejects_scratch_links_outside_scratch(tmp_path, target):
+    runner = DockerRunner(locked(tmp_path), transport=Transport())
+    with runner.public_verifier_session(
+        {}, {}, {}, {"tests/test_public.py": "def test_ok(): pass"}
+    ) as session:
+        (session.work / "scratch/link").symlink_to(target)
+        with pytest.raises(ValueError, match="unsafe_workspace_symlink"):
+            session.snapshot()
+
+
+@pytest.mark.parametrize("kind", ["directory", "file"])
+def test_public_snapshot_never_silently_omits_unreadable_scratch(tmp_path, kind):
+    if os.getuid() == 0:
+        pytest.skip("host permission denial requires a non-root test process")
+    runner = DockerRunner(locked(tmp_path), transport=Transport())
+    with runner.public_verifier_session(
+        {}, {}, {}, {"tests/test_public.py": "def test_ok(): pass"}
+    ) as session:
+        path = session.work / "scratch/private"
+        if kind == "directory":
+            path.mkdir()
+            (path / "hidden").write_bytes(b"must be counted")
+        else:
+            path.write_bytes(b"must be counted")
+        path.chmod(0)
+        try:
+            with pytest.raises(PermissionError):
+                session.snapshot()
+        finally:
+            path.chmod(0o700 if kind == "directory" else 0o600)
+
+
+def test_public_snapshot_preserves_known_non_utf8_package_for_correction(tmp_path):
+    runner = DockerRunner(locked(tmp_path), transport=Transport())
+    with runner.authoring_session(SkillBundle({"SKILL.md": "parent"}), {}, {}) as session:
+        binary = session.target / "binary.bin"
+        binary.write_bytes(b"\xff\x80")
+        with pytest.raises(ValueError, match="non_utf8_package_file: binary.bin"):
+            session.files()
+        invalid = session.snapshot()
+        assert invalid["files"] is None
+        assert invalid["invalid_package"] == "non_utf8_package_file: binary.bin"
+        assert (
+            invalid["manifest"]["work"]["candidate/binary.bin"]
+            == hashlib.sha256(b"\xff\x80").hexdigest()
+        )
+        binary.unlink()
+        corrected = session.snapshot()
+        assert corrected["files"] == {"SKILL.md": "parent"}
+        assert "invalid_package" not in corrected
+        assert corrected["workspace_hash"] != invalid["workspace_hash"]

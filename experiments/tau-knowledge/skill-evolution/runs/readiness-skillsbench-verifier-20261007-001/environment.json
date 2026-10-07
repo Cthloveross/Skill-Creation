@@ -1,0 +1,13 @@
+{
+  "schema": "skillsbench.fix-environment.v1",
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "platform": "Linux-6.8.0-86-generic-x86_64-with-glibc2.39",
+  "packages": {
+    "pytest": "8.4.2",
+    "ruff": "0.16.6",
+    "PyYAML": "6.0.3",
+    "harbor": "0.1.34"
+  },
+  "credentials_read": false,
+  "paid_model_calls": 0
+}

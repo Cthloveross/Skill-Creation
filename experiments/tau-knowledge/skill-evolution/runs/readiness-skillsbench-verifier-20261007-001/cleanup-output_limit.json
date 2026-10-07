@@ -1,0 +1,4 @@
+{
+  "exit_code": 1,
+  "stderr": "Error response from daemon: No such container: tau-skill-1de19641c11f4f74b8e9ccff1cc04d2b\n"
+}

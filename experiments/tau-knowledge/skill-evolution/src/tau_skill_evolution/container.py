@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import posixpath
 import re
 import selectors
 import shutil
@@ -518,13 +519,13 @@ class DockerRunner:
             "--security-opt",
             "no-new-privileges",
             "--workdir",
-            "/work",
+            "/work/scratch" if "scratch" in writable and "candidate" not in writable else "/work",
             "--env",
             "PYTHONDONTWRITEBYTECODE=1",
             "--env",
             "PYTHONPATH=/bundle:/bundle/scripts",
             "--env",
-            "TMPDIR=/work",
+            "TMPDIR=/work/scratch" if "scratch" in writable else "TMPDIR=/work",
             "--env",
             "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1",
             "--tmpfs",
@@ -624,12 +625,16 @@ def _workspace_writable_roots(package: Path) -> tuple[str, ...]:
     return tuple(values)
 
 
-def _tree_manifest(root: Path) -> dict[str, str]:
-    """Hash regular bytes, never follow links or open a pipe/device."""
+def _tree_manifest(root: Path, *, scratch_links: bool = False) -> dict[str, str]:
+    """Hash regular bytes and record safe scratch links without following them."""
     if root.is_symlink() or not root.is_dir():
         raise ValueError("unsafe_workspace_root")
     manifest = {}
-    for directory, directories, files in os.walk(root, followlinks=False):
+
+    def unreadable(error: OSError) -> None:
+        raise error
+
+    for directory, directories, files in os.walk(root, followlinks=False, onerror=unreadable):
         for name in sorted([*directories, *files]):
             path = Path(directory) / name
             relative = path.relative_to(root).as_posix()
@@ -644,6 +649,17 @@ def _tree_manifest(root: Path) -> dict[str, str]:
                     if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
                         raise ValueError("unsafe_workspace_file")
                     manifest[relative] = hashlib.sha256(source.read()).hexdigest()
+            elif stat.S_ISLNK(mode) and scratch_links and relative.startswith("scratch/"):
+                target = os.readlink(path)
+                if "\\" in target or "\x00" in target:
+                    raise ValueError("unsafe_workspace_symlink")
+                destination = posixpath.normpath(
+                    posixpath.join("/work", posixpath.dirname(relative), target)
+                )
+                if destination != "/work/scratch" and not destination.startswith("/work/scratch/"):
+                    raise ValueError("unsafe_workspace_symlink")
+                # Preserve the link itself, never traverse its target on the host.
+                manifest[relative] = "symlink:" + target
             else:
                 raise ValueError("unsafe_workspace_file")
     return manifest
@@ -670,6 +686,8 @@ class PublicWorkspaceSession:
         return result
 
     def files(self) -> dict[str, str]:
+        from .artifacts import decode_package_text
+
         manifest = _tree_manifest(self.target)
         files = {}
         for relative in manifest:
@@ -682,21 +700,30 @@ class PublicWorkspaceSession:
                 continue
             path = self.target / relative
             descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
-            with os.fdopen(descriptor, "r", encoding="utf-8") as source:
+            with os.fdopen(descriptor, "rb") as source:
                 if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
                     raise ValueError("unsafe_workspace_file")
                 key = "tests/" + relative if self.tests else relative
-                files[key] = source.read()
+                files[key] = decode_package_text(source.read(), key)
         return files
 
     def snapshot(self) -> dict[str, Any]:
-        manifest = {"public": _tree_manifest(self.package), "work": _tree_manifest(self.work)}
+        manifest = {
+            "public": _tree_manifest(self.package),
+            "work": _tree_manifest(self.work, scratch_links=True),
+        }
         encoded = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()
-        return {
-            "files": self.files(),
+        result = {
             "workspace_hash": hashlib.sha256(encoded).hexdigest(),
             "manifest": manifest,
         }
+        try:
+            result["files"] = self.files()
+        except ValueError as exc:
+            if not str(exc).startswith("non_utf8_package_file: "):
+                raise
+            result.update(files=None, invalid_package=str(exc))
+        return result
 
     def run_tests(self) -> ProgramResult:
         if not self.tests:
@@ -770,7 +797,7 @@ def _public_workspace(
             }
             if expected != observed:
                 raise ValueError("public_workspace_input_mismatch")
-            _tree_manifest(work)
+            _tree_manifest(work, scratch_links=True)
         else:
             package.mkdir()
             work.mkdir(mode=0o777)
@@ -850,25 +877,18 @@ def _run_verifier(
     from .verifier import _validate_test_source
 
     _validate_test_source(test_files)
-    files = dict(test_files)
-    files["public_inputs.json"] = json.dumps(public_inputs, ensure_ascii=False, allow_nan=False)
-    files["base.json"] = json.dumps(frozen_base, ensure_ascii=False, allow_nan=False)
-    files["trace.json"] = json.dumps(trace, ensure_ascii=False, allow_nan=False)
-    files["_harness.py"] = _PYTEST_HARNESS
-    staging = tempfile.mkdtemp(prefix="tau-verifier-")
-    result: ProgramResult | None = None
-    try:
-        root = Path(staging)
-        package, work = root / "bundle", root / "work"
-        package.mkdir()
-        work.mkdir(mode=0o777)
-        work.chmod(0o777)
-        _stage_files(package, files)
-        result = runner._run(package, work, ["python", "-I", "/bundle/_harness.py"])
-        return result
-    finally:
-        if result is None or result.failure != "cleanup_failed":
-            _remove_runtime_staging(runner, staging)
+    with _public_workspace(
+        runner,
+        public_inputs,
+        frozen_base,
+        trace=trace,
+        test_files=test_files,
+        readonly_tests=True,
+        terminal_callback=lambda package, work, command: runner._run(
+            package, work, ["/bin/sh", "-c", command]
+        ),
+    ) as session:
+        return session.run_tests()
 
 
 @dataclass

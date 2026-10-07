@@ -1368,6 +1368,56 @@ def test_direct_generator_raw_results_are_readonly_and_snapshot_ignores_live_out
         assert public["public_artifact_count"] == 0
 
 
+def test_direct_generator_binary_candidate_has_a_recoverable_byte_snapshot(evolution_adapter):
+    adapter, _, journal, workspace = evolution_adapter
+    parent = SkillBundle({"SKILL.md": "parent"})
+    with adapter.evolution_session(
+        parent, adapter.public_inputs, {}, journal=journal, workspace=workspace
+    ) as session:
+        session.begin_attempt(parent, False, operation_id="revision")
+        before = session.snapshot()
+        binary = session.public.target / "references/cache.bin"
+        binary.parent.mkdir()
+        binary.write_bytes(b"\xff\xfe\x00")
+        snapshot = session.snapshot()
+        assert snapshot["files"] is None
+        assert snapshot["invalid_package"] == "non_utf8_package_file: references/cache.bin"
+        assert (
+            snapshot["candidate_manifest"]["references/cache.bin"]
+            == hashlib.sha256(binary.read_bytes()).hexdigest()
+        )
+        assert snapshot["workspace_hash"] != before["workspace_hash"]
+        assert session.snapshot() == snapshot
+        with pytest.raises(ValueError, match="non_utf8_package_file"):
+            session.submit(parent, operation_id="invalid-submit")
+        binary.unlink()
+        (session.public.target / "SKILL.md").write_text("corrected")
+        assert "invalid_package" not in session.snapshot()
+        result = session.submit(parent, operation_id="corrected-submit")
+        assert result.bundle.files["SKILL.md"] == "corrected"
+
+
+def test_direct_generator_snapshot_does_not_hide_io_or_unsafe_files(evolution_adapter, monkeypatch):
+    adapter, _, journal, workspace = evolution_adapter
+    parent = SkillBundle({"SKILL.md": "parent"})
+    with adapter.evolution_session(
+        parent, adapter.public_inputs, {}, journal=journal, workspace=workspace
+    ) as session:
+        session.begin_attempt(parent, False, operation_id="revision")
+        link = session.public.target / "references"
+        link.symlink_to(session.public.package, target_is_directory=True)
+        with pytest.raises(ValueError, match="unsafe_workspace_file"):
+            session.snapshot()
+        link.unlink()
+
+        def cannot_read():
+            raise OSError("storage unavailable")
+
+        monkeypatch.setattr(session.public, "files", cannot_read)
+        with pytest.raises(OSError, match="storage unavailable"):
+            session.snapshot()
+
+
 def test_direct_generator_initial_package_cannot_change_and_new_attempt_restores_parent(
     evolution_adapter,
 ):

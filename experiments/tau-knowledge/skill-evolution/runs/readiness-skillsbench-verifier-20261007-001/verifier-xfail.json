@@ -1,0 +1,61 @@
+{
+  "program": {
+    "exit_code": 0,
+    "output": {
+      "exit_code": 0,
+      "collected": 1,
+      "collected_nodeids": [
+        "tests/test_trace.py::test_trace"
+      ],
+      "collection_errors": 0,
+      "results": [
+        {
+          "nodeid": "tests/test_trace.py::test_trace",
+          "stage": "call",
+          "outcome": "skipped",
+          "exception": "XFailed",
+          "requirement_failure": true,
+          "xfail": true,
+          "detail": "trace = {'ok': True}\n\n    def test_trace(trace):\n>    getattr(pytest, 'xfail')('runtime fixture')\nE    _pytest.outcomes.XFailed: runtime fixture\n\n/bundle/tests/test_trace.py:3: XFailed"
+        }
+      ]
+    },
+    "stderr": "x                                                                        [100%]\n1 xfailed in 0.01s\n",
+    "failure": null
+  },
+  "report": {
+    "suite": {
+      "files": {
+        "tests/test_trace.py": "import pytest\ndef test_trace(trace):\n getattr(pytest, 'xfail')('runtime fixture')\n assert trace['ok']\n"
+      },
+      "version": 0,
+      "repairs": 0,
+      "test_hash": "3854a271f0bc6a26e196a4cddbd7396f2b48b7d2a7fc160b8431872c10d542cd",
+      "diagnosis": "",
+      "recommendations": [],
+      "obligations": [],
+      "inheritance": []
+    },
+    "passed": false,
+    "pass_rate": 0.0,
+    "results": [
+      {
+        "nodeid": "tests/test_trace.py::test_trace",
+        "stage": "call",
+        "outcome": "skipped",
+        "exception": "XFailed",
+        "requirement_failure": true,
+        "xfail": true,
+        "detail": "trace = {'ok': True}\n\n    def test_trace(trace):\n>    getattr(pytest, 'xfail')('runtime fixture')\nE    _pytest.outcomes.XFailed: runtime fixture\n\n/bundle/tests/test_trace.py:3: XFailed"
+      }
+    ],
+    "diagnosis": "",
+    "recommendations": [],
+    "failure": "skip_or_xfail",
+    "program_error": true,
+    "test_version": 0,
+    "test_hash": "3854a271f0bc6a26e196a4cddbd7396f2b48b7d2a7fc160b8431872c10d542cd",
+    "test_runs": [],
+    "stage_failures": []
+  }
+}

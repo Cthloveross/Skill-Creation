@@ -1,0 +1,24 @@
+{
+  "exit_code": 0,
+  "output": {
+    "exit_code": 0,
+    "collected": 1,
+    "collected_nodeids": [
+      "tests/test_trace.py::test_trace"
+    ],
+    "collection_errors": 0,
+    "results": [
+      {
+        "nodeid": "tests/test_trace.py::test_trace",
+        "stage": "call",
+        "outcome": "passed",
+        "exception": null,
+        "requirement_failure": false,
+        "xfail": false,
+        "detail": ""
+      }
+    ]
+  },
+  "stderr": ".                                                                        [100%]\n1 passed in 0.00s\n",
+  "failure": null
+}

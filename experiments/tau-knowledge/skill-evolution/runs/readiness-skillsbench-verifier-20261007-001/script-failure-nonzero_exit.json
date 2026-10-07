@@ -1,0 +1,6 @@
+{
+  "exit_code": 1,
+  "output": null,
+  "stderr": "Traceback (most recent call last):\n  File \"/bundle/scripts/main.py\", line 1, in <module>\n    import unavailable_tau_fixture_dependency\nModuleNotFoundError: No module named 'unavailable_tau_fixture_dependency'\n",
+  "failure": "nonzero_exit"
+}

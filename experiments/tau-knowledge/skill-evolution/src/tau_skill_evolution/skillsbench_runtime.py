@@ -1275,7 +1275,16 @@ class SkillsBenchRunner:
             "/tmp",
         ]
         if self.public_workspace_mode:
-            command += ["--ro-bind", str(work), "/work", "--chdir", "/work"]
+            writable = _workspace_writable_roots(package)
+            command += [
+                "--ro-bind",
+                str(work),
+                "/work",
+                "--chdir",
+                "/work/scratch"
+                if "scratch" in writable and "candidate" not in writable
+                else "/work",
+            ]
             for relative in _workspace_writable_roots(package):
                 command += ["--bind", str(work / relative), "/work/" + relative]
             if self.verifier_artifacts is None:
@@ -1335,6 +1344,8 @@ class SkillsBenchRunner:
             "OMP_NUM_THREADS": "1",
             "NUMEXPR_NUM_THREADS": "1",
         }
+        if self.public_workspace_mode:
+            environment.update(HOME="/work/scratch", TMPDIR="/work/scratch")
         if (
             self.runtime == "workspace"
             and not self.public_workspace_mode
@@ -1388,6 +1399,8 @@ class SkillsBenchRunner:
             "docker",
             "run",
             "--interactive",
+            "--user",
+            f"{os.getuid()}:{os.getgid()}" if os.getuid() else "10001:10001",
             "--name",
             "tau-sb-public-" + uuid.uuid4().hex,
             "--network",
@@ -1409,6 +1422,8 @@ class SkillsBenchRunner:
             f"type=bind,src={package},dst=/bundle,readonly",
         ]
         writable = _workspace_writable_roots(package)
+        if "scratch" in writable and "candidate" not in writable:
+            command[command.index("--workdir") + 1] = "/work/scratch"
         if not writable:
             command += ["--mount", f"type=bind,src={work},dst=/work"]
         else:
@@ -1446,6 +1461,7 @@ class SkillsBenchRunner:
             "-i",
             "PATH=/usr/local/bin:/usr/bin:/bin",
             "HOME=/work/scratch",
+            "TMPDIR=/work/scratch" if "scratch" in writable else "TMPDIR=/tmp",
             f"PYTHONPATH={_VERIFIER_PREFIX}",
             "PYTHONDONTWRITEBYTECODE=1",
             "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1",
@@ -2680,6 +2696,8 @@ class SkillsBenchRunner:
         test_files: Mapping[str, str],
     ) -> ProgramResult:
         self.verifier_artifacts = self._public_artifacts(trace)
+        previous_mode = self.public_workspace_mode
+        self.public_workspace_mode = True
         try:
             return _run_verifier(
                 self,
@@ -2690,6 +2708,7 @@ class SkillsBenchRunner:
             )
         finally:
             self.verifier_artifacts = None
+            self.public_workspace_mode = previous_mode
 
     def _codex_admission(
         self, episode: SkillEpisode, settings: Mapping[str, Any]

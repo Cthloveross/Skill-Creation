@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 import uuid
 from collections import defaultdict
 from pathlib import Path
@@ -13,6 +14,7 @@ from typing import Any
 from .acquisition import READ_ONLY_TOOL_NAMES, AcquisitionBudgets, collect_base
 from .artifacts import FrozenBase, atomic_json, load_base, load_bundle, seal_base, seal_bundle
 from .bank import BankWorkerError
+from .core._canonical import thaw_json
 from .credentials import bearer_token_source
 from .generator import (
     SKILL_BUNDLE_RESPONSE_FORMAT,
@@ -814,6 +816,7 @@ class Workflow:
                                 oracle_attempts=result.oracle_calls + len(result.oracle_failures),
                                 oracle_failures=list(result.oracle_failures),
                                 attempts=list(result.attempts),
+                                stage_failures=thaw_json(result.stage_failures),
                                 verifications=[
                                     {
                                         **{
@@ -842,6 +845,11 @@ class Workflow:
                                                 "recommendations",
                                                 "results",
                                             )
+                                        },
+                                        **{
+                                            key: check[key]
+                                            for key in ("test_runs", "stage_failures")
+                                            if key in check
                                         },
                                     }
                                     for check in result.verifications
@@ -980,7 +988,7 @@ class Workflow:
         """Export public evidence without model chats or private oracle/evaluator output."""
         from .artifacts import EvolutionSubmission
 
-        submissions, terminal_operations, bank_actions = [], [], []
+        submissions, terminal_operations, bank_actions, verifier_operations = [], [], [], []
         execution_ids: set[str] = set()
         execution_count = 0
         for request in sorted(journal.root.glob("*/request.json")):
@@ -988,6 +996,32 @@ class Workflow:
             operation = envelope["operation_id"]
             payload = envelope["payload"]
             name = payload.get("name")
+            if name is not None and re.fullmatch(
+                r"evolution-turn-\d+-(?:suite|escalate|verify-(?:diagnosis|repair))"
+                r"-turn-\d+-tool-\d+",
+                operation,
+            ):
+                record = {
+                    "operation_id": operation,
+                    "status": journal.status(operation),
+                    "tool": name,
+                }
+                if journal.completed(operation):
+                    response = journal.response(operation)
+                    record["program"] = response["program"]
+                    record["workspace_hash"] = response["snapshot"]["workspace_hash"]
+                    snapshot = response["snapshot"]
+                    if "files" in snapshot:
+                        record["test_files"] = snapshot["files"]
+                    record.update(
+                        {
+                            key: snapshot[key]
+                            for key in ("manifest", "invalid_package")
+                            if key in snapshot
+                        }
+                    )
+                verifier_operations.append(record)
+                continue
             if name is None and operation.endswith("/start") and journal.completed(operation):
                 start = journal.response(operation)
                 state = start.get("learning_execution_state", {})
@@ -1032,10 +1066,12 @@ class Workflow:
                     )
                 (terminal_operations if name == "terminal" else bank_actions).append(record)
         checks = []
+        stage_failures = []
         submission_order = {}
         if journal.completed("evolution-result"):
             evolution = journal.response("evolution-result")
             checks = evolution["verifications"]
+            stage_failures = evolution.get("stage_failures", [])
             submission_order = {
                 item["submission_hash"]: index
                 for index, item in enumerate(evolution.get("submissions", ()))
@@ -1060,7 +1096,9 @@ class Workflow:
                 "learning_execution_count": max(execution_count, len(execution_ids)),
                 "terminal_operations": terminal_operations,
                 "bank_actions": bank_actions,
+                "verifier_operations": verifier_operations,
                 "verifications": checks,
+                "stage_failures": stage_failures,
             },
         )
         return path
@@ -1104,12 +1142,12 @@ class Workflow:
             self.root / "private" / "skillsbench-models",
         ]
         counted_requests: set[Path] = set()
+        policies: dict[str, int] = defaultdict(int)
         for request in (path for root in journal_roots for path in root.rglob("request.json")):
-            if (
-                json.loads(request.read_text()).get("payload", {}).get("delivery_policy")
-                != "single_post"
-            ):
+            policy = json.loads(request.read_text()).get("payload", {}).get("delivery_policy")
+            if not isinstance(policy, str) or not policy:
                 continue
+            policies[policy] += 1
             state = json.loads((request.parent / "state.json").read_text())["status"]
             if (request.parent / "response.json").exists():
                 state = "COMPLETED"
@@ -1129,6 +1167,8 @@ class Workflow:
                 state = journal.status(operation)
                 if request_path.resolve() not in counted_requests:
                     delivery[state] += 1
+                    policy = request.get("payload", {}).get("delivery_policy") or "native_provider"
+                    policies[policy] += 1
                     counted_requests.add(request_path.resolve())
                 if state == "COMPLETED":
                     usage = journal.response(operation)["response"]["usage"]
@@ -1141,6 +1181,12 @@ class Workflow:
             "basis": "provider_response_usage; successful responses only",
             "roles": dict(roles),
             "model_request_states": delivery,
+            "delivery_policies": dict(policies),
+            "http_posts": {
+                "status": "NOT_MEASURED",
+                "count": None,
+                "reason": "journal counts logical operations, not individual transport attempts",
+            },
             "dispatched_model_requests": sum(
                 count for state, count in delivery.items() if state != "NOT_SENT"
             ),
@@ -1263,6 +1309,18 @@ class Workflow:
                 return None
             return f"{sum(item['met'] for item in value)}/{len(value)}"
 
+        def phase_failures(case: dict[str, Any]) -> list[dict[str, Any]]:
+            failures = list(case.get("stage_failures", ()))
+            for check in case.get("verifications", ()):
+                for failure in check.get("stage_failures", ()):
+                    if failure not in failures:
+                        failures.append(failure)
+            for failure in tuple(failures):
+                for rejection in failure.get("rejections", ()):
+                    if rejection not in failures:
+                        failures.append(rejection)
+            return failures
+
         table(
             "Final arms",
             (
@@ -1343,6 +1401,23 @@ class Workflow:
                     case.get("final_bundle_hash"),
                 )
                 for case in report["cases"]
+            ),
+        )
+        table(
+            "Stage failures",
+            ("Task", "Condition", "Stage", "Operation", "Exception", "Reason", "Detail"),
+            (
+                (
+                    case["task_id"],
+                    case["condition"],
+                    failure["stage"],
+                    failure["operation_id"],
+                    failure["exception_type"],
+                    failure["reason"],
+                    failure["detail"],
+                )
+                for case in report["cases"]
+                for failure in phase_failures(case)
             ),
         )
         if self.spec.experiment == "skillsbench":

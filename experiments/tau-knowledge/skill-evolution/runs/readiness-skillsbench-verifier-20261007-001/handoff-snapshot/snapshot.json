@@ -1,0 +1,32 @@
+{
+  "schema": "skillsbench.handoff-snapshot.v1",
+  "source": "runs/skillsbench",
+  "reason": "Preserve pre-fix handoff and source identity",
+  "files": [
+    {
+      "path": "HANDOFF.md",
+      "sha256": "03ca7981ef9c95e94547364a3cd1fb1fb79434001369bb6ffa6b56309b5b1e12",
+      "bytes": 39664
+    },
+    {
+      "path": "skillsbench-v4-source.tar.gz",
+      "sha256": "f49f9605a9cf1dc72ab33a4d2eedbbd07c734890c95aaf802fbf92c38d157c34",
+      "bytes": 2574388
+    },
+    {
+      "path": "transfer-manifest.json",
+      "sha256": "699c87015eed61aa469157b099e2488ce5e0db60d16afe3c6f5022dfd72f4126",
+      "bytes": 163310
+    },
+    {
+      "path": "full-85-gpt56-v4/manifest.json",
+      "sha256": "abab5e7b914bfacf7ab86c950f050f35b0577a8ee5e0802bfe3d03402cae673e",
+      "bytes": 458294
+    },
+    {
+      "path": "full-85-opus48-v4/manifest.json",
+      "sha256": "17540663b5b28fdf28ef1a0dfcea6995be7ab53e5f8ab3a079403e1c54d50463",
+      "bytes": 458302
+    }
+  ]
+}

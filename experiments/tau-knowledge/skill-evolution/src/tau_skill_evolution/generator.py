@@ -348,6 +348,14 @@ def parse_model_json(raw: Any) -> dict[str, Any]:
 
 
 def parse_bundle_response(raw: Any, *, parent_hash: str | None = None) -> SkillBundle:
+    # Messages providers may wrap their entire JSON answer in one Markdown fence.
+    # Only that exact envelope is accepted; JSON parsing still consumes everything.
+    text = raw.get("content") if isinstance(raw, Mapping) else raw
+    if isinstance(text, str) and text.lstrip().startswith("```"):
+        match = re.fullmatch(r"```json[ \t]*\r?\n(.*)\r?\n```", text.strip(), re.DOTALL)
+        if match is None:
+            raise ValueError("expected exactly one fenced JSON object")
+        raw = {**raw, "content": match[1]} if isinstance(raw, Mapping) else match[1]
     value = parse_model_json(raw)
     if set(value) != {"files"} or not isinstance(value["files"], list) or not value["files"]:
         raise ValueError("expected a nonempty files list")
@@ -878,7 +886,7 @@ def _execute_learning(
                 expected_snapshot["files"]
             ) != canonical_json_sha256(thaw_json(previous_bundle.files)):
                 finish_failure("initial_execution_modified_bundle", sent=dispatched)
-            if raw_result.get("failure") == "invalid_package":
+            if initial and raw_result.get("failure") == "invalid_package":
                 finish_failure("invalid_package", sent=dispatched)
             if "submission" in sealed:
                 # Finish all advertised calls in this assistant message before retaining

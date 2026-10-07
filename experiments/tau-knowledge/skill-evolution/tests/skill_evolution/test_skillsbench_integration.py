@@ -124,6 +124,105 @@ def episode_json(runner, episode, command):
     return json.loads(result.output if isinstance(result.output, str) else result.output["stdout"])
 
 
+@pytest.mark.skipif(
+    os.environ.get("TAU_RUN_SKILLSBENCH_DOCKER_INTEGRATION") != "1",
+    reason="real SkillsBench verifier ownership and scratch checks require explicit opt-in",
+)
+def test_real_visual_stability_verifier_scratch_and_nonroot_ownership(tmp_path):
+    task = "fix-visual-stability"
+    root = EXPERIMENT_ROOT
+    transport = RecordedTransport()
+    runner = SkillsBenchRunner(
+        root,
+        task,
+        demo=False,
+        transport=transport,
+        runtime_lock_path=root / f"runtime/skillsbench-docker-{task}-v4-lock.json",
+    )
+    lock = runner._docker_lock()
+    adapter = SkillsBenchAdapter(
+        SimpleNamespace(root=root), task, demo=False, artifact_root=tmp_path / "snapshots"
+    )
+    adapter.runner = runner
+    artifacts = tmp_path / "artifacts"
+    artifacts.mkdir()
+    output = artifacts / "output.txt"
+    output.write_text("unchanged public output")
+    output.chmod(0o444)
+    trace = adapter._seal_public_workspace({"/app": artifacts})
+    tests = {
+        "tests/test_scratch.py": "import os\nfrom pathlib import Path\n"
+        "def test_scratch(trace):\n"
+        " assert Path.cwd()==Path('/work/scratch')\n"
+        " assert os.getuid()==trace['uid']\n"
+        " private=Path('private'); private.mkdir(exist_ok=True,mode=0o700)\n"
+        " binary=private/'state.bin'; binary.write_bytes(bytes([255,0,128])); binary.chmod(0o600)\n"
+        " assert binary.read_bytes()==bytes(trace['bytes'])\n"
+        " assert Path('/app/output.txt').read_text()==trace['output']\n"
+    }
+    trace.update(
+        uid=os.getuid() if os.getuid() else 10001,
+        bytes=[255, 0, 128],
+        output="unchanged public output",
+    )
+    with runner.public_verifier_session({}, {}, trace, tests) as session:
+        command = (
+            shlex.quote(lock["images"]["runtime"]["verifier_python"])
+            + " -c "
+            + shlex.quote(
+                "import os;from pathlib import Path;"
+                "p=Path('/work/scratch/private');p.mkdir(mode=0o700);"
+                "f=p/'state.bin';f.write_bytes(bytes([255,0,128]));f.chmod(0o600);"
+                "Path('/work/scratch/link').symlink_to('private/state.bin')"
+            )
+        )
+        result = session.terminal(command)
+        assert result.exit_code == 0 and result.failure is None, result.to_dict()
+        private, binary = (
+            session.work / "scratch/private",
+            session.work / "scratch/private/state.bin",
+        )
+        assert private.stat().st_uid == binary.stat().st_uid == trace["uid"]
+        snapshot = session.snapshot()
+        assert snapshot["manifest"]["work"]["scratch/link"] == "symlink:private/state.bin"
+        assert private.stat().st_mode & 0o777 == 0o700
+        assert binary.stat().st_mode & 0o777 == 0o600
+        interactive = session.run_tests()
+        assert _report(TestSuite(tests), interactive).passed, interactive.to_dict()
+        staging = session.package.parent
+    assert not staging.exists()
+    formal = runner.run_verifier({}, {}, trace, tests)
+    assert _report(TestSuite(tests), formal).passed, formal.to_dict()
+    assert (
+        output.read_text() == "unchanged public output" and output.stat().st_mode & 0o777 == 0o444
+    )
+    runs = [command for command, _names in transport.calls if command[:2] == ["docker", "run"]]
+    names = [command[command.index("--name") + 1] for command in runs]
+    cleanups = [
+        command[-1] for command, _names in transport.calls if command[:2] == ["docker", "rm"]
+    ]
+    assert names == cleanups
+    evidence = {
+        "task": task,
+        "runtime_lock": str(runner.runtime_lock_path.relative_to(root)),
+        "runtime_image": lock["images"]["runtime"]["digest"],
+        "official_main_user": lock["service_images"]["main"]["user"],
+        "public_verifier_uid": trace["uid"],
+        "model_calls": 0,
+        "official_grader_calls": 0,
+        "interactive": interactive.to_dict(),
+        "formal": formal.to_dict(),
+        "containers_cleaned": names,
+        "public_output_unchanged": True,
+    }
+    if directory := os.environ.get("TAU_CONTAINER_EVIDENCE"):
+        destination = Path(directory)
+        destination.mkdir(parents=True, exist_ok=True)
+        (destination / "skillsbench-verifier-scratch.json").write_text(
+            json.dumps(evidence, indent=2)
+        )
+
+
 def test_real_task_credentials_use_scoped_values_and_do_not_inherit_provider_key(
     prepared, monkeypatch, tmp_path
 ):

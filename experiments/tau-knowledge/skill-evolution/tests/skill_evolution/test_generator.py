@@ -390,6 +390,78 @@ def test_creation_failure_never_retries_or_feedbacks(tmp_path, raw):
     assert journal.result("generate_initial")["status"] == "creation_failed"
 
 
+def test_single_fenced_package_is_parsed_without_changing_the_role_json_contract(tmp_path):
+    from tau_skill_evolution.generator import parse_model_json
+
+    base, journal, calls = _base(), Journal(tmp_path / "journal"), []
+    raw = {"content": "\n```json\n" + json.dumps(_raw()) + "\n```\n", "finish_reason": "stop"}
+
+    def model(payload):
+        calls.append(payload)
+        return raw
+
+    bundle = generate_initial(model, base.public_inputs, base, journal=journal)
+    assert bundle == parse_bundle_response(_raw())
+    assert generate_initial(model, base.public_inputs, base, journal=journal) == bundle
+    assert len(calls) == 1 and journal.response("generate_initial") == raw
+    with pytest.raises(ValueError):
+        parse_model_json(raw)
+
+
+def test_known_invalid_submission_can_be_corrected_in_the_same_revision(tmp_path):
+    from tau_skill_evolution.artifacts import decode_package_text
+
+    class Session(EditingSession):
+        def submit(self, parent, *, initial, operation_id):
+            if self.candidate["SKILL.md"] == "invalid candidate":
+                decode_package_text(b"\xff", "references/cache.bin")
+            return super().submit(parent, initial=initial, operation_id=operation_id)
+
+    model = ToolSequenceModel(
+        [
+            ("terminal", {"command": json.dumps(["write", "SKILL.md", "invalid candidate"])}),
+            ("submit_revision", {}),
+            ("terminal", {"command": json.dumps(["write", "SKILL.md", "corrected candidate"])}),
+            ("submit_revision", {}),
+        ]
+    )
+    base, parent, journal = _base(), parse_bundle_response(_raw()), Journal(tmp_path)
+    result = revise(model, parent, base.public_inputs, base, {}, journal=journal, session=Session())
+    assert result.bundle.files["SKILL.md"] == "corrected candidate"
+    assert result.bundle.parent_hash == parent.bundle_hash and len(model.requests) == 4
+    rejected = journal.response("revise/model-1/tool-0")
+    assert rejected["result"]["failure"] == "invalid_package"
+    assert "non_utf8_package_file" in rejected["result"]["detail"]
+    assert journal.status("revise/model-1/tool-0") == "COMPLETED"
+    assert journal.completed("revise/submitted")
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        'Explanation\n```json\n{"files": []}\n```',
+        '```json\n{"files": []}\n```\nExplanation',
+        '```json\n{"files": []}\n```\n```json\n{"files": []}\n```',
+        '```json\n{"files": [], "files": []}\n```',
+        '```json\n{"files": [{"path": "SKILL.md", "content": "ok", "content": "other"}]}\n```',
+        '```json\n{"files": [{"path": "../SKILL.md", "content": "ok"}]}\n```',
+        '```json\n{"files": [{"path": "SKILL.md", "content": "ok"}]} trailing\n```',
+        {"content": '```json\n{"files": []}\n```', "finish_reason": "length"},
+    ],
+)
+def test_fenced_creation_rejects_ambiguous_or_unsafe_answers_without_retry(tmp_path, raw):
+    base, journal, calls = _base(), Journal(tmp_path / "journal"), []
+
+    def model(payload):
+        calls.append(payload)
+        return raw
+
+    for _ in range(2):
+        with pytest.raises(CreationFailure, match="invalid_package"):
+            generate_initial(model, base.public_inputs, base, journal=journal)
+    assert len(calls) == 1
+
+
 def test_unknown_s0_request_is_terminal_and_not_resent(tmp_path):
     base = _base()
     calls = []
@@ -448,6 +520,10 @@ def test_incomplete_bedrock_response_cannot_seal_s0_even_with_complete_json(tmp_
 def test_role_json_requires_normal_finish_when_finish_reason_is_present(finish_reason):
     with pytest.raises(ValueError, match="did not finish normally"):
         parse_bundle_response({"content": json.dumps(_raw()), "finish_reason": finish_reason})
+    with pytest.raises(ValueError, match="did not finish normally"):
+        parse_bundle_response(
+            {"content": "```json\n" + json.dumps(_raw()) + "\n```", "finish_reason": finish_reason}
+        )
 
 
 def test_analyzer_rejects_complete_json_from_an_incomplete_response():

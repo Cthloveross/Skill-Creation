@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -115,6 +116,36 @@ def test_cleanup_failure_detail_stays_inside_combined_output_limit(tmp_path):
     assert b"daemon denied removal" in result.stderr and result.stdout
 
 
+def test_formal_verifier_uses_same_scratch_contract_and_host_nonroot_user(tmp_path):
+    calls = []
+
+    def run(command, **_kwargs):
+        calls.append(command)
+        if command[:2] != ["docker", "run"]:
+            return ProcessResult(0)
+        assert command[command.index("--user") + 1] == (
+            f"{os.getuid()}:{os.getgid()}" if os.getuid() else "10001:10001"
+        )
+        assert command[command.index("--workdir") + 1] == "/work/scratch"
+        assert "HOME=/work/scratch" in command and "TMPDIR=/work/scratch" in command
+        mounts = [command[index + 1] for index, arg in enumerate(command) if arg == "--mount"]
+        assert mounts[0].endswith("dst=/bundle,readonly")
+        assert mounts[1].endswith("dst=/work,readonly")
+        scratch = next(mount for mount in mounts if mount.endswith("dst=/work/scratch"))
+        assert os.path.isdir(scratch.split("src=", 1)[1].split(",", 1)[0])
+        return ProcessResult(0, b'{"collected":1}')
+
+    runner = public_runner(SimpleNamespace(run=run))
+    runner.public_workspace_mode = False
+    runner._public_artifacts = lambda _trace: tmp_path
+    result = runner.run_verifier(
+        {}, {}, {"ok": True}, {"tests/test_ok.py": "def test_ok(trace): assert trace['ok']"}
+    )
+    assert result.failure is None and result.output == {"collected": 1}
+    assert not runner.public_workspace_mode and runner.verifier_artifacts is None
+    assert len(calls) == 2
+
+
 @pytest.mark.skipif(
     os.environ.get("TAU_RUN_SKILLSBENCH_DOCKER_INTEGRATION") != "1",
     reason="actual public-command Docker cleanup requires explicit opt-in",
@@ -126,7 +157,7 @@ def test_real_public_commands_preserve_limits_and_remove_every_container(tmp_pat
         "dialogue-parser",
         demo=False,
         runtime_lock_path=EXPERIMENT_ROOT
-        / "runtime/skillsbench-docker-dialogue-parser-v2-20261006-lock.json",
+        / "runtime/skillsbench-docker-dialogue-parser-v4-lock.json",
     )
     runner._docker_lock()
     calls = []
@@ -170,15 +201,20 @@ def test_real_public_commands_preserve_limits_and_remove_every_container(tmp_pat
         probe = subprocess.run(["docker", "inspect", name], capture_output=True)
         assert probe.returncode != 0 and b"no such" in probe.stderr.lower()
     assert not staging.exists()
-    (tmp_path / "cleanup-evidence.json").write_text(
-        json.dumps(
-            {
-                "failure": failure,
-                "containers": names,
-                "commands": calls,
-                "results": [result.to_dict() for result in results],
-            },
-            indent=2,
+    evidence = {
+        "runtime_lock": str(runner.runtime_lock_path),
+        "failure": failure,
+        "containers": names,
+        "commands": calls,
+        "results": [result.to_dict() for result in results],
+        "containers_absent": True,
+        "staging_absent": True,
+        "model_calls": 0,
+    }
+    (tmp_path / "cleanup-evidence.json").write_text(json.dumps(evidence, indent=2) + "\n")
+    if directory := os.environ.get("TAU_CONTAINER_EVIDENCE"):
+        destination = Path(directory)
+        destination.mkdir(parents=True, exist_ok=True)
+        (destination / f"skillsbench-cleanup-{failure or 'normal'}.json").write_text(
+            json.dumps(evidence, indent=2) + "\n"
         )
-        + "\n"
-    )

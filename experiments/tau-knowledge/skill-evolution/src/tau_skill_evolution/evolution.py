@@ -11,7 +11,7 @@ from tau_skill_evolution.core._canonical import freeze_json, thaw_json
 from .artifacts import EvolutionSubmission, SkillBundle
 from .generator import GeneratorContextBudgetExhausted, public_feedback_history
 from .model import ModelClientError, authentication_status, is_credential_error
-from .verifier import TestSuite, VerificationReport
+from .verifier import TestSuite, VerificationReport, _stage_failure
 
 
 class OracleUnavailable(RuntimeError):
@@ -30,8 +30,10 @@ class EvolutionResult:
     oracle_failures: tuple[Mapping[str, Any], ...] = ()
     final_bundle_ref: Mapping[str, str | None] | None = None
     submissions: tuple[Mapping[str, Any], ...] = ()
+    stage_failures: tuple[Mapping[str, Any], ...] = ()
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "stage_failures", freeze_json(self.stage_failures))
         if self.final_bundle_ref is not None:
             if (
                 not isinstance(self.final_bundle_ref, Mapping)
@@ -81,6 +83,7 @@ class EvolutionResult:
             "oracle_failures": list(self.oracle_failures),
             "oracle_attempts": self.oracle_calls + len(self.oracle_failures),
             "submissions": list(self.submissions),
+            "stage_failures": thaw_json(self.stage_failures),
             "submitted_learning_executions": len(
                 {item["execution_id"] for item in self.submissions}
             ),
@@ -102,6 +105,7 @@ class EvolutionResult:
             tuple(value.get("oracle_failures", ())),
             value.get("final_bundle_ref"),
             tuple(value.get("submissions", ())),
+            tuple(value.get("stage_failures", ())),
         )
 
 
@@ -197,6 +201,7 @@ class EvolutionEngine:
         turn = 0
         stop_reason = ""
         submissions: list[Mapping[str, Any]] = []
+        stage_failures: list[Mapping[str, Any]] = []
 
         def retain_submission(submission: EvolutionSubmission) -> None:
             submissions.append(
@@ -233,6 +238,9 @@ class EvolutionEngine:
         except Exception as exc:
             if is_credential_error(exc):
                 raise
+            stage_failures.append(
+                _stage_failure("initial_execution", f"{operation_prefix}-initial-execution", exc)
+            )
             stop_reason = getattr(exc, "reason", None) or _failure("initial_execution", exc)
             trace = {}
         # Deterministic operation IDs permit replay of sealed phase results after interruption.
@@ -250,6 +258,9 @@ class EvolutionEngine:
                         public_inputs, frozen_base, trace, operation_id=f"{prefix}-suite"
                     )
                 except Exception as exc:
+                    stage_failures.append(
+                        _stage_failure("verifier_initialization", f"{prefix}-suite", exc)
+                    )
                     stop_reason = _failure("verifier_initialization", exc)
                     break
             if self._authentication_status() is not None:
@@ -260,9 +271,11 @@ class EvolutionEngine:
                     public_inputs, frozen_base, trace, suite, operation_id=f"{prefix}-verify"
                 )
             except Exception as exc:
+                stage_failures.append(_stage_failure("verification", f"{prefix}-verify", exc))
                 stop_reason = _failure("verification", exc)
                 break
             suite = report.suite
+            stage_failures.extend(report.stage_failures)
             verifications.append(
                 {
                     **submissions[-1],
@@ -315,6 +328,7 @@ class EvolutionEngine:
                             oracle_id, {"bundle_hash": current.bundle_hash}, call_oracle
                         )
                     except Exception as exc:
+                        stage_failures.append(_stage_failure("oracle", oracle_id, exc))
                         stop_reason = _failure("oracle", exc)
                         break
                     if outcome["status"] == "MEASURED":
@@ -354,6 +368,9 @@ class EvolutionEngine:
                         operation_id=f"{prefix}-escalate",
                     )
                 except Exception as exc:
+                    stage_failures.append(
+                        _stage_failure("test_escalation", f"{prefix}-escalate", exc)
+                    )
                     stop_reason = _failure("test_escalation", exc)
                     break
                 # Upgraded checks examine the same immutable submitted observation.
@@ -401,7 +418,8 @@ class EvolutionEngine:
                     current = candidate
                     if all(item.bundle_hash != candidate.bundle_hash for item in versions):
                         versions.append(candidate)
-            except GeneratorContextBudgetExhausted:
+            except GeneratorContextBudgetExhausted as exc:
+                stage_failures.append(_stage_failure("revision", operation_id, exc))
                 # Admission rejected before a model dispatch: no invalid package or retry.
                 revision_attempts -= 1
                 stop_reason = "context_budget_exhausted"
@@ -410,6 +428,7 @@ class EvolutionEngine:
                 if is_credential_error(exc):
                     # Nothing was dispatched; abort without consuming an attempt.
                     raise
+                stage_failures.append(_stage_failure("revision", operation_id, exc))
                 attempt["status"] = "invalid"
                 attempt["failure"] = type(exc).__name__
                 if getattr(exc, "dispatched", True) is False:
@@ -449,6 +468,7 @@ class EvolutionEngine:
             tuple(oracle_failures),
             {"bundle_hash": current.bundle_hash, "parent_hash": current.parent_hash},
             tuple(submissions),
+            tuple(stage_failures),
         )
         if self.journal is not None:
             sealed = self._dispatch(

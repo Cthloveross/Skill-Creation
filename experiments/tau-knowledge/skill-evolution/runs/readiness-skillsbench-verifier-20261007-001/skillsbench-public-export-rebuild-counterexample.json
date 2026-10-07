@@ -1,0 +1,114 @@
+{
+  "fixture": "synthetic public rebuild obligation in prepared 3d-scan-calc image",
+  "experiment_measurement": false,
+  "external_model_calls": 0,
+  "official_grader_calls_in_test": 0,
+  "public_inputs": {
+    "task": "synthetic public export requirement",
+    "request": "Generate JSON and CSV reports containing value 12; export.py must rebuild them.",
+    "export_entry": "/root/.tau-public-export-fixture/export.py"
+  },
+  "visibility": {
+    "skill": false,
+    "candidate": false,
+    "official_grader": false
+  },
+  "existing_outputs": {
+    "suite": {
+      "files": {
+        "tests/test_public.py": "import csv,json,subprocess,sys\nfrom pathlib import Path\nROOT = Path('/root/.tau-public-export-fixture')\n\ndef test_existing_json_report():\n    assert json.loads((ROOT/'report.json').read_text()) == {'value':12}\n\ndef test_existing_csv_report():\n    with (ROOT/'report.csv').open() as stream:\n        assert list(csv.DictReader(stream)) == [{'value':'12'}]\n"
+      },
+      "version": 0,
+      "repairs": 0,
+      "test_hash": "827ee1e69bb1a695d05af3437756bff4fb2fc1837b2d7ec4b6307579ebf23dc0",
+      "diagnosis": "",
+      "recommendations": [],
+      "obligations": [],
+      "inheritance": []
+    },
+    "passed": true,
+    "pass_rate": 1.0,
+    "results": [
+      {
+        "nodeid": "tests/test_public.py::test_existing_json_report",
+        "stage": "call",
+        "outcome": "passed",
+        "exception": null,
+        "requirement_failure": false,
+        "xfail": false,
+        "detail": ""
+      },
+      {
+        "nodeid": "tests/test_public.py::test_existing_csv_report",
+        "stage": "call",
+        "outcome": "passed",
+        "exception": null,
+        "requirement_failure": false,
+        "xfail": false,
+        "detail": ""
+      }
+    ],
+    "diagnosis": "",
+    "recommendations": [],
+    "failure": null,
+    "program_error": false,
+    "test_version": 0,
+    "test_hash": "827ee1e69bb1a695d05af3437756bff4fb2fc1837b2d7ec4b6307579ebf23dc0",
+    "test_runs": [],
+    "stage_failures": []
+  },
+  "with_rebuild_obligation": {
+    "suite": {
+      "files": {
+        "tests/test_public.py": "import csv,json,subprocess,sys\nfrom pathlib import Path\nROOT = Path('/root/.tau-public-export-fixture')\n\ndef test_existing_json_report():\n    assert json.loads((ROOT/'report.json').read_text()) == {'value':12}\n\ndef test_existing_csv_report():\n    with (ROOT/'report.csv').open() as stream:\n        assert list(csv.DictReader(stream)) == [{'value':'12'}]\n\ndef test_public_export_rebuilds_in_scratch():\n    destination = Path('/work/scratch/rebuilt')\n    destination.mkdir()\n    result = subprocess.run(\n        [sys.executable,str(ROOT/'export.py'),'--output',str(destination)],\n        capture_output=True,text=True,check=False,\n    )\n    assert result.returncode == 0, 'public export entry must rebuild reports'\n    assert json.loads((destination/'report.json').read_text()) == {'value':12}\n    assert (destination/'report.csv').read_text() == 'value\\n12\\n'\n"
+      },
+      "version": 0,
+      "repairs": 0,
+      "test_hash": "6d9cbf6e623b46755c1ccecff8166adc581814dd59fdf85de3c0e7467c72dfe0",
+      "diagnosis": "",
+      "recommendations": [],
+      "obligations": [],
+      "inheritance": []
+    },
+    "passed": false,
+    "pass_rate": 0.6666666666666666,
+    "results": [
+      {
+        "nodeid": "tests/test_public.py::test_existing_json_report",
+        "stage": "call",
+        "outcome": "passed",
+        "exception": null,
+        "requirement_failure": false,
+        "xfail": false,
+        "detail": ""
+      },
+      {
+        "nodeid": "tests/test_public.py::test_existing_csv_report",
+        "stage": "call",
+        "outcome": "passed",
+        "exception": null,
+        "requirement_failure": false,
+        "xfail": false,
+        "detail": ""
+      },
+      {
+        "nodeid": "tests/test_public.py::test_public_export_rebuilds_in_scratch",
+        "stage": "call",
+        "outcome": "failed",
+        "exception": "AssertionError",
+        "requirement_failure": true,
+        "xfail": false,
+        "detail": "def test_public_export_rebuilds_in_scratch():\n        destination = Path('/work/scratch/rebuilt')\n        destination.mkdir()\n        result = subprocess.run(\n            [sys.executable,str(ROOT/'export.py'),'--output',str(destination)],\n            capture_output=True,text=True,check=False,\n        )\n>       assert result.returncode == 0, 'public export entry must rebuild reports'\nE       AssertionError: public export entry must rebuild reports\nE       assert 1 == 0\nE        +  where 1 = CompletedProcess(args=['/.tau-python/python3', '/root/.tau-public-export-fixture/export.py', '--output', '/work/scratc... raise RuntimeError(\\'synthetic public entry cannot rebuild\\')\\nRuntimeError: synthetic public entry cannot rebuild\\n').returncode\n\n../tests/test_public.py:19: AssertionError"
+      }
+    ],
+    "diagnosis": "",
+    "recommendations": [],
+    "failure": null,
+    "program_error": false,
+    "test_version": 0,
+    "test_hash": "6d9cbf6e623b46755c1ccecff8166adc581814dd59fdf85de3c0e7467c72dfe0",
+    "test_runs": [],
+    "stage_failures": []
+  },
+  "actual_pytest_exit_code": 1
+}

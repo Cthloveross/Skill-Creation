@@ -391,6 +391,45 @@ def test_messages_raw_response_is_sealed_before_normalization_and_never_reposted
     assert journal.status("unknown-s0") == "UNKNOWN"
 
 
+def test_messages_fenced_s0_uses_one_post_and_restores_the_exact_response(tmp_path):
+    import base64
+
+    from tau_skill_evolution.artifacts import FrozenBase
+    from tau_skill_evolution.generator import generate_initial
+    from tau_skill_evolution.journal import Journal
+
+    package = {"files": [{"path": "SKILL.md", "content": "instructions"}]}
+    fenced = "```json\n" + json.dumps(package) + "\n```"
+    raw = json.dumps(_anthropic_response([{"type": "text", "text": fenced}])).encode()
+    requests = []
+
+    def opener(request, *, timeout):
+        assert request.full_url == MESSAGES_ENDPOINT + "/messages"
+        assert request.get_method() == "POST"
+        requests.append(json.loads(request.data))
+        return io.BytesIO(raw)
+
+    client = OpenAICompatibleClient(
+        MESSAGES_ENDPOINT,
+        api_key="local-provider-fixture",
+        config=GenerationConfig(
+            model=OPUS,
+            transport="bedrock-messages",
+            response_format=SKILL_BUNDLE_RESPONSE_FORMAT,
+        ),
+        opener=opener,
+        token_counter=SerializedChatTokenCounter(lambda text: len(text)),
+    )
+    base, journal = FrozenBase((), {"opening_message": "public task"}), Journal(tmp_path)
+    initial = generate_initial(client, base.public_inputs, base, journal=journal)
+    assert generate_initial(client, base.public_inputs, base, journal=journal) == initial
+    assert len(requests) == 1 and initial.files["SKILL.md"] == "instructions"
+    assert '"files"' in requests[0]["system"]
+    sealed = next(journal.root.glob("*/raw-response.json"))
+    assert base64.b64decode(json.loads(sealed.read_text())["body_base64"]) == raw
+    assert journal.response("generate_initial")["content"] == fenced
+
+
 def test_messages_cached_usage_counts_all_input_without_fabricated_reasoning_count():
     from tau_skill_evolution.model import anthropic_to_responses
 

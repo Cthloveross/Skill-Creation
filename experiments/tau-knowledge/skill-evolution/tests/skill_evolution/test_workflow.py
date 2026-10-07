@@ -914,6 +914,99 @@ def test_usage_reparse_is_not_double_counted_and_unknown_billing_is_explicit(tmp
     assert summary["cost_usd"] is None
 
 
+def test_usage_includes_unknown_requests_with_historical_delivery_policy(tmp_path):
+    workflow, _, _ = _workflow(tmp_path, experiment="skillsbench")
+    _, journal = workflow._cell(workflow.spec.tasks[0], "benign")
+    policy = "bounded_resend_of_unobserved_transport_failures_v1"
+    with pytest.raises(UnknownOperation):
+        journal.dispatch(
+            "historical-provider-call",
+            {"delivery_policy": policy},
+            lambda: (_ for _ in ()).throw(TimeoutError()),
+        )
+    # Task tools must not become model requests merely because they share a journal.
+    journal.dispatch("terminal", {"name": "terminal"}, lambda: {"exit_code": 0})
+    summary = workflow._usage_summary()
+    assert summary["model_request_states"]["UNKNOWN"] == 1
+    assert summary["dispatched_model_requests"] == 1
+    assert summary["unknown_requests_may_be_billed"] == 1
+    assert summary["delivery_policies"] == {policy: 1}
+    assert summary["http_posts"]["status"] == "NOT_MEASURED"
+    assert summary["http_posts"]["count"] is None
+
+
+def test_skillsbench_stage_failure_and_verifier_tools_survive_report_export(tmp_path):
+    workflow, _, requests = _workflow(tmp_path, experiment="skillsbench")
+    task = workflow.spec.tasks[0]
+    workflow.create(((task, "benign"),))
+    directory, journal = workflow._cell(task, "benign")
+    _, initial = workflow._created(directory, journal)
+    operation = "evolution-turn-0-suite-turn-0-tool-0"
+    program = ProgramResult(1, stderr="collection failed", failure="nonzero_exit").to_dict()
+    journal.dispatch(
+        operation,
+        {"name": "run_tests", "arguments": {}},
+        lambda: {
+            "program": program,
+            "snapshot": {
+                "workspace_hash": "a" * 64,
+                "files": {"test_public.py": "def test_output(): assert False\n"},
+                "manifest": {"work": {"tests/test_public.py": "b" * 64}},
+            },
+        },
+    )
+    rejection = {
+        "stage": "test_submission",
+        "operation_id": operation,
+        "exception_type": "ValueError",
+        "reason": "missing_test_obligations",
+        "detail": "missing_test_obligations",
+    }
+    failure = {
+        "stage": "verifier_initialization",
+        "operation_id": "evolution-turn-0-suite",
+        "exception_type": "ValueError",
+        "reason": "ungrounded_test_evidence",
+        "detail": "ungrounded_test_evidence",
+        "rejections": [rejection],
+    }
+    result = EvolutionResult(
+        (initial,),
+        (),
+        (),
+        (),
+        0,
+        "verifier_initialization_failed",
+        initial.bundle_hash,
+        stage_failures=(failure,),
+    )
+    journal.dispatch("evolution-result", {}, result.to_dict, external=False)
+    before = copy.deepcopy(requests)
+    report = workflow.report()
+    case = next(item for item in report["cases"] if item["task_id"] == task)
+    assert case["stage_failures"] == [failure]
+    assert case["verifications"] == []
+    audit = json.loads((workflow.root / case["public_audit"]).read_text())
+    assert audit["stage_failures"] == [failure]
+    assert audit["verifier_operations"] == [
+        {
+            "operation_id": operation,
+            "status": "COMPLETED",
+            "tool": "run_tests",
+            "program": program,
+            "workspace_hash": "a" * 64,
+            "test_files": {"test_public.py": "def test_output(): assert False\n"},
+            "manifest": {"work": {"tests/test_public.py": "b" * 64}},
+        }
+    ]
+    assert audit["terminal_operations"] == []
+    assert audit["bank_actions"] == []
+    markdown = (workflow.root / "REPORT.md").read_text()
+    assert "ungrounded_test_evidence" in markdown
+    assert "missing_test_obligations" in markdown
+    assert requests == before  # Audit data never makes another learning-model request.
+
+
 def _native_journal(workflow, episode):
     return Journal(
         workflow.root / "private" / "skillsbench-models" / "task" / episode / "provider",

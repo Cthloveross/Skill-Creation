@@ -1,0 +1,14 @@
+{
+  "exit_code": 0,
+  "output": {
+    "uid": 1582702,
+    "host_visible": false,
+    "docker_socket_visible": false,
+    "host_env_inherited": false,
+    "aws_credentials_present": false,
+    "network": false,
+    "root_writable": false
+  },
+  "stderr": "",
+  "failure": null
+}
