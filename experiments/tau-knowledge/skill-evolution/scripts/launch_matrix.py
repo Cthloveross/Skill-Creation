@@ -27,7 +27,7 @@ from typing import Any
 
 TOKEN_FILE_ENV = "AWS_BEARER_TOKEN_BEDROCK_FILE"
 DROPPED_ENV = ("AWS_PROFILE", "AWS_BEARER_TOKEN_BEDROCK")
-DEFAULT_R2SP = "/local/home/tianrgua/Skill-Creation/.venv/bin/r2sp"
+DEFAULT_R2SP = None
 TERMINATE_GRACE_SECONDS = 30.0
 
 
@@ -79,12 +79,24 @@ def discover_accounts(token_dir: Path) -> list[str]:
     )
 
 
+def entrypoint(r2sp: str | None) -> list[str]:
+    return [r2sp] if r2sp else [sys.executable, "-m", "tau_skill_evolution.cli"]
+
+
 def build_command(
-    r2sp: str, experiment: str, config: Path, run_dir: Path, task: str, arm: str
+    r2sp: str | None,
+    experiment: str,
+    config: Path,
+    run_dir: Path,
+    task: str,
+    arm: str,
+    runtime: str = "docker",
 ) -> list[str]:
     return [
-        r2sp,
+        *entrypoint(r2sp),
         "run",
+        "--runtime",
+        runtime,
         "--experiment",
         experiment,
         "--config",
@@ -105,10 +117,14 @@ def build_env(base: dict[str, str], token_file: Path) -> dict[str, str]:
     return env
 
 
-def report_command(r2sp: str, experiment: str, config: Path, run_dir: Path) -> list[str]:
+def report_command(
+    r2sp: str | None, experiment: str, config: Path, run_dir: Path, runtime: str = "docker"
+) -> list[str]:
     return [
-        r2sp,
+        *entrypoint(r2sp),
         "report",
+        "--runtime",
+        runtime,
         "--experiment",
         experiment,
         "--config",
@@ -189,23 +205,31 @@ class Launcher:
         }
         self.processes: dict[str, tuple[subprocess.Popen[bytes], Any]] = {}
         self.stop = False
+        self.authentication_status: int | None = None
+        self.runtime = getattr(args, "runtime", "docker")
 
     def write_status(self) -> None:
-        write_atomic_json(
-            Path(self.args.run_dir) / "launcher-status.json",
-            build_status(
-                started_at=self.started_at,
-                experiment=self.args.experiment,
-                config=self.args.config,
-                cells=self.status_cells,
-            ),
+        status = build_status(
+            started_at=self.started_at,
+            experiment=self.args.experiment,
+            config=self.args.config,
+            cells=self.status_cells,
         )
+        status["authentication_status"] = self.authentication_status
+        status["runtime"] = self.runtime
+        write_atomic_json(Path(self.args.run_dir) / "launcher-status.json", status)
 
     def start(self, task: str, arm: str) -> None:
         key = cell_key(task, arm)
         account = self.accounts[key]
         command = build_command(
-            self.args.r2sp, self.args.experiment, self.args.config, self.args.run_dir, task, arm
+            self.args.r2sp,
+            self.args.experiment,
+            self.args.config,
+            self.args.run_dir,
+            task,
+            arm,
+            runtime=self.runtime,
         )
         env = build_env(dict(os.environ), token_path(self.args.token_dir, account))
         log_file = log_path(self.args.run_dir, task, arm)
@@ -227,6 +251,17 @@ class Launcher:
             stream.close()
             del self.processes[key]
             self.status_cells[key].update(finished_at=now_iso(), exit_code=code)
+            task, arm = key.split("|", 1)
+            journal = Path(self.args.run_dir) / "cells" / task / arm / "journal"
+            for path in journal.glob("*/failure.json"):
+                failure = json.loads(path.read_text())
+                if failure.get("code") == "authentication_failed" and failure.get("status") in (
+                    401,
+                    403,
+                ):
+                    self.authentication_status = failure["status"]
+                    self.stop = True
+                    break
             self.write_status()
             print(f"finished {key} exit={code}", flush=True)
 
@@ -250,6 +285,8 @@ class Launcher:
         try:
             while (pending or self.processes) and not self.stop:
                 self.reap()
+                if self.stop:
+                    break
                 if pending and len(self.processes) < self.args.max_concurrent:
                     task, arm = pending.pop(0)
                     self.start(task, arm)
@@ -264,7 +301,7 @@ class Launcher:
         if self.stop:
             self.terminate_children()
             self.write_status()
-            return 130
+            return 2 if self.authentication_status is not None else 130
         self.reap()
         return 0
 
@@ -273,7 +310,9 @@ def _dry_run(args: argparse.Namespace, cells: list[tuple[str, str]]) -> None:
     accounts = assign_accounts(cells, args.accounts)
     for task, arm in cells:
         account = accounts[cell_key(task, arm)]
-        command = build_command(args.r2sp, args.experiment, args.config, args.run_dir, task, arm)
+        command = build_command(
+            args.r2sp, args.experiment, args.config, args.run_dir, task, arm, runtime=args.runtime
+        )
         print(
             f"{TOKEN_FILE_ENV}={token_path(args.token_dir, account)} "
             + " ".join(command)
@@ -285,11 +324,12 @@ def _dry_run(args: argparse.Namespace, cells: list[tuple[str, str]]) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--experiment", choices=("tau", "skillsbench"), required=True)
+    parser.add_argument("--runtime", choices=("workspace", "docker"), default="docker")
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--token-dir", type=Path, required=True)
     parser.add_argument("--accounts", help="comma-separated; default: all <ID>.json in token-dir")
-    parser.add_argument("--max-concurrent", type=int, default=96)
+    parser.add_argument("--max-concurrent", type=int)
     parser.add_argument("--stagger-seconds", type=float, default=1.0)
     parser.add_argument("--task", action="append")
     parser.add_argument("--arm", action="append")
@@ -305,9 +345,11 @@ def main(argv: list[str] | None = None) -> int:
     args.config = args.config.resolve()
     args.run_dir = args.run_dir.resolve()
     args.token_dir = args.token_dir.resolve()
+    if args.max_concurrent is None:
+        args.max_concurrent = 1 if args.runtime == "workspace" else 96
     if args.max_concurrent <= 0:
         parser.error("--max-concurrent must be positive")
-    if not executable(args.r2sp):
+    if args.r2sp is not None and not executable(args.r2sp):
         parser.error(f"--r2sp is not an executable file: {args.r2sp}")
     args.accounts = (
         [item.strip() for item in args.accounts.split(",") if item.strip()]
@@ -322,6 +364,7 @@ def main(argv: list[str] | None = None) -> int:
     if missing and not args.dry_run:
         parser.error("token files missing for accounts: " + ", ".join(missing))
 
+    from tau_skill_evolution.journal import _create_identity_exclusive
     from tau_skill_evolution.spec import load_spec
 
     spec = load_spec(args.config)
@@ -355,7 +398,14 @@ def main(argv: list[str] | None = None) -> int:
     args.run_dir.mkdir(parents=True, exist_ok=True)
     (args.run_dir / "locks").mkdir(exist_ok=True)
     (args.run_dir / "logs").mkdir(exist_ok=True)
-    report = report_command(args.r2sp, args.experiment, args.config, args.run_dir)
+    launcher_identity = {"identity": spec.identity, "runtime": args.runtime}
+    identity_path = args.run_dir / "launcher-identity.json"
+    _create_identity_exclusive(identity_path, launcher_identity)
+    if json.loads(identity_path.read_text()) != launcher_identity:
+        parser.error("launcher configuration or runtime differs from the existing run")
+    report = report_command(
+        args.r2sp, args.experiment, args.config, args.run_dir, runtime=args.runtime
+    )
     initial = subprocess.run(report, capture_output=True, text=True, check=False)
     if initial.returncode != 0:
         sys.stderr.write(initial.stdout[-2000:] + initial.stderr[-2000:])

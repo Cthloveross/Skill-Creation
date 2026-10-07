@@ -72,43 +72,77 @@ def _load_script(name: str):
 
 
 def test_supported_models_keep_the_historical_default_first():
-    assert SUPPORTED_MODELS == ("openai.gpt-5.5", "openai.gpt-5.6-terra")
+    assert SUPPORTED_MODELS == (
+        "openai.gpt-5.5",
+        "openai.gpt-5.6-terra",
+        "openai.gpt-5.4",
+        "anthropic.claude-opus-4-8",
+    )
     assert BEDROCK_MODEL == "openai.gpt-5.5" == GenerationConfig().model
 
 
 @pytest.mark.parametrize("model", SUPPORTED_MODELS)
 def test_generation_config_accepts_every_supported_model(model):
-    assert GenerationConfig(model=model).model == model
+    transport = "bedrock-messages" if model == "anthropic.claude-opus-4-8" else "bedrock-responses"
+    assert GenerationConfig(model=model, transport=transport).model == model
 
 
-@pytest.mark.parametrize("model", ["openai.gpt-5.4", "openai.gpt-oss-120b", "gpt-5.6-terra"])
+@pytest.mark.parametrize("model", ["openai.gpt-5.2", "openai.gpt-oss-120b", "gpt-5.6-terra"])
 def test_generation_config_rejects_other_models(model):
-    with pytest.raises(ValueError, match="openai.gpt-5.5 / openai.gpt-5.6-terra"):
+    with pytest.raises(ValueError, match="model and supported Bedrock Mantle transport must match"):
         GenerationConfig(model=model)
 
 
-def test_load_spec_accepts_terra_snapshot_and_binds_it_in_identity(tmp_path):
+@pytest.mark.parametrize("model", ["openai.gpt-5.6-terra", "openai.gpt-5.4"])
+def test_configured_model_binds_identity_worker_and_responses_request(tmp_path, model):
     values = yaml.safe_load(DEFAULT_CONFIG.read_text())
-    values["provider"]["model"] = "openai.gpt-5.6-terra"
-    path = tmp_path / "terra.yaml"
+    values["provider"]["model"] = model
+    path = tmp_path / "model.yaml"
     path.write_text(yaml.safe_dump(values, sort_keys=False))
     spec = load_spec(path)
-    assert spec.values["provider"]["model"] == "openai.gpt-5.6-terra"
-    assert spec.identity["provider"]["model"] == "openai.gpt-5.6-terra"
-    assert spec.identity["identity_hash"] != load_spec().identity["identity_hash"]
-    config = spec.worker_config()
-    assert (
-        config["model"] == config["user_model"] == config["judge_model"] == "openai.gpt-5.6-terra"
+    assert spec.values["provider"]["model"] == model
+    assert spec.identity["provider"]["model"] == model
+    default = load_spec()
+    assert (spec.identity["identity_hash"] == default.identity["identity_hash"]) == (
+        model == default.values["provider"]["model"]
     )
-    values["provider"]["model"] = "openai.gpt-5.4"
+    config = spec.worker_config()
+    assert config["model"] == config["user_model"] == config["judge_model"] == model
+    assert config["transport"] == "bedrock-responses"
+    assert config["api_base"] == ENDPOINT
+    requests = []
+
+    def opener(request, *, timeout):
+        requests.append(request)
+        return io.BytesIO(json.dumps(workflow_tests_response()).encode())
+
+    client = OpenAICompatibleClient(
+        config["api_base"],
+        config=GenerationConfig(model=config["model"], transport=config["transport"]),
+        api_key="offline-secret",
+        opener=opener,
+    )
+    client.complete([{"role": "user", "content": "offline model routing check"}])
+    assert len(requests) == 1
+    request = requests[0]
+    assert request.get_method() == "POST"
+    assert request.full_url == f"{ENDPOINT}/responses"
+    assert request.get_header("Authorization") == "Bearer offline-secret"
+    payload = json.loads(request.data)
+    assert payload["model"] == model
+    assert payload["reasoning"] == {"effort": "medium"}
+    assert payload["max_output_tokens"] == GenerationConfig().max_output_tokens
+    assert payload["store"] is False
+    values["provider"]["model"] = "openai.gpt-5.2"
     path.write_text(yaml.safe_dump(values, sort_keys=False))
-    with pytest.raises(ValueError, match="openai.gpt-5.5 / openai.gpt-5.6-terra"):
+    with pytest.raises(ValueError, match="model and supported Bedrock Mantle transport must match"):
         load_spec(path)
 
 
-def test_bedrock_authentication_checks_the_configured_model(monkeypatch):
+@pytest.mark.parametrize("model", ["openai.gpt-5.6-terra", "openai.gpt-5.4"])
+def test_bedrock_authentication_checks_the_configured_model(monkeypatch, model):
     spec = load_spec()
-    spec.values["provider"]["model"] = "openai.gpt-5.6-terra"
+    spec.values["provider"]["model"] = model
     monkeypatch.setenv(spec.values["provider"]["region_env"], "us-east-1")
     monkeypatch.delenv(TOKEN_FILE_ENV, raising=False)
     monkeypatch.setenv(spec.values["provider"]["api_key_env"], "offline-secret")
@@ -130,11 +164,11 @@ def test_bedrock_authentication_checks_the_configured_model(monkeypatch):
 
     monkeypatch.setattr(admission.urllib.request, "urlopen", urlopen)
     seen["catalog"] = "openai.gpt-5.5"
-    with pytest.raises(ValueError, match="openai.gpt-5.6-terra"):
+    with pytest.raises(ValueError, match=model):
         admission.bedrock_authentication(spec)
-    seen["catalog"] = "openai.gpt-5.6-terra"
+    seen["catalog"] = model
     result = admission.bedrock_authentication(spec)
-    assert result == {"status": 200, "model": "openai.gpt-5.6-terra", "generation_requested": False}
+    assert result == {"status": 200, "model": model, "generation_requested": False}
     assert seen["url"] == "https://bedrock-mantle.us-east-1.api.aws/v1/models"
     assert seen["auth"] == "Bearer offline-secret"
 
@@ -332,10 +366,22 @@ def test_cli_run_with_single_cell_locks_only_that_cell(tmp_path, monkeypatch, ca
     assert (run_dir / "locks" / f"{task}__benign.lock").exists()
     # Single-cell runs also hold ".lock" SHARED (see test_run_locks_hierarchy).
     assert (run_dir / ".lock").exists()
-    assert seen["kwargs"] == {"interim_report": False} and seen["cells"] == ((task, "benign"),)
+    assert seen["kwargs"] == {
+        "demo": False,
+        "demo_task": None,
+        "interim_report": False,
+        "runtime": "docker",
+    }
+    assert seen["cells"] == ((task, "benign"),)
     code = cli.main(["run", "--run-dir", str(run_dir), "--task", task])
     assert code == 0 and (run_dir / ".lock").exists()
-    assert seen["kwargs"] == {"interim_report": True} and len(seen["cells"]) == 3
+    assert seen["kwargs"] == {
+        "demo": False,
+        "demo_task": None,
+        "interim_report": True,
+        "runtime": "docker",
+    }
+    assert len(seen["cells"]) == 3
 
 
 # ----------------------------------------------------------------------------
@@ -461,7 +507,8 @@ def test_launcher_pure_helpers(tmp_path):
         "/r2sp", "tau", Path("/cfg.yaml"), Path("/run"), "t1", "benign"
     )
     assert command == [
-        "/r2sp", "run", "--experiment", "tau", "--config", "/cfg.yaml", "--task", "t1",
+        "/r2sp", "run", "--runtime", "docker", "--experiment", "tau",
+        "--config", "/cfg.yaml", "--task", "t1",
         "--arm", "benign", "--run-dir", "/run", "--no-interim-report",
     ]  # fmt: skip
     env = launcher.build_env(
@@ -474,6 +521,13 @@ def test_launcher_pure_helpers(tmp_path):
         "report",
     ]
     assert launcher.log_path(Path("/run"), "t1", "benign") == Path("/run/logs/t1__benign.log")
+    assert launcher.entrypoint(None) == [launcher.sys.executable, "-m", "tau_skill_evolution.cli"]
+    workspace = launcher.build_command(
+        None, "tau", Path("/c"), Path("/r"), "t", "benign", runtime="workspace"
+    )
+    assert workspace[workspace.index("--runtime") + 1] == "workspace"
+    report = launcher.report_command(None, "tau", Path("/c"), Path("/r"), runtime="workspace")
+    assert report[report.index("--runtime") + 1] == "workspace"
     (tmp_path / "123.json").write_text("{}")
     (tmp_path / "456.json").write_text("{}")
     (tmp_path / "status.json").write_text("{}")
@@ -847,3 +901,270 @@ def test_launcher_rejects_missing_r2sp_and_terminates_children_on_error(tmp_path
         instance.run()
     assert terminated == [True]
     assert json.loads((tmp_path / "run" / "launcher-status.json").read_text())["running"] == 0
+
+
+@pytest.mark.parametrize("code", [401, 403])
+def test_launcher_stops_before_starting_next_cell_after_authentication_failure(tmp_path, code):
+    launcher = _load_script("launch_matrix")
+    args = types.SimpleNamespace(
+        r2sp=None,
+        experiment="tau",
+        config=DEFAULT_CONFIG,
+        run_dir=tmp_path,
+        token_dir=tmp_path,
+        accounts=["111"],
+        max_concurrent=1,
+        stagger_seconds=0,
+    )
+    instance = launcher.Launcher(args, [("first", "benign"), ("next", "benign")])
+    journal = tmp_path / "cells/first/benign/journal/op"
+    journal.mkdir(parents=True)
+    (journal / "failure.json").write_text(
+        json.dumps({"code": "authentication_failed", "status": code})
+    )
+    process = types.SimpleNamespace(poll=lambda: 2)
+    instance.processes["first|benign"] = (process, io.BytesIO())
+    started = []
+    instance.start = lambda *cell: started.append(cell)
+    assert instance.run() == 2
+    assert not started and instance.authentication_status == code
+
+
+def _formal_report(trial, cases, identity=None):
+    return {
+        "identity": identity or {"identity_hash": "same-method"},
+        "trial_id": trial,
+        "namespace": "tau.skill-evolution.v3",
+        "experiment": "tau",
+        "run_mode": "formal",
+        "execution": {"backend": "docker"},
+        "cases": cases,
+    }
+
+
+def test_trial_collection_retains_primary_and_original_hashes():
+    merge = _load_script("merge_reports")
+    original = {
+        "task_id": "t",
+        "condition": "benign",
+        "status": "CREATED",
+        "stop_reason": "oracle_success",
+        "initial_bundle_hash": "S0-original",
+        "acquisition": {"base_hash": "B-original"},
+    }
+    rerun = {
+        **original,
+        "initial_bundle_hash": "S0-rerun",
+        "acquisition": {"base_hash": "B-rerun"},
+        "stop_reason": "oracle_budget_exhausted",
+    }
+    primary, retry = _formal_report("primary", [original]), _formal_report("retry", [rerun])
+    collected = merge.resampled_cases(primary, retry, {"t|benign"})
+    assert primary["cases"] == [original]
+    assert collected[0]["primary_initial_bundle_hash"] == "S0-original"
+    assert collected[0]["primary_base_hash"] == "B-original"
+    assert collected[0]["case"] == rerun
+    assert collected[0]["kind"] == "whole_chain_resample"
+
+
+@pytest.mark.parametrize("change", ["identity", "demo", "duplicate", "missing_trial"])
+def test_trial_collection_rejects_unbound_or_mixed_reports(change):
+    merge = _load_script("merge_reports")
+    case = {"task_id": "t", "condition": "benign"}
+    identity = {"identity_hash": "same-method"}
+    report = _formal_report("trial", [case], identity)
+    if change == "identity":
+        report["identity"] = {"identity_hash": "changed-model-source-or-config"}
+    elif change == "demo":
+        report["run_mode"] = "single-task-demo"
+        report["execution"]["backend"] = "bubblewrap-demo"
+    elif change == "duplicate":
+        report["cases"].append(case)
+    else:
+        report.pop("trial_id")
+    with pytest.raises(ValueError):
+        merge.validate_report(report, identity, "tau", "tau.skill-evolution.v3")
+
+
+def test_unstarted_or_missing_trial_cell_is_rejected():
+    merge = _load_script("merge_reports")
+    case = {"task_id": "t", "condition": "benign", "stop_reason": "not_started"}
+    with pytest.raises(ValueError, match="not started"):
+        merge.resampled_cases(
+            _formal_report("primary", [case]), _formal_report("retry", [case]), {"t|benign"}
+        )
+    with pytest.raises(ValueError, match="missing"):
+        merge.resampled_cases(
+            _formal_report("primary", [case]), _formal_report("retry", []), {"t|benign"}
+        )
+
+
+def test_launcher_binds_default_docker_and_rejects_runtime_change(tmp_path, monkeypatch):
+    launcher = _load_script("launch_matrix")
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    (token_dir / "111.json").write_text("{}")
+    calls = []
+
+    def report(command, **kwargs):
+        calls.append(command)
+        return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    def run(instance):
+        assert instance.args.max_concurrent == 96
+        for item in instance.status_cells.values():
+            item["exit_code"] = 0
+        return 0
+
+    monkeypatch.setattr(launcher.subprocess, "run", report)
+    monkeypatch.setattr(launcher.Launcher, "run", run)
+    argv = [
+        "--experiment",
+        "tau",
+        "--config",
+        str(DEFAULT_CONFIG),
+        "--run-dir",
+        str(tmp_path / "run"),
+        "--token-dir",
+        str(token_dir),
+        "--task",
+        load_spec().tasks[0],
+        "--arm",
+        "benign",
+        "--skip-final-report",
+    ]
+    assert launcher.main(argv) == 0
+    assert calls[0][calls[0].index("--runtime") + 1] == "docker"
+    identity = json.loads((tmp_path / "run/launcher-identity.json").read_text())
+    assert identity["runtime"] == "docker"
+    with pytest.raises(SystemExit) as error:
+        launcher.main([*argv, "--runtime", "workspace"])
+    assert error.value.code == 2 and len(calls) == 1
+
+
+@pytest.mark.parametrize(
+    ("options", "runtime", "concurrency"),
+    [
+        ([], "docker", 96),
+        (["--runtime", "docker"], "docker", 96),
+        (["--runtime", "workspace"], "workspace", 1),
+        (["--max-concurrent", "4"], "docker", 4),
+    ],
+)
+def test_launcher_concurrency_defaults_follow_runtime(
+    tmp_path, monkeypatch, options, runtime, concurrency
+):
+    launcher = _load_script("launch_matrix")
+    observed = []
+    monkeypatch.setattr(
+        launcher,
+        "_dry_run",
+        lambda args, cells: observed.append((args.runtime, args.max_concurrent)),
+    )
+    assert (
+        launcher.main(
+            [
+                "--experiment",
+                "tau",
+                "--config",
+                str(DEFAULT_CONFIG),
+                "--run-dir",
+                str(tmp_path / "run"),
+                "--token-dir",
+                str(tmp_path / "tokens"),
+                "--accounts",
+                "1",
+                "--dry-run",
+                *options,
+            ]
+        )
+        == 0
+    )
+    assert observed == [(runtime, concurrency)]
+
+
+@pytest.mark.parametrize("runtime", ["workspace", "docker"])
+def test_workspace_trial_collection_preserves_runtime_and_primary(tmp_path, monkeypatch, runtime):
+    from tau_skill_evolution import spec as spec_module
+    from tau_skill_evolution.workflow import Workflow
+
+    merge = _load_script("merge_reports")
+    identity = {"identity_hash": "method"}
+    spec = types.SimpleNamespace(
+        identity=identity,
+        experiment="tau",
+        namespace="tau.skill-evolution.v3",
+        tasks=("t",),
+        arms=("benign",),
+        cells=(("t", "benign"),),
+    )
+    monkeypatch.setattr(spec_module, "load_spec", lambda path: spec)
+    monkeypatch.setattr(
+        Workflow,
+        "_write_report_md",
+        lambda self, report: (self.root / "REPORT.md").write_text(report["run_mode"]),
+    )
+    original = {
+        "task_id": "t",
+        "condition": "benign",
+        "status": "CREATION_FAILED",
+        "stop_reason": "creation_failed",
+        "versions": [],
+        "evaluations": {},
+    }
+    rerun = {**original, "stop_reason": "generation_result_unknown"}
+    primary_dir, retry_dir, output = (tmp_path / name for name in ("primary", "retry", "output"))
+    for directory, trial, case in ((primary_dir, "primary", original), (retry_dir, "retry", rerun)):
+        directory.mkdir()
+        report = _formal_report(trial, [case], identity)
+        report.update(
+            run_mode="workspace" if runtime == "workspace" else "formal", formal_matrix_result=False
+        )
+        report["execution"] = {
+            "backend": runtime,
+            "runtime_lock_hash": "same-lock",
+            "aggregate_limits_enforced": False,
+            "formal_matrix_result": False,
+        }
+        (directory / "report.json").write_text(json.dumps(report))
+    cells = tmp_path / "cells.json"
+    cells.write_text('["t|benign"]')
+    argv = [
+        "merge_reports.py",
+        "--config",
+        str(DEFAULT_CONFIG),
+        "--runtime",
+        runtime,
+        "--primary",
+        str(primary_dir),
+        "--retry",
+        str(retry_dir),
+        "--cells",
+        str(cells),
+        "--output",
+        str(output),
+    ]
+    monkeypatch.setattr(merge.sys, "argv", argv)
+    assert merge.main() == 0
+    report = json.loads((output / "report.json").read_text())
+    assert report["run_mode"] == ("workspace-trials" if runtime == "workspace" else "formal-trials")
+    assert report["execution"]["backend"] == runtime and report["formal_matrix_result"] is False
+    assert report["cases"] == [original] and report["resampled_trials"][0]["case"] == rerun
+    changed = json.loads((retry_dir / "report.json").read_text())
+    changed["execution"]["runtime_lock_hash"] = "changed-lock"
+    (retry_dir / "report.json").write_text(json.dumps(changed))
+    with pytest.raises(ValueError, match="runtime or lock"):
+        merge.main()
+
+
+@pytest.mark.parametrize(
+    "mode,backend",
+    [("formal", "workspace"), ("workspace", "docker"), ("single-task-demo", "workspace")],
+)
+def test_trial_collection_rejects_mismatched_runtime_modes(mode, backend):
+    merge = _load_script("merge_reports")
+    identity = {"identity_hash": "same-method"}
+    report = _formal_report("trial", [], identity)
+    report["run_mode"], report["execution"]["backend"] = mode, backend
+    with pytest.raises(ValueError, match="matching Docker or workspace"):
+        merge.validate_report(report, identity, "tau", "tau.skill-evolution.v3")

@@ -1,4 +1,4 @@
-"""Read-only admission checks; unavailable isolation never permits host execution."""
+"""Admission probes; unavailable isolation never permits host execution."""
 
 from __future__ import annotations
 
@@ -8,10 +8,12 @@ import subprocess
 import urllib.error
 import urllib.request
 from typing import Any
+from urllib.parse import urlsplit
 
 from .constants import SUPPORTED_MODELS, UPSTREAM_ROOT, WORKER_PYTHON_VERSION
 from .credentials import bearer_token_source, describe_credential
 from .data import verify_tracked_snapshot
+from .model import GenerationConfig, bedrock_messages_endpoint, bedrock_responses_endpoint
 from .spec import ExperimentSpec
 
 
@@ -21,8 +23,14 @@ def bedrock_authentication(spec: ExperimentSpec) -> dict[str, Any]:
     token = bearer_token_source(provider["api_key_env"])()
     if not token:
         raise ValueError("Bedrock credential is missing")
-    # The model catalog uses /v1; GPT inference separately uses /openai/v1/responses.
-    host = provider["api_base"].removesuffix("/openai/v1")
+    # Both inference transports use the same catalog, outside their API prefix.
+    route = (
+        bedrock_messages_endpoint
+        if provider["transport"] == "bedrock-messages"
+        else bedrock_responses_endpoint
+    )
+    endpoint = urlsplit(route(provider["api_base"]))
+    host = f"https://{endpoint.netloc}"
     request = urllib.request.Request(
         host + "/v1/models", headers={"Authorization": "Bearer " + token}
     )
@@ -43,7 +51,13 @@ def preflight(
     demo: bool = False,
     authenticate: bool = False,
     task_ids: tuple[str, ...] | None = None,
+    runtime: str | None = None,
 ) -> dict[str, Any]:
+    runtime = runtime or ("bubblewrap-demo" if demo else "docker")
+    if runtime not in {"docker", "workspace", "bubblewrap-demo"}:
+        raise ValueError("unsupported runtime")
+    if demo != (runtime == "bubblewrap-demo"):
+        raise ValueError("demo and runtime differ")
     checks: list[dict[str, Any]] = []
 
     def check(name: str, callback: Any) -> None:
@@ -77,14 +91,13 @@ def preflight(
 
     def bedrock_model() -> str:
         provider = spec.values["provider"]
-        if (
-            provider["model"] not in SUPPORTED_MODELS
-            or provider["transport"] != "bedrock-responses"
-        ):
+        try:
+            GenerationConfig(model=provider["model"], transport=provider["transport"])
+        except ValueError as exc:
             raise ValueError(
-                "unsupported_model: this experiment uses Bedrock Mantle Responses models "
+                "unsupported_model: this experiment uses supported Bedrock Mantle models "
                 + " / ".join(SUPPORTED_MODELS)
-            )
+            ) from exc
         return provider["model"]
 
     def bedrock_region() -> str:
@@ -181,14 +194,15 @@ def preflight(
             )
         return "Python 3.11 and fixed dependencies verified in the locked container"
 
-    def bubblewrap_demo() -> dict[str, Any]:
+    def local_runtime() -> dict[str, Any]:
         from .bubblewrap import BubblewrapRunner, RuntimeLock
 
         result = BubblewrapRunner(
-            RuntimeLock.from_file(spec.root / "runtime" / "bubblewrap-lock.json")
+            RuntimeLock.from_file(spec.root / "runtime" / "bubblewrap-lock.json"),
+            runtime=runtime,
         ).preflight()
         if not result.get("ready"):
-            raise ValueError(f"Bubblewrap demo runtime is unavailable: {result}")
+            raise ValueError(f"Local workspace runtime is unavailable: {result}")
         return result
 
     if spec.experiment == "tau":
@@ -202,16 +216,16 @@ def preflight(
     if spec.experiment == "skillsbench":
         from .skillsbench import skillsbench_preflight
 
-        if not demo:
+        if runtime == "docker":
             check("docker_cli", docker_cli)
             check("docker_daemon", docker_info)
-        result = skillsbench_preflight(spec, demo=demo, task_ids=task_ids)
+        result = skillsbench_preflight(spec, demo=demo, task_ids=task_ids, runtime=runtime)
         checks.extend(result["checks"])
     else:
-        check("dependency_lock", dependency_lock)
-        if demo:
-            check("bubblewrap_demo", bubblewrap_demo)
+        if runtime != "docker":
+            check("bubblewrap_demo" if demo else "workspace_runtime", local_runtime)
         else:
+            check("dependency_lock", dependency_lock)
             check("docker_cli", docker_cli)
             check("docker_daemon", docker_info)
             check("docker_image", image)
@@ -222,8 +236,15 @@ def preflight(
         "namespace": spec.namespace,
         "experiment": spec.experiment,
         "ready": ready,
-        "requested_runtime": "bubblewrap_demo" if demo else "docker",
-        "formal_matrix_result": ready and not demo,
-        "aggregate_limits_enforced": ready and not demo,
+        "requested_runtime": "bubblewrap_demo" if demo else runtime,
+        "formal_matrix_result": ready and runtime == "docker",
+        "aggregate_limits_enforced": ready and runtime == "docker" and spec.experiment == "tau",
+        "resources_scope": (
+            "local_process"
+            if runtime != "docker"
+            else "bank_script_process_tree"
+            if spec.experiment == "tau"
+            else "main_container"
+        ),
         "checks": checks,
     }

@@ -7,12 +7,16 @@ name = "tau-skill-evolution"
 version = "0.1.0"
 description = "τ-Knowledge one-shot Skill creation and co-evolutionary verification"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
   "PyYAML>=6.0,<7",
 ]
 
 [project.optional-dependencies]
+codex = [
+  "harbor @ git+https://github.com/laude-institute/harbor.git@3f28e5ce2acbff36d8b5df431e35e050ac13bef6",
+  "pillow>=12,<13",
+]
 dev = [
   "jsonschema>=4.23,<5",
   "pytest>=8,<9",
@@ -28,12 +32,19 @@ package-dir = {"" = "experiments/tau-knowledge/skill-evolution/src"}
 [tool.setuptools.packages.find]
 where = ["experiments/tau-knowledge/skill-evolution/src"]
 
+[tool.setuptools.package-data]
+"tau_skill_evolution.author" = ["LICENSE", "SOURCE.json"]
+
 [tool.ruff]
 target-version = "py310"
 line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.format]
+# Keep the vendored author implementation byte-identical to its pinned source.
+exclude = ["**/author/codex_skill_only.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["experiments/tau-knowledge/skill-evolution/tests"]

@@ -47,10 +47,13 @@ MAX_TASK_TOOL_CALLS = 800
 
 MODEL_SEED = 20260904
 
-# Bedrock Mantle Responses models this method may use. The first entry is the
-# historical default; configs select one explicitly via provider.model.
-SUPPORTED_MODELS = ("openai.gpt-5.5", "openai.gpt-5.6-terra")
-DEFAULT_MODEL = SUPPORTED_MODELS[0]
+# The historical default remains stable; configurations choose an explicit model
+# and its supported Mantle transport. Opus does not offer the Responses API.
+RESPONSES_MODELS = ("openai.gpt-5.5", "openai.gpt-5.6-terra", "openai.gpt-5.4")
+MESSAGES_MODEL = "anthropic.claude-opus-4-8"
+MESSAGES_MAX_OUTPUT_TOKENS = 128000
+SUPPORTED_MODELS = (*RESPONSES_MODELS, MESSAGES_MODEL)
+DEFAULT_MODEL = RESPONSES_MODELS[0]
 
 # The official tau2 bank worker runs in data/upstream/tau2-bench/.venv. The
 # original pin was 3.12.14, but uv's download index (checked 2026-10-04) does

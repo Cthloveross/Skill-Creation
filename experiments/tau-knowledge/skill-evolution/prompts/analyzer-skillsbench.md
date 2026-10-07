@@ -8,8 +8,7 @@ execute the task or generate a Skill.
 
 # Available information
 
-Each request contains the public task instruction, all documentation chunks returned in full
-so far, the current task's public input-file manifest and environment description, the previous
+Each request contains the public task instruction, new documentation chunks and currently selected chunks returned in full, the current task's public input-file manifest and environment description, the previous
 selection, action observations, remaining search budget, and the base token limit.
 The shared search pool contains only background documents from all tasks. Task instructions,
 environment files, datasets, source code, and their binary summaries are not indexed.
@@ -35,7 +34,7 @@ or procedures as gaps; do not invent file contents.
 ## 2. Score every returned document
 
 Read the document content and its applicability to this request, not just its title or rank.
-For each unique returned document ID, give a confidence score from 0 to 1 and a concise
+For each newly presented full-text document ID, give a confidence score from 0 to 1 and a concise
 reason grounded in its content and the public request. The score estimates relevance or
 potential usefulness to this task, not document truth, execution success, or official reward.
 Give higher scores to direct rules and procedures needed for the request. Keep plausible
@@ -46,12 +45,15 @@ Shared keywords alone are not evidence of relevance. Do not assume uncertainty m
 Your acquisition permissions do not determine relevance: a procedure describing a needed
 task operation can be necessary evidence for the later executor, even though you cannot
 perform that operation.
-There is no target document count or preference for a short base. Score every returned ID
-once each round; do not silently omit a document. The controller retains all scores at or
+There is no target document count or preference for a short base. Score every newly presented ID; do not silently omit it. Previously reviewed scores persist
+on the host. You may update them by ID; reviewed_documents contains their compact inventory. The controller retains all scores at or
 above the threshold when they fit. If they exceed the base token limit, it packs whole
-documents by descending score, then document ID for ties, skipping those that do not fit
+documents supporting evidence first, then by descending score and document ID for ties, skipping those that do not fit
 and continuing with smaller ones. Set the highest scores for essential distinct requirements.
 The next input shows the previous valid controller selection in selected_document_ids.
+If pending_review_count is positive, review the remaining already returned material before
+requesting more searches or freezing. On final_review, finish scoring and report remaining
+gaps; a new search is not permitted without a subsequent review round.
 
 ## 3. Check whether the selection is sufficient
 

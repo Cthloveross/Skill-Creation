@@ -94,14 +94,102 @@ def test_missing_runtime_never_executes_script_on_host(tmp_path):
         assert episode.run_skill_script("scripts/main.py", {}).failure == "container_unavailable"
 
 
-@pytest.fixture
-def real_runner():
+@pytest.mark.parametrize("runtime", ["workspace", "bubblewrap-demo"])
+def test_preflight_labels_local_resource_scope_without_claiming_formal_equivalence(
+    tmp_path, monkeypatch, runtime
+):
+    class Transport:
+        def run(self, command, **kwargs):
+            assert "--unshare-all" in command and "--clearenv" in command
+            if "'terminal':True" in command[-1]:
+                return ProcessResult(0, b'{"terminal":true,"helper":7,"reference":"public"}')
+            return ProcessResult(
+                0,
+                json.dumps(
+                    {
+                        "python": [3, 11, 14],
+                        "dependencies": {"numpy": "2.2.6", "pandas": "2.2.3", "pytest": "8.4.2"},
+                    }
+                ).encode(),
+            )
+
+    monkeypatch.setattr("tau_skill_evolution.bubblewrap.shutil.which", lambda name: name)
+    checks = BubblewrapRunner(locked(tmp_path), runtime=runtime, transport=Transport()).preflight()
+    assert checks["ready"]
+    assert checks["backend"] == runtime
+    assert checks["demo_only"] is (runtime == "bubblewrap-demo")
+    assert checks["resources_scope"] == "local_process"
+    assert checks["formal_environment_equivalent"] is False
+    assert checks["aggregate_limits_enforced"] is False
+
+
+def test_preflight_requires_actual_terminal_read_write_and_helper_import(tmp_path, monkeypatch):
+    class Transport:
+        def run(self, command, **kwargs):
+            if "'terminal':True" in command[-1]:
+                return ProcessResult(1, b"", b"/bin/sh is missing")
+            return ProcessResult(
+                0,
+                b'{"python":[3,11,14],"dependencies":'
+                b'{"numpy":"2.2.6","pandas":"2.2.3","pytest":"8.4.2"}}',
+            )
+
+    monkeypatch.setattr("tau_skill_evolution.bubblewrap.shutil.which", lambda name: name)
+    checks = BubblewrapRunner(
+        locked(tmp_path), runtime="workspace", transport=Transport()
+    ).preflight()
+    assert checks["runtime_lock"] and checks["commands"] and checks["dependencies"]
+    assert checks["terminal"] is False and checks["ready"] is False
+    assert checks["terminal_error"]["failure"] == "nonzero_exit"
+
+
+def test_unknown_runtime_is_rejected_before_execution(tmp_path):
+    with pytest.raises(ValueError, match="unknown Bubblewrap runtime"):
+        BubblewrapRunner(locked(tmp_path), runtime="host")
+
+
+def test_authoring_terminal_uses_locked_rootfs_and_only_writable_subtrees(tmp_path):
+    calls = []
+
+    class Transport:
+        def run(self, command, **kwargs):
+            calls.append(command)
+            return ProcessResult(3, b"ordinary stdout", b"ordinary stderr")
+
+    runner = BubblewrapRunner(locked(tmp_path), transport=Transport())
+    with runner.authoring_session(
+        SkillBundle({"SKILL.md": "parent"}), {"request": "public"}, {}
+    ) as session:
+        result = session.terminal("cat /work/candidate/SKILL.md")
+        assert result.exit_code == 3 and result.failure is None
+        assert result.output == {"stdout": "ordinary stdout", "stderr": "ordinary stderr"}
+        command = calls[0]
+        mounts = [
+            (part, command[i + 1], command[i + 2])
+            for i, part in enumerate(command)
+            if part in {"--bind", "--ro-bind"}
+        ]
+        assert mounts == [
+            ("--ro-bind", str(runner.runtime_lock.rootfs), "/"),
+            ("--ro-bind", str(session.package), "/bundle"),
+            ("--ro-bind", str(session.work), "/work"),
+            ("--bind", str(session.work / "candidate"), "/work/candidate"),
+            ("--bind", str(session.work / "scratch"), "/work/scratch"),
+        ]
+        assert command[-3:] == ["/bin/sh", "-c", "cat /work/candidate/SKILL.md"]
+        assert "--unshare-all" in command and "--clearenv" in command
+
+
+@pytest.fixture(params=["bubblewrap-demo", "workspace"])
+def real_runner(request):
     if os.environ.get("TAU_RUN_BUBBLEWRAP_INTEGRATION") != "1":
         pytest.skip("real Bubblewrap boundaries are opt-in and not attested by mocks")
     lock = RuntimeLock.from_file(EXPERIMENT_ROOT / "runtime/bubblewrap-lock.json")
-    runner = BubblewrapRunner(lock)
+    runner = BubblewrapRunner(lock, runtime=request.param)
     checks = runner.preflight()
-    assert checks["ready"] and checks["demo_only"] and not checks["aggregate_limits_enforced"]
+    assert checks["ready"] and not checks["aggregate_limits_enforced"], checks
+    assert checks["backend"] == request.param
+    assert checks["demo_only"] is (request.param == "bubblewrap-demo")
     return runner
 
 
@@ -195,6 +283,48 @@ def test_real_verifier_and_explicit_program_failures(real_runner):
             assert episode.run_skill_script(f"scripts/{name}.py", {}).failure == failure
 
 
+def test_real_public_workspaces_copy_parent_and_keep_diagnosis_tests_readonly(real_runner):
+    parent = SkillBundle({"SKILL.md": "parent", "references/policy.txt": "public policy"})
+    with real_runner.authoring_session(
+        parent, {"request": "public"}, {"policy": "fixed"}
+    ) as session:
+        result = session.terminal(
+            "cat /work/candidate/references/policy.txt; "
+            "printf revised > /work/candidate/SKILL.md; "
+            "printf saved > /work/scratch/marker"
+        )
+        assert result.failure is None and result.exit_code == 0, result.to_dict()
+        assert result.output["stdout"] == "public policy"
+        assert session.files()["SKILL.md"] == "revised"
+        assert session.snapshot()["manifest"]["work"]["scratch/marker"]
+        assert parent.files["SKILL.md"] == "parent"
+        assert session.terminal("printf changed > /bundle/base.json").exit_code != 0
+    tests = {
+        "tests/test_public.py": (
+            "from pathlib import Path\n"
+            "def test_public(public_inputs, frozen_base, trace):\n"
+            "    assert public_inputs['request'] == 'public'\n"
+            "    assert frozen_base['policy'] == 'fixed' and trace['ok']\n"
+            "    assert not Path('/work/candidate').exists()\n"
+            "    assert not Path('/bundle/SKILL.md').exists()\n"
+            "    assert not Path('/work/scratch/marker').exists()\n"
+        )
+    }
+    for readonly in (False, True):
+        with real_runner.public_verifier_session(
+            {"request": "public"}, {"policy": "fixed"}, {"ok": True}, tests, readonly_tests=readonly
+        ) as session:
+            result = session.run_tests()
+            assert result.failure is None, result.to_dict()
+            assert result.output["collected"] == 1
+            assert result.output["results"][0]["outcome"] == "passed"
+            if readonly:
+                assert (
+                    session.terminal("printf changed > /bundle/tests/test_public.py").exit_code != 0
+                )
+                assert session.files() == tests
+
+
 def test_real_timeout_kills_forked_descendants(real_runner):
     marker = "tau-bwrap-timeout-" + uuid.uuid4().hex
     code = f"""import subprocess,sys,time
@@ -202,7 +332,7 @@ subprocess.Popen([sys.executable,'-c','import time;time.sleep(10)',{marker!r}],
                  start_new_session=True)
 time.sleep(10)
 """
-    runner = BubblewrapRunner(real_runner.runtime_lock, timeout=0.5)
+    runner = BubblewrapRunner(real_runner.runtime_lock, runtime=real_runner.runtime, timeout=0.5)
     with runner.episode(SkillBundle({"SKILL.md": "s", "scripts/timeout.py": code})) as episode:
         result = episode.run_skill_script("scripts/timeout.py", {})
         assert result.failure == "timeout", result.to_dict()
@@ -213,3 +343,24 @@ time.sleep(10)
                 assert marker.encode() not in (process / "cmdline").read_bytes()
         except (OSError, ProcessLookupError):
             continue
+
+
+def test_real_py_compile_caches_survive_snapshot_and_trusted_test_execution(real_runner):
+    parent = SkillBundle({"SKILL.md": "parent", "scripts/helper.py": "VALUE = 7\n"})
+    with real_runner.authoring_session(parent, {}, {}) as session:
+        result = session.terminal("python -m py_compile /work/candidate/scripts/helper.py")
+        assert result.failure is None and result.exit_code == 0, result.to_dict()
+        snapshot = session.snapshot()
+        assert snapshot["files"] == dict(parent.files)
+        assert any(path.endswith(".pyc") for path in snapshot["manifest"]["work"])
+    tests = {"tests/test_public.py": "def test_trace(trace): assert trace['ok']\n"}
+    with real_runner.public_verifier_session({}, {}, {"ok": True}, tests) as session:
+        result = session.terminal("python -m py_compile /work/tests/test_public.py")
+        assert result.failure is None and result.exit_code == 0, result.to_dict()
+        snapshot = session.snapshot()
+        assert snapshot["files"] == tests
+        assert any(path.endswith(".pyc") for path in snapshot["manifest"]["work"])
+        result = session.run_tests()
+        assert result.failure is None, result.to_dict()
+        assert result.output["collected"] == 1
+        assert result.output["results"][0]["outcome"] == "passed"

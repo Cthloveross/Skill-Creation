@@ -143,6 +143,8 @@ def _serialize_messages(messages: Sequence[Message]) -> list[dict[str, Any]]:
         items = message.raw_data.get("_bedrock_output_items")
         if isinstance(items, list):
             payload["_bedrock_output_items"] = deepcopy(items)
+            if isinstance(message.usage, Mapping):
+                payload["usage"] = deepcopy(message.usage)
     return converted
 
 
@@ -151,6 +153,7 @@ def _user_model_history(state: Any) -> list[Message]:
     for original, flipped in zip(state.messages, history, strict=True):
         if isinstance(original, UserMessage) and isinstance(flipped, AssistantMessage):
             flipped.raw_data = deepcopy(original.raw_data)
+            flipped.usage = deepcopy(original.usage)
     return history
 
 
@@ -186,13 +189,7 @@ def _complete(
     usage = result.get("usage", getattr(client, "last_usage", None))
     content = result.get("content")
     if not calls and (content is None or not str(content).strip()):
-        # GPT-5.6 Terra returns a completed response with no output when it has
-        # nothing further to say (observed after transfer_to_human_agents). The
-        # official runtime rejects a message with neither content nor tool calls, and
-        # its own semantics for "nothing more to say" is the stop signal, so the
-        # empty output is mapped to it; the adaptation is recorded in private raw data.
-        content = "###STOP###"
-        raw["empty_output_as_stop"] = True
+        raise OfficialRuntimeError("model response has neither public content nor tool calls")
     return AssistantMessage(
         role="assistant",
         content=content,
@@ -431,6 +428,22 @@ class BoundedEnvironment(Environment):
         return super().make_tool_call(tool_name, requestor=requestor, **kwargs)
 
 
+class ExternalBankAgent(LLMAgent):
+    """Official agent state driven by the Generator, without a second model."""
+
+    pending_message: AssistantMessage | None = None
+
+    def _generate_next_message(self, message: Any, state: Any) -> AssistantMessage:
+        if self.pending_message is None:
+            raise OfficialRuntimeError("external bank action required")
+        additions = (
+            list(message.tool_messages) if isinstance(message, MultiToolMessage) else [message]
+        )
+        state.messages.extend(additions)
+        response, self.pending_message = self.pending_message, None
+        return response
+
+
 @dataclass(frozen=True)
 class RuntimeBundle:
     """One fresh bank episode; hidden task and evaluator handles stay here."""
@@ -610,7 +623,7 @@ def build_runtime(
     allowed_task_ids: Sequence[str],
     runtime_controls: RuntimeControls,
     model: str,
-    model_client: ModelClient,
+    model_client: ModelClient | None,
     user_model_client: ModelClient,
     chat_token_counter: ChatTokenCounter,
     user_chat_token_counter: ChatTokenCounter,
@@ -618,6 +631,7 @@ def build_runtime(
     seed: int = MODEL_SEED,
     max_turns: int = 100,
     max_task_tool_calls: int = MAX_TASK_TOOL_CALLS,
+    external_driver: bool = False,
 ) -> RuntimeBundle:
     """Construct official objects without executing an episode or scoring it."""
     if task_id not in allowed_task_ids:
@@ -639,14 +653,18 @@ def build_runtime(
         chat_token_counter,
         user_counter=user_chat_token_counter,
     )
-    agent = AdmissionControlledLLMAgent(
-        tools=environment.get_tools(),
-        domain_policy=policy,
-        llm=model,
-        model_client=model_client,
-        admission=admission,
-        settings=runtime_controls.agent,
-    )
+    agent_options = {"tools": environment.get_tools(), "domain_policy": policy, "llm": model}
+    if external_driver:
+        agent = ExternalBankAgent(**agent_options)
+    else:
+        if model_client is None:
+            raise ValueError("execution model client required")
+        agent = AdmissionControlledLLMAgent(
+            **agent_options,
+            model_client=model_client,
+            admission=admission,
+            settings=runtime_controls.agent,
+        )
     user = AdmissionControlledUserSimulator(
         llm=model,
         instructions=str(task.user_scenario),

@@ -1,0 +1,276 @@
+{
+  "native": {
+    "framework": "author-codex",
+    "author_commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+    "author_source_sha256": "ec8652a2671059f1ebd1fd331e3dbae95d62fa6e0487ec2b3bccb04cb525c98e",
+    "harbor_commit": "3f28e5ce2acbff36d8b5df431e35e050ac13bef6",
+    "cli_version": "codex-cli 0.160.1",
+    "codex_version": "0.160.1",
+    "cli_sha256": "f34a4d2301892ae96c90097786bfe5dc269f187b6f69faf42a7b357b8c081e35",
+    "binary_sha256": "f34a4d2301892ae96c90097786bfe5dc269f187b6f69faf42a7b357b8c081e35",
+    "harbor_source_hashes": {
+      "agents/installed/codex.py": "afe319d7e2bff3f1e346b0ffc69f7c281dbb1f33447755355dd2ac5b5e12b18e",
+      "agents/installed/base.py": "fb2e1cf77a1b5ba0925ca3cf53684920b7025b22b5635e3565db283450c72d01",
+      "agents/base.py": "e1b7f8cbc0d82c2b8fe2fcde8c8863aff48c9de385ffbb06335eb3499fde1266"
+    },
+    "code_mode_host_sha256": "b33e8a5283f3c65c2a0aca6d43a59cfe850f624d8fa16992e3cad4fcc27c14e1",
+    "model": "anthropic.claude-opus-4-8",
+    "condition": "skill_only",
+    "bundle_hash": "19ee8a5419eea24c63b77342bb395c50a7fb61b24c1de1a91d01dd01452a3514",
+    "skill_protection": "read_only_bind_mount",
+    "termination_reason": "agent_finished",
+    "error_type": null,
+    "usage": {
+      "input_tokens": 40,
+      "cached_input_tokens": 0,
+      "output_tokens": 40
+    },
+    "execution_statuses": [
+      {
+        "phase": "setup_or_attestation",
+        "return_code": 0,
+        "failure": null
+      },
+      {
+        "phase": "setup_or_attestation",
+        "return_code": 0,
+        "failure": null
+      },
+      {
+        "phase": "setup_or_attestation",
+        "return_code": 1,
+        "failure": null
+      },
+      {
+        "phase": "setup_or_attestation",
+        "return_code": 0,
+        "failure": null
+      },
+      {
+        "phase": "setup_or_attestation",
+        "return_code": 0,
+        "failure": null
+      },
+      {
+        "phase": "agent",
+        "return_code": 0,
+        "failure": null
+      },
+      {
+        "phase": "setup_or_attestation",
+        "return_code": 0,
+        "failure": null
+      }
+    ]
+  },
+  "public_trace": {
+    "framework": "author-codex",
+    "author_commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+    "author_source_sha256": "ec8652a2671059f1ebd1fd331e3dbae95d62fa6e0487ec2b3bccb04cb525c98e",
+    "harbor_commit": "3f28e5ce2acbff36d8b5df431e35e050ac13bef6",
+    "cli_version": "codex-cli 0.160.1",
+    "codex_version": "0.160.1",
+    "cli_sha256": "f34a4d2301892ae96c90097786bfe5dc269f187b6f69faf42a7b357b8c081e35",
+    "binary_sha256": "f34a4d2301892ae96c90097786bfe5dc269f187b6f69faf42a7b357b8c081e35",
+    "harbor_source_hashes": {
+      "agents/installed/codex.py": "afe319d7e2bff3f1e346b0ffc69f7c281dbb1f33447755355dd2ac5b5e12b18e",
+      "agents/installed/base.py": "fb2e1cf77a1b5ba0925ca3cf53684920b7025b22b5635e3565db283450c72d01",
+      "agents/base.py": "e1b7f8cbc0d82c2b8fe2fcde8c8863aff48c9de385ffbb06335eb3499fde1266"
+    },
+    "code_mode_host_sha256": "b33e8a5283f3c65c2a0aca6d43a59cfe850f624d8fa16992e3cad4fcc27c14e1",
+    "model": "anthropic.claude-opus-4-8",
+    "condition": "skill_only",
+    "bundle_hash": "19ee8a5419eea24c63b77342bb395c50a7fb61b24c1de1a91d01dd01452a3514",
+    "skill_protection": "read_only_bind_mount",
+    "termination_reason": "agent_finished",
+    "error_type": null,
+    "usage": {
+      "input_tokens": 40,
+      "cached_input_tokens": 0,
+      "output_tokens": 40
+    },
+    "execution_statuses": [
+      {
+        "phase": "setup_or_attestation",
+        "return_code": 0,
+        "failure": null
+      },
+      {
+        "phase": "setup_or_attestation",
+        "return_code": 0,
+        "failure": null
+      },
+      {
+        "phase": "setup_or_attestation",
+        "return_code": 1,
+        "failure": null
+      },
+      {
+        "phase": "setup_or_attestation",
+        "return_code": 0,
+        "failure": null
+      },
+      {
+        "phase": "setup_or_attestation",
+        "return_code": 0,
+        "failure": null
+      },
+      {
+        "phase": "agent",
+        "return_code": 0,
+        "failure": null
+      },
+      {
+        "phase": "setup_or_attestation",
+        "return_code": 0,
+        "failure": null
+      }
+    ]
+  },
+  "provider": {
+    "requests": 4,
+    "input_tokens_estimate": 30193,
+    "input_token_estimates": [
+      {
+        "operation_key": "1825e4d06f0d73620ca203eed1abcc29a93c271a95103f279498d1f7a3d82dbc",
+        "text_tokens": 7062,
+        "image_tokens": 0,
+        "image_count": 0,
+        "total_tokens": 7062
+      },
+      {
+        "operation_key": "9c66f444940baf1e8dfbcf561323dd22edebeb64cb2f25536e6f8506e7bce7f1",
+        "text_tokens": 7548,
+        "image_tokens": 0,
+        "image_count": 0,
+        "total_tokens": 7548
+      },
+      {
+        "operation_key": "664211d3f299524644a1b03c1b1f82e4791e4bf85862f7e9c0ebb3390e92bc6d",
+        "text_tokens": 7735,
+        "image_tokens": 0,
+        "image_count": 0,
+        "total_tokens": 7735
+      },
+      {
+        "operation_key": "07a292c63a9b79ed3f54d1653eb949f908b3aa494ae374de9dc81ecb6286ca8e",
+        "text_tokens": 7846,
+        "image_tokens": 2,
+        "image_count": 1,
+        "total_tokens": 7848
+      }
+    ],
+    "vision_estimation_basis": "raw_unscaled_patches_x1.2; Responses32px/Messages28px; URL36000",
+    "input_token_estimation_basis": "serialized_anthropic_messages_payload",
+    "output_tokens": 40,
+    "usage": [
+      {
+        "operation_key": "1825e4d06f0d73620ca203eed1abcc29a93c271a95103f279498d1f7a3d82dbc",
+        "input_tokens": 10,
+        "output_tokens": 10,
+        "total_tokens": 20,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "anthropic_usage": {
+          "input_tokens": 10,
+          "output_tokens": 10
+        }
+      },
+      {
+        "operation_key": "9c66f444940baf1e8dfbcf561323dd22edebeb64cb2f25536e6f8506e7bce7f1",
+        "input_tokens": 10,
+        "output_tokens": 10,
+        "total_tokens": 20,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "anthropic_usage": {
+          "input_tokens": 10,
+          "output_tokens": 10
+        }
+      },
+      {
+        "operation_key": "664211d3f299524644a1b03c1b1f82e4791e4bf85862f7e9c0ebb3390e92bc6d",
+        "input_tokens": 10,
+        "output_tokens": 10,
+        "total_tokens": 20,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "anthropic_usage": {
+          "input_tokens": 10,
+          "output_tokens": 10
+        }
+      },
+      {
+        "operation_key": "07a292c63a9b79ed3f54d1653eb949f908b3aa494ae374de9dc81ecb6286ca8e",
+        "input_tokens": 10,
+        "output_tokens": 10,
+        "total_tokens": 20,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "anthropic_usage": {
+          "input_tokens": 10,
+          "output_tokens": 10
+        }
+      }
+    ],
+    "halted": false,
+    "closed": true,
+    "failure_code": null,
+    "authentication_status": null,
+    "unknown_operation": false,
+    "terminal_stop": null
+  },
+  "provider_simulated": true,
+  "native_cli_model": "anthropic.claude-opus-4-8",
+  "provider_model": "anthropic.claude-opus-4-8",
+  "native_tool_catalog": [
+    {
+      "type": "function",
+      "name": "exec_command"
+    },
+    {
+      "type": "function",
+      "name": "write_stdin"
+    },
+    {
+      "type": "function",
+      "name": "request_user_input"
+    },
+    {
+      "type": "function",
+      "name": "view_image"
+    },
+    {
+      "type": "function",
+      "name": "get_goal"
+    },
+    {
+      "type": "function",
+      "name": "create_goal"
+    },
+    {
+      "type": "function",
+      "name": "update_goal"
+    }
+  ],
+  "native_tool_catalog_sha256": "90257d5ee17ddfd88547a3b46d223a13b0682e9924d86c91846eb76d9211a2b1",
+  "disabled_spawn_probe": null,
+  "task_id": "3d-scan-calc",
+  "scope": {
+    "docker": true,
+    "native_codex_cli": true,
+    "provider": "local simulated provider",
+    "live_model_performance": "NOT_MEASURED",
+    "sensitive_evidence_included": false
+  },
+  "official_grading_status": {
+    "status": "MEASURED",
+    "grader_exit_code": 0,
+    "fixture_is_task_solution": false
+  },
+  "text_counter_basis": "canonical_json_characters_div_4_mock_only"
+}

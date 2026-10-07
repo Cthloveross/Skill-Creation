@@ -16,6 +16,42 @@ from tau_skill_evolution.container import DockerRunner
 from tau_skill_evolution.spec import ExperimentSpec, load_spec
 
 
+@pytest.mark.parametrize(
+    "model,transport,prefix",
+    [
+        ("openai.gpt-5.6-terra", "bedrock-responses", "openai"),
+        ("anthropic.claude-opus-4-8", "bedrock-messages", "anthropic"),
+    ],
+)
+def test_authentication_uses_shared_catalog_without_requesting_generation(
+    monkeypatch, model, transport, prefix
+):
+    original = load_spec()
+    values = deepcopy(original.values)
+    values["provider"].update(model=model, transport=transport, region="us-east-1")
+    spec = replace(original, values=values)
+    monkeypatch.setattr(admission, "bearer_token_source", lambda _: lambda: "offline-fixture")
+    requests = []
+
+    class Response(io.BytesIO):
+        status = 200
+
+    def opener(request, *, timeout):
+        requests.append(request)
+        assert request.full_url == "https://bedrock-mantle.us-east-1.api.aws/v1/models"
+        assert request.get_method() == "GET" and request.data is None
+        return Response(json.dumps({"data": [{"id": model}]}).encode())
+
+    monkeypatch.setattr(admission.urllib.request, "urlopen", opener)
+    assert spec.provider_settings["api_base"].endswith(f"/{prefix}/v1")
+    assert admission.bedrock_authentication(spec) == {
+        "status": 200,
+        "model": model,
+        "generation_requested": False,
+    }
+    assert len(requests) == 1
+
+
 @pytest.fixture
 def infrastructure(tmp_path, monkeypatch):
     original = load_spec()
@@ -144,6 +180,25 @@ def test_missing_region_blocks_live_without_inventing_an_endpoint(infrastructure
     check = next(check for check in result["checks"] if check["name"] == "bedrock_region")
     assert not check["ok"] and not result["ready"]
     assert "missing_region" in check["detail"]
+
+
+def test_skillsbench_admission_does_not_claim_project_resource_limits(infrastructure, monkeypatch):
+    from tau_skill_evolution import skillsbench
+
+    spec, _, _ = infrastructure
+    monkeypatch.setattr(ExperimentSpec, "experiment", property(lambda self: "skillsbench"))
+    monkeypatch.setattr(
+        skillsbench,
+        "skillsbench_preflight",
+        lambda *args, **kwargs: {
+            "ready": True,
+            "checks": [{"name": "task", "ok": True, "detail": "mock"}],
+        },
+    )
+    result = admission.preflight(spec)
+    assert result["ready"]
+    assert result["resources_scope"] == "main_container"
+    assert not result["aggregate_limits_enforced"]
 
 
 def test_wrong_model_is_explicitly_unsupported_without_fallback(infrastructure):
@@ -284,7 +339,40 @@ def test_every_live_entrypoint_blocks_before_workflow(
 
     monkeypatch.setattr(cli, "Workflow", unauthorized_workflow)
     destination = tmp_path / "never-started"
-    assert cli.main([command, "--run-dir", str(destination)]) == 2
+    assert cli.main([command, "--run-dir", str(destination), "--runtime", "docker"]) == 2
     result = json.loads(capsys.readouterr().out)
     assert result["ready"] is False
     assert not destination.exists()
+
+
+def test_workspace_admission_does_not_probe_docker(infrastructure, monkeypatch):
+    from tau_skill_evolution.bubblewrap import BubblewrapRunner, RuntimeLock
+
+    spec, state, _ = infrastructure
+    state["fault"] = "socket_permission"
+    monkeypatch.setattr(RuntimeLock, "from_file", lambda _: object())
+
+    def local_admission(self):
+        assert self.runtime == "workspace"
+        return {"ready": True, "aggregate_limits_enforced": False}
+
+    monkeypatch.setattr(BubblewrapRunner, "preflight", local_admission)
+    result = admission.preflight(spec, runtime="workspace")
+    assert result["ready"]
+    assert state["requests"] == []
+    assert result["requested_runtime"] == "workspace"
+    assert result["resources_scope"] == "local_process"
+    assert not result["aggregate_limits_enforced"]
+    assert not result["formal_matrix_result"]
+
+
+def test_workspace_failure_has_no_docker_fallback(infrastructure, monkeypatch):
+    from tau_skill_evolution.bubblewrap import BubblewrapRunner, RuntimeLock
+
+    spec, state, _ = infrastructure
+    monkeypatch.setattr(RuntimeLock, "from_file", lambda _: object())
+    monkeypatch.setattr(BubblewrapRunner, "preflight", lambda _: {"ready": False})
+    result = admission.preflight(spec, runtime="workspace")
+    assert not result["ready"]
+    assert state["requests"] == []
+    assert any(item["name"] == "workspace_runtime" and not item["ok"] for item in result["checks"])

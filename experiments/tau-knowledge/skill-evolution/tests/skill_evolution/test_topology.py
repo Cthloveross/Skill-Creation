@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 from tau_skill_evolution import cli, model, workflow
-from tau_skill_evolution.runtime_controls import RuntimeGenerationSettings
+from tau_skill_evolution.runtime_controls import RuntimeControls, RuntimeGenerationSettings
 from tau_skill_evolution.spec import load_spec
 
 
@@ -33,3 +33,26 @@ def test_repository_has_no_other_experiment_or_duplicate_source_tree():
 def test_runtime_controls_reject_unsupported_gpt_reasoning_effort():
     with pytest.raises(ValueError):
         RuntimeGenerationSettings("minimal", 1024)
+
+
+def test_runtime_controls_roundtrip_optional_output_limits():
+    value = {
+        "agent": {"reasoning_effort": "medium", "max_output_tokens": None},
+        "user": {"reasoning_effort": "none", "max_output_tokens": None},
+        "max_input_tokens": 1000,
+        "assistant_completion_budget": None,
+    }
+    assert RuntimeControls.from_dict(value).to_dict() == value
+
+
+@pytest.mark.parametrize("invalid", [0, -1, True, 1.5, "unlimited"])
+def test_runtime_controls_optional_output_limits_still_reject_invalid_values(invalid):
+    with pytest.raises(ValueError, match="max_output_tokens"):
+        RuntimeGenerationSettings("medium", invalid)
+    with pytest.raises(ValueError, match="assistant_completion_budget"):
+        RuntimeControls(
+            RuntimeGenerationSettings("medium", None),
+            RuntimeGenerationSettings("none", None),
+            1000,
+            invalid,
+        )

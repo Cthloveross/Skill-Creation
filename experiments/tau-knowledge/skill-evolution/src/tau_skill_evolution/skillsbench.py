@@ -6,13 +6,16 @@ import fnmatch
 import hashlib
 import json
 import os
+import posixpath
 import re
 import shlex
 import shutil
 import struct
 import subprocess
+import tempfile
 import time
 import urllib.request
+import uuid
 import zipfile
 from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
@@ -25,6 +28,8 @@ import tomllib
 
 from .artifacts import atomic_json
 from .container import _safe_path
+
+_EVOLUTION_PRIVATE_ROOTS = ("/bundle", "/work/candidate", "/work/scratch", "/work/observations")
 
 COMMIT = "4380d4bff673dd6e1d58e5babeb2aaa0fe527119"
 REPOSITORY = "Zhang-Henry/CoEvoSkills"
@@ -43,6 +48,58 @@ def _json_hash(value: Any) -> str:
     return hashlib.sha256(
         json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
+
+
+def _public_link_target(relative: str, target: str, roots: Sequence[str]) -> bool:
+    resolved = posixpath.normpath(
+        target
+        if target.startswith("/")
+        else posixpath.join("/", posixpath.dirname(relative), target)
+    )
+    if any(part in {"skills", ".claude", ".codex", ".evolution"} for part in resolved.split("/")):
+        return False
+    if any(
+        resolved == private or resolved.startswith(private + "/")
+        for private in (*_EVOLUTION_PRIVATE_ROOTS, "/tests", "/logs/verifier", "/root/verifier")
+    ):
+        return False
+    # Preserve workspace links and task-image executable links without dereferencing
+    # them on the host. Verifier mounts contain no host filesystem targets.
+    return any(
+        resolved == root or resolved.startswith(root.rstrip("/") + "/")
+        for root in (*roots, "/usr", "/bin", "/lib", "/lib64")
+    )
+
+
+def task_config(directory: Path) -> dict[str, Any]:
+    """Apply the defaults and legacy size units of the author's pinned Harbor config."""
+    value = tomllib.loads((directory / "task.toml").read_text())
+    environment = {
+        "build_timeout_sec": 600.0,
+        "cpus": 1,
+        "memory_mb": 2048,
+        "storage_mb": 10240,
+        "gpus": 0,
+        "allow_internet": True,
+        **value.get("environment", {}),
+    }
+    for old, new in (("memory", "memory_mb"), ("storage", "storage_mb")):
+        if old in environment:
+            size = str(environment.pop(old)).strip().upper()
+            match = re.fullmatch(r"([0-9]+(?:\.[0-9]+)?)([GMK])", size)
+            if match is None:
+                raise ValueError("skillsbench_invalid_resource_size")
+            number, unit = match.groups()
+            environment[new] = int(float(number) * {"G": 1024, "M": 1, "K": 1 / 1024}[unit])
+    for name in ("cpus", "memory_mb", "storage_mb"):
+        if isinstance(environment[name], bool) or environment[name] <= 0:
+            raise ValueError("skillsbench_invalid_resource_limit")
+    if not isinstance(environment["allow_internet"], bool):
+        raise ValueError("skillsbench_invalid_network_setting")
+    value["environment"] = environment
+    value["agent"] = {"timeout_sec": 600.0, **value.get("agent", {})}
+    value["verifier"] = {"timeout_sec": 600.0, "env": {}, **value.get("verifier", {})}
+    return value
 
 
 PRIVATE_SEGMENTS = frozenset(
@@ -399,7 +456,7 @@ class SkillsBenchSource:
         if task_id not in self.manifest["tasks"]:
             raise ValueError("unknown_skillsbench_task")
         directory = self.checkout / "tasks" / task_id
-        config = tomllib.loads((directory / "task.toml").read_text())
+        config = task_config(directory)
         inputs = [
             e
             for e in self.manifest["files"]
@@ -790,25 +847,69 @@ class SkillsBenchAdapter:
         model_factory: Any = None,
         counter: Any = None,
         artifact_root: Path | None = None,
+        model_journal_dir: Path | None = None,
+        runtime: str | None = None,
     ):
         from .skillsbench_runtime import SkillsBenchRunner
 
         self.spec, self.task_id, self.demo = spec, task, demo
         self.source = SkillsBenchSource(spec.root)
         self.public_inputs = self.source.task(task)
+        selected_lock = getattr(spec, "values", {}).get("source", {}).get("runtime_lock")
+        self.runner = SkillsBenchRunner(
+            spec.root,
+            task,
+            demo=demo,
+            runtime=runtime,
+            runtime_lock_path=spec.root / selected_lock if selected_lock else None,
+        )
+        self.public_inputs["environment"]["execution_runtime"] = self.runner.runtime
         self.public_inputs["environment"]["runtime_network"] = (
             "bridge"
-            if not demo and self.public_inputs["environment"].get("allow_internet") is True
+            if not self.runner.use_bwrap
+            and self.public_inputs["environment"].get("allow_internet") is True
             else "none"
         )
-        self.runner = SkillsBenchRunner(spec.root, task, demo=demo)
         self.model_factory, self.counter = model_factory, counter
         self.artifact_root = Path(
             artifact_root or spec.root / "data/skillsbench/public-artifacts" / task
         )
+        self.model_journal_dir = (
+            Path(model_journal_dir or self.source.root / "data/skillsbench/private-models") / task
+        )
+        self.executor = (
+            getattr(spec, "values", {}).get("runtime", {}).get("executor", "local-tools")
+        )
+        self.runner.execution_framework = self.executor
+        if self.executor == "author-codex":
+            self.public_inputs["environment"].update(
+                execution_agent="author-codex",
+                skill_directory="/app/environment/skills/current",
+                execution_interface=(
+                    "Native Codex terminal; read files and run scripts with shell commands."
+                ),
+            )
 
     @property
     def tool_schemas(self) -> list[dict[str, Any]]:
+        if self.executor == "author-codex":
+            return [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "exec_command",
+                        "description": (
+                            "Native Codex terminal in the task container. Read installed "
+                            "Skill files and invoke their scripts through shell commands."
+                        ),
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"cmd": {"type": "string"}},
+                            "required": ["cmd"],
+                        },
+                    },
+                }
+            ]
         return EXECUTION_TOOLS
 
     @property
@@ -826,6 +927,55 @@ class SkillsBenchAdapter:
 
     def verifier_runner(self) -> Any:
         return self.runner
+
+    @contextmanager
+    def evolution_session(
+        self,
+        initial_bundle: Any,
+        public_inputs: Mapping[str, Any],
+        frozen_base: Any,
+        *,
+        journal: Any,
+        workspace: Path,
+    ) -> Any:
+        from .container import _public_workspace
+        from .core._canonical import thaw_json
+        from .skillsbench_runtime import SkillsBenchRunner
+
+        learning = SkillsBenchRunner(
+            self.spec.root,
+            self.task_id,
+            demo=False,
+            runtime="docker",
+            runtime_lock_path=self.runner.runtime_lock_path,
+            transport=self.runner.transport,
+        )
+        workspace = Path(workspace)
+        identity = {
+            "journal": json.loads((journal.root / "identity.json").read_text()),
+            "initial_bundle_hash": initial_bundle.bundle_hash,
+            "base": frozen_base.to_dict()
+            if hasattr(frozen_base, "to_dict")
+            else thaw_json(frozen_base),
+            "public_inputs": thaw_json(public_inputs),
+            "runtime_lock_hash": _hash(learning.runtime_lock_path),
+        }
+        with _public_workspace(
+            learning,
+            public_inputs,
+            frozen_base,
+            previous_bundle=initial_bundle,
+            workspace=workspace,
+            terminal_callback=learning._public_terminal,
+        ) as public:
+            checkpoint = workspace / "evolution-runtime.json"
+            with learning.learning_episode(public, checkpoint=checkpoint, identity=identity) as (
+                episode,
+                state,
+            ):
+                yield SkillsBenchEvolutionSession(
+                    self, learning, public, episode, checkpoint, state
+                )
 
     def _model(self) -> Any:
         if self.model_factory is not None:
@@ -850,7 +1000,20 @@ class SkillsBenchAdapter:
         )
 
     def _execute(self, bundle: Any, episode: Any) -> dict[str, Any]:
+        if self.executor == "author-codex":
+            return self._execute_codex(bundle, episode)
+        from .journal import Journal, UnknownOperation
+        from .model import ModelClientError, authentication_status, is_credential_error
+
         model = self._model()
+        episode_id = getattr(episode, "model_episode_id", None) or uuid.uuid4().hex
+        episode.model_episode_id = episode_id
+        identity = {
+            "task_id": self.task_id,
+            "episode_id": episode_id,
+            "bundle_hash": bundle.bundle_hash,
+        }
+        journal = Journal(self.model_journal_dir / episode_id, identity=identity)
         prompt = (self.spec.root / "prompts/execution-skillsbench.md").read_text()
         messages: list[dict[str, Any]] = [
             {
@@ -866,8 +1029,9 @@ class SkillsBenchAdapter:
         controls = runtime["controls"]
         budget = controls["assistant_completion_budget"]
         used, calls, events, reason = 0, 0, [], "turn_budget_exhausted"
+        termination_metadata: dict[str, Any] = {}
         started = time.monotonic()
-        for _ in range(runtime.get("max_turns", 100)):
+        for turn in range(runtime.get("max_turns", 100)):
             if time.monotonic() - started >= self.runner.config["agent"]["timeout_sec"]:
                 reason = "episode_timeout"
                 break
@@ -875,11 +1039,56 @@ class SkillsBenchAdapter:
             if remaining <= 0:
                 reason = "completion_budget_exhausted"
                 break
-            raw = model.complete(
-                messages,
-                tools=self.tool_schemas,
-                max_output_tokens=min(remaining, controls["agent"]["max_output_tokens"]),
-            )
+            kwargs = {
+                "tools": self.tool_schemas,
+                "max_output_tokens": min(remaining, controls["agent"]["max_output_tokens"]),
+            }
+            operation = f"execution-{turn}"
+            try:
+                if hasattr(model, "complete_journaled"):
+                    raw = model.complete_journaled(journal, operation, identity, messages, **kwargs)
+                else:
+                    # Offline clients return a normalized response. Real clients seal provider
+                    # bytes before parsing through complete_journaled above.
+                    raw = journal.dispatch(
+                        operation,
+                        {"inputs": identity, "messages": messages, **kwargs},
+                        lambda _kwargs=kwargs: model.complete(messages, **_kwargs),
+                    )
+            except (ModelClientError, UnknownOperation) as exc:
+                cause: BaseException | None = exc
+                seen: set[int] = set()
+                while cause is not None and id(cause) not in seen:
+                    seen.add(id(cause))
+                    if isinstance(cause, ModelClientError):
+                        break
+                    cause = cause.__cause__ or cause.__context__
+                if (
+                    not isinstance(cause, ModelClientError)
+                    or cause.code != "input_token_budget_exceeded"
+                    or is_credential_error(exc)
+                    or authentication_status(exc) is not None
+                    or journal.status(operation) != "NOT_SENT"
+                    or journal.received(operation)
+                ):
+                    raise
+                # Admission failed before a POST. Earlier task actions are known and
+                # must still be snapshotted, verified and independently graded.
+                reason = "input_token_budget_exhausted"
+                termination_metadata = {
+                    "error_code": cause.code,
+                    "input_request_status": "NOT_SENT",
+                }
+                details = getattr(cause, "details", {})
+                if isinstance(details, Mapping):
+                    for key in (
+                        "observed_input_tokens",
+                        "max_input_tokens",
+                    ):
+                        value = details.get(key)
+                        if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+                            termination_metadata[key] = value
+                break
             used += raw.get("usage", {}).get("completion_tokens", 0)
             if raw.get("finish_reason", "stop") not in {"stop", "tool_calls"}:
                 reason = "model_output_incomplete"
@@ -917,6 +1126,14 @@ class SkillsBenchAdapter:
                         "status": "returned",
                     }
                 except (OSError, ValueError, TypeError, PermissionError) as exc:
+                    if (
+                        isinstance(exc, OSError)
+                        and not isinstance(exc, PermissionError)
+                        and name != "read_skill_file"
+                    ):
+                        # A transport failure cannot establish whether a terminal/script
+                        # executed. Let the enclosing operation remain UNKNOWN.
+                        raise
                     result = {"failure": type(exc).__name__}
                     event = {
                         "type": "tool_status",
@@ -940,64 +1157,218 @@ class SkillsBenchAdapter:
             "task_id": self.task_id,
             "events": events,
             "termination_reason": reason,
+            **({"termination_metadata": termination_metadata} if termination_metadata else {}),
             "assistant_completion_tokens": used,
             "tool_calls": calls,
         }
 
-    def _snapshot(self, episode: Any) -> dict[str, Any]:
-        import uuid
+    @contextmanager
+    def _execution_episode(self, bundle: Any, *, evaluation: bool = False) -> Any:
+        if self.executor != "author-codex":
+            if bundle is None:
+                raise ValueError("no_skill_requires_author_codex")
+            with self.runner.episode(bundle) as episode:
+                episode.model_episode_id = uuid.uuid4().hex
+                episode.grader_evidence_dir = (
+                    self.model_journal_dir / episode.model_episode_id / "official-grader"
+                )
+                episode.grader_identity = {
+                    "episode_id": episode.model_episode_id,
+                    "bundle_hash": bundle.bundle_hash,
+                    "evaluation": evaluation,
+                }
+                yield episode
+            return
+        from .codex_provider import open_provider
+        from .codex_runtime import codex_identity
+        from .retrieval import text_counter
 
+        settings = self.spec.values["runtime"]
+        installed = codex_identity(settings["codex"])
+        self._codex_binary = Path(installed.pop("binary"))
+        companion = installed.pop("code_mode_host_binary", None)
+        self._codex_code_mode_host = Path(companion) if companion is not None else None
+        self.runner.codex_skill_mode = bundle is not None
+        self.runner.agent_timeout_seconds = settings["codex"][
+            "evaluation_timeout_seconds" if evaluation else "evolution_timeout_seconds"
+        ]
+        self._executor_identity = {
+            **installed,
+            "model": self.spec.provider_settings["model"],
+            "cli_model": self.spec.provider_settings["model"].removeprefix("openai."),
+            "controls": settings["controls"],
+            "episode_timeout_seconds": self.runner.agent_timeout_seconds,
+            "provider_request_timeout_seconds": settings["request_timeout_seconds"],
+            "max_model_requests": settings["max_turns"],
+            "task_runtime_lock_sha256": _hash(self.runner.runtime_lock_path),
+        }
+        episode_id = uuid.uuid4().hex
+        self._codex_logs = self.model_journal_dir / episode_id / "codex"
+        with tempfile.TemporaryDirectory(prefix="sb-provider-") as temporary:
+            directory = Path(temporary) / "gateway"
+            with open_provider(
+                directory,
+                self.spec.provider_settings,
+                settings["controls"],
+                self.model_journal_dir / episode_id / "provider",
+                {
+                    "task_id": self.task_id,
+                    "episode_id": episode_id,
+                    "bundle_hash": bundle.bundle_hash if bundle else None,
+                    "executor": self._executor_identity,
+                },
+                token_counter=self.counter or text_counter(self.spec),
+                timeout_seconds=settings["request_timeout_seconds"],
+                max_requests=settings["max_turns"],
+            ) as gateway:
+                self._codex_gateway = gateway
+                self.runner.provider_directory = directory
+                try:
+                    with self.runner.episode(bundle) as episode:
+                        episode.model_episode_id = episode_id
+                        episode.grader_evidence_dir = (
+                            self.model_journal_dir / episode_id / "official-grader"
+                        )
+                        episode.grader_identity = {
+                            "episode_id": episode_id,
+                            "bundle_hash": bundle.bundle_hash if bundle else None,
+                            "evaluation": evaluation,
+                        }
+                        yield episode
+                finally:
+                    self.runner.provider_directory = None
+                    self._codex_gateway = None
+
+    def _execute_codex(self, bundle: Any, episode: Any) -> dict[str, Any]:
+        from .codex_provider import OUTPUT_TOKEN_BUDGET_STOP
+        from .codex_runtime import CodexProvider, execute_codex
+        from .container import ContainerUnavailable
+        from .journal import UnknownOperation
+        from .model import ModelClientError
+
+        gateway = self._codex_gateway
+        controls = self.spec.values["runtime"]["controls"]
+        trace = execute_codex(
+            self.runner,
+            episode,
+            instruction=self.public_inputs["opening"],
+            logs_dir=self._codex_logs,
+            bundle=bundle,
+            provider=CodexProvider(
+                model=self.spec.provider_settings["model"].removeprefix("openai."),
+                base_url=gateway.base_url,
+                binary=self._codex_binary,
+                code_mode_host=getattr(self, "_codex_code_mode_host", None),
+                reasoning_effort=controls["agent"]["reasoning_effort"],
+                input_token_limit=controls["max_input_tokens"],
+                relay_command=(
+                    self.runner.public_python,
+                    "/run/skill-provider/relay.py",
+                    "/run/skill-provider/provider.sock",
+                    "18765",
+                ),
+            ),
+        )
+        gateway.close_public()
+        statistics = gateway.statistics
+        atomic_json(self._codex_logs.parent / "provider-statistics.json", statistics)
+        if statistics.get("authentication_status"):
+            raise ModelClientError(
+                "http_error",
+                "Codex provider authentication failed",
+                status=statistics["authentication_status"],
+            )
+        if statistics.get("unknown_operation"):
+            raise UnknownOperation("codex_provider_response_unknown")
+        budget_stops = {
+            "provider_completion_budget_exhausted",
+            "provider_input_bytes_exceeded",
+            "input_token_budget_exceeded",
+        }
+        terminal = statistics.get("terminal_stop")
+        if (
+            isinstance(terminal, dict)
+            and terminal.get("kind") == "budget"
+            and terminal.get("reason") == "max_output_tokens"
+            and terminal.get("response_status") == "incomplete"
+        ):
+            budget_stops.add(OUTPUT_TOKEN_BUDGET_STOP)
+        if statistics.get("halted") and statistics.get("failure_code") not in budget_stops:
+            raise ModelClientError(
+                statistics.get("failure_code") or "codex_provider_failed",
+                "Codex provider did not complete execution",
+            )
+        if trace["termination_reason"] == "codex_runtime_error" or not statistics["requests"]:
+            raise ContainerUnavailable("codex_execution_not_ready")
+        if statistics.get("halted"):
+            trace["termination_reason"] = statistics["failure_code"]
+        elif trace["termination_reason"] == "codex_error":
+            raise ContainerUnavailable("codex_cli_execution_failed")
+        return {
+            "benchmark": "skillsbench",
+            "task_id": self.task_id,
+            "termination_reason": trace["termination_reason"],
+            "events": [{"type": "execution_status", "status": trace["termination_reason"]}],
+            "executor": self._executor_identity,
+            "assistant_completion_tokens": statistics["output_tokens"],
+            "provider_requests": statistics["requests"],
+        }
+
+    def _snapshot(self, episode: Any) -> dict[str, Any]:
+        if not self.runner.use_bwrap:
+            with self.runner.snapshot_workspace() as mounts:
+                return self._seal_public_workspace(mounts)
+        return self._seal_public_workspace(
+            {getattr(self.runner, "workspace_directory", "/root"): episode.work}
+        )
+
+    def _seal_public_workspace(
+        self, mounts: Mapping[str, Path], *, excluded_roots: Sequence[str] = ()
+    ) -> dict[str, Any]:
         path = self.artifact_root / uuid.uuid4().hex
         files_root = path / "files"
         files_root.mkdir(parents=True)
-        selected: dict[str, Path] = {}
-        mounts = {"/root": episode.work} if self.demo else self.runner.workspace_mounts
-        for entry in self.public_inputs["public_input_manifest"]:
-            for absolute in entry["sandbox_paths"]:
-                for mount, directory in mounts.items():
-                    if absolute.startswith(mount + "/"):
-                        selected[absolute.lstrip("/")] = directory / absolute.removeprefix(
-                            mount + "/"
-                        )
-        # Only declared task paths and original public inputs cross into the verifier.
-        absolute_paths = re.findall(
-            r"/(?:root|app|workspace|home|data|output|outputs|opt|services)/[A-Za-z0-9_./*?\-]+",
-            self.public_inputs["opening"],
-        )
-        workdir = self.public_inputs["environment"]["workdir"]
-        relative_paths = re.findall(
-            r"(?<![/\w])([A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\."
-            r"(?:json|csv|tsv|xlsx|txt|md|py|js|java|scala|lean|wav|mp4|pdf|png|xml|yaml|obj))(?=$|[^\w/])",
-            self.public_inputs["opening"],
-        )
-        absolute_paths += [workdir.rstrip("/") + "/" + p for p in relative_paths]
-        for absolute in absolute_paths:
-            absolute = absolute.rstrip(".")
-            if any(p == ".." for p in absolute.split("/")):
-                continue
-            for mount, directory in mounts.items():
-                if not absolute.startswith(mount + "/"):
-                    continue
-                for candidate in directory.glob(absolute.removeprefix(mount + "/")):
-                    paths = candidate.rglob("*") if candidate.is_dir() else [candidate]
-                    for file in paths:
-                        if file.is_file():
-                            relative = (
-                                mount.lstrip("/") + "/" + file.relative_to(directory).as_posix()
-                            )
-                            selected[relative] = file
         files = []
+        links = []
+        directories = []
         excluded: list[dict[str, str]] = []
         permissions_repaired = False
-        for relative, original in sorted(selected.items()):
-            if not original.exists():
+        selected: dict[str, tuple[Path, Path]] = {}
+        for mount, directory in mounts.items():
+            (files_root / mount.lstrip("/")).mkdir(parents=True, exist_ok=True)
+            directories.append(mount.lstrip("/"))
+            for original in directory.rglob("*"):
+                relative = mount.lstrip("/") + "/" + original.relative_to(directory).as_posix()
+                if any(
+                    "/" + relative == root or ("/" + relative).startswith(root.rstrip("/") + "/")
+                    for root in excluded_roots
+                ):
+                    continue
+                parts = original.relative_to(directory).parts
+                if any(p in {"skills", ".claude", ".codex", ".evolution", ".venv"} for p in parts):
+                    continue
+                if relative.startswith(("root/verifier/", "logs/verifier/")):
+                    continue
+                selected[relative] = (original, directory)
+        for relative, (original, directory) in sorted(selected.items()):
+            if original.is_symlink():
+                target = os.readlink(original)
+                if not _public_link_target(relative, target, tuple(mounts)):
+                    raise ValueError("skillsbench_public_artifact_not_regular")
+                destination = files_root / _safe_path(relative)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.symlink_to(target)
+                links.append({"path": relative, "target": target})
                 continue
-            directory = mounts["/" + relative.split("/")[0]]
             if not original.resolve().is_relative_to(directory.resolve()) or any(
                 parent.is_symlink() for parent in original.parents if parent != directory
             ):
                 # A path that resolves outside its mount is a host-escape attempt.
                 raise ValueError("skillsbench_public_artifact_not_regular")
+            if original.is_dir() and not original.is_symlink():
+                (files_root / _safe_path(relative)).mkdir(parents=True, exist_ok=True)
+                directories.append(relative)
+                continue
             if original.is_symlink() or not original.is_file():
                 # The executor may leave a symlink/directory/special file at a declared
                 # artifact path. Such a path is not a public artifact; it is excluded and
@@ -1014,47 +1385,76 @@ class SkillsBenchAdapter:
                 # throwaway container (the episode is over, so this changes no result).
                 if permissions_repaired:
                     raise
+                if self.runner.runtime == "workspace":
+                    raise PermissionError(
+                        "skillsbench_workspace_public_artifact_unreadable"
+                    ) from None
                 for mount_directory in mounts.values():
                     _open_permissions(mount_directory)
                 permissions_repaired = True
                 shutil.copyfile(original, destination)
-            destination.chmod(0o444)
+            destination.chmod(0o555 if original.stat().st_mode & 0o111 else 0o444)
             files.append(
                 {
                     "path": relative,
                     "sandbox_path": "/" + relative,
                     "sha256": _hash(destination),
                     "bytes": destination.stat().st_size,
+                    "mode": destination.stat().st_mode & 0o777,
                 }
             )
-        snapshot_hash = _json_hash(files)
+        snapshot_hash = _json_hash(
+            {"files": files, "directories": sorted(directories), "symlinks": links}
+        )
         atomic_json(
             path / "snapshot.json",
-            {"files": files, "excluded": excluded, "snapshot_hash": snapshot_hash},
+            {
+                "files": files,
+                "directories": sorted(directories),
+                "symlinks": links,
+                "excluded": excluded,
+                "snapshot_hash": snapshot_hash,
+            },
         )
         return {
             "public_artifacts_dir": str(files_root),
             "public_artifacts_hash": snapshot_hash,
-            "public_artifacts": files,
+            "public_artifacts": files[:128],
+            "public_artifact_count": len(files),
+            "public_artifact_manifest_truncated": len(files) > 128,
             "public_artifacts_excluded": excluded,
         }
 
     def rollout(self, bundle: Any) -> dict[str, Any]:
-        with self.runner.episode(bundle) as episode:
+        with self._execution_episode(bundle) as episode:
             trace = self._execute(bundle, episode)
             return {**trace, **self._snapshot(episode)}
 
     def oracle(self, bundle: Any) -> bool:
-        with self.runner.episode(bundle) as episode:
+        with self._execution_episode(bundle) as episode:
             self._execute(bundle, episode)
+            self._snapshot(episode)
+            self.runner.close_public(episode)
             result = self.runner.grade(episode)
         if result["status"] != "MEASURED":
-            raise RuntimeError("skillsbench_oracle_not_measured")
+            from .evolution import OracleUnavailable
+
+            raise OracleUnavailable("skillsbench_oracle_not_measured")
         return result["utility"] is True
 
     def evaluate(self, bundle: Any) -> dict[str, Any]:
-        with self.runner.episode(bundle) as episode:
-            self._execute(bundle, episode)
+        return self._evaluate(bundle)
+
+    def evaluate_no_skill(self) -> dict[str, Any]:
+        if self.executor != "author-codex":
+            raise ValueError("no_skill_requires_author_codex")
+        return self._evaluate(None)
+
+    def _evaluate(self, bundle: Any) -> dict[str, Any]:
+        with self._execution_episode(bundle, evaluation=True) as episode:
+            trace = self._execute(bundle, episode)
+            self._snapshot(episode)
+            self.runner.close_public(episode)
             result = self.runner.grade(episode)
         return {
             **result,
@@ -1062,13 +1462,219 @@ class SkillsBenchAdapter:
             "asr": None,
             "asr_status": "NOT_APPLICABLE",
             "completion_steps": None,
+            "execution_termination_reason": trace.get("termination_reason"),
+            "executor": trace.get("executor"),
+            **(
+                {"execution_termination_metadata": trace["termination_metadata"]}
+                if trace.get("termination_metadata")
+                else {}
+            ),
         }
 
 
-def skillsbench_preflight(spec: Any, *, demo: bool, task_ids: Any) -> dict[str, Any]:
+class SkillsBenchEvolutionSession:
+    """One Generator's live task state; only explicit submissions become evidence."""
+
+    tool_schemas: tuple[Any, ...] = ()
+
+    def __init__(
+        self,
+        adapter: Any,
+        runner: Any,
+        public: Any,
+        episode: Any,
+        checkpoint: Path,
+        state: dict[str, Any],
+    ):
+        self.adapter, self.runner, self.public, self.episode = adapter, runner, public, episode
+        self.checkpoint, self.state = checkpoint, state
+
+    def _save(self) -> None:
+        atomic_json(self.checkpoint, self.state)
+
+    def files(self) -> dict[str, str]:
+        return self.public.files()
+
+    def snapshot(self) -> dict[str, Any]:
+        from .container import _tree_manifest
+        from .core._canonical import canonical_json_sha256
+
+        files = self.files()
+        return {
+            "files": files,
+            "workspace_hash": canonical_json_sha256(
+                {
+                    "fixed_inputs": _tree_manifest(self.public.package),
+                    "candidate": files,
+                    "execution_id": self.state["execution_id"],
+                }
+            ),
+        }
+
+    def begin_attempt(self, parent: Any, initial: bool, *, operation_id: str) -> dict[str, Any]:
+        attempt = {
+            "operation_id": operation_id,
+            "parent_hash": parent.bundle_hash,
+            "initial": initial,
+        }
+        previous = self.state.get("attempt")
+        if (
+            previous
+            and previous["operation_id"] == operation_id
+            and previous["status"] != "PREPARING"
+        ):
+            if any(previous[name] != value for name, value in attempt.items()):
+                raise ValueError("skillsbench_evolution_attempt_identity_differs")
+            return {
+                "state": {
+                    "execution_id": self.state["execution_id"],
+                    "execution_count": 1,
+                    "operation_cursor": self.state["operation_cursor"],
+                }
+            }
+        self.state["attempt"] = {**attempt, "status": "PREPARING"}
+        self._save()
+        reset = self.runner._exec(
+            ["/bin/sh", "-c", "find /work/candidate -mindepth 1 -depth -delete"], public=True
+        )
+        if reset.returncode or reset.failure:
+            raise RuntimeError("skillsbench_evolution_candidate_reset_failed")
+        for relative, content in parent.files.items():
+            path = self.public.target / _safe_path(relative)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content)
+            path.chmod(0o666)
+            for directory in path.parents:
+                if directory == self.public.work:
+                    break
+                directory.chmod(0o777)
+        self.state["attempt"] = {**attempt, "status": "READY"}
+        self._save()
+        return {
+            "state": {
+                "execution_id": self.state["execution_id"],
+                "execution_count": 1,
+                "operation_cursor": self.state["operation_cursor"],
+            }
+        }
+
+    def terminal(self, command: str) -> Any:
+        if self.state.get("attempt", {}).get("status") != "READY":
+            raise PermissionError("skillsbench_evolution_attempt_not_open")
+        result = self.runner.terminal(self.episode, command)
+        self.state["operation_cursor"] += 1
+        self.state["events"].append(
+            {
+                "kind": "tool",
+                "name": "terminal",
+                "exit_code": result.exit_code,
+                "failure": result.failure,
+                "operation_cursor": self.state["operation_cursor"],
+            }
+        )
+        self._save()
+        return result
+
+    def execute_tool(self, name: str, args: Mapping[str, Any], operation_id: str) -> Any:
+        raise ValueError("skillsbench_evolution_has_no_additional_tools")
+
+    def record_tool_result(self, operation_id: str, result: Any) -> str:
+        from .core._canonical import canonical_json_sha256, thaw_json
+
+        path = (
+            self.public.work
+            / "observations"
+            / "tools"
+            / (canonical_json_sha256(operation_id) + ".json")
+        )
+        if any(parent.is_symlink() for parent in (path, *path.parents)):
+            raise ValueError("unsafe_evolution_tool_result_path")
+        value = thaw_json(result)
+        if path.exists():
+            if json.loads(path.read_text()) != value:
+                raise ValueError("evolution_tool_result_changed")
+        else:
+            atomic_json(path, value)
+            path.chmod(0o444)
+            for parent in path.parents:
+                if parent == self.public.work:
+                    break
+                parent.chmod(0o755)
+        return "/work/observations/tools/" + path.name
+
+    def submit(self, parent_bundle: Any, *, initial: bool = False, operation_id: str) -> Any:
+        from .artifacts import EvolutionSubmission, SkillBundle
+        from .core._canonical import thaw_json
+
+        previous = self.state.get("submission")
+        if previous and previous["operation_id"] == operation_id:
+            if (
+                previous["parent_hash"] != parent_bundle.bundle_hash
+                or previous["initial"] != initial
+            ):
+                raise ValueError("skillsbench_evolution_submission_identity_differs")
+            submission = EvolutionSubmission.from_dict(previous["value"])
+            self.runner._public_artifacts(thaw_json(submission.public_trace))
+            return submission
+        attempt = self.state.get("attempt", {})
+        if (
+            attempt.get("status") != "READY"
+            or attempt.get("parent_hash") != parent_bundle.bundle_hash
+            or attempt.get("initial") != initial
+        ):
+            raise ValueError("skillsbench_evolution_submission_phase_differs")
+        files = self.files()
+        if initial and files != dict(parent_bundle.files):
+            raise ValueError("initial_execution_changed_sealed_skill")
+        bundle = (
+            parent_bundle if initial else SkillBundle(files, parent_hash=parent_bundle.bundle_hash)
+        )
+        with self.runner.snapshot_workspace() as mounts:
+            trace = {
+                "task_id": self.adapter.task_id,
+                "events": list(self.state["events"]),
+                "termination_reason": "generator_submitted",
+                "executor": {"framework": "generator-direct"},
+                **self.adapter._seal_public_workspace(
+                    mounts, excluded_roots=_EVOLUTION_PRIVATE_ROOTS
+                ),
+            }
+        if self.files() != files:
+            raise ValueError("candidate_changed_during_submission")
+        submission = EvolutionSubmission(
+            bundle, trace, self.state["execution_id"], self.state["operation_cursor"], initial
+        )
+        self.state["submission"] = {
+            "operation_id": operation_id,
+            "parent_hash": parent_bundle.bundle_hash,
+            "initial": initial,
+            "value": submission.to_dict(),
+        }
+        self.state["attempt"]["status"] = "SUBMITTED"
+        self._save()
+        return submission
+
+
+def skillsbench_preflight(
+    spec: Any,
+    *,
+    demo: bool,
+    task_ids: Any,
+    runtime: str | None = None,
+) -> dict[str, Any]:
     from .skillsbench_runtime import SkillsBenchRunner
 
     checks = []
+    if spec.values["runtime"].get("executor") == "author-codex":
+        try:
+            if runtime not in {None, "docker"} or demo:
+                raise ValueError("author_codex_requires_docker")
+            from .codex_runtime import codex_identity
+
+            identity = codex_identity(spec.values["runtime"]["codex"])
+            checks.append({"name": "author_codex", "ok": True, "detail": identity})
+        except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
+            checks.append({"name": "author_codex", "ok": False, "detail": str(exc)})
     try:
         source = SkillsBenchSource(spec.root)
         source.validate()
@@ -1131,7 +1737,20 @@ def skillsbench_preflight(spec: Any, *, demo: bool, task_ids: Any) -> dict[str, 
         )
     for task in task_ids or (("3d-scan-calc",) if demo else source.manifest["tasks"]):
         try:
-            result = SkillsBenchRunner(spec.root, task, demo=demo).preflight(validate_source=False)
+            result = SkillsBenchRunner(
+                spec.root,
+                task,
+                demo=demo,
+                runtime=runtime,
+                runtime_lock_path=spec.root / spec.values["source"]["runtime_lock"],
+            ).preflight(
+                validate_source=False,
+                **(
+                    {"author_codex": spec.values["runtime"]["codex"]}
+                    if spec.values["runtime"].get("executor") == "author-codex"
+                    else {}
+                ),
+            )
         except (OSError, ValueError, RuntimeError) as exc:
             result = {"ready": False, "error": str(exc)}
         checks.append(

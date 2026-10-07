@@ -1,28 +1,20 @@
 # Retrieval and Skill Evolution
 
-当前支持 τ-Knowledge 与 CoEvo/SkillsBench 两个适配实验，共用一套代码。
-源码、配置、提示、测试和运行资料均位于 [skill-evolution](experiments/tau-knowledge/skill-evolution/README.md)。
+τ-Knowledge 与 CoEvo/SkillsBench 共用一套 pipeline、两个任务适配器。源码、配置、提示与测试集中在 [skill-evolution](experiments/tau-knowledge/skill-evolution/README.md)。
 
-每题独立进行：多轮检索 → 冻结 B* → 一次生成 S0 → Skill/公开测试交替演化 → 每个实际版本独立评估。
-创建阶段禁止执行、自测和重新生成；演化最多 15 次修订、5 次 fresh oracle，只回传 pass/fail。
-所有生成与执行模型为 Bedrock GPT-5.5，区域 us-east-1。
+每题：多轮检索 → 冻结 B* → 一次创建 S0 → **Generator 直接执行、修改并提交** → 独立公开验证 → fresh oracle → 各内容版本独立评估。创建禁止自测和重发；M15/K5、Generator全链120轮。当前两个方法均为v4，默认Bedrock GPT-5.4／us-east-1，不设置学习模型输出配额或费用额度。
 
-SkillsBench共享检索仅包含85题的背景资料；当前题的任务说明与environment作为提供的输入，原始文件只在当前题的隔离环境中使用。
+SkillsBench 的学习环境持续保留服务与依赖，正式评分使用作者 CodexSkillOnly 的 fresh 环境；τ学习直接使用银行工具，正式评分保留官方tau2执行器。Verifier只检查提交的公开快照。环境未通过预检则停止，不降级宿主执行。
 
 ```bash
 make setup
 make check
-.venv/bin/r2sp preflight --experiment tau --env-file key.env
-.venv/bin/r2sp preflight --experiment skillsbench --env-file key.env
 ```
 
-`make check` 是离线验收。正式矩阵要求 Docker 权限、真实镜像 digest 和每题环境通过 preflight；不会降级为宿主执行。
-Bubblewrap smoke 是单题演示，不能作为正式矩阵结果。当前两份交接目录：
+运行前按对应交接准备数据、embedding、Docker及本地凭据：
 
-- [τ 全97题 × 三条件](experiments/tau-knowledge/skill-evolution/runs/tau-full-97-20261004-001/HANDOFF.md)
-- [SkillsBench 全85题共享资料池](experiments/tau-knowledge/skill-evolution/runs/skillsbench-pooled-85-20261004-001/HANDOFF.md)
+- [研究问题、威胁模型、方法与实验参数](experiments/tau-knowledge/skill-evolution/PROTOCOL.md)
+- [τ：97题 × 三条件交接](experiments/tau-knowledge/skill-evolution/runs/tau/HANDOFF.md)
+- [SkillsBench：GPT-5.6 Terra / Opus 4.8 两套85题交接](experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md)
 
-[实验参数与边界](experiments/tau-knowledge/skill-evolution/PROTOCOL.md)、[提示来源](experiments/tau-knowledge/skill-evolution/meta/coevo-authoring/SOURCE.md)。
-历史 runs、原始资料及用户 analysis 保留，旧 checkpoint 不进入新协议。
-
-2026-10-05 更新：两套矩阵已用 Bedrock GPT-5.6 Terra 跑完，结果与运行条件见 [EXPERIMENT_PLAN](EXPERIMENT_PLAN.md) 末节。
+[历史实验索引](experiments/tau-knowledge/skill-evolution/archive/index.json)收纳旧结果、配置与证据，旧checkpoint不续接v4；[历史分析](experiments/tau-knowledge/skill-evolution/archive/HISTORY.md)不代表当前方法成绩。凭据、私有评分及原始模型日志不进入公开交接。

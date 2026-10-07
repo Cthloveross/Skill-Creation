@@ -3,12 +3,51 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 from tau_skill_evolution import bank
 from tau_skill_evolution.artifacts import SkillBundle
 from tau_skill_evolution.constants import UPSTREAM_ROOT
+from tau_skill_evolution.journal import UnknownOperation
+from tau_skill_evolution.model import CredentialError, ModelClientError
+
+
+@pytest.mark.parametrize(
+    "kind,expected",
+    [
+        ("CredentialError:credential_unavailable", CredentialError),
+        ("CredentialError:credential_expired", CredentialError),
+        ("CredentialError:other_error", bank.BankWorkerError),
+        ("ModelClientError:credential_expired", bank.BankWorkerError),
+        ("UnknownOperation", UnknownOperation),
+        ("ModelClientError:acquisition_received_invalid", ModelClientError),
+        ("ModelClientError:acquisition_recovery_failed", ModelClientError),
+    ],
+)
+def test_worker_credential_protocol_preserves_only_known_unsent_errors(kind, expected):
+    response = {"protocol": bank.PROTOCOL, "ok": False, "error_kind": kind}
+    program = "import sys; sys.stdin.readline(); print(" + repr(json.dumps(response)) + ")"
+    channel = bank._Channel.__new__(bank._Channel)
+    channel.process = subprocess.Popen(
+        [sys.executable, "-c", program],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+    )
+    channel.timeout = 5
+    channel.buffer = bytearray()
+    channel.stderr_log = None
+    try:
+        with pytest.raises(expected) as caught:
+            channel.request({"operation": "acquire"})
+        if expected is CredentialError:
+            assert caught.value.code == kind.split(":", 1)[1]
+        elif expected is bank.BankWorkerError:
+            assert caught.value.response_received
+    finally:
+        channel.close()
 
 
 def test_acquisition_rejects_all_nonallowlisted_actions(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -192,6 +231,272 @@ def _pinned(program: str) -> dict:
     return json.loads(result.stdout)
 
 
+ACQUISITION_RUNTIME = r"""
+import json, tempfile
+from pathlib import Path
+from tau_skill_evolution import official_runtime as r, worker as w
+from tau_skill_evolution.core._canonical import canonical_json_sha256
+from tau_skill_evolution.journal import Journal, UnknownOperation
+from tau_skill_evolution.model import CredentialError, GenerationConfig
+from tau_skill_evolution.runtime_controls import RuntimeControls, RuntimeGenerationSettings
+
+root = Path(tempfile.mkdtemp())
+checkpoint = root / "private" / "session.json"
+calls, responses = [], []
+expired, transport_failed, expire_after = False, False, None
+initializations = 0
+original_initialize = r.Orchestrator.initialize
+def initialize(self):
+    global initializations
+    initializations += 1
+    return original_initialize(self)
+r.Orchestrator.initialize = initialize
+def token():
+    if expired:
+        raise CredentialError("credential_expired", "offline unsent")
+    return "offline-fixture-token"
+class Response:
+    status = 200
+    def __init__(self, value): self.value = value
+    def __enter__(self): return self
+    def __exit__(self, *args): pass
+    def read(self): return json.dumps(self.value).encode()
+def opener(request, *, timeout):
+    global expired
+    calls.append(json.loads(request.data))
+    if transport_failed:
+        raise OSError("offline lost response")
+    result = Response(responses[len(calls)-1])
+    if len(calls) == expire_after: expired = True
+    return result
+def answer(text=None, tools=False):
+    output = [{"type":"reasoning","summary":[],"encrypted_content":"PRIVATE_OPAQUE"}]
+    output += ([{"type":"function_call","id":"f1","call_id":"c1",
+                 "name":"apply_for_credit_card","arguments":"{}"}] if tools else
+               [{"type":"message","role":"assistant","content":[
+                 {"type":"output_text","text":text}]}])
+    return {"id":"offline-response", "status":"completed", "output":output,
+            "usage":{"input_tokens":10,"output_tokens":8,
+                     "output_tokens_details":{"reasoning_tokens":2}}}
+class Counter:
+    basis = "offline"
+    def count(self, *args, **kwargs): return 1
+controls = RuntimeControls(
+    RuntimeGenerationSettings(reasoning_effort="medium", max_output_tokens=64),
+    RuntimeGenerationSettings(reasoning_effort="none", max_output_tokens=64), 10000, 256)
+def factory(task_id, toolkit, config, policy, sidecar=None, *, episode_id=None):
+    client = w.RecordedBankClient(
+        "https://bedrock-mantle.us-east-1.api.aws/openai/v1", api_key=token,
+        config=GenerationConfig(model="openai.gpt-5.5", max_output_tokens=64),
+        journal=Journal(root / "models" / episode_id), opener=opener)
+    return r.build_runtime(task_id, toolkit, policy=policy, tasks_root=r.TASKS_ROOT,
+        allowed_task_ids=["task_001"], runtime_controls=controls,
+        model="openai.gpt-5.5", model_client=NeverCalledClient(),
+        user_model_client=client, chat_token_counter=Counter(),
+        user_chat_token_counter=Counter(), seed=0)
+w._runtime = factory
+def session(identity=None):
+    return w.AcquisitionSession("task_001", {
+        "banking_root":str(r.BANKING_ROOT), "model_journal_dir":str(root / "models"),
+        "seed":0}, checkpoint=checkpoint, identity=identity or {"trial":"offline"})
+"""
+
+
+def test_pinned_acquisition_restores_exact_official_state_and_internal_unsent_turn():
+    result = _pinned(
+        ACQUISITION_RUNTIME
+        + r"""
+responses[:] = [answer("Public opening"), answer(tools=True), answer("Public clarification"),
+                answer("Further clarification")]
+s = session()
+initialized_db = s.bundle.toolkit.db.model_dump(mode="json")
+opening = s.opening()
+assert len(calls) == 1
+expire_after = 2
+try:
+    s.reply("Which account?", operation_id="acquisition/clarify/0")
+    raise AssertionError("expected NOT_SENT")
+except CredentialError:
+    pass
+sealed = json.loads(checkpoint.read_text())
+assert sealed["state"]["pending"]["inner_turn"] == 1
+assert sealed["state"]["runtime"]["next_model"] == 2
+assert sealed["state"]["runtime"]["user_state"]["messages"][-1]["error"] is True
+assert "PRIVATE_OPAQUE" in checkpoint.read_text() and "PRIVATE_OPAQUE" not in json.dumps(opening)
+s.close()
+expired = False
+s = session()
+assert initializations == 1 and s.opening() == opening and len(calls) == 2
+assert s.reply("Which account?", operation_id="acquisition/clarify/0") == "Public clarification"
+assert len(calls) == 3 and json.dumps(calls[-1]["input"]).count("Which account?") == 1
+assert "Tool actions are unavailable" in json.dumps(calls[-1]["input"])
+before = len(calls)
+assert s.reply("Which account?", operation_id="acquisition/clarify/0") == "Public clarification"
+assert len(calls) == before
+clock = s.read("get_current_time", {}, operation_id="acquisition/read_only/0")
+assert "2025-11-14 03:40:00 EST" in clock and s.bundle.environment.task_tool_calls == 1
+s.close()
+s = session()
+assert s.read("get_current_time", {}, operation_id="acquisition/read_only/0") == clock
+assert s.bundle.environment.task_tool_calls == 1
+assert s.reply("Next question", operation_id="acquisition/clarify/1") == "Further clarification"
+assert "Public clarification" in json.dumps(calls[-1]["input"])
+assert s.bundle.toolkit.db.model_dump(mode="json") == initialized_db
+assert checkpoint.stat().st_mode & 0o777 == 0o600
+assert checkpoint.parent.stat().st_mode & 0o777 == 0o700
+s.close()
+print(json.dumps({"posts":len(calls),"initializations":initializations,"restored":True}))
+"""
+    )
+    assert result == {"posts": 4, "initializations": 1, "restored": True}
+
+
+@pytest.mark.parametrize("phase", ["raw", "post"])
+def test_pinned_acquisition_received_turn_survives_crash_without_another_post(phase):
+    result = _pinned(
+        ACQUISITION_RUNTIME
+        + f"phase = {phase!r}\n"
+        + r"""
+responses[:] = [answer("Stable public opening")]
+s = session()
+finish = s._finish
+def crash(*args, **kwargs):
+    if phase == "post": finish(*args, **kwargs)
+    raise InterruptedError("offline crash")
+s._finish = crash
+try:
+    s.opening()
+    raise AssertionError("expected crash")
+except InterruptedError:
+    pass
+assert len(calls) == 1
+s.close()
+s = session()
+assert s.opening()["public_inputs"] == {"opening":"Stable public opening"}
+assert len(calls) == 1 and initializations == 1
+s.close()
+print(json.dumps({"posts":len(calls),"restored":True}))
+"""
+    )
+    assert result == {"posts": 1, "restored": True}
+
+
+def test_pinned_valid_received_reply_survives_local_tokenizer_failure_during_restore():
+    result = _pinned(
+        ACQUISITION_RUNTIME
+        + r"""
+responses[:] = [answer("Stable public opening")]
+s = session()
+def crash(*args, **kwargs): raise InterruptedError("offline crash after receipt")
+s._finish = crash
+try: s.opening()
+except InterruptedError: pass
+s.close()
+s = session()
+original_count = Counter.count
+def outage(*args, **kwargs): raise OSError("temporary tokenizer failure")
+Counter.count = outage
+try:
+    s.opening()
+    raise AssertionError("tokenizer failure ignored")
+except w.ModelClientError as exc:
+    assert exc.code == "acquisition_recovery_failed"
+assert "terminal_error" not in json.loads(checkpoint.read_text())["state"]
+s.close()
+Counter.count = original_count
+s = session()
+assert s.opening()["public_inputs"] == {"opening":"Stable public opening"}
+assert len(calls) == 1 and initializations == 1
+s.close()
+print(json.dumps({"posts":len(calls),"restored":True}))
+"""
+    )
+    assert result == {"posts": 1, "restored": True}
+
+
+def test_pinned_acquisition_unknown_corrupt_wrong_identity_and_concurrent_resume_fail_closed():
+    result = _pinned(
+        ACQUISITION_RUNTIME
+        + r"""
+s = session()
+try:
+    session()
+    raise AssertionError("concurrent session accepted")
+except RuntimeError as exc:
+    assert str(exc) == "acquisition_session_busy"
+transport_failed = True
+try:
+    s.opening()
+    raise AssertionError("expected unknown")
+except UnknownOperation:
+    pass
+s.close()
+transport_failed = False
+s = session()
+try:
+    s.opening()
+    raise AssertionError("UNKNOWN request was repeated")
+except UnknownOperation:
+    pass
+assert len(calls) == 1
+s.close()
+try:
+    session({"trial":"different"})
+    raise AssertionError("wrong trial accepted")
+except ValueError:
+    pass
+envelope = json.loads(checkpoint.read_text())
+envelope["state"]["runtime"]["next_model"] = 100
+checkpoint.write_text(json.dumps(envelope))
+try:
+    session()
+    raise AssertionError("tampered checkpoint accepted")
+except ValueError:
+    pass
+print(json.dumps({"posts":len(calls),"blocked":True}))
+"""
+    )
+    assert result == {"posts": 1, "blocked": True}
+
+
+@pytest.mark.parametrize("stage", ["opening", "clarify"])
+@pytest.mark.parametrize("malformed", ["provider", "official_message"])
+def test_pinned_received_invalid_simulator_reply_is_terminal(stage, malformed):
+    result = _pinned(
+        ACQUISITION_RUNTIME
+        + f"stage, malformed = {stage!r}, {malformed!r}\n"
+        + r"""
+bad = answer(tools=True)
+if malformed == "provider":
+    bad["status"] = "failed"
+else:
+    bad["output"][-1]["arguments"] = "not-json"
+responses[:] = [bad] if stage == "opening" else [answer("Public opening"), bad]
+s = session()
+try:
+    if stage == "opening": s.opening()
+    else:
+        s.opening()
+        s.reply("Clarify", operation_id="acquisition/clarify/0")
+    raise AssertionError("invalid simulator response accepted")
+except w.ModelClientError as exc:
+    assert exc.code == "acquisition_received_invalid"
+posts = len(calls)
+assert (json.loads(checkpoint.read_text())["state"]["terminal_error"]
+        == "acquisition_received_invalid")
+s.close()
+try:
+    session()
+    raise AssertionError("terminal acquisition resumed")
+except w.ModelClientError as exc:
+    assert exc.code == "acquisition_received_invalid"
+assert len(calls) == posts and initializations == 1
+print(json.dumps({"posts":posts,"terminal":True}))
+"""
+    )
+    assert result == {"posts": 1 if stage == "opening" else 2, "terminal": True}
+
+
 def test_pinned_public_schemas_do_not_need_private_tasks_or_model_calls() -> None:
     python = UPSTREAM_ROOT / ".venv/bin/python"
     if not python.is_file():
@@ -235,6 +540,72 @@ print(json.dumps({'skill_loaded':True}))
     assert result == {"skill_loaded": True}
 
 
+def test_pinned_workspace_dispatch_uses_locked_bubblewrap_without_docker_or_host_fallback():
+    result = _pinned(r"""
+import json
+from pathlib import Path
+from tau_skill_evolution import worker as w
+from tau_skill_evolution.bubblewrap import BubblewrapRunner
+from tau_skill_evolution.constants import EXPERIMENT_ROOT
+
+def forbidden_docker(config):
+    raise AssertionError('workspace dispatch attempted Docker')
+w._docker = forbidden_docker
+lock = EXPERIMENT_ROOT / 'runtime/bubblewrap-lock.json'
+for backend in ('workspace', 'bubblewrap-demo'):
+    runner = w._sandbox({'sandbox': {'backend': backend, 'runtime_lock': str(lock)}})
+    assert isinstance(runner, BubblewrapRunner) and runner.runtime == backend
+    expected = lock.parent / json.loads(lock.read_text())['rootfs']
+    assert runner.runtime_lock.rootfs == expected.absolute()
+for settings in ({'backend': 'host'}, {'backend': 'docker'}, [], {'backend': 'unknown'}):
+    try:
+        w._sandbox({'sandbox': settings})
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('unrecognized sandbox accepted')
+try:
+    w._sandbox({'sandbox': {'backend': 'workspace', 'runtime_lock': '/missing/runtime-lock'}})
+except FileNotFoundError:
+    pass
+else:
+    raise AssertionError('missing workspace lock was ignored')
+print(json.dumps({'locked_workspace_dispatch': True, 'fallback': False}))
+""")
+    assert result == {"locked_workspace_dispatch": True, "fallback": False}
+
+
+def test_pinned_bank_client_seals_raw_response_before_normalization() -> None:
+    result = _pinned(r"""
+import json
+import tempfile
+from pathlib import Path
+from tau_skill_evolution.worker import RecordedBankClient
+from tau_skill_evolution.model import GenerationConfig
+from tau_skill_evolution.journal import Journal
+with tempfile.TemporaryDirectory() as temporary:
+    journal = Journal(Path(temporary) / 'private')
+    client = RecordedBankClient('https://bedrock-mantle.us-east-1.api.aws/openai/v1',
+        config=GenerationConfig(model='openai.gpt-5.5', transport='bedrock-responses'),
+        api_key='offline', journal=journal)
+    client._send = lambda prepared: (200, json.dumps({'status': 'completed',
+        'usage': {'input_tokens': 1, 'output_tokens': 1}, 'output': [{
+        'type': 'message', 'role': 'assistant',
+        'content': [{'type': 'output_text', 'text': 'public'}]
+    }]}).encode())
+    original = client._normalize
+    def normalize(status, body, **options):
+        assert journal.received('model-0')
+        assert not journal.completed('model-0')
+        return original(status, body, **options)
+    client._normalize = normalize
+    assert client.complete([{'role': 'user', 'content': 'offline'}])['content'] == 'public'
+    assert journal.completed('model-0')
+print(json.dumps({'raw_first': True}))
+""")
+    assert result == {"raw_first": True}
+
+
 def test_pinned_simulator_actions_never_dispatch_during_acquisition() -> None:
     result = _pinned(r"""
 import json
@@ -261,10 +632,13 @@ def factory(task_id, toolkit, config, policy, sidecar=None):
         user_chat_token_counter=Counter(), sidecar=sidecar,
     )
 w._runtime = factory
+user_calls = 0
 def user_response(self, message, state):
+    global user_calls
+    user_calls += 1
     state.messages.append(message)
     return r.UserMessage(
-        role="user", content="Public customer request",
+        role="user", content="Public customer request" if user_calls % 2 == 0 else None,
         tool_calls=[r.ToolCall(id="denied", name="apply_for_credit_card",
                               arguments={"private": "secret-user-tool"}, requestor="user")],
         raw_data={"private": "secret-model-state"},
@@ -277,6 +651,7 @@ session.bundle.environment.make_tool_call = lambda *a, **kw: (_ for _ in ()).thr
     AssertionError("simulator dispatch forbidden")
 )
 assert session.reply("Please clarify.") == "Public customer request"
+assert user_calls == 4
 assert before == session.bundle.toolkit.db.model_dump_json()
 try:
     session.read("log_verification", {})
@@ -553,6 +928,7 @@ assert response.usage["completion_tokens"] == 12
 assert set(response.raw_data) == {"_bedrock_output_items", "response_id"}
 history = r._serialize_messages([response])
 assert history[0]["_bedrock_output_items"] == items
+assert history[0]["usage"]["completion_tokens"] == 12
 history[0]["_bedrock_output_items"][0]["encrypted_content"] = "changed-copy"
 assert response.raw_data["_bedrock_output_items"] == items
 class IncompleteClient:
@@ -568,16 +944,23 @@ except r.OfficialRuntimeError as exc:
     assert str(exc) == "model response exceeded its output budget"
 
 state = UserState(system_messages=[], messages=[
-    r.AssistantMessage(role="assistant", content="Agent question", raw_data={
+    r.AssistantMessage(role="assistant", content="Agent question",
+                       usage={"output_tokens": 99}, raw_data={
         "_bedrock_output_items": [{"type": "reasoning", "encrypted_content": "agent-state"}],
     }),
-    r.UserMessage(role="user", content="Public clarification", raw_data={
+    r.UserMessage(role="user", content="Public clarification", usage={
+        "output_tokens": 12, "output_tokens_details": {"reasoning_tokens": 10},
+    }, raw_data={
         "_bedrock_output_items": [{"type": "reasoning", "encrypted_content": "user-state"}],
     }),
 ])
 flipped = r._serialize_messages(r._user_model_history(state))
 assert "_bedrock_output_items" not in flipped[0]
+assert "usage" not in flipped[0]
 assert flipped[1]["_bedrock_output_items"][0]["encrypted_content"] == "user-state"
+assert flipped[1]["usage"]["output_tokens_details"]["reasoning_tokens"] == 10
+flipped[1]["usage"]["output_tokens_details"]["reasoning_tokens"] = 11
+assert state.messages[1].usage["output_tokens_details"]["reasoning_tokens"] == 10
 trace = r.normalize_public_trace(state.messages).to_json()
 assert "agent-state" not in trace and "user-state" not in trace
 print(json.dumps({"preserved": True, "isolated": True}))
@@ -695,3 +1078,498 @@ bundle.close()
 print(json.dumps({"utility": evaluation.reward, "filtered": True}))
 """)
     assert result == {"utility": 1.0, "filtered": True}
+
+
+LEARNING_RUNTIME = r"""
+import json, tempfile
+from pathlib import Path
+from tau2.data_model.tasks import Task, UserScenario
+from tau_skill_evolution import official_runtime as r, worker as w
+from tau_skill_evolution.core._canonical import canonical_json_sha256
+from tau_skill_evolution.journal import UnknownOperation
+from tau_skill_evolution.runtime_controls import RuntimeControls, RuntimeGenerationSettings
+
+root = Path(tempfile.mkdtemp())
+checkpoint = root / "private" / "learning.json"
+responses, requests, builds = [], [], []
+controls = RuntimeControls(RuntimeGenerationSettings("medium", 64),
+                           RuntimeGenerationSettings("none", 64), 10000, 256)
+class Counter:
+    def count(self, *args, **kwargs): return 1
+class Client:
+    def __init__(self): self.request_number = 0
+    def complete(self, messages, **options):
+        self.request_number += 1
+        requests.append(messages)
+        return responses.pop(0)
+def answer(text=None, tools=False):
+    return {"role":"assistant", "content":text,
+        "tool_calls": ([{"id":"private-user-action", "type":"function", "function":{
+            "name":"fixture_user_write", "arguments":"{}"}}] if tools else []),
+        "usage":{"completion_tokens":3},
+        "_bedrock_output_items":[{"type":"reasoning", "encrypted_content":"PRIVATE_USER_STATE"}]}
+class UserTools(r.KnowledgeUserTools):
+    @r.is_tool(r.ToolType.WRITE)
+    def fixture_user_write(self) -> str:
+        "Write the offline fixture user's email."
+        self.db.users.data["fixture-user"]["email"] = "user-action@example.test"
+        return "PRIVATE_USER_RESULT"
+r.KnowledgeUserTools = UserTools
+r.load_fresh_official_db = lambda path=None: r.TransactionalDB.model_validate({
+    "users":{"data":{"fixture-user":{"user_id":"fixture-user", "email":"initial@example.test"}}}})
+r.load_official_task = lambda task_id, tasks_root: Task(id=task_id,
+    user_scenario=UserScenario(instructions="Public offline fixture request"),
+    user_tools=["fixture_user_write"])
+def factory(task_id, toolkit, config, policy, sidecar=None, *, episode_id=None,
+            external_driver=False):
+    assert external_driver is True
+    builds.append(episode_id)
+    return r.build_runtime(task_id, toolkit, policy=policy, tasks_root=Path("unused"),
+        allowed_task_ids=["offline-task"], runtime_controls=controls,
+        model="openai.gpt-5.5", model_client=None, user_model_client=Client(),
+        chat_token_counter=Counter(), user_chat_token_counter=Counter(),
+        sidecar=sidecar, seed=0, max_turns=120, max_task_tool_calls=800,
+        external_driver=True)
+w._runtime = factory
+config = {"banking_root":"unused", "model_journal_dir":str(root / "models"), "seed":0}
+def session(): return w.LearningSession("offline-task", config, checkpoint, {"run":"fixture"})
+"""
+
+
+def test_pinned_learning_driver_keeps_user_tools_and_requires_explicit_fresh_episode():
+    result = _pinned(
+        LEARNING_RUNTIME
+        + r"""
+responses[:] = [answer("Public opening"), answer(tools=True), answer("###STOP###"),
+               answer("Fresh public opening")]
+s = session()
+assert len(requests) == 0 and s.bundle is None
+schemas = s.opening()["tool_schemas"]
+names = {x["function"]["name"] for x in schemas}
+assert {"respond_to_user", "start_learning_execution", "change_user_email"} <= names
+assert not {"read_skill_file", "run_skill_script", "query_database",
+            "run_env_function_call"} & names
+opening = s.perform("initial", "start_learning_execution", {})
+first_id = opening["state"]["execution_id"]
+assert "Public opening" in json.dumps(opening)
+assert "PRIVATE_USER_STATE" not in json.dumps(opening)
+assert isinstance(s.bundle.agent, r.ExternalBankAgent)
+written = s.perform("write", "change_user_email", {
+    "user_id":"fixture-user", "new_email":"agent-action@example.test"})
+assert written["tool_result"]["error"] is False
+assert s.bundle.toolkit.db.users.data["fixture-user"]["email"] == "agent-action@example.test"
+assert len(requests) == 1
+stopped = s.perform("reply", "respond_to_user", {"text":"Please perform your action."})
+assert stopped["state"]["closed"] and stopped["state"]["termination_reason"] == "user_stop"
+assert s.bundle.toolkit.db.users.data["fixture-user"]["email"] == "user-action@example.test"
+private = json.loads(checkpoint.read_text())
+assert "private-user-action" in checkpoint.read_text()
+assert "PRIVATE_USER_RESULT" in checkpoint.read_text()
+assert "PRIVATE_USER_STATE" in checkpoint.read_text()
+for secret in ("private-user-action", "PRIVATE_USER_RESULT", "PRIVATE_USER_STATE",
+               "fixture_user_write"):
+    assert secret not in json.dumps(stopped)
+before = len(requests)
+assert s.perform("reply", "respond_to_user", {"text":"Please perform your action."}) == stopped
+assert len(requests) == before
+closed = s.perform("closed-write", "change_user_email", {
+    "user_id":"fixture-user", "new_email":"must-not-write@example.test"})
+assert closed["error"] == "learning_execution_closed"
+assert s.bundle.toolkit.db.users.data["fixture-user"]["email"] == "user-action@example.test"
+steps = s.bundle.orchestrator.step_count
+tool_count = s.bundle.environment.task_tool_calls
+s.close()
+s = session()
+assert s.bundle.orchestrator.done
+assert s.perform("reply", "respond_to_user", {"text":"Please perform your action."}) == stopped
+assert len(requests) == before
+restarted = s.perform("restart", "start_learning_execution", {})
+assert restarted["state"]["execution_id"] != first_id
+assert restarted["state"]["execution_count"] == 2
+assert s.bundle.toolkit.db.users.data["fixture-user"]["email"] == "initial@example.test"
+assert s.bundle.orchestrator.step_count < steps
+assert s.bundle.environment.task_tool_calls == 0
+assert restarted["state"]["learning_tool_calls"] == tool_count
+active = s.perform("active-restart", "start_learning_execution", {})
+assert active["error"] == "learning_execution_active"
+snapshot = s.perform("submit", "__snapshot__", {"bundle_hash":"a" * 64})
+assert "Fresh public opening" in json.dumps(snapshot)
+assert "Public opening" not in json.dumps(snapshot)
+assert "reward" not in snapshot and "asr" not in snapshot
+assert len(requests) == 4 and len(builds) == 3
+s.close()
+print(json.dumps({"posts":len(requests), "restarted":True, "private_user_tools":True}))
+"""
+    )
+    assert result == {"posts": 4, "restarted": True, "private_user_tools": True}
+
+
+@pytest.mark.parametrize("failure", ["write_before_checkpoint", "pending_simulator"])
+def test_pinned_learning_unknown_dispatch_never_repeats(failure):
+    result = _pinned(
+        LEARNING_RUNTIME
+        + f"failure = {failure!r}\n"
+        + r"""
+responses[:] = [answer("Public opening")]
+s = session()
+s.perform("initial", "start_learning_execution", {})
+if failure == "write_before_checkpoint":
+    original = s._save
+    def fail_save():
+        if s.bundle.toolkit.db.users.data["fixture-user"]["email"] == "written@example.test":
+            raise OSError("fixture disk failure")
+        original()
+    s._save = fail_save
+    try:
+        s.perform("write", "change_user_email", {
+            "user_id":"fixture-user", "new_email":"written@example.test"})
+        raise AssertionError("write checkpoint should fail")
+    except OSError:
+        pass
+    assert s.bundle.toolkit.db.users.data["fixture-user"]["email"] == "written@example.test"
+else:
+    s.saved["pending"] = {"operation_id":"reply", "request_hash":"a" * 64}
+    s._save()
+s.close()
+before = len(requests)
+try:
+    session()
+    raise AssertionError("unfinished write/model call was replayed")
+except UnknownOperation:
+    pass
+assert len(requests) == before
+print(json.dumps({"unknown":True,"posts":len(requests)}))
+"""
+    )
+    assert result == {"unknown": True, "posts": 1}
+
+
+def test_bank_evolution_session_binds_s0_and_keeps_one_workspace(monkeypatch, tmp_path):
+    from contextlib import contextmanager
+
+    from tau_skill_evolution.container import ProgramResult, PublicWorkspaceSession
+    from tau_skill_evolution.journal import Journal
+
+    initial = SkillBundle({"SKILL.md": "Initial skill", "scripts/main.py": "print('{}')"})
+    opened, actions = [], []
+    root = tmp_path / "workspace"
+
+    class Runner:
+        @contextmanager
+        def authoring_session(self, previous, inputs, base, *, workspace):
+            assert previous is initial and workspace == root
+            opened.append(workspace)
+            package, work = root / "bundle", root / "work"
+            package.mkdir(parents=True)
+            work.mkdir()
+            (package / "base.json").write_text(json.dumps(base))
+            (package / "public_inputs.json").write_text(json.dumps(inputs))
+            target = work / "candidate"
+            for relative, content in initial.files.items():
+                path = target / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content)
+            (work / "scratch").mkdir()
+
+            def terminal(_package, _work, command):
+                (target / "SKILL.md").write_text(command)
+                return ProgramResult(0, {"edited": True}, "", None)
+
+            yield PublicWorkspaceSession(package, work, target, terminal, lambda *_: None)
+
+    class Channel:
+        def __init__(self, service):
+            self.state = {
+                "execution_id": None,
+                "execution_count": 0,
+                "operation_cursor": 0,
+                "closed": True,
+            }
+
+        def request(self, request):
+            actions.append(request)
+            if request["operation"] == "learning":
+                assert "bank-private" in request["checkpoint"]
+                assert not request["checkpoint"].startswith(str(root))
+                return {"tool_schemas": [], "state": dict(self.state)}
+            if request["operation"] == "close":
+                return None
+            self.state = {
+                "execution_id": "fixture-learning",
+                "execution_count": 1,
+                "operation_cursor": self.state["operation_cursor"] + 1,
+                "closed": False,
+            }
+            return {
+                "public_trace": {"events": [], "public": "fixture observation"},
+                "state": dict(self.state),
+            }
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(bank, "_authoring_runner", lambda _: Runner())
+    monkeypatch.setattr(bank, "_Channel", Channel)
+    service = bank.Bank(Path("unused"), UPSTREAM_ROOT, "offline", {})
+    with service.evolution_session(
+        initial,
+        {"opening": "Public request"},
+        {"docs": []},
+        journal=Journal(tmp_path / "journal"),
+        workspace=root,
+    ) as s:
+        assert (
+            s.begin_attempt(initial, True, operation_id="initial/open")["state"]["execution_count"]
+            == 1
+        )
+        snapshot = s.snapshot()
+        path = s.record_tool_result("read/1", {"content": "Public bank observation"})
+        assert path.startswith("/work/observations/tools/")
+        assert s.record_tool_result("read/1", {"content": "Public bank observation"}) == path
+        assert s.snapshot()["workspace_hash"] == snapshot["workspace_hash"]
+        (root / "work/scratch/temporary.txt").write_text("Persistent scratch")
+        assert s.snapshot()["workspace_hash"] == snapshot["workspace_hash"]
+        receipt = s.submit(initial, initial=True, operation_id="initial/submit")
+        assert receipt.bundle is initial and receipt.initial
+        assert receipt.public_trace["bundle_hash"] == initial.bundle_hash
+        s.terminal("Revised skill")
+        assert s.snapshot()["workspace_hash"] != snapshot["workspace_hash"]
+        before = len(actions)
+        with pytest.raises(ValueError, match="changed S0"):
+            s.submit(initial, initial=True, operation_id="must-not-submit")
+        assert len(actions) == before
+        # Re-entering the same attempt retains journaled edits. A new attempt
+        # starts from the last sealed parent and preserves scratch/observations.
+        s.begin_attempt(initial, True, operation_id="initial/open")
+        assert s.files()["SKILL.md"] == "Revised skill"
+        s.begin_attempt(initial, False, operation_id="revision-1")
+        assert s.files()["SKILL.md"] == "Initial skill"
+        assert (root / "work/scratch/temporary.txt").read_text() == "Persistent scratch"
+        s.terminal("Revised skill")
+        revised = s.submit(initial, operation_id="revision/submit")
+        assert revised.bundle.parent_hash == initial.bundle_hash
+        assert revised.bundle.files["SKILL.md"] == "Revised skill"
+        fixed_before = s.snapshot()["workspace_hash"]
+        (root / "bundle/base.json").write_text("tampered")
+        assert s.snapshot()["workspace_hash"] != fixed_before
+    assert opened == [root]
+    assert actions[-1]["operation"] == "close"
+    with pytest.raises(bank.BankWorkerError, match="closed"):
+        s.execute_tool("get_current_time", {}, "after-close")
+
+
+def test_pinned_learning_canary_restoration_does_not_rearm_and_restart_clears_it():
+    result = _pinned(
+        LEARNING_RUNTIME
+        + r"""
+responses[:] = [answer("Public opening"), answer("###STOP###"), answer("Fresh opening")]
+s = session()
+s.perform("initial", "start_learning_execution", {})
+command = r.PAYLOAD_COMMANDS["mock-api-call"]
+first = s.perform("canary", "sandbox_run_command", {"command":command})
+assert first["tool_result"]["error"] is False
+assert len(s.bundle.sidecar.events) == 1
+assert "learning_canary_events" not in json.dumps(first) and "asr" not in json.dumps(first)
+s.close()
+s = session()
+assert len(s.bundle.sidecar.events) == 1
+assert s.perform("canary", "sandbox_run_command", {"command":command}) == first
+again = s.perform("canary-again", "sandbox_run_command", {"command":command})
+assert again["tool_result"]["error"] is True
+assert len(s.bundle.sidecar.events) == 1
+s.perform("finish", "respond_to_user", {"text":"Finished."})
+s.perform("restart", "start_learning_execution", {})
+assert not s.bundle.sidecar.events
+assert len(s.saved["completed_executions"][0]["learning_canary_events"]) == 1
+s.close()
+print(json.dumps({"restored":True,"fresh_canary":True}))
+"""
+    )
+    assert result == {"restored": True, "fresh_canary": True}
+
+
+def test_pinned_learning_resume_keeps_unlocked_tool_state():
+    result = _pinned(
+        LEARNING_RUNTIME
+        + r"""
+responses[:] = [answer("Public opening")]
+s = session()
+s.perform("initial", "start_learning_execution", {})
+unlocked = s.perform("unlock", "unlock_discoverable_agent_tool", {
+    "agent_tool_name":"example_agent_tool_0000"})
+assert "Tool unlocked" in unlocked["tool_result"]["content"]
+assert "example_agent_tool_0000" in s.bundle.toolkit.get_agent_discoverable_tools_state()
+s.close()
+s = session()
+assert "example_agent_tool_0000" in s.bundle.toolkit.get_agent_discoverable_tools_state()
+called = s.perform("call", "call_discoverable_agent_tool", {
+    "agent_tool_name":"example_agent_tool_0000", "arguments":"{}"})
+assert "Example tool executed successfully" in called["tool_result"]["content"]
+assert len(requests) == 1
+s.close()
+print(json.dumps({"unlocked_state_restored":True}))
+"""
+    )
+    assert result == {"unlocked_state_restored": True}
+
+
+def test_pinned_learning_invalid_control_action_is_known_and_does_not_dispatch():
+    result = _pinned(
+        LEARNING_RUNTIME
+        + r"""
+responses[:] = [answer("Public opening")]
+s = session()
+invalid = s.perform("invalid-start", "start_learning_execution", {"unexpected":True})
+assert invalid["failure"] == "forbidden_or_invalid_learning_tool"
+assert not requests and s.bundle is None and s.saved["pending"] is None
+s.perform("initial", "start_learning_execution", {})
+for index, (name,args) in enumerate([
+    ("respond_to_user", {"invalid":True}), ("respond_to_user", {"text":""}),
+    ("query_database", {}), ("run_skill_script", {})]):
+    result = s.perform(f"invalid-{index}", name, args)
+    assert result["failure"] == "forbidden_or_invalid_learning_tool"
+    assert len(requests) == 1 and s.saved["pending"] is None
+before = s.bundle.environment.task_tool_calls
+missing = s.perform("bad-tool-args", "change_user_email", {"missing":True})
+assert missing["tool_result"]["error"] is True
+assert s.bundle.environment.task_tool_calls == before + 1
+assert s.bundle.toolkit.db.users.data["fixture-user"]["email"] == "initial@example.test"
+s.close()
+s = session()
+assert s.perform("invalid-0", "respond_to_user", {"invalid":True})["failure"]
+assert len(requests) == 1
+s.close()
+print(json.dumps({"known_invalid":True,"posts":len(requests)}))
+"""
+    )
+    assert result == {"known_invalid": True, "posts": 1}
+
+
+@pytest.mark.parametrize("sandbox", ["offline", "docker"])
+def test_real_pinned_worker_jsonl_generator_driver_and_bound_submission(
+    monkeypatch, tmp_path, sandbox
+):
+    from types import SimpleNamespace
+
+    from tau_skill_evolution.constants import EXPERIMENT_ROOT
+    from tau_skill_evolution.container import DockerRunner, ImageLock, _public_workspace
+    from tau_skill_evolution.journal import Journal
+
+    python = UPSTREAM_ROOT / ".venv/bin/python"
+    if not python.is_file():
+        pytest.skip("pinned official Python unavailable")
+    if sandbox == "docker":
+        if os.environ.get("TAU_RUN_DOCKER_INTEGRATION") != "1":
+            pytest.skip("real Docker bank integration requires explicit opt-in")
+        runner = DockerRunner(ImageLock.from_file(EXPERIMENT_ROOT / "runtime/image-lock.json"))
+        assert runner.preflight()["ready"]
+    else:
+
+        def deny_terminal(*_args, **_kwargs):
+            raise AssertionError("offline fixture cannot execute candidate code on the host")
+
+        runner = SimpleNamespace(_terminal=deny_terminal, _run=deny_terminal)
+        runner.authoring_session = lambda previous, inputs, base, **options: _public_workspace(
+            runner, inputs, base, previous_bundle=previous, **options
+        )
+    monkeypatch.setattr(bank, "_authoring_runner", lambda _config: runner)
+    program = LEARNING_RUNTIME + '\nresponses[:] = [answer("Opening"), answer(tools=True), '
+    program += 'answer("###STOP###"), answer("Fresh opening")]\nraise SystemExit(w.main())\n'
+
+    class Channel(bank._Channel):
+        def __init__(self, _bank):
+            env = os.environ.copy()
+            env["R2SP_TAU_UPSTREAM_ROOT"] = str(UPSTREAM_ROOT.resolve())
+            env["PYTHONPATH"] = str(EXPERIMENT_ROOT / "src")
+            self.stderr_log = (tmp_path / "private-worker.log").open("ab")
+            self.process = subprocess.Popen(
+                [str(python), "-c", program],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=self.stderr_log,
+                env=env,
+                cwd=UPSTREAM_ROOT,
+            )
+            self.timeout, self.buffer = 30, bytearray()
+
+    monkeypatch.setattr(bank, "_Channel", Channel)
+    initial = SkillBundle(
+        {
+            "SKILL.md": "Offline fixture Skill",
+            "references/note.txt": "Public packaged reference",
+            "scripts/check.py": (
+                "import json\nfrom pathlib import Path\n"
+                "p=Path('/work/scratch/counter')\n"
+                "n=int(p.read_text())+1 if p.exists() else 1\np.write_text(str(n))\n"
+                "print(json.dumps({'counter':n,'reference':"
+                "Path('/work/candidate/references/note.txt').read_text()}))\n"
+            ),
+        }
+    )
+    service = bank.Bank(
+        python,
+        UPSTREAM_ROOT,
+        "offline-task",
+        {
+            "banking_root": "unused",
+            "model_journal_dir": str(tmp_path / "models"),
+            "seed": 0,
+        },
+    )
+    journal = Journal(tmp_path / "journal")
+    workspace = tmp_path / "learning"
+    with service.evolution_session(
+        initial,
+        {"opening": "Frozen public request"},
+        {"docs": []},
+        journal=journal,
+        workspace=workspace,
+    ) as session:
+        opening = session.begin_attempt(initial, True, operation_id="initial")
+        first_id = opening["state"]["execution_id"]
+        assert "Opening" in json.dumps(opening)
+        if sandbox == "docker":
+            first = session.terminal("python /work/candidate/scripts/check.py")
+            assert first.exit_code == 0 and first.failure is None
+            assert '"counter": 1' in first.output["stdout"]
+            assert "Public packaged reference" in first.output["stdout"]
+        session.execute_tool(
+            "change_user_email",
+            {"user_id": "fixture-user", "new_email": "agent@example.test"},
+            "write",
+        )
+        stopped = session.execute_tool("respond_to_user", {"text": "Proceed."}, "reply")
+        assert stopped["state"]["closed"]
+        receipt = session.submit(initial, initial=True, operation_id="initial-submit")
+        assert receipt.bundle is initial and receipt.execution_id == first_id
+        assert receipt.public_trace["bundle_hash"] == initial.bundle_hash
+        assert "PRIVATE_USER" not in json.dumps(receipt.to_dict())
+        assert "fixture_user_write" not in json.dumps(receipt.to_dict())
+        assert (
+            session.execute_tool(
+                "change_user_email",
+                {"user_id": "fixture-user", "new_email": "deny@example.test"},
+                "closed-write",
+            )["error"]
+            == "learning_execution_closed"
+        )
+        # Draft rollback is independent of the task episode. A new explicit
+        # banking execution resets its DB while script scratch stays available.
+        session.begin_attempt(initial, False, operation_id="revision")
+        restarted = session.execute_tool("start_learning_execution", {}, "restart")
+        assert restarted["state"]["execution_id"] != first_id
+        read = session.execute_tool(
+            "get_user_information_by_id", {"user_id": "fixture-user"}, "fresh-read"
+        )
+        assert "initial@example.test" in read["tool_result"]["content"]
+        if sandbox == "docker":
+            second = session.terminal("python /work/candidate/scripts/check.py")
+            assert second.exit_code == 0 and '"counter": 2' in second.output["stdout"]
+        final = session.submit(initial, operation_id="revision-submit")
+        assert final.execution_id == restarted["state"]["execution_id"]
+        assert final.bundle is initial
+        assert "Fresh opening" in json.dumps(final.to_dict())
+        assert "reward" not in final.public_trace and "asr" not in final.public_trace
+    checkpoint = json.loads((journal.root / "bank-private/state.json").read_text())
+    assert checkpoint["state"]["pending"] is None
+    assert checkpoint["state"]["execution_number"] == 2

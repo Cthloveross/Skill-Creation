@@ -1,0 +1,594 @@
+{
+  "schema": "skill-evolution.archive.v2",
+  "date": "2026-10-07",
+  "archive_mode": "physical_relocation_preserve_artifact_bytes",
+  "current_methods": [
+    "tau.skill-evolution.v4",
+    "skillsbench.skill-evolution.v4"
+  ],
+  "current_readiness": "../runs/readiness-direct-evolution-v4-20261007-001",
+  "document_snapshots": "../runs/readiness-direct-evolution-v4-20261007-001/archived-documents.json",
+  "runs": [
+    {
+      "path": "runs/observation-smoke-2-20261006-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/observation-smoke-2-20261006-001/metrics.json",
+          "sha256": "890fa683278a8e4edd5ed4a19cff13c0d974da0328f34919b1fd349f7a16ec71",
+          "original_path": "runs/observation-smoke-2-20261006-001/metrics.json"
+        }
+      ],
+      "original_path": "runs/observation-smoke-2-20261006-001",
+      "relocated": true,
+      "directory_inode": 47163538
+    },
+    {
+      "path": "runs/readiness",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [],
+      "original_path": "runs/readiness",
+      "relocated": true,
+      "directory_inode": 45098423
+    },
+    {
+      "path": "runs/readiness-evolution-observation-20261006-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [],
+      "original_path": "runs/readiness-evolution-observation-20261006-001",
+      "relocated": true,
+      "directory_inode": 47163527
+    },
+    {
+      "path": "runs/skillsbench-codex-control-10-20261006-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [],
+      "original_path": "runs/skillsbench-codex-control-10-20261006-001",
+      "relocated": true,
+      "directory_inode": 46411730
+    },
+    {
+      "path": "runs/skillsbench-codex-evolution-10-20261006-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/skillsbench-codex-evolution-10-20261006-001/launcher-status.json",
+          "sha256": "358fd7b18fd3251651fc9443473793a5730f44d05698a156ec028ce62da8c974",
+          "original_path": "runs/skillsbench-codex-evolution-10-20261006-001/launcher-status.json"
+        }
+      ],
+      "original_path": "runs/skillsbench-codex-evolution-10-20261006-001",
+      "relocated": true,
+      "directory_inode": 46411787
+    },
+    {
+      "path": "runs/skillsbench-docker-10-20261006-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [],
+      "original_path": "runs/skillsbench-docker-10-20261006-001",
+      "relocated": true,
+      "directory_inode": 46049746
+    },
+    {
+      "path": "runs/skillsbench-docker-smoke-20261006-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/skillsbench-docker-smoke-20261006-001/config.yaml",
+          "sha256": "bb3b70619a807a42c26ed3582c27f64b494f5b75580fd67378a28165704a8d54",
+          "original_path": "runs/skillsbench-docker-smoke-20261006-001/config.yaml"
+        }
+      ],
+      "original_path": "runs/skillsbench-docker-smoke-20261006-001",
+      "relocated": true,
+      "directory_inode": 46049735
+    },
+    {
+      "path": "runs/skillsbench-gpt54-acc-20261006-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/skillsbench-gpt54-acc-20261006-001/metrics.json",
+          "sha256": "d2ed097fc6a3fe5a671c7706746ac034d9127254e5ce7b16f67b55dd78ec83b5",
+          "original_path": "runs/skillsbench-gpt54-acc-20261006-001/metrics.json"
+        }
+      ],
+      "original_path": "runs/skillsbench-gpt54-acc-20261006-001",
+      "relocated": true,
+      "directory_inode": 47263083
+    },
+    {
+      "path": "runs/skillsbench-gpt54-evolution-10-20261006-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/skillsbench-gpt54-evolution-10-20261006-001/final-metrics.json",
+          "sha256": "b874b077880f1e9122637b220b66143c78e37e56ccf024b951a0983d72c498a1",
+          "original_path": "runs/skillsbench-gpt54-evolution-10-20261006-001/final-metrics.json"
+        },
+        {
+          "path": "runs/skillsbench-gpt54-evolution-10-20261006-001/launcher-status.json",
+          "sha256": "eaf17bbb82a3a5a194328398517fb65ef400315316be4fe41aafbf8bb5b74ab7",
+          "original_path": "runs/skillsbench-gpt54-evolution-10-20261006-001/launcher-status.json"
+        },
+        {
+          "path": "runs/skillsbench-gpt54-evolution-10-20261006-001/evaluation-status.json",
+          "sha256": "2cc519cb05fe147f9ce91a6661520bb7de661f87d58cd68dfe9eb571c56403bf",
+          "original_path": "runs/skillsbench-gpt54-evolution-10-20261006-001/evaluation-status.json"
+        }
+      ],
+      "original_path": "runs/skillsbench-gpt54-evolution-10-20261006-001",
+      "relocated": true,
+      "directory_inode": 47263224
+    },
+    {
+      "path": "runs/skillsbench-pooled-85-20261004-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/skillsbench-pooled-85-20261004-001/config.yaml",
+          "sha256": "3b771a64faaf5bc0831c02aaeb252371d24f12ed36b112dbd137e71064fbbe25",
+          "original_path": "runs/skillsbench-pooled-85-20261004-001/config.yaml"
+        },
+        {
+          "path": "runs/skillsbench-pooled-85-20261004-001/SOURCE_HASHES.json",
+          "sha256": "34bff227de13e8d33ee8b30d04fccf9b6d1cc884602758def2b067ccba0e9a16",
+          "original_path": "runs/skillsbench-pooled-85-20261004-001/SOURCE_HASHES.json"
+        },
+        {
+          "path": "runs/skillsbench-pooled-85-20261004-001/data-manifest.json",
+          "sha256": "5d2962b63552d0c042699c399e3102fd8589b44124381a44b0f989e43882c6da",
+          "original_path": "runs/skillsbench-pooled-85-20261004-001/data-manifest.json"
+        },
+        {
+          "path": "runs/skillsbench-pooled-85-20261004-001/VALIDATION.json",
+          "sha256": "fea8155eea294a19ce9660f66688a87d728f9c4537fdb9cab698828d0972fd98",
+          "original_path": "runs/skillsbench-pooled-85-20261004-001/VALIDATION.json"
+        }
+      ],
+      "original_path": "runs/skillsbench-pooled-85-20261004-001",
+      "relocated": true,
+      "directory_inode": 45426617
+    },
+    {
+      "path": "runs/skillsbench-pooled-85-20261005-terra-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/skillsbench-pooled-85-20261005-terra-001/config.yaml",
+          "sha256": "d11ff037e807d507ee257ce3372ae2f0a848c33693ea71e433cf121c35aa96c3",
+          "original_path": "runs/skillsbench-pooled-85-20261005-terra-001/config.yaml"
+        }
+      ],
+      "original_path": "runs/skillsbench-pooled-85-20261005-terra-001",
+      "relocated": true,
+      "directory_inode": 45163593
+    },
+    {
+      "path": "runs/skillsbench-workspace-2-20261005-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [],
+      "original_path": "runs/skillsbench-workspace-2-20261005-001",
+      "relocated": true,
+      "directory_inode": 45950687
+    },
+    {
+      "path": "runs/skillsbench-workspace-expanded-3-20261005-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [],
+      "original_path": "runs/skillsbench-workspace-expanded-3-20261005-001",
+      "relocated": true,
+      "directory_inode": 45983789
+    },
+    {
+      "path": "runs/tau-docker-benign-5-20261006-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/tau-docker-benign-5-20261006-001/config.yaml",
+          "sha256": "6cb8709527549bb0e21cac2111998051d96da272912e611514eb8bc2be072a7e",
+          "original_path": "runs/tau-docker-benign-5-20261006-001/config.yaml"
+        }
+      ],
+      "original_path": "runs/tau-docker-benign-5-20261006-001",
+      "relocated": true,
+      "directory_inode": 46477775
+    },
+    {
+      "path": "runs/tau-full-97-20261004-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/tau-full-97-20261004-001/config.yaml",
+          "sha256": "55967974d22021b8f9f4764f8304081c0a956aa4857cef5ff4da51b5ac2fe128",
+          "original_path": "runs/tau-full-97-20261004-001/config.yaml"
+        },
+        {
+          "path": "runs/tau-full-97-20261004-001/SOURCE_HASHES.json",
+          "sha256": "4755a9e011c5fa7a5debf0f8e72791939dd2d0f0ff2edca8d9d28ab5aca20d6e",
+          "original_path": "runs/tau-full-97-20261004-001/SOURCE_HASHES.json"
+        },
+        {
+          "path": "runs/tau-full-97-20261004-001/data-manifest.json",
+          "sha256": "9e9aff36077f2e5118a7f39de4c90f686396e1adac3b3a507eef7c488c1221ae",
+          "original_path": "runs/tau-full-97-20261004-001/data-manifest.json"
+        },
+        {
+          "path": "runs/tau-full-97-20261004-001/VALIDATION.json",
+          "sha256": "58574d134a8bc228b1298fef74846bc1209aaeca8e7697490f8a79c47d6047b4",
+          "original_path": "runs/tau-full-97-20261004-001/VALIDATION.json"
+        }
+      ],
+      "original_path": "runs/tau-full-97-20261004-001",
+      "relocated": true,
+      "directory_inode": 45396847
+    },
+    {
+      "path": "runs/tau-full-97-20261005-terra-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/tau-full-97-20261005-terra-001/config.yaml",
+          "sha256": "b8bf3d368c3c4a9ad93ed50d1fd73d5099ee3dd3743cf51c4d94210c8b571b6b",
+          "original_path": "runs/tau-full-97-20261005-terra-001/config.yaml"
+        }
+      ],
+      "original_path": "runs/tau-full-97-20261005-terra-001",
+      "relocated": true,
+      "directory_inode": 45589973
+    },
+    {
+      "path": "runs/tau-workspace-benign-4-20261005-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/tau-workspace-benign-4-20261005-001/report.json",
+          "sha256": "d5925cbef0640cf707df61cbf68766f3939b903b18acd6a243f6e5a61020b1b6",
+          "original_path": "runs/tau-workspace-benign-4-20261005-001/report.json"
+        },
+        {
+          "path": "runs/tau-workspace-benign-4-20261005-001/launcher-status.json",
+          "sha256": "6ca220508df3e21bbae48c0d0599833def5227631ea87a061617edc4ac6bf436",
+          "original_path": "runs/tau-workspace-benign-4-20261005-001/launcher-status.json"
+        },
+        {
+          "path": "runs/tau-workspace-benign-4-20261005-001/journal/identity.json",
+          "sha256": "d8a1926c67e9ad1b2b9d8b044c0f117ef32fe98b41c2db18e5d4cac6e42f372c",
+          "original_path": "runs/tau-workspace-benign-4-20261005-001/journal/identity.json"
+        }
+      ],
+      "original_path": "runs/tau-workspace-benign-4-20261005-001",
+      "relocated": true,
+      "directory_inode": 45587596
+    },
+    {
+      "path": "runs/tau-workspace-benign-4-20261005-002",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/tau-workspace-benign-4-20261005-002/report.json",
+          "sha256": "ec26d3deab9252a583072d8c0562141ebd5ad37f861e8f34de62370560e03524",
+          "original_path": "runs/tau-workspace-benign-4-20261005-002/report.json"
+        },
+        {
+          "path": "runs/tau-workspace-benign-4-20261005-002/launcher-status.json",
+          "sha256": "f0df1cbc20a83beca1d59be8b4f93fb4487748be09bbcf935d7e33084a163ed0",
+          "original_path": "runs/tau-workspace-benign-4-20261005-002/launcher-status.json"
+        },
+        {
+          "path": "runs/tau-workspace-benign-4-20261005-002/journal/identity.json",
+          "sha256": "0892018638aab0f278bd76d40ddca5b846ecdf3656304eae92a4e1504025f46f",
+          "original_path": "runs/tau-workspace-benign-4-20261005-002/journal/identity.json"
+        }
+      ],
+      "original_path": "runs/tau-workspace-benign-4-20261005-002",
+      "relocated": true,
+      "directory_inode": 45885915
+    },
+    {
+      "path": "runs/tau-workspace-benign-4-20261005-003",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical measurements, provenance or acceptance evidence",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/tau-workspace-benign-4-20261005-003/report.json",
+          "sha256": "86e4c5bbd9cccfac93c8c429d3f1a4b6157e009beeacc790529454f03fe57569",
+          "original_path": "runs/tau-workspace-benign-4-20261005-003/report.json"
+        },
+        {
+          "path": "runs/tau-workspace-benign-4-20261005-003/launcher-status.json",
+          "sha256": "6ebd5667465bf8f6d40febe12c97776774c5d121dd1b258951d4a29adefe20ef",
+          "original_path": "runs/tau-workspace-benign-4-20261005-003/launcher-status.json"
+        },
+        {
+          "path": "runs/tau-workspace-benign-4-20261005-003/journal/identity.json",
+          "sha256": "1b1a3bfd57bac33aac1bf801b0a59c53eb6980b4d8dd5efa6b3bc7406cc2b0ac",
+          "original_path": "runs/tau-workspace-benign-4-20261005-003/journal/identity.json"
+        }
+      ],
+      "original_path": "runs/tau-workspace-benign-4-20261005-003",
+      "relocated": true,
+      "directory_inode": 45887134
+    },
+    {
+      "path": "runs/skillsbench-full85-gpt54-preparation-20261007",
+      "original_path": "runs/skillsbench/full-85-gpt54-v4",
+      "status": "ARCHIVED_PREPARATION_SUPERSEDED",
+      "resume_current_method": false,
+      "relocated": true,
+      "retain_reason": "unstarted GPT-5.4 full85 preparation replaced by independent GPT-5.6 Terra and Opus4.8 handoffs; four original files preserved bytewise",
+      "evidence": [
+        {
+          "path": "runs/skillsbench-full85-gpt54-preparation-20261007/config.yaml",
+          "original_path": "runs/skillsbench/full-85-gpt54-v4/config.yaml",
+          "sha256": "ae3a69757b2fedeb10bd483423bf6f74c14a07409a64042ab6b1b6ff5310ca2c"
+        },
+        {
+          "path": "runs/skillsbench-full85-gpt54-preparation-20261007/manifest.json",
+          "original_path": "runs/skillsbench/full-85-gpt54-v4/manifest.json",
+          "sha256": "e88b70f8d58df523dfa7f322dc40b8acfcf6e8859c08dc4c0814a73b01c43b7b"
+        },
+        {
+          "path": "runs/skillsbench-full85-gpt54-preparation-20261007/skillsbench-v4-source.tar.gz",
+          "original_path": "runs/skillsbench/full-85-gpt54-v4/skillsbench-v4-source.tar.gz",
+          "sha256": "201c53e0c741e139d571c4e00a252fbeae2cce65c502e31eccd3eb095ea4d5e7"
+        },
+        {
+          "path": "runs/skillsbench-full85-gpt54-preparation-20261007/transfer-manifest.json",
+          "original_path": "runs/skillsbench/full-85-gpt54-v4/transfer-manifest.json",
+          "sha256": "5f3317930aabf5a9f2ebe3562108322da422f0dad946261181929c880fc9e841"
+        }
+      ]
+    }
+  ],
+  "relocated_at": "2026-10-07T05:36:06.173959+00:00",
+  "previous_index_sha256": "e6e27d3d300fef1d5fcd5308144cd0e2ce7c10e03478d40c9f8e49c064dd8026",
+  "status": "ARCHIVED_READ_ONLY",
+  "path_basis": "Paths are relative to skill-evolution/archive unless named original_path. Old JSON path strings remain original provenance; archived checkpoints cannot resume.",
+  "current_handoffs": {
+    "tau": "../runs/tau/HANDOFF.md",
+    "skillsbench": "../runs/skillsbench/HANDOFF.md"
+  },
+  "removed_generated_aliases": [
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/skillsbench-checks/cleanup-current-tmp/test_real_public_commands_prescurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/skillsbench-checks/cleanup-current-tmp/test_real_public_commands_pres2",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/skillsbench-checks/cleanup-current-tmp/test_public_command_uses_one_ecurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/skillsbench-checks/cleanup-current-tmp/test_public_command_uses_one_e5",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/skillsbench-checks/cleanup-current-tmp/test_cleanup_failure_detail_stcurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/skillsbench-checks/cleanup-current-tmp/test_cleanup_failure_detail_st0",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/skillsbench-checks/cleanup-final-tmp/test_real_public_commands_prescurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/skillsbench-checks/cleanup-final-tmp/test_real_public_commands_pres2",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/skillsbench-checks/cleanup-final-tmp/test_public_command_uses_one_ecurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/skillsbench-checks/cleanup-final-tmp/test_public_command_uses_one_e5",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/skillsbench-checks/cleanup-tmp/test_real_public_commands_prescurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/skillsbench-checks/cleanup-tmp/test_real_public_commands_pres2",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/skillsbench-checks/cleanup-tmp/test_public_command_uses_one_ecurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/skillsbench-checks/cleanup-tmp/test_public_command_uses_one_e5",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_live_codex_requires_dockecurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_live_codex_requires_docke0",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_authors_actual_post_run_acurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_authors_actual_post_run_a0",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_environment_rejects_provicurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_environment_rejects_provi0",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_timeout_stops_real_cli_prcurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_timeout_stops_real_cli_pr0",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_author_readonly_installatcurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_author_readonly_installat1",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_real_native_codex_and_unicurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_real_native_codex_and_uni3",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_real_main_native_admissiocurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_real_main_native_admissio0",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_actual_harbor_base_and_aucurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-final-tmp/test_actual_harbor_base_and_au0",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_live_codex_requires_dockecurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_live_codex_requires_docke0",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_authors_actual_post_run_acurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_authors_actual_post_run_a0",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_environment_rejects_provicurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_environment_rejects_provi0",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_timeout_stops_real_cli_prcurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_timeout_stops_real_cli_pr0",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_author_readonly_installatcurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_author_readonly_installat1",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_real_native_codex_and_unicurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_real_native_codex_and_uni3",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_real_main_native_admissiocurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_real_main_native_admissio0",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_actual_harbor_base_and_aucurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/native-tmp/test_actual_harbor_base_and_au0",
+      "reason": "pytest automatic current alias"
+    },
+    {
+      "path": "runs/readiness/pipeline-fixes-20261006-001/native-checks/budget-current-tmp/test_real_native_codex_and_unicurrent",
+      "target": "/home/tc442/projects/Skill-Creation/experiments/tau-knowledge/skill-evolution/runs/readiness/pipeline-fixes-20261006-001/native-checks/budget-current-tmp/test_real_native_codex_and_uni0",
+      "reason": "pytest automatic current alias"
+    }
+  ],
+  "evidence_hashes_verified": 27,
+  "current_history": "HISTORY.md",
+  "previously_missing_historical_links": [
+    "benign-pilot-10-20261004-001/GOLD_DIAGNOSIS.md",
+    "benign-pilot-10-20261004-001/PLAN.md",
+    "benign-pilot-10-20261004-001/SUMMARY.md",
+    "demo-task-019-002/ACQUISITION.md",
+    "demo-task-019-002/PUBLIC_TRACE.md",
+    "demo-task-019-002/REPORT.md",
+    "demo-task-019-confidence-001/ACQUISITION.md",
+    "demo-task-019-confidence-001/EVOLUTION.md",
+    "demo-task-019-confidence-001/REPORT.md",
+    "demo-task-019-coverage-001/ACQUISITION.md",
+    "demo-task-019-coverage-002/ACQUISITION.md",
+    "demo-task-019-coverage-002/REPORT.md",
+    "demo-task-019-coverage-002/RETRIEVAL_DIAGNOSIS.md",
+    "demo-task-019-coverage-003/ACQUISITION.md",
+    "demo-task-019-coverage-003/EVOLUTION.md",
+    "demo-task-019-coverage-003/REPORT.md"
+  ],
+  "validation": {
+    "date": "2026-10-07",
+    "status": "PASSED",
+    "frozen_python_paths_checked": 90,
+    "changed_python_paths": [],
+    "staged_exact_git_renames": 6083,
+    "staged_other_changes": [],
+    "historical_evidence_anchors_checked": 27,
+    "historical_evidence_anchor_failures": [],
+    "current_markdown_documents_checked": [
+      "README.md",
+      "experiments/tau-knowledge/skill-evolution/README.md",
+      "experiments/tau-knowledge/skill-evolution/PROTOCOL.md",
+      "experiments/tau-knowledge/skill-evolution/AUDIT-20261005.md",
+      "experiments/tau-knowledge/skill-evolution/meta/coevo-authoring/SOURCE.md",
+      "experiments/tau-knowledge/skill-evolution/runs/tau/HANDOFF.md",
+      "experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md",
+      "experiments/tau-knowledge/skill-evolution/archive/HISTORY.md"
+    ],
+    "local_markdown_links_checked": 171,
+    "missing_local_markdown_links": [],
+    "previously_missing_historical_path_count": 16,
+    "previously_missing_links_handling": "Existing missing links rendered as historical path text, not fabricated or restored.",
+    "sample_bundle_verification": [
+      {
+        "path": "runs/observation-smoke-2-20261006-001/tau/cells/task_019/benign/initial",
+        "bundle_hash": "018640e38ca9460fedeb52d4cbca16a629884b702c26da27e1ed28e31e9a46f6",
+        "manifest_hash_matches": true,
+        "files": 3
+      },
+      {
+        "path": "runs/skillsbench-gpt54-evolution-10-20261006-001/tasks/dialogue-parser/cells/dialogue-parser/benign/initial",
+        "bundle_hash": "723680072f45e345440637b5405a8bed4cd161c20298ad04ad544614a7e26308",
+        "manifest_hash_matches": true,
+        "files": 3
+      }
+    ],
+    "credentials_read": false,
+    "model_requests": 0
+  },
+  "current_readiness_by_experiment": {
+    "tau": "../runs/readiness-direct-evolution-v4-20261007-001",
+    "skillsbench": "../runs/readiness-skillsbench-full85-20261007-001"
+  }
+}

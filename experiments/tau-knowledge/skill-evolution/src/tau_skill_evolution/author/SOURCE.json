@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/Zhang-Henry/CoEvoSkills",
+  "commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+  "source_path": "libs/terminus_agent/agents/codex_skill_only.py",
+  "sha256": "ec8652a2671059f1ebd1fd331e3dbae95d62fa6e0487ec2b3bccb04cb525c98e",
+  "harbor_commit": "3f28e5ce2acbff36d8b5df431e35e050ac13bef6",
+  "license": "Apache-2.0",
+  "adaptations": [],
+  "harbor_source_hashes": {
+    "agents/installed/codex.py": "afe319d7e2bff3f1e346b0ffc69f7c281dbb1f33447755355dd2ac5b5e12b18e",
+    "agents/installed/base.py": "fb2e1cf77a1b5ba0925ca3cf53684920b7025b22b5635e3565db283450c72d01",
+    "agents/base.py": "e1b7f8cbc0d82c2b8fe2fcde8c8863aff48c9de385ffbb06335eb3499fde1266"
+  }
+}

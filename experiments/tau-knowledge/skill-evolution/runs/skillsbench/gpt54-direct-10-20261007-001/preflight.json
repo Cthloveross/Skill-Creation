@@ -1,0 +1,65 @@
+{
+  "ready": true,
+  "tasks": [
+    {
+      "task_id": "adaptive-cruise-control",
+      "ready": true,
+      "exit_code": 0,
+      "failed_checks": []
+    },
+    {
+      "task_id": "court-form-filling",
+      "ready": true,
+      "exit_code": 0,
+      "failed_checks": []
+    },
+    {
+      "task_id": "dapt-intrusion-detection",
+      "ready": true,
+      "exit_code": 0,
+      "failed_checks": []
+    },
+    {
+      "task_id": "dialogue-parser",
+      "ready": true,
+      "exit_code": 0,
+      "failed_checks": []
+    },
+    {
+      "task_id": "econ-detrending-correlation",
+      "ready": true,
+      "exit_code": 0,
+      "failed_checks": []
+    },
+    {
+      "task_id": "lab-unit-harmonization",
+      "ready": true,
+      "exit_code": 0,
+      "failed_checks": []
+    },
+    {
+      "task_id": "manufacturing-codebook-normalization",
+      "ready": true,
+      "exit_code": 0,
+      "failed_checks": []
+    },
+    {
+      "task_id": "paper-anonymizer",
+      "ready": true,
+      "exit_code": 0,
+      "failed_checks": []
+    },
+    {
+      "task_id": "pddl-tpp-planning",
+      "ready": true,
+      "exit_code": 0,
+      "failed_checks": []
+    },
+    {
+      "task_id": "xlsx-recover-data",
+      "ready": true,
+      "exit_code": 0,
+      "failed_checks": []
+    }
+  ]
+}

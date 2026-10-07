@@ -16,7 +16,8 @@ from .constants import (
     BANKING_TREE,
     DEFAULT_MODEL,
     EXPERIMENT_ROOT,
-    SUPPORTED_MODELS,
+    MESSAGES_MODEL,
+    RESPONSES_MODELS,
     UPSTREAM_COMMIT,
     UPSTREAM_ROOT_TREE,
 )
@@ -24,7 +25,7 @@ from .constants import (
 # Historical wire-format tests and sealed artifacts still use v1. New method
 # namespaces are deliberately different and cannot resume those checkpoints.
 NAMESPACE = "tau.skill-evolution.v1"
-NAMESPACES = {"tau": "tau.skill-evolution.v2", "skillsbench": "skillsbench.skill-evolution.v1"}
+NAMESPACES = {"tau": "tau.skill-evolution.v4", "skillsbench": "skillsbench.skill-evolution.v4"}
 DEFAULT_CONFIG = EXPERIMENT_ROOT / "configs" / "experiment.yaml"
 SKILLSBENCH_CONFIG = EXPERIMENT_ROOT / "configs" / "skillsbench.yaml"
 ARMS = ("benign", "poison-5", "poison-10")
@@ -136,11 +137,12 @@ class ExperimentSpec:
         if not region:
             raise ValueError(f"missing_region: set provider.region or {provider['region_env']}")
         if region not in BEDROCK_REGIONS:
-            raise ValueError(
-                "unsupported_region: GPT-5.x Bedrock Mantle requires us-east-1/us-east-2"
-            )
+            raise ValueError("unsupported_region: Bedrock Mantle requires us-east-1/us-east-2")
+        if provider["model"] == MESSAGES_MODEL and region != "us-east-1":
+            raise ValueError("unsupported_region: Opus 4.8 Mantle requires us-east-1")
+        route = "anthropic" if provider["transport"] == "bedrock-messages" else "openai"
         provider.update(
-            region=region, api_base=f"https://bedrock-mantle.{region}.api.aws/openai/v1"
+            region=region, api_base=f"https://bedrock-mantle.{region}.api.aws/{route}/v1"
         )
         return provider
 
@@ -172,9 +174,20 @@ class ExperimentSpec:
                 self.root / "data" / "skillsbench" / name
                 for name in ("source-tree.json", "source-manifest.json", "corpus/manifest.json")
             )
+            if self.namespace == "skillsbench.skill-evolution.v4":
+                files.extend(
+                    self.root / "src/tau_skill_evolution/author" / name
+                    for name in ("SOURCE.json", "LICENSE")
+                )
         source = self.values["source"]
-        for name in ("corpus_manifest", "runtime_lock"):
-            files.append(self.root / source[name])
+        files.append(self.root / source["corpus_manifest"])
+        selected_lock = source["runtime_lock"]
+        if self.experiment == "skillsbench" and "{task_id}" in selected_lock:
+            files.extend(
+                self.root / selected_lock.replace("{task_id}", task) for task in self.tasks
+            )
+        else:
+            files.append(self.root / selected_lock)
         meta = self.upstream / "meta_skills" / "skill-creator"
         if self.experiment == "skillsbench":
             files.extend(sorted(path for path in meta.rglob("*") if path.is_file()))
@@ -199,7 +212,9 @@ class ExperimentSpec:
         }
         return {**binding, "identity_hash": digest(binding)}
 
-    def worker_config(self) -> dict[str, Any]:
+    def worker_config(self, *, runtime: str = "docker") -> dict[str, Any]:
+        if runtime not in {"docker", "workspace", "bubblewrap-demo"}:
+            raise ValueError("unsupported runtime")
         settings, provider = self.values["runtime"], self.provider_settings
         embedding = self.values["embedding"]
         config = {
@@ -214,18 +229,24 @@ class ExperimentSpec:
             "api_key_env": provider["api_key_env"],
             "tokenizer_endpoint": embedding["endpoint"],
             "tokenizer_model": embedding["model"],
-            "token_counter_basis": "embedding_serialized_text_estimate",
+            "token_counter_basis": "embedding_responses_input_estimate_with_reasoning_reserve",
             "request_timeout_seconds": settings["request_timeout_seconds"],
             "episode_timeout_seconds": settings["episode_timeout_seconds"],
             "max_turns": settings["max_turns"],
             "max_task_tool_calls": settings["max_task_tool_calls"],
             "seed": self.values["seed"],
             "allowed_task_ids": list(self.tasks),
-            "docker": {
+        }
+        if runtime == "docker":
+            config["docker"] = {
                 **json.loads((self.root / "runtime" / "image-lock.json").read_text()),
                 "dependency_lock": str(self.root / "runtime" / "requirements.lock"),
-            },
-        }
+            }
+        else:
+            config["sandbox"] = {
+                "backend": runtime,
+                "runtime_lock": str(self.root / "runtime" / "bubblewrap-lock.json"),
+            }
         if self.experiment == "tau":
             banking = self.upstream / "data" / "tau2" / "domains" / "banking_knowledge"
             config.update(
@@ -249,7 +270,11 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
     if not isinstance(value, dict) or value.get("experiment") not in NAMESPACES:
         raise ValueError("configuration must select tau or skillsbench")
     experiment = value["experiment"]
-    if value.get("schema_version") != NAMESPACES[experiment]:
+    namespaces = {NAMESPACES[experiment]}
+    if experiment == "skillsbench":
+        # Historical config snapshots remain readable, with their own frozen identity.
+        namespaces.add("skillsbench.skill-evolution.v2")
+    if value.get("schema_version") not in namespaces:
         raise ValueError("configuration namespace does not match the current experiment method")
     source, tasks = value["source"], value["tasks"]["selected"]
     if not isinstance(tasks, list) or any(not isinstance(task, str) for task in tasks):
@@ -319,25 +344,40 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
         target = Path(source[name])
         if target.is_absolute() or ".." in target.parts:
             raise ValueError("source manifest/runtime paths must remain inside the experiment")
+        if "{" in str(target) or "}" in str(target):
+            literal = str(target).replace("{task_id}", "")
+            if (
+                experiment != "skillsbench"
+                or name != "runtime_lock"
+                or str(target).count("{task_id}") != 1
+                or "{" in literal
+                or "}" in literal
+                or not target.name.startswith("skillsbench-docker-")
+            ):
+                raise ValueError("runtime lock only supports the SkillsBench {task_id} template")
     retrieval = value["retrieval"]
     if (retrieval["bm25_top_k"], retrieval["dense_top_k"], retrieval["rrf_k"]) != (10, 10, 60):
         raise ValueError("hybrid retrieval parameters changed")
     if not retrieval["full_text"] or not retrieval["fail_closed"]:
         raise ValueError("retrieval must return full text and fail closed")
     provider = value["provider"]
-    if (
-        provider.get("model") not in SUPPORTED_MODELS
-        or provider.get("transport") != "bedrock-responses"
-    ):
-        raise ValueError(
-            "only Bedrock Mantle Responses models "
-            + " / ".join(SUPPORTED_MODELS)
-            + " are supported"
+    if not (
+        (
+            provider.get("model") in RESPONSES_MODELS
+            and provider.get("transport") == "bedrock-responses"
         )
+        or (
+            provider.get("model") == MESSAGES_MODEL
+            and provider.get("transport") == "bedrock-messages"
+        )
+    ):
+        raise ValueError("model and supported Bedrock Mantle transport must match")
     if set(provider) != {"model", "transport", "region", "region_env", "api_key_env"}:
         raise ValueError("provider fields must use the Bedrock Mantle configuration")
     if provider["region"] is not None and provider["region"] not in BEDROCK_REGIONS:
         raise ValueError("unsupported GPT-5.x Bedrock region")
+    if provider["model"] == MESSAGES_MODEL and provider["region"] not in {None, "us-east-1"}:
+        raise ValueError("unsupported_region: Opus 4.8 Mantle requires us-east-1")
     if not all(
         isinstance(provider[name], str) and provider[name] for name in ("region_env", "api_key_env")
     ):
@@ -355,6 +395,61 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
     from .runtime_controls import RuntimeControls
 
     RuntimeControls.from_dict(value["runtime"]["controls"])
+    executor = value["runtime"].get("executor", "local-tools")
+    if executor not in {"local-tools", "author-codex"}:
+        raise ValueError("unsupported execution agent")
+    controls = value["runtime"]["controls"]
+    if executor != "author-codex" and (
+        controls["assistant_completion_budget"] is None
+        or any(controls[role]["max_output_tokens"] is None for role in ("agent", "user"))
+    ):
+        raise ValueError("null runtime output limits require the author Codex execution agent")
+    if executor == "author-codex" and value["schema_version"] != "skillsbench.skill-evolution.v4":
+        raise ValueError("author Codex requires the SkillsBench v4 namespace")
+    if value["schema_version"] == "skillsbench.skill-evolution.v4":
+        if executor != "author-codex":
+            raise ValueError("SkillsBench v4 requires the author Codex execution agent")
+        codex = value["runtime"].get("codex", {})
+        required_codex = {
+            "binary",
+            "version",
+            "binary_sha256",
+            "evolution_timeout_seconds",
+            "evaluation_timeout_seconds",
+        }
+        companion_fields = {"code_mode_host_binary", "code_mode_host_sha256"}
+        if not (
+            required_codex <= set(codex) <= required_codex | companion_fields
+            and set(codex) & companion_fields in (set(), companion_fields)
+        ):
+            raise ValueError("Codex binary and both episode budgets must be explicit")
+        if value["provider"]["model"] == "openai.gpt-5.6-terra" and not (
+            companion_fields <= set(codex)
+        ):
+            raise ValueError("GPT-5.6 requires the pinned Codex code-mode companion")
+        if not all(isinstance(codex[name], str) and codex[name] for name in ("binary", "version")):
+            raise ValueError("Codex binary/version must be nonempty")
+        pinned_hash = codex["binary_sha256"]
+        if (
+            not isinstance(pinned_hash, str)
+            or len(pinned_hash) != 64
+            or any(character not in "0123456789abcdef" for character in pinned_hash)
+        ):
+            raise ValueError("Codex binary hash must be pinned")
+        if companion_fields <= set(codex):
+            host_binary, host_hash = codex["code_mode_host_binary"], codex["code_mode_host_sha256"]
+            if not isinstance(host_binary, str) or not host_binary:
+                raise ValueError("Codex code-mode companion binary must be explicit")
+            if (
+                not isinstance(host_hash, str)
+                or len(host_hash) != 64
+                or any(character not in "0123456789abcdef" for character in host_hash)
+            ):
+                raise ValueError("Codex code-mode companion hash must be pinned")
+        for name in ("evolution_timeout_seconds", "evaluation_timeout_seconds"):
+            number = codex[name]
+            if isinstance(number, bool) or not isinstance(number, int) or number <= 0:
+                raise ValueError("Codex episode budgets must be positive integers")
     confidence = value["acquisition"]["min_document_confidence"]
     if (
         isinstance(confidence, bool)
@@ -370,7 +465,12 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
             "base_token_limit": 32768,
             "max_steps": 50,
         },
-        "evolution": {"max_revisions": 15, "max_oracles": 5},
+        "evolution": {
+            "max_revisions": 15,
+            "max_oracles": 5,
+            "max_oracle_errors": 5,
+            "revision_timeout_seconds": 3600,
+        },
     }
     for group, caps in limits.items():
         for name, maximum in caps.items():
@@ -383,19 +483,28 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
             ):
                 raise ValueError(f"{group}.{name} must be between {minimum} and {maximum}")
     generator = value["roles"]["generator"]
-    if (
-        generator["reasoning_effort"],
-        generator["context_window"],
-        generator["context_beta"],
-        generator["max_output_tokens"],
-    ) != ("high", 272000, 0.7, 32768):
-        raise ValueError("Generator must use high reasoning and the fixed context/output budget")
-    expected_input = (
-        math.floor(generator["context_window"] * generator["context_beta"])
-        - generator["max_output_tokens"]
-    )
+    for name, maximum in (("max_turns", 120),):
+        number = generator[name]
+        if isinstance(number, bool) or not isinstance(number, int) or not 1 <= number <= maximum:
+            raise ValueError(f"generator.{name} must be between 1 and {maximum}")
+    verifier = value["roles"]["verifier"]
+    for name, maximum in (("max_turns", 30), ("diagnosis_turns", 8)):
+        number = verifier[name]
+        if isinstance(number, bool) or not isinstance(number, int) or not 1 <= number <= maximum:
+            raise ValueError(f"verifier.{name} must be between 1 and {maximum}")
+    if generator["reasoning_effort"] not in ("medium", "high"):
+        raise ValueError("Generator reasoning effort must be medium or high")
+    for role in value["roles"].values():
+        output_limit = role["max_output_tokens"]
+        if output_limit is not None and (
+            isinstance(output_limit, bool) or not isinstance(output_limit, int) or output_limit <= 0
+        ):
+            raise ValueError("role max_output_tokens must be positive or null")
+    if (generator["context_window"], generator["context_beta"]) != (272000, 0.7):
+        raise ValueError("Generator must use the fixed context budget")
+    if generator["max_output_tokens"] not in (None, 32768):
+        raise ValueError("Generator output limit must be 32768 or null")
+    expected_input = math.floor(generator["context_window"] * generator["context_beta"]) - 32768
     if generator["max_input_tokens"] != expected_input:
-        raise ValueError(
-            "Generator input budget differs from floor(context_window*beta)-max_output"
-        )
+        raise ValueError("Generator input budget differs from the fixed context admission reserve")
     return ExperimentSpec(path, value)

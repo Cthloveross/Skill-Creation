@@ -114,6 +114,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="one benign task in Bubblewrap; no aggregate cgroup limits",
     )
+    parser.add_argument(
+        "--runtime",
+        choices=("workspace", "docker"),
+        help="execution backend; defaults to Docker for tau and author Codex",
+    )
     parser.add_argument("--task", action="append", help="restrict to selected task IDs")
     parser.add_argument(
         "--arm", choices=ARMS, action="append", help="restrict to selected conditions"
@@ -123,7 +128,24 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="run: do not rewrite report.json after each cell (parallel launcher mode)",
     )
+    parser.add_argument(
+        "--no-skill",
+        action="store_true",
+        help="evaluate: SkillsBench control with no package or learning stages",
+    )
+    parser.add_argument(
+        "--bundles-from",
+        type=Path,
+        help="evaluate: rescore sealed SkillsBench versions from a separate run",
+    )
     args = parser.parse_args(argv)
+    if args.no_skill and args.command != "evaluate":
+        parser.error("--no-skill is only valid with evaluate")
+    if args.bundles_from and (args.command != "evaluate" or args.no_skill):
+        parser.error("--bundles-from requires evaluate and cannot accompany --no-skill")
+    if args.demo and args.runtime is not None:
+        parser.error("--demo and --runtime are mutually exclusive")
+    runtime = "bubblewrap-demo" if args.demo else args.runtime or "workspace"
     try:
         if args.env_file is not None:
             load_env(args.env_file)
@@ -133,6 +155,20 @@ def main(argv: list[str] | None = None) -> int:
             else DEFAULT_CONFIG
         )
         spec = load_spec(config)
+        if (
+            not args.demo
+            and args.runtime is None
+            and (
+                spec.experiment == "tau" or spec.values["runtime"].get("executor") == "author-codex"
+            )
+        ):
+            runtime = "docker"
+        if (args.no_skill or args.bundles_from) and spec.experiment != "skillsbench":
+            parser.error("control evaluation requires --experiment skillsbench")
+        if (args.no_skill or args.bundles_from) and (
+            runtime != "docker" or spec.values["runtime"].get("executor") != "author-codex"
+        ):
+            parser.error("control evaluation requires --runtime docker and author-codex config")
         if args.experiment is not None and spec.experiment != args.experiment:
             parser.error("--experiment differs from the selected configuration")
         if args.task and set(args.task) - set(spec.tasks):
@@ -146,6 +182,7 @@ def main(argv: list[str] | None = None) -> int:
                 demo=args.demo,
                 authenticate=True,
                 task_ids=selected_tasks,
+                runtime=runtime,
             )
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 0 if result["ready"] else 2
@@ -164,6 +201,7 @@ def main(argv: list[str] | None = None) -> int:
                 demo=args.demo,
                 authenticate=True,
                 task_ids=selected_tasks,
+                runtime=runtime,
             )
             if not admission["ready"]:
                 print(json.dumps(admission, ensure_ascii=False, indent=2))
@@ -171,30 +209,38 @@ def main(argv: list[str] | None = None) -> int:
         args.run_dir.mkdir(parents=True, exist_ok=True)
         with run_locks(args.run_dir, cells if args.command != "report" else ()):
             interim_report = not args.no_interim_report
-            workflow = (
-                Workflow(
-                    spec,
-                    args.run_dir,
-                    demo=True,
-                    demo_task=args.task[0],
-                    interim_report=interim_report,
-                )
-                if args.demo
-                else Workflow(spec, args.run_dir, interim_report=interim_report)
+            workflow = Workflow(
+                spec,
+                args.run_dir,
+                demo=args.demo,
+                demo_task=args.task[0] if args.demo else None,
+                interim_report=interim_report,
+                runtime=runtime,
             )
             if args.command == "run":
                 result = workflow.run(cells)
             elif args.command == "report":
                 result = workflow.report()
             else:
-                getattr(workflow, args.command)(cells)
+                if args.no_skill:
+                    workflow.evaluate_no_skill(cells)
+                elif args.bundles_from:
+                    workflow.evaluate_imported(cells, args.bundles_from)
+                else:
+                    getattr(workflow, args.command)(cells)
                 result = {
                     "namespace": spec.values["schema_version"],
                     "stage": args.command,
                     "selected_cells": len(cells),
                     "run_dir": str(args.run_dir),
-                    "run_mode": "single-task-demo" if args.demo else "formal",
+                    "run_mode": "single-task-demo"
+                    if args.demo
+                    else "workspace"
+                    if runtime == "workspace"
+                    else "formal",
                 }
+                if (args.no_skill or args.bundles_from) and interim_report:
+                    result = workflow.report()
             print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except (OSError, ValueError, RuntimeError, KeyError) as exc:

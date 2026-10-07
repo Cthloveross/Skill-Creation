@@ -90,3 +90,34 @@ def test_journal_response_and_derived_result_tampering_detected(tmp_path):
     response_path.write_text(json.dumps(damaged))
     with pytest.raises(ValueError, match="integrity"):
         journal.response("phase")
+
+
+def test_local_orchestration_error_is_unsent_and_can_resume(tmp_path):
+    journal = Journal(tmp_path)
+
+    def unavailable():
+        raise ValueError("local_tokenizer_unavailable")
+
+    with pytest.raises(ValueError):
+        journal.dispatch("collect-base", {}, unavailable, external=False)
+    assert journal.status("collect-base") == "NOT_SENT"
+    assert not journal.dispatched("collect-base")
+    assert journal.dispatch("collect-base", {}, lambda: {"base": "fixed"}, external=False) == {
+        "base": "fixed"
+    }
+
+
+def test_provider_raw_response_status_and_bytes_are_hash_bound(tmp_path):
+    journal = Journal(tmp_path)
+
+    def invalid(status, body):
+        raise ValueError("invalid_provider_shape")
+
+    with pytest.raises(ValueError):
+        journal.dispatch_raw("s0", {}, lambda: None, lambda _: (200, b"raw"), invalid)
+    path = next(tmp_path.glob("*/raw-response.json"))
+    raw = json.loads(path.read_text())
+    raw["http_status"] = 401
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="integrity"):
+        journal.dispatch_raw("s0", {}, lambda: pytest.fail("must not resend"), None, invalid)

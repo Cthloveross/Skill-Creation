@@ -1,4 +1,4 @@
-schema_version: tau.skill-evolution.v2
+schema_version: tau.skill-evolution.v4
 seed: 20260904
 matrix_commitment: 1e12a8a525845f43b53cd52659488032464e5c4d15fe469a376bb4a3ca8519cd
 source:
@@ -325,7 +325,7 @@ embedding:
   gpu_uuid: GPU-1c51e1d6-08ac-129f-38dc-1824c5ab9698
   vllm: data/embedding/.venv/bin/vllm
 provider:
-  model: openai.gpt-5.5
+  model: openai.gpt-5.4
   transport: bedrock-responses
   region: us-east-1
   region_env: AWS_REGION
@@ -333,20 +333,23 @@ provider:
 roles:
   analyzer:
     reasoning_effort: medium
-    max_output_tokens: 16384
+    max_output_tokens: null
     prompt: analyzer.md
     max_input_tokens: 114688
   generator:
     reasoning_effort: high
-    max_output_tokens: 32768
+    max_output_tokens: null
     prompt: generator.md
     max_input_tokens: 157632
     context_window: 272000
     context_beta: 0.7
+    max_turns: 120
   verifier:
     reasoning_effort: medium
-    max_output_tokens: 16384
+    max_output_tokens: null
     prompt: verifier.md
+    max_turns: 30
+    diagnosis_turns: 8
     max_input_tokens: 114688
 acquisition:
   min_document_confidence: 0.1
@@ -358,6 +361,8 @@ acquisition:
 evolution:
   max_revisions: 15
   max_oracles: 5
+  max_oracle_errors: 5
+  revision_timeout_seconds: 3600
 runtime:
   request_timeout_seconds: 900
   episode_timeout_seconds: 3600

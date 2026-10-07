@@ -192,6 +192,80 @@ class SkillBundle:
         return result
 
 
+@dataclass(frozen=True)
+class EvolutionSubmission:
+    """A sealed candidate and the public observation from its learning execution."""
+
+    bundle: SkillBundle
+    public_trace: Mapping[str, Any]
+    execution_id: str
+    operation_cursor: int
+    initial: bool = False
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.bundle, SkillBundle) or not isinstance(self.public_trace, Mapping):
+            raise ValueError("invalid_evolution_submission")
+        if not isinstance(self.execution_id, str) or not self.execution_id:
+            raise ValueError("submission_execution_id_required")
+        if (
+            isinstance(self.operation_cursor, bool)
+            or not isinstance(self.operation_cursor, int)
+            or self.operation_cursor < 0
+            or not isinstance(self.initial, bool)
+        ):
+            raise ValueError("invalid_submission_cursor_or_phase")
+        trace = thaw_json(self.public_trace)
+        for name, expected in (
+            ("bundle_hash", self.bundle.bundle_hash),
+            ("execution_id", self.execution_id),
+            ("operation_cursor", self.operation_cursor),
+        ):
+            if name in trace and trace[name] != expected:
+                raise ValueError("submission_observation_binding_mismatch")
+            trace[name] = expected
+        object.__setattr__(self, "public_trace", freeze_json(trace))
+
+    @property
+    def trace_hash(self) -> str:
+        return canonical_json_sha256(thaw_json(self.public_trace))
+
+    def _payload(self) -> dict[str, Any]:
+        return {
+            "protocol": "skill-evolution.submission.v1",
+            "bundle": self.bundle.to_dict(),
+            "public_trace": thaw_json(self.public_trace),
+            "execution_id": self.execution_id,
+            "operation_cursor": self.operation_cursor,
+            "initial": self.initial,
+            "trace_hash": self.trace_hash,
+        }
+
+    @property
+    def submission_hash(self) -> str:
+        return canonical_json_sha256(self._payload())
+
+    def to_dict(self) -> dict[str, Any]:
+        return {**self._payload(), "submission_hash": self.submission_hash}
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> EvolutionSubmission:
+        if value.get("protocol") != "skill-evolution.submission.v1":
+            raise ValueError("incompatible_evolution_submission")
+        result = cls(
+            SkillBundle.from_dict(value["bundle"]),
+            value["public_trace"],
+            value["execution_id"],
+            value["operation_cursor"],
+            value["initial"],
+        )
+        if (
+            value.get("trace_hash") != result.trace_hash
+            or value.get("submission_hash") != result.submission_hash
+        ):
+            raise ValueError("evolution_submission_hash_mismatch")
+        return result
+
+
 def atomic_json(path: Path, value: Any) -> None:
     """Durably replace one JSON file; used before and after external requests."""
     path.parent.mkdir(parents=True, exist_ok=True)

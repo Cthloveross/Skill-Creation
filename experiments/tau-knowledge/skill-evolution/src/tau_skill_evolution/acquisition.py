@@ -10,10 +10,16 @@ from typing import Any
 from tau_skill_evolution.core._canonical import canonical_json_bytes, thaw_json
 
 from .artifacts import FrozenBase, normalize_document
+from .bank import BankWorkerError
 from .constants import EXPERIMENT_ROOT
-from .generator import invoke_model, model_messages, parse_model_json
-from .journal import Journal
-from .model import SerializedChatTokenCounter, authentication_status, is_credential_error
+from .generator import invoke_model, journaled_model_request, model_messages, parse_model_json
+from .journal import Journal, UnknownOperation
+from .model import (
+    ModelClientError,
+    SerializedChatTokenCounter,
+    authentication_status,
+    is_credential_error,
+)
 
 READ_ONLY_TOOL_NAMES = frozenset(
     {
@@ -126,9 +132,29 @@ def _selection(
         scores[identifier] = confidence
     if set(scores) != set(inventory):
         raise ValueError("score every document returned in full")
+    citations: list[dict[str, Any]] = []
+    for item in decision["evidence"]:
+        if (
+            not isinstance(item, Mapping)
+            or not isinstance(item.get("requirement"), str)
+            or not item["requirement"].strip()
+            or item.get("document_id") not in scores
+            or scores[item["document_id"]] < min_document_confidence
+        ):
+            raise ValueError("evidence must cite selected full-text documents")
+        if "quote" in item and (
+            not isinstance(item["quote"], str)
+            or not item["quote"]
+            or item["quote"] not in inventory[item["document_id"]]["content"]
+        ):
+            raise ValueError("evidence quote is absent from the cited document")
+        citations.append(
+            {key: item[key] for key in ("requirement", "document_id", "quote") if key in item}
+        )
+    required = {item["document_id"] for item in citations}
     ids = sorted(
         (identifier for identifier, score in scores.items() if score >= min_document_confidence),
-        key=lambda identifier: (-scores[identifier], identifier),
+        key=lambda identifier: (identifier not in required, -scores[identifier], identifier),
     )
     documents = [dict(inventory[identifier]) for identifier in ids]
     count = _token_count(token_counter, documents)
@@ -141,47 +167,44 @@ def _selection(
                 documents.append(candidate)
                 count = trial_count
         ids = [item["document_id"] for item in documents]
-    evidence: list[dict[str, Any]] = []
-    for item in decision["evidence"]:
-        if (
-            not isinstance(item, Mapping)
-            or not isinstance(item.get("requirement"), str)
-            or not item["requirement"].strip()
-            or item.get("document_id") not in ids
-        ):
-            raise ValueError("evidence must cite selected full-text documents")
-        if "quote" in item and (
-            not isinstance(item["quote"], str)
-            or not item["quote"]
-            or item["quote"] not in inventory[item["document_id"]]["content"]
-        ):
-            raise ValueError("evidence quote is absent from the cited document")
-        # Keep only the public citation, never arbitrary extra model fields.
-        evidence.append(
-            {key: item[key] for key in ("requirement", "document_id", "quote") if key in item}
-        )
+    evidence = [item for item in citations if item["document_id"] in ids]
     return documents, evidence, count
+
+
+def _invalid_coverage(
+    decision: Mapping[str, Any], ids: set[str], evidence: Sequence[Mapping[str, Any]]
+) -> list[str]:
+    coverage = decision["coverage"]
+    cited = {item["document_id"] for item in evidence}
+    invalid = [f"coverage.{category}" for category in coverage if category not in _COVERAGE]
+    for category in _COVERAGE:
+        value = coverage.get(category)
+        if isinstance(value, Mapping):
+            valid = (
+                set(value) == {"not_applicable"}
+                and isinstance(value["not_applicable"], str)
+                and bool(value["not_applicable"].strip())
+            )
+        else:
+            valid = (
+                isinstance(value, list)
+                and bool(value)
+                and all(isinstance(item, str) and item in ids and item in cited for item in value)
+            )
+        if not valid:
+            invalid.append(f"coverage.{category}")
+    return invalid
 
 
 def _sufficient(
     decision: Mapping[str, Any], ids: set[str], evidence: Sequence[Mapping[str, Any]]
 ) -> bool:
-    coverage = decision["coverage"]
-    cited = {item["document_id"] for item in evidence}
     return bool(
         decision["sufficient"]
         and not decision["gaps"]
         and not decision["conflicts"]
         and ids
-        and all(
-            isinstance(coverage.get(category), list)
-            and coverage[category]
-            and all(
-                isinstance(identifier, str) and identifier in ids and identifier in cited
-                for identifier in coverage[category]
-            )
-            for category in _COVERAGE
-        )
+        and not _invalid_coverage(decision, ids, evidence)
     )
 
 
@@ -202,6 +225,7 @@ def collect_base(
     input_token_limit: int = 114688,
     min_document_confidence: float = 0.1,
     allowed_read_only_tool_names: Sequence[str] = tuple(sorted(READ_ONLY_TOOL_NAMES)),
+    action_dispatcher: Callable[[str, Mapping[str, Any]], Any] | None = None,
 ) -> FrozenBase:
     """Freeze the last legal score-filtered base, then revoke the large corpus.
 
@@ -245,6 +269,9 @@ def collect_base(
     public["clarifications"] = []
     public["read_only_observations"] = []
     inventory: dict[str, dict[str, Any]] = {}
+    scores: dict[str, Mapping[str, Any]] = {}
+    pending: list[str] = []
+    unreviewable: list[str] = []
     observations: list[dict[str, Any]] = []
     selected: list[dict[str, Any]] = []
     evidence: list[dict[str, Any]] = []
@@ -256,10 +283,16 @@ def collect_base(
         "read_only": budgets.read_only_queries,
     }
     stop_reason = "budget_exhausted_incomplete"
+    stop_detail = "analyzer_steps_exhausted"
+    last_decision: Mapping[str, Any] = {}
     input_counter = SerializedChatTokenCounter(token_counter)
 
     def dispatch(identifier: str, payload: Any, callback: Callable[[], Any]) -> Any:
-        return callback() if journal is None else journal.dispatch(identifier, payload, callback)
+        if journal is None:
+            return callback()
+        # Recoverable bank actions journal their actual POSTs inside the private worker.
+        local = action_dispatcher is not None and payload.get("kind") in {"clarify", "read_only"}
+        return journal.dispatch(identifier, payload, callback, external=not local)
 
     def has_budget() -> bool:
         return (
@@ -270,20 +303,31 @@ def collect_base(
             and counters["read_only"] < limits["read_only"]
         )
 
-    def perform(kind: str, action: Mapping[str, Any]) -> dict[str, Any]:
+    def perform(kind: str, action: Mapping[str, Any], identifier: str) -> dict[str, Any]:
         try:
             if kind == "search":
                 result = _search(corpus, action["query"])
+            elif action_dispatcher is not None:
+                result = action_dispatcher(identifier, action)
             elif kind == "clarify":
                 result = clarify(action["question"])
-                if not isinstance(result, str):
-                    raise ValueError("clarification must return public text without tool events")
             else:
                 result = read_only_tools[action["tool"]](**dict(action["arguments"]))
+            if kind == "clarify" and not isinstance(result, str):
+                raise ValueError("clarification must return public text without tool events")
             canonical_json_bytes(result)
             return {"status": "ok", "result": result}
         except Exception as exc:
-            if authentication_status(exc) is not None or is_credential_error(exc):
+            if (
+                isinstance(exc, UnknownOperation)
+                or isinstance(exc, ModelClientError)
+                and exc.code in {"acquisition_received_invalid", "acquisition_recovery_failed"}
+                or action_dispatcher is not None
+                and isinstance(exc, BankWorkerError)
+                and not exc.response_received
+                or authentication_status(exc) is not None
+                or is_credential_error(exc)
+            ):
                 raise
             return {"status": "error", "error": str(exc)}
 
@@ -295,7 +339,9 @@ def collect_base(
             action = {"kind": "read_only", "tool": "get_current_time", "arguments": {}}
             counters["read_only"] = 1
             result = dispatch(
-                f"{operation_prefix}/read_only/0", action, lambda: perform("read_only", action)
+                f"{operation_prefix}/read_only/0",
+                action,
+                lambda: perform("read_only", action, f"{operation_prefix}/read_only/0"),
             )
             observations.append({"kind": "read_only", "action": action, **result})
             public["read_only_observations"].append(
@@ -305,35 +351,121 @@ def collect_base(
             payload = {
                 "role": "analyzer",
                 "public_inputs": public,
-                "returned_documents": list(inventory.values()),
-                "observations": observations,
+                "returned_documents": list(selected),
+                "reviewed_documents": [
+                    {
+                        "document_id": identifier,
+                        "title": inventory[identifier]["title"],
+                        "confidence": score["confidence"],
+                    }
+                    for identifier, score in scores.items()
+                ],
+                "observations": observations[-10:],
+                "previous_gaps": last_decision.get("gaps", []),
+                "previous_coverage": last_decision.get("coverage", {}),
+                "previous_conflicts": last_decision.get("conflicts", []),
+                "unreviewable_document_ids": list(unreviewable),
                 "selected_document_ids": [item["document_id"] for item in selected],
                 "allowed_read_only_tools": sorted(read_only_tools),
                 "tool_schemas": public_schemas,
                 "remaining": {key: limits[key] - value for key, value in counters.items()},
                 "base_token_limit": budgets.base_tokens,
                 "min_document_confidence": min_document_confidence,
+                "pending_review_count": len(pending),
+                "final_review": step == budgets.analyzer_steps - 1,
             }
-            # A full retrieval union may exceed the next request even when the
-            # selected base fits. Freeze before dispatch; tokenizer failures must
-            # propagate rather than become either budget exhaustion or unknown calls.
             if input_counter.count(model_messages(payload, system_prompt)) > input_token_limit:
+                stop_detail = "public_inputs_or_selected_base_exceed_context"
                 break
-            raw = dispatch(
-                f"{operation_prefix}/analyzer/{step}",
-                {"inputs": payload, "system_prompt": system_prompt, "seed": seed},
-                lambda payload=payload: invoke_model(model, payload, system_prompt, seed=seed),
+            reviewed_ids = {item["document_id"] for item in selected}
+            batch: list[str] = []
+            for identifier in list(pending):
+                if identifier in reviewed_ids:
+                    batch.append(identifier)
+                    continue
+                trial = {
+                    **payload,
+                    "returned_documents": [*payload["returned_documents"], inventory[identifier]],
+                    "pending_review_count": len(pending) - len(batch) - 1,
+                }
+                if input_counter.count(model_messages(trial, system_prompt)) <= input_token_limit:
+                    payload = trial
+                    reviewed_ids.add(identifier)
+                    batch.append(identifier)
+                elif not batch:
+                    # An oversized hit must not prevent a later short hit being read.
+                    unreviewable.append(identifier)
+                    pending.remove(identifier)
+                    payload["unreviewable_document_ids"] = list(unreviewable)
+                    payload["pending_review_count"] = len(pending) - len(batch)
+            payload["pending_review_count"] = len(pending) - len(batch)
+            payload["unreviewable_document_ids"] = list(unreviewable)
+            if input_counter.count(model_messages(payload, system_prompt)) > input_token_limit:
+                stop_detail = "public_inputs_or_selected_base_exceed_context"
+                break
+            request_payload = {"inputs": payload, "system_prompt": system_prompt, "seed": seed}
+            raw = (
+                journaled_model_request(
+                    model,
+                    journal,
+                    f"{operation_prefix}/analyzer/{step}",
+                    request_payload,
+                    model_messages(payload, system_prompt),
+                    seed=seed,
+                )
+                if journal is not None
+                else invoke_model(model, payload, system_prompt, seed=seed)
             )
             try:
                 decision = _decision(raw)
+                incoming = {
+                    item.get("document_id")
+                    for item in decision["document_scores"]
+                    if isinstance(item, Mapping)
+                }
+                if not set(batch).issubset(incoming):
+                    raise ValueError("score every newly presented full-text document")
+                if any(
+                    identifier not in reviewed_ids and identifier not in scores
+                    for identifier in incoming
+                ):
+                    raise ValueError("cannot score a document not yet reviewed")
+                updates = {item["document_id"]: item for item in decision["document_scores"]}
+                if len(updates) != len(decision["document_scores"]):
+                    raise ValueError("score IDs must be unique")
+                combined = {**scores, **updates}
+                scored_inventory = {identifier: inventory[identifier] for identifier in combined}
+                scored_decision = {**decision, "document_scores": list(combined.values())}
                 proposed, proposed_evidence, proposed_count = _selection(
-                    decision, inventory, token_counter, budgets.base_tokens, min_document_confidence
+                    scored_decision,
+                    scored_inventory,
+                    token_counter,
+                    budgets.base_tokens,
+                    min_document_confidence,
                 )
+                scores = combined
+                pending = [identifier for identifier in pending if identifier not in incoming]
                 selected, evidence, count = proposed, proposed_evidence, proposed_count
+                last_decision = decision
+                packed_ids = {item["document_id"] for item in selected}
+                dropped_citations = sorted(
+                    {item["document_id"] for item in decision["evidence"]} - packed_ids
+                )
+                if dropped_citations:
+                    observations.append(
+                        {
+                            "kind": "controller_error",
+                            "error": "base_capacity_exceeded",
+                            "dropped_citations": dropped_citations,
+                        }
+                    )
+                    stop_detail = "base_capacity_exceeded"
             except (ValueError, TypeError, KeyError, UnicodeError) as exc:
                 observations.append({"kind": "controller_error", "error": str(exc)})
                 if not has_budget():
-                    break
+                    stop_detail = "acquisition_actions_exhausted"
+                    if not pending:
+                        break
                 continue
             action = decision["action"]
             kind = action.get("kind")
@@ -343,25 +475,28 @@ def collect_base(
                         {"kind": "controller_error", "error": "invalid freeze action"}
                     )
                     continue
-                if _sufficient(decision, {item["document_id"] for item in selected}, evidence):
+                if (
+                    not pending
+                    and not dropped_citations
+                    and _sufficient(decision, {item["document_id"] for item in selected}, evidence)
+                ):
                     stop_reason = "sufficient"
+                    stop_detail = "supported_public_requirements"
                     break
-                if not has_budget():
+                if not has_budget() and not pending:
+                    stop_detail = "acquisition_actions_exhausted"
                     break
-                missing = []
-                cited = {item["document_id"] for item in evidence}
-                ids = {item["document_id"] for item in selected}
-                for category in _COVERAGE:
-                    coverage = decision["coverage"].get(category)
-                    if (
-                        not isinstance(coverage, list)
-                        or not coverage
-                        or any(
-                            not isinstance(item, str) or item not in ids or item not in cited
-                            for item in coverage
-                        )
-                    ):
-                        missing.append(f"coverage.{category}")
+                if pending:
+                    observations.append(
+                        {
+                            "kind": "controller_error",
+                            "error": "review remaining returned documents before freezing",
+                        }
+                    )
+                    continue
+                missing = _invalid_coverage(
+                    decision, {item["document_id"] for item in selected}, evidence
+                )
                 observations.append(
                     {
                         "kind": "controller_error",
@@ -373,6 +508,15 @@ def collect_base(
                 )
                 continue
             if not has_budget():
+                if pending:
+                    continue
+                stop_detail = "acquisition_actions_exhausted"
+                break
+            if pending:
+                # Review the returned batch before adding more material.
+                continue
+            if step == budgets.analyzer_steps - 1:
+                stop_detail = "analyzer_steps_exhausted"
                 break
             if kind not in limits:
                 observations.append(
@@ -425,7 +569,9 @@ def collect_base(
             result = dispatch(
                 f"{operation_prefix}/{kind}/{call_index}",
                 dict(action),
-                lambda kind=kind, action=action: perform(kind, action),
+                lambda kind=kind, action=action, call_index=call_index: perform(
+                    kind, action, f"{operation_prefix}/{kind}/{call_index}"
+                ),
             )
             if kind != "search":
                 observations.append({"kind": kind, "action": dict(action), **result})
@@ -460,6 +606,8 @@ def collect_base(
                         if previous is not None and previous != document:
                             raise ValueError("document content changed within fixed resource pool")
                         inventory[document["document_id"]] = document
+                        if previous is None:
+                            pending.append(document["document_id"])
                         if document["document_id"] not in observation["returned_document_ids"]:
                             observation["returned_document_ids"].append(document["document_id"])
                     except (ValueError, TypeError, UnicodeError) as exc:
@@ -470,6 +618,19 @@ def collect_base(
                 public["read_only_observations"].append(
                     {"tool": action["tool"], "arguments": dict(action["arguments"]), **result}
                 )
+        if journal is not None:
+            summary = {
+                "stop_reason": stop_reason,
+                "stop_detail": stop_detail,
+                "counters": counters,
+                "returned_document_ids": list(inventory),
+                "document_scores": list(scores.values()),
+                "unreviewed_document_ids": pending,
+                "unreviewable_document_ids": unreviewable,
+                "selected_document_ids": [item["document_id"] for item in selected],
+                "observations": observations,
+            }
+            journal.dispatch(f"{operation_prefix}-summary", {}, lambda: summary, external=False)
         return FrozenBase(
             documents=tuple(selected),
             public_inputs=public,

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Prepare and seal the user-owned runtime for the explicitly approved demo."""
+"""Prepare a locked local runtime; explicitly upgrade legacy Python-only roots."""
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -17,6 +18,56 @@ ROOTFS = EXPERIMENT / "data" / "bubblewrap" / "rootfs"
 LOCK = RUNTIME / "bubblewrap-lock.json"
 REQUIREMENTS = RUNTIME / "requirements.lock"
 VERSION = [3, 11, 14]
+TERMINAL_TOOLS = (
+    "sh",
+    "cat",
+    "ls",
+    "head",
+    "tail",
+    "wc",
+    "sed",
+    "grep",
+    "sort",
+    "cut",
+    "tr",
+    "cp",
+    "mv",
+    "rm",
+    "mkdir",
+    "touch",
+    "chmod",
+    "pwd",
+    "date",
+    "find",
+    "xargs",
+    "timeout",
+    "true",
+    "false",
+    "printf",
+    "env",
+    "test",
+    "sleep",
+    "sha256sum",
+)
+
+
+def copy_terminal_tools(root: Path) -> None:
+    source = shutil.which("busybox")
+    if source is None:
+        raise RuntimeError("BusyBox is required to prepare the isolated terminal")
+    source = Path(source).resolve(strict=True)
+    available = subprocess.run(
+        [str(source), "--list"], capture_output=True, text=True, timeout=10, check=True
+    ).stdout.splitlines()
+    if not set(TERMINAL_TOOLS) <= set(available):
+        raise RuntimeError("the available BusyBox lacks required terminal tools")
+    binary = root / "usr/bin/busybox"
+    binary.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, binary)
+    for name in TERMINAL_TOOLS:
+        target = root / "bin" / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.symlink_to("../usr/bin/busybox")
 
 
 def sha256(path: Path) -> str:
@@ -94,6 +145,8 @@ def check_runtime(root: Path) -> dict:
         "/dev",
         "--tmpfs",
         "/tmp",
+        "--perms",
+        "0777",
         "--tmpfs",
         "/work",
         "--uid",
@@ -102,7 +155,7 @@ def check_runtime(root: Path) -> dict:
         "65534",
         "--setenv",
         "PATH",
-        "/usr/local/bin",
+        "/usr/local/bin:/usr/bin:/bin",
         "--setenv",
         "OPENBLAS_NUM_THREADS",
         "1",
@@ -122,14 +175,51 @@ def check_runtime(root: Path) -> dict:
     expected = {"python": VERSION, "numpy": "2.2.6", "pandas": "2.2.3", "pytest": "8.4.2"}
     if measured != expected:
         raise RuntimeError("actual Bubblewrap imports differ from the pinned runtime")
+    terminal_command = command[:-5] + [
+        "/bin/sh",
+        "-c",
+        "mkdir -p /work/scripts /work/references && "
+        "printf 'VALUE = 7\\n' > /work/scripts/helper.py && "
+        "printf public > /work/references/policy.txt && "
+        "cat /work/references/policy.txt > /work/copy && "
+        "python -I -B -c \"import json,pathlib,sys;sys.path.insert(0,'/work/scripts');"
+        "import helper;print(json.dumps({'helper':helper.VALUE,"
+        "'reference':pathlib.Path('/work/copy').read_text()}))\"",
+    ]
+    terminal = subprocess.run(
+        terminal_command, capture_output=True, text=True, timeout=60, check=True
+    )
+    if json.loads(terminal.stdout) != {"helper": 7, "reference": "public"}:
+        raise RuntimeError("actual Bubblewrap terminal helper/reference check failed")
     return measured
 
 
-def main() -> None:
+def seal(root: Path, dependency_hash: str) -> None:
+    files, symlinks = manifest(root)
+    lock = {
+        "rootfs": os.path.relpath(root, RUNTIME),
+        "files": files,
+        "symlinks": symlinks,
+        "python_version": VERSION,
+        "dependency_hash": dependency_hash,
+        "aggregate_limits_enforced": False,
+        "terminal_tools": list(TERMINAL_TOOLS),
+    }
+    temporary = LOCK.with_suffix(".tmp")
+    with temporary.open("w") as stream:
+        json.dump(lock, stream, indent=2, sort_keys=True)
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    temporary.replace(LOCK)
+
+
+def main(*, terminal: bool = False) -> None:
     dependency_hash = sha256(REQUIREMENTS)
     if LOCK.exists():
         lock = json.loads(LOCK.read_text())
-        files, symlinks = manifest(ROOTFS)
+        root = (RUNTIME / lock["rootfs"]).resolve(strict=True)
+        files, symlinks = manifest(root)
         if (
             lock.get("dependency_hash") != dependency_hash
             or lock.get("files") != files
@@ -137,10 +227,51 @@ def main() -> None:
             or lock.get("python_version") != VERSION
         ):
             raise ValueError("existing runtime lock does not match; preserve it for inspection")
-        check_runtime(ROOTFS)
+        if terminal and not (root / "bin/sh").is_file():
+            destination = ROOTFS.with_name("rootfs-terminal")
+            stage = ROOTFS.with_name(".rootfs-terminal-preparing")
+            if destination.exists() or stage.exists():
+                raise ValueError("terminal staging already exists; preserve it for inspection")
+            historical = ROOTFS.parent / "locks" / f"{sha256(LOCK)}.json"
+            historical.parent.mkdir(parents=True, exist_ok=True)
+            if not historical.exists():
+                shutil.copy2(LOCK, historical)
+            shutil.copytree(root, stage, symlinks=True)
+            copy_terminal_tools(stage)
+            copy_libraries(stage)
+            check_runtime(stage)
+            stage.rename(destination)
+            seal(destination, dependency_hash)
+            print(
+                json.dumps(
+                    {
+                        "ready": True,
+                        "reused": False,
+                        "rootfs": str(destination),
+                        "previous_rootfs_preserved": str(root),
+                        "previous_lock": str(historical),
+                        "lock_sha256": sha256(LOCK),
+                        "terminal": True,
+                        "aggregate_limits_enforced": False,
+                    }
+                )
+            )
+            return
+        try:
+            check_runtime(root)
+        except subprocess.CalledProcessError as exc:
+            raise RuntimeError(
+                "locked terminal is unavailable; use --terminal to prepare a new root"
+            ) from exc
         print(
             json.dumps(
-                {"ready": True, "reused": True, "rootfs": str(ROOTFS), "lock_sha256": sha256(LOCK)}
+                {
+                    "ready": True,
+                    "reused": True,
+                    "rootfs": str(root),
+                    "lock_sha256": sha256(LOCK),
+                    "terminal": True,
+                }
             )
         )
         return
@@ -204,27 +335,14 @@ def main() -> None:
     (stage / "etc" / "nsswitch.conf").write_text("passwd: files\ngroup: files\nhosts: files\n")
     for path in sorted(stage.rglob("__pycache__"), reverse=True):
         shutil.rmtree(path)
+    copy_terminal_tools(stage)
     copy_libraries(stage)
     measured = check_runtime(stage)
     files, symlinks = manifest(stage)
     if ROOTFS.exists():
         raise ValueError("unsealed rootfs already exists; preserve it for inspection")
     stage.rename(ROOTFS)
-    lock = {
-        "rootfs": "../data/bubblewrap/rootfs",
-        "files": files,
-        "symlinks": symlinks,
-        "python_version": VERSION,
-        "dependency_hash": dependency_hash,
-        "aggregate_limits_enforced": False,
-    }
-    temporary = LOCK.with_suffix(".tmp")
-    with temporary.open("w") as stream:
-        json.dump(lock, stream, indent=2, sort_keys=True)
-        stream.write("\n")
-        stream.flush()
-        os.fsync(stream.fileno())
-    temporary.replace(LOCK)
+    seal(ROOTFS, dependency_hash)
     print(
         json.dumps(
             {
@@ -242,4 +360,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--terminal",
+        action="store_true",
+        help="clone a sealed Python-only runtime and add locked terminal tools",
+    )
+    main(terminal=parser.parse_args().terminal)

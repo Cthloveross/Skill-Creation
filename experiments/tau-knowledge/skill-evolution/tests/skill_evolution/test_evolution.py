@@ -1,8 +1,12 @@
 import pytest
-from tau_skill_evolution.artifacts import FrozenBase, SkillBundle
+from tau_skill_evolution.artifacts import EvolutionSubmission, FrozenBase, SkillBundle
 from tau_skill_evolution.container import ProgramResult
-from tau_skill_evolution.evolution import EvolutionEngine, EvolutionResult
-from tau_skill_evolution.generator import CreationFailure, GeneratorContextBudgetExhausted
+from tau_skill_evolution.evolution import EvolutionEngine, EvolutionResult, OracleUnavailable
+from tau_skill_evolution.generator import (
+    CreationFailure,
+    GeneratorContextBudgetExhausted,
+    RevisionFailure,
+)
 from tau_skill_evolution.journal import Journal, UnknownOperation
 from tau_skill_evolution.model import ModelClientError
 from tau_skill_evolution.verifier import SurrogateVerifier, TestSuite, VerificationReport
@@ -33,6 +37,14 @@ class Verifier:
         return VerificationReport(previous_tests, passed, 1 if passed else 0)
 
 
+def _submission(bundle, trace=None, *, initial=False, execution_id="learning-episode", cursor=0):
+    return EvolutionSubmission(bundle, trace or {"events": []}, execution_id, cursor, initial)
+
+
+def _initial_submission(bundle, *args, **kwargs):
+    return _submission(bundle, initial=True)
+
+
 def run(outcomes, oracles, revise, **kwargs):
     initial = SkillBundle({"SKILL.md": "initial"})
     traces, oracle_hashes = [], []
@@ -40,23 +52,37 @@ def run(outcomes, oracles, revise, **kwargs):
     kwargs.setdefault("max_revisions", 4)
     oracle_values = iter(oracles)
 
-    def rollout(bundle):
+    def execute_initial(bundle, *args, **options):
+        assert options["operation_id"] == "evolution-initial-execution"
         traces.append(bundle.bundle_hash)
-        return {"bundle_hash": bundle.bundle_hash, "events": []}
+        return _submission(bundle, initial=True)
+
+    def submit_revision(*args, **options):
+        submission = revise(*args, **options)
+        assert isinstance(submission, EvolutionSubmission)
+        traces.append(submission.bundle.bundle_hash)
+        return submission
 
     def oracle(bundle):
         oracle_hashes.append(bundle.bundle_hash)
         return next(oracle_values)
 
     result = EvolutionEngine(
-        rollout=rollout, oracle=oracle, verifier=verifier, revise=revise, **kwargs
+        execute_initial=execute_initial,
+        oracle=oracle,
+        verifier=verifier,
+        revise=submit_revision,
+        **kwargs,
     ).run({}, FrozenBase((), {}), initial)
     return result, verifier, traces, oracle_hashes
 
 
 def revised(previous, *args, **kwargs):
-    return SkillBundle(
-        {"SKILL.md": previous.files["SKILL.md"] + " updated"}, parent_hash=previous.bundle_hash
+    return _submission(
+        SkillBundle(
+            {"SKILL.md": previous.files["SKILL.md"] + " updated"}, parent_hash=previous.bundle_hash
+        ),
+        cursor=1,
     )
 
 
@@ -67,16 +93,39 @@ def test_failure_revises_parent_and_tests_stay_fixed_then_early_stops():
     assert len(result.versions) == 2 and len(traces) == 2 and len(oracle_hashes) == 1
     assert verifier.checks[0][1] == verifier.checks[1][1]
     assert result.versions[1].parent_hash == result.versions[0].bundle_hash
+    for report, submission in zip(result.verifications, result.submissions, strict=True):
+        assert report["submission_hash"] == submission["submission_hash"]
+        assert report["trace_hash"] == submission["trace_hash"]
+        assert report["execution_id"] == submission["execution_id"]
+        assert report["operation_cursor"] == submission["operation_cursor"]
     assert EvolutionResult.from_dict(result.to_dict()).to_dict() == result.to_dict()
 
 
-def test_oracle_fail_escalates_then_fresh_same_bundle_before_revision():
+def test_revision_receives_current_public_execution_without_verifier_evidence():
+    observations = []
+
+    def revise(previous, *args, public_trace, feedback_history, **kwargs):
+        observations.append(public_trace)
+        assert public_trace["bundle_hash"] == previous.bundle_hash
+        assert all("diagnosis" not in item and "suite" not in item for item in feedback_history)
+        return revised(previous)
+
+    result, _, traces, _ = run([False, False, True], [True], revise)
+    assert [trace["bundle_hash"] for trace in observations] == traces[:2]
+    assert len(result.versions) == 3 and result.oracle_calls == 1
+
+
+def test_oracle_fail_upgrades_checks_against_same_submitted_observation_before_revision():
     result, verifier, traces, oracle_hashes = run([True, False, True], [False, True], revised)
     assert result.stop_reason == "oracle_success"
     assert result.revision_attempts == 1 and result.oracle_calls == 2
-    assert traces[0] == traces[1] and traces[2] != traces[1]
+    assert len(traces) == 2 and traces[0] != traces[1]
+    assert verifier.checks[0][0] == verifier.checks[1][0] == traces[0]
     assert verifier.checks[0][1] != verifier.checks[1][1] == verifier.checks[2][1]
     assert len(verifier.escalations) == 1
+    assert result.verifications[0]["submission_hash"] == result.verifications[1]["submission_hash"]
+    assert result.verifications[0]["trace_hash"] == result.verifications[1]["trace_hash"]
+    assert result.verifications[2]["submission_hash"] != result.verifications[1]["submission_hash"]
 
 
 def test_fourth_revised_package_is_checked_before_budget_stop():
@@ -91,8 +140,32 @@ def test_five_oracle_calls_stop_without_creating_unused_revision():
     result, verifier, traces, oracle_hashes = run([True] * 5, [False] * 5, revised)
     assert result.stop_reason == "oracle_budget_exhausted"
     assert result.oracle_calls == 5 and result.revision_attempts == 0
-    assert len(verifier.escalations) == 4 and len(traces) == 5
+    assert len(verifier.escalations) == 4 and len(traces) == 1
     assert len(set(oracle_hashes)) == 1
+    assert len(result.submissions) == 1 and result.submissions[0]["initial"]
+    assert result.to_dict()["submitted_learning_executions"] == 1
+
+
+@pytest.mark.parametrize("violation", ["modified_bundle", "wrong_phase"])
+def test_initial_execution_cannot_modify_s0_or_submit_as_a_revision(violation):
+    initial = SkillBundle({"SKILL.md": "initial"})
+
+    def execute_initial(bundle, *args, **kwargs):
+        candidate = (
+            SkillBundle({"SKILL.md": "changed"}) if violation == "modified_bundle" else bundle
+        )
+        return _submission(candidate, initial=violation != "wrong_phase")
+
+    result = EvolutionEngine(
+        execute_initial=execute_initial,
+        oracle=lambda _: pytest.fail("invalid S0 execution cannot score"),
+        verifier=None,
+        revise=lambda *a, **k: pytest.fail("invalid S0 execution cannot evolve"),
+    ).run({}, FrozenBase((), {}), initial)
+    assert result.stop_reason == "initial_execution_failed"
+    assert result.versions == (initial,) and result.final_bundle == initial
+    assert result.submissions == result.verifications == result.attempts == ()
+    assert result.oracle_calls == result.revision_attempts == 0
 
 
 @pytest.mark.parametrize("kind", ["invalid", "unchanged"])
@@ -100,10 +173,11 @@ def test_invalid_and_unchanged_attempts_consume_budget(kind):
     def revise(previous, *args, **kwargs):
         if kind == "invalid":
             raise CreationFailure("invalid_package")
-        return SkillBundle(previous.files, parent_hash=previous.bundle_hash)
+        return _submission(SkillBundle(previous.files, parent_hash=previous.bundle_hash))
 
     result, _, traces, _ = run([False] * 5, [], revise)
-    assert result.revision_attempts == 4 and len(result.versions) == 1 and len(traces) == 5
+    assert result.revision_attempts == 4 and len(result.versions) == 1
+    assert len(traces) == (1 if kind == "invalid" else 5)
     assert all(item["status"] == kind for item in result.attempts)
 
 
@@ -119,11 +193,37 @@ def test_unknown_revision_is_never_reissued():
     assert result.attempts[0]["status"] == "result_unknown" and len(calls) == 1
 
 
+def test_known_revision_cleanup_failure_stops_without_another_attempt(tmp_path):
+    calls = []
+
+    def revise(*args, **kwargs):
+        calls.append(kwargs["operation_id"])
+        raise RevisionFailure("cleanup_failed", dispatched=True)
+
+    journal = Journal(tmp_path / "journal")
+    result, _, traces, oracles = run([False], [], revise, journal=journal)
+    assert result.stop_reason == "cleanup_failed"
+    assert result.revision_attempts == 1 and len(result.versions) == 1
+    assert len(traces) == 1 and oracles == [] and calls == ["evolution-revision-1"]
+    assert result.attempts[0]["status"] == "invalid"
+    assert result.attempts[0]["status"] != "result_unknown"
+    assert journal.completed("evolution-result")
+    restored = EvolutionEngine(
+        execute_initial=lambda *a, **k: pytest.fail("sealed cleanup stop cannot execute again"),
+        oracle=lambda _: pytest.fail("sealed cleanup stop cannot score"),
+        verifier=None,
+        revise=lambda *a, **k: pytest.fail("sealed cleanup stop cannot revise"),
+        journal=journal,
+        max_revisions=4,
+    ).run({}, FrozenBase((), {}), result.versions[0])
+    assert restored.to_dict() == result.to_dict()
+
+
 def test_resume_uses_sealed_evolution_result(tmp_path):
     journal = Journal(tmp_path / "journal")
     initial = SkillBundle({"SKILL.md": "initial"})
     engine = EvolutionEngine(
-        rollout=lambda b: {"bundle_hash": b.bundle_hash},
+        execute_initial=_initial_submission,
         oracle=lambda b: True,
         verifier=Verifier([True]),
         revise=revised,
@@ -131,13 +231,110 @@ def test_resume_uses_sealed_evolution_result(tmp_path):
     )
     result = engine.run({}, FrozenBase((), {}), initial)
 
-    def forbidden(*args):
+    def forbidden(*args, **kwargs):
         raise AssertionError("a sealed execution must not run again")
 
     resumed = EvolutionEngine(
-        rollout=forbidden, oracle=forbidden, verifier=None, revise=forbidden, journal=journal
+        execute_initial=forbidden,
+        oracle=forbidden,
+        verifier=None,
+        revise=forbidden,
+        journal=journal,
     ).run({}, FrozenBase((), {}), initial)
     assert resumed.to_dict() == result.to_dict()
+
+
+@pytest.mark.parametrize("contents", [("middle", "initial"), ("middle", "later", "middle")])
+@pytest.mark.parametrize("oracle_success", [False, True])
+def test_revisited_content_keeps_actual_final_parent_and_resumes(
+    tmp_path, contents, oracle_success
+):
+    values = iter(contents)
+
+    def revisit(previous, *args, **kwargs):
+        return _submission(
+            SkillBundle({"SKILL.md": next(values)}, parent_hash=previous.bundle_hash)
+        )
+
+    journal = Journal(tmp_path)
+    result, _, _, oracle_hashes = run(
+        [False] * len(contents) + [oracle_success],
+        [True] if oracle_success else [],
+        revisit,
+        journal=journal,
+        max_revisions=len(contents),
+    )
+    assert result.final_bundle.files["SKILL.md"] == contents[-1]
+    assert result.final_bundle.parent_hash == result.attempts[-1]["parent_hash"]
+    assert result.final_bundle_ref == {
+        "bundle_hash": result.final_bundle_hash,
+        "parent_hash": result.attempts[-1]["parent_hash"],
+    }
+    assert len(result.versions) == len(set(("initial", *contents)))
+    assert result.versions[0].parent_hash is None
+    assert result.stop_reason == (
+        "oracle_success" if oracle_success else "revision_budget_exhausted"
+    )
+    assert oracle_hashes == ([result.final_bundle_hash] if oracle_success else [])
+    assert EvolutionResult.from_dict(result.to_dict()).final_bundle == result.final_bundle
+    restored = EvolutionEngine(
+        execute_initial=lambda *a, **k: pytest.fail("sealed result must not execute"),
+        oracle=lambda _: pytest.fail("sealed result must not score"),
+        verifier=None,
+        revise=lambda *a, **k: pytest.fail("sealed result must not revise"),
+        journal=journal,
+        max_revisions=len(contents),
+    ).run({}, FrozenBase((), {}), result.versions[0])
+    assert restored.to_dict() == result.to_dict() and restored.final_bundle == result.final_bundle
+
+
+def test_legacy_final_result_can_be_read_without_fabricating_lineage():
+    result, _, _, _ = run([True], [True], revised)
+    legacy = result.to_dict()
+    del legacy["final_bundle_ref"]
+    restored = EvolutionResult.from_dict(legacy)
+    assert restored.final_bundle_ref is None and restored.final_bundle == result.versions[0]
+
+
+def test_old_final_result_checkpoint_is_not_resumed(tmp_path):
+    initial, base = SkillBundle({"SKILL.md": "initial"}), FrozenBase((), {})
+    result, _, _, _ = run([True], [True], revised)
+    journal = Journal(tmp_path)
+    journal.dispatch(
+        "evolution-result",
+        {
+            "initial_bundle_hash": initial.bundle_hash,
+            "base_hash": base.base_hash,
+            "max_revisions": 15,
+            "max_oracles": 5,
+            "max_oracle_errors": 5,
+        },
+        result.to_dict,
+    )
+    with pytest.raises(ValueError, match="journal operation payload differs"):
+        EvolutionEngine(
+            execute_initial=None, oracle=None, verifier=None, revise=None, journal=journal
+        ).run({}, base, initial)
+
+
+@pytest.mark.parametrize("reference", [{}, {"bundle_hash": "0" * 64, "parent_hash": None}])
+def test_final_bundle_reference_must_match_selected_sealed_content(reference):
+    result, _, _, _ = run([True], [True], revised)
+    value = result.to_dict()
+    value["final_bundle_ref"] = reference
+    with pytest.raises(ValueError, match="invalid_final_bundle_ref"):
+        EvolutionResult.from_dict(value)
+
+
+@pytest.mark.parametrize("parent", [None, "0" * 64, ["invalid"], "self"])
+def test_revised_final_reference_requires_a_known_sealed_parent(parent):
+    result, _, _, _ = run([False, True], [True], revised)
+    value = result.to_dict()
+    value["final_bundle_ref"]["parent_hash"] = (
+        result.final_bundle_hash if parent == "self" else parent
+    )
+    with pytest.raises(ValueError, match="invalid_final_bundle_ref"):
+        EvolutionResult.from_dict(value)
 
 
 def test_final_version_does_not_depend_on_evaluation():
@@ -160,12 +357,13 @@ def test_fifteen_invalid_or_unchanged_revisions_do_not_fabricate_content_version
     def revise(previous, *args, **kwargs):
         if kind == "invalid":
             raise CreationFailure("invalid_package")
-        return SkillBundle(previous.files, parent_hash=previous.bundle_hash)
+        return _submission(SkillBundle(previous.files, parent_hash=previous.bundle_hash))
 
     result, _, traces, _ = run([False] * 16, [], revise, max_revisions=15)
     assert result.stop_reason == "revision_budget_exhausted"
     assert result.revision_attempts == 15 and len(result.versions) == 1
-    assert len(traces) == 16 and all(item["status"] == kind for item in result.attempts)
+    assert len(traces) == (1 if kind == "invalid" else 16)
+    assert all(item["status"] == kind for item in result.attempts)
 
 
 def test_public_feedback_accumulates_same_task_diagnostics_and_opaque_oracle_bit():
@@ -206,7 +404,7 @@ def test_context_admission_stop_is_not_an_invalid_dispatched_revision(tmp_path):
     assert len(result.versions) == 1 and len(traces) == 1 and oracles == []
     assert calls == ["evolution-revision-1"]
     restored = EvolutionEngine(
-        rollout=lambda _: pytest.fail("sealed context stop cannot execute again"),
+        execute_initial=lambda *a, **k: pytest.fail("sealed context stop cannot execute again"),
         oracle=lambda _: pytest.fail("sealed context stop cannot call oracle"),
         verifier=None,
         revise=lambda *a, **k: pytest.fail("sealed stop cannot generate"),
@@ -220,7 +418,7 @@ def test_context_admission_stop_is_not_an_invalid_dispatched_revision(tmp_path):
 def test_evolution_hardcaps_require_integer_m15_k5(revisions, oracles):
     with pytest.raises(ValueError, match="budgets"):
         EvolutionEngine(
-            rollout=None,
+            execute_initial=None,
             oracle=None,
             verifier=None,
             revise=None,
@@ -235,10 +433,9 @@ def test_skip_or_xfail_repairs_tests_once_without_consuming_skill_revisions(
     tmp_path, kind, repair_succeeds
 ):
     requests, executions, oracle_hashes = [], [], []
-    source = (
-        f"import pytest\n@pytest.mark.{kind}(reason='invalid generated check')\n"
-        "def test_public(trace): assert trace['ok']"
-    )
+    # A safe submitted suite can still receive a runtime skip/xfail report.
+    # Statically visible skip/xfail decorators are rejected at submission.
+    source = "def test_public(trace): assert trace['ok']"
     repaired_source = "def test_public(trace): assert trace['ok']"
     initial = SkillBundle({"SKILL.md": "initial"})
     base = FrozenBase((), {})
@@ -264,6 +461,7 @@ def test_skip_or_xfail_repairs_tests_once_without_consuming_skill_revisions(
                 0,
                 {
                     "collected": 1,
+                    "collected_nodeids": ["tests/test_public.py::test_public"],
                     "collection_errors": 0,
                     "exit_code": 0,
                     "results": [
@@ -279,7 +477,7 @@ def test_skip_or_xfail_repairs_tests_once_without_consuming_skill_revisions(
             )
 
     result = EvolutionEngine(
-        rollout=lambda _: {"ok": True},
+        execute_initial=lambda bundle, *a, **k: _submission(bundle, {"ok": True}, initial=True),
         oracle=lambda bundle: oracle_hashes.append(bundle.bundle_hash) or True,
         verifier=SurrogateVerifier(model, Runner(), journal=journal),
         revise=lambda *a, **k: pytest.fail("invalid tests cannot consume Skill revisions"),
@@ -313,9 +511,10 @@ def test_verifier_diagnosis_auth_failure_stops_before_skill_revision_or_oracle(t
         def run_verifier(self, *args):
             calls.append("pytest")
             return ProgramResult(
-                0,
+                1,
                 {
                     "collected": 1,
+                    "collected_nodeids": ["tests/test_public.py::test_public"],
                     "collection_errors": 0,
                     "exit_code": 1,
                     "results": [
@@ -341,7 +540,7 @@ def test_verifier_diagnosis_auth_failure_stops_before_skill_revision_or_oracle(t
         raise ModelClientError("authentication_failed", "offline denied", status=status)
 
     engine = EvolutionEngine(
-        rollout=lambda _: {"events": []},
+        execute_initial=_initial_submission,
         oracle=lambda _: pytest.fail("diagnosis auth failure cannot call oracle"),
         verifier=SurrogateVerifier(model, Runner(), journal=journal),
         revise=lambda *a, **k: pytest.fail("diagnosis auth failure cannot revise Skill"),
@@ -365,7 +564,7 @@ def test_existing_auth_failure_stops_all_external_operations_and_seals_stop(tmp_
         journal.dispatch("earlier-denied-request", {}, denied)
     initial = SkillBundle({"SKILL.md": "initial"})
     result = EvolutionEngine(
-        rollout=lambda _: pytest.fail("known auth failure cannot start rollout"),
+        execute_initial=lambda *a, **k: pytest.fail("known auth failure cannot start rollout"),
         oracle=lambda _: pytest.fail("known auth failure cannot start oracle"),
         verifier=None,
         revise=None,
@@ -389,7 +588,7 @@ def test_journal_auth_failure_takes_priority_over_returned_oracle_bit(tmp_path, 
         return returned_bit
 
     result = EvolutionEngine(
-        rollout=lambda bundle: {"bundle_hash": bundle.bundle_hash, "events": []},
+        execute_initial=_initial_submission,
         oracle=oracle,
         verifier=Verifier([True]),
         revise=lambda *a, **k: pytest.fail("auth failure cannot revise Skill"),
@@ -407,7 +606,7 @@ def test_direct_auth_failure_is_not_relabelled_as_invalid_package(stage):
 
     initial, base = SkillBundle({"SKILL.md": "initial"}), FrozenBase((), {})
     result = EvolutionEngine(
-        rollout=lambda bundle: {"bundle_hash": bundle.bundle_hash},
+        execute_initial=_initial_submission,
         oracle=denied,
         verifier=Verifier([stage == "oracle"]),
         revise=denied,
@@ -418,3 +617,52 @@ def test_direct_auth_failure_is_not_relabelled_as_invalid_package(stage):
         assert result.revision_attempts == 1
     else:
         assert result.attempts == ()
+
+
+@pytest.mark.parametrize("recover", [False, True])
+def test_completed_oracle_infrastructure_errors_have_separate_budget(tmp_path, recover):
+    calls = []
+
+    def oracle(bundle):
+        calls.append(bundle.bundle_hash)
+        if recover and len(calls) == 2:
+            return True
+        raise OracleUnavailable("official reward file missing")
+
+    verifier = Verifier([True])
+    journal = Journal(tmp_path)
+    result = EvolutionEngine(
+        execute_initial=_initial_submission,
+        oracle=oracle,
+        verifier=verifier,
+        revise=lambda *a, **k: pytest.fail("infrastructure failures must not revise Skill"),
+        journal=journal,
+        max_oracle_errors=5,
+    ).run({}, FrozenBase((), {}), SkillBundle({"SKILL.md": "initial"}))
+    assert result.revision_attempts == 0 and verifier.escalations == []
+    assert result.oracle_calls == int(recover)
+    assert len(result.oracle_failures) == (1 if recover else 5)
+    assert len(set(calls)) == 1
+    assert result.stop_reason == (
+        "oracle_success" if recover else "oracle_infrastructure_unavailable"
+    )
+    assert all(item["status"] == "NOT_MEASURED" for item in result.oracle_failures)
+
+
+def test_unknown_oracle_operation_is_not_infrastructure_retry(tmp_path):
+    calls = []
+
+    def oracle(bundle):
+        calls.append(bundle.bundle_hash)
+        raise ConnectionError("response was not received")
+
+    result = EvolutionEngine(
+        execute_initial=_initial_submission,
+        oracle=oracle,
+        verifier=Verifier([True]),
+        revise=revised,
+        journal=Journal(tmp_path),
+    ).run({}, FrozenBase((), {}), SkillBundle({"SKILL.md": "initial"}))
+    assert result.stop_reason == "oracle_result_unknown"
+    assert result.oracle_calls == result.revision_attempts == len(result.oracle_failures) == 0
+    assert len(calls) == 1

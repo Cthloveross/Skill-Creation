@@ -5,10 +5,12 @@ from tau_skill_evolution.artifacts import SkillBundle
 from tau_skill_evolution.evaluation import (
     case_views,
     completion_steps,
+    evaluate_no_skill,
     evaluate_versions,
     not_measured,
     report_cases,
 )
+from tau_skill_evolution.journal import Journal
 
 
 def test_each_content_version_evaluated_once_package_only():
@@ -34,6 +36,81 @@ def test_each_content_version_evaluated_once_package_only():
     }
     assert case_views(case)["frozen"] is evaluations[initial.bundle_hash]
     assert case_views(case)["evolved"] is evaluations[updated.bundle_hash]
+
+
+def test_no_skill_evaluation_has_no_package_and_resumes_sealed_measurement(tmp_path):
+    calls = []
+    journal = Journal(tmp_path / "journal")
+
+    def evaluate():
+        calls.append("fresh")
+        return {"utility": True, "reward": 1.0, "asr": None, "asr_status": "NOT_APPLICABLE"}
+
+    first = evaluate_no_skill(evaluate, journal=journal)
+    second = evaluate_no_skill(lambda: pytest.fail("do not resample"), journal=journal)
+    assert first == second
+    assert calls == ["fresh"]
+    assert first["bundle_hash"] is None and first["baseline"] == "no_skill"
+    assert first["status"] == "MEASURED"
+
+
+def test_no_skill_unknown_operation_does_not_resend_or_become_zero(tmp_path):
+    journal = Journal(tmp_path / "journal")
+    calls = []
+
+    def lost_response():
+        calls.append("sent")
+        raise RuntimeError("transport lost")
+
+    first = evaluate_no_skill(lost_response, journal=journal)
+    second = evaluate_no_skill(lambda: pytest.fail("unknown cannot resend"), journal=journal)
+    assert calls == ["sent"]
+    assert first == second
+    assert first["status"] == "NOT_MEASURED" and first["utility"] is None
+    assert first["reason"] == "result_unknown"
+
+
+@pytest.mark.parametrize("executor", [None, "legacy-tool-loop", "author-codex"])
+def test_baseline_report_pairs_only_matching_explicit_executor(executor):
+    bundle = SkillBundle({"SKILL.md": "s0"})
+    metrics = {"utility": True, "reward": 1.0, "asr": None, "asr_status": "NOT_APPLICABLE"}
+    baseline = {
+        "status": "MEASURED",
+        "bundle_hash": None,
+        "baseline": "no_skill",
+        "utility": False,
+        "asr": None,
+        "metrics": {**metrics, "utility": False, "reward": 0.5, "executor": "author-codex"},
+    }
+    report = report_cases(
+        [
+            {
+                "task_id": "one",
+                "condition": "benign",
+                "versions": [bundle.to_dict()],
+                "evaluations": evaluate_versions(
+                    [bundle], lambda _: {**metrics, "executor": executor}
+                ),
+                "no_skill_evaluation": baseline,
+            }
+        ],
+        task_denominator=85,
+        conditions=("benign",),
+    )
+    control = next(row for row in report["arms"] if row["arm"] == "no_skill")
+    assert control["task_denominator"] == 85 and control["measured_count"] == 1
+    assert control["not_measured_count"] == 84 and control["actual_chains"] == 0
+    assert [row["arm"] for row in report["arms"]] == ["no_skill", "initial", "evolved"]
+    assert report["arms"][1]["task_pass_rate"] == 1 / 85
+    assert len(report["versions"]) == 1
+    paired = executor == "author-codex"
+    assert all(row["paired_measured"] == paired for row in report["baseline_progress"])
+    assert all(row["paired_count"] == int(paired) for row in report["baseline_paired_progress"])
+    if paired:
+        assert report["baseline_progress"][0]["reward_delta"] == 0.5
+        assert report["baseline_paired_progress"][0]["rescued_count"] == 1
+    else:
+        assert report["baseline_progress"][0]["utility_delta"] is None
 
 
 def test_missing_measurements_null_and_full_task_denominator():
@@ -290,3 +367,192 @@ def test_authentication_failure_does_not_evaluate_later_versions(tmp_path):
     assert calls == [initial.bundle_hash]
     assert measurements[initial.bundle_hash]["status"] == "NOT_MEASURED"
     assert journal.authentication_failure() == 401
+
+
+def _official_measurement(passed, total, *, executor="author-codex", unit="reporter_group"):
+    return {
+        "status": "MEASURED",
+        "utility": passed == total,
+        "asr": None,
+        "metrics": {
+            "reward": passed / total,
+            "executor": executor,
+            "official_checks": {
+                "status": "MEASURED",
+                "passed": passed,
+                "total": total,
+                "rate": passed / total,
+                "unit": unit,
+                "source": "pytest-json-ctrf.summary",
+            },
+        },
+    }
+
+
+def test_native_report_records_all_actual_content_deltas_and_separate_pair_counts():
+    bundles = [SkillBundle({"SKILL.md": f"content {i}"}) for i in range(3)]
+    measurements = [
+        {**_official_measurement(passed, 4), "bundle_hash": bundle.bundle_hash}
+        for bundle, passed in zip(bundles, (2, 4, 3), strict=True)
+    ]
+    report = report_cases(
+        [
+            {
+                "task_id": "one",
+                "condition": "benign",
+                "versions": bundles,
+                "final_bundle_hash": bundles[-1].bundle_hash,
+                "no_skill_evaluation": _official_measurement(1, 4),
+                "evaluations": dict(
+                    zip((b.bundle_hash for b in bundles), measurements, strict=True)
+                ),
+            }
+        ],
+        task_denominator=85,
+        conditions=("benign",),
+    )
+    rows = report["version_progress"]
+    assert [(r["from_label"], r["to_label"]) for r in rows] == [
+        ("NoSkill", "S0"),
+        ("S0", "S1"),
+        ("S1", "S2"),
+    ]
+    assert [r["utility_delta"] for r in rows] == [0, 1, -1]
+    assert [r["reward_delta"] for r in rows] == [0.25, 0.5, -0.25]
+    assert [r["official_check_rate_delta"] for r in rows] == [0.25, 0.5, -0.25]
+    assert len(report["versions"]) == 3
+    for summary in report["version_paired_progress"]:
+        assert summary["paired_count"] == summary["reward_paired_count"] == 1
+        assert summary["official_check_paired_count"] == 1
+        assert summary["task_denominator"] == 85
+        assert summary["paired_coverage"] == summary["official_check_paired_coverage"] == 1 / 85
+    assert report["progress"][0]["official_check_rate_delta"] == 0.25
+    assert report["paired_progress"][0]["mean_reward_delta"] == 0.25
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "reason"),
+    [
+        ("unit", "assertion", "official_check_unit_mismatch"),
+        ("unit", None, "official_check_unit_not_recorded"),
+        ("total", 8, "official_check_total_mismatch"),
+        ("source", None, "official_check_source_not_recorded"),
+        ("source", "another-grader", "official_check_source_mismatch"),
+        ("status", "NOT_MEASURED", "official_checks_not_measured"),
+    ],
+)
+def test_gt_deltas_require_matching_measured_check_basis(field, value, reason):
+    initial, final = SkillBundle({"SKILL.md": "before"}), SkillBundle({"SKILL.md": "after"})
+    left, right = _official_measurement(1, 2), _official_measurement(2, 2)
+    right["metrics"]["official_checks"][field] = value
+    report = report_cases(
+        [
+            {
+                "task_id": "one",
+                "condition": "benign",
+                "versions": [initial, final],
+                "no_skill_evaluation": left,
+                "evaluations": {initial.bundle_hash: left, final.bundle_hash: right},
+            }
+        ],
+        task_denominator=85,
+        conditions=("benign",),
+    )
+    comparison = report["version_progress"][-1]
+    assert comparison["utility_delta"] == 1 and comparison["reward_delta"] == 0.5
+    assert comparison["official_check_rate_delta"] is None
+    assert comparison["official_check_delta_reason"] == reason
+    assert report["progress"][0]["official_check_delta_reason"] == reason
+    assert report["baseline_progress"][-1]["official_check_delta_reason"] == reason
+    summary = report["paired_progress"][0]
+    assert summary["paired_count"] == 1 and summary["official_check_paired_count"] == 0
+    assert summary["mean_official_check_rate_delta"] is None
+
+
+def test_gt_delta_remains_unmeasured_when_both_check_sources_are_missing():
+    initial, final = SkillBundle({"SKILL.md": "before"}), SkillBundle({"SKILL.md": "after"})
+    left, right = _official_measurement(1, 2), _official_measurement(2, 2)
+    for measurement in (left, right):
+        del measurement["metrics"]["official_checks"]["source"]
+    report = report_cases(
+        [
+            {
+                "task_id": "one",
+                "condition": "benign",
+                "versions": [initial, final],
+                "no_skill_evaluation": left,
+                "evaluations": {initial.bundle_hash: left, final.bundle_hash: right},
+            }
+        ],
+        task_denominator=85,
+        conditions=("benign",),
+    )
+    for row in (*report["version_progress"], *report["progress"], *report["baseline_progress"]):
+        assert row["paired_measured"] is True
+        assert row["official_check_rate_delta"] is None
+        assert row["official_check_delta_reason"] == "official_check_source_not_recorded"
+    assert report["paired_progress"][0]["official_check_paired_count"] == 0
+    assert report["paired_progress"][0]["mean_official_check_rate_delta"] is None
+
+
+def test_unmeasured_content_keeps_adjacent_and_endpoint_deltas_null():
+    initial, final = SkillBundle({"SKILL.md": "before"}), SkillBundle({"SKILL.md": "after"})
+    report = report_cases(
+        [
+            {
+                "task_id": "one",
+                "condition": "benign",
+                "versions": [initial, final],
+                "no_skill_evaluation": not_measured(),
+                "evaluations": {initial.bundle_hash: _official_measurement(1, 2)},
+            }
+        ],
+        task_denominator=85,
+        conditions=("benign",),
+    )
+    assert len(report["versions"]) == 2 and report["versions"][-1]["utility"] is None
+    for row in (*report["version_progress"], *report["progress"], *report["baseline_progress"]):
+        assert (
+            row["utility_delta"] is row["reward_delta"] is row["official_check_rate_delta"] is None
+        )
+        assert row["reason"] == row["official_check_delta_reason"] == "not_measured"
+    assert report["paired_progress"][0]["paired_count"] == 0
+    assert report["paired_progress"][0]["mean_reward_delta"] is None
+
+
+@pytest.mark.parametrize("returned_to_s0", [False, True])
+def test_final_alias_does_not_fabricate_version_or_evolution_gain(returned_to_s0):
+    initial, second = SkillBundle({"SKILL.md": "initial"}), SkillBundle({"SKILL.md": "changed"})
+    versions = [initial, second] if returned_to_s0 else [initial]
+    report = report_cases(
+        [
+            {
+                "task_id": "one",
+                "condition": "benign",
+                "versions": versions,
+                "final_bundle_hash": initial.bundle_hash,
+                "evaluations": {
+                    bundle.bundle_hash: {
+                        **_official_measurement(2, 2),
+                        "bundle_hash": bundle.bundle_hash,
+                    }
+                    for bundle in versions
+                },
+            }
+        ],
+        task_denominator=85,
+        conditions=("benign",),
+    )
+    assert len(report["versions"]) == len(versions)
+    assert len(report["version_progress"]) == len(versions) - 1
+    progress = report["progress"][0]
+    assert progress["same_content"] is True
+    assert (
+        progress["utility_delta"]
+        == progress["reward_delta"]
+        == progress["official_check_rate_delta"]
+        == 0
+    )
+    summary = report["paired_progress"][0]
+    assert summary["same_content_count"] == 1 and summary["rescued_count"] == 0
+    assert summary["task_denominator"] == 85 and summary["mean_utility_delta"] == 0

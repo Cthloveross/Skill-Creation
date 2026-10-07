@@ -19,11 +19,30 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", action="store_true")
     parser.add_argument("--pool", action="store_true")
-    parser.add_argument("--demo", action="store_true")
-    parser.add_argument("--docker", action="store_true")
+    runtime = parser.add_mutually_exclusive_group()
+    runtime.add_argument("--demo", action="store_true")
+    runtime.add_argument("--docker", action="store_true")
+    runtime.add_argument("--workspace", action="store_true")
+    parser.add_argument(
+        "--all-tasks",
+        action="store_true",
+        help="Prepare or report every task; --docker or --workspace.",
+    )
     parser.add_argument("--task", default="3d-scan-calc")
+    parser.add_argument(
+        "--runtime-lock",
+        type=Path,
+        help="Docker lock output; use {task_id} for --all-tasks. Relative to the experiment.",
+    )
     parser.add_argument("--index-settings")
     args = parser.parse_args()
+    if args.all_tasks and not (args.docker or args.workspace):
+        parser.error("--all-tasks requires --docker or --workspace")
+    if args.runtime_lock is not None:
+        if not args.docker:
+            parser.error("--runtime-lock requires --docker")
+        if args.all_tasks and "{task_id}" not in str(args.runtime_lock):
+            parser.error("--all-tasks requires a {task_id} runtime lock template")
     if args.source:
         print(json.dumps(prepare_skillsbench(ROOT)), flush=True)
     if args.pool:
@@ -35,17 +54,37 @@ def main() -> None:
             str(snapshot / "5cf2132abc99cad020ac570b19d031efec650f2b/tokenizer.json")
         )
         print(json.dumps(prepare_pool(ROOT, tokenizer)), flush=True)
-    if args.demo or args.docker:
-        from tau_skill_evolution.skillsbench_runtime import prepare_demo_runtime, prepare_docker
+    if args.demo or args.docker or args.workspace:
+        from tau_skill_evolution.skillsbench_runtime import (
+            prepare_demo_runtime,
+            prepare_docker,
+            prepare_workspace_runtime,
+        )
 
-        function = prepare_demo_runtime if args.demo else prepare_docker
-        print(json.dumps(function(ROOT, args.task)), flush=True)
+        function = (
+            prepare_workspace_runtime
+            if args.workspace
+            else prepare_demo_runtime
+            if args.demo
+            else prepare_docker
+        )
+        if args.all_tasks:
+            from tau_skill_evolution.skillsbench import SkillsBenchSource
+
+            tasks = SkillsBenchSource(ROOT).manifest["tasks"]
+        else:
+            tasks = [args.task]
+        for task in tasks:
+            settings = {"runtime_lock_path": args.runtime_lock} if args.runtime_lock else {}
+            print(json.dumps(function(ROOT, task, **settings)), flush=True)
     if args.index_settings:
         from tau_skill_evolution.skillsbench import prepare_dense
 
         print(json.dumps(prepare_dense(ROOT, json.loads(args.index_settings))), flush=True)
-    if not any((args.source, args.pool, args.demo, args.docker, args.index_settings)):
-        parser.error("select --source, --pool, --demo or --docker")
+    if not any(
+        (args.source, args.pool, args.demo, args.docker, args.workspace, args.index_settings)
+    ):
+        parser.error("select --source, --pool, --demo, --workspace or --docker")
 
 
 if __name__ == "__main__":

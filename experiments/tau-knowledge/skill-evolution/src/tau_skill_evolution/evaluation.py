@@ -93,22 +93,7 @@ def evaluate_versions(
                 if journal is not None
                 else callback()
             )
-            if not isinstance(metrics, Mapping) or not _valid_metric(metrics.get("utility")):
-                raise ValueError("evaluation_missing_utility")
-            asr_unavailable = (
-                metrics.get("asr") is None and metrics.get("asr_status") == "NOT_APPLICABLE"
-            )
-            if not _valid_metric(metrics.get("asr")) and not asr_unavailable:
-                raise ValueError("evaluation_missing_asr")
-            measurements[bundle.bundle_hash] = {
-                "status": "MEASURED",
-                "bundle_hash": bundle.bundle_hash,
-                "utility": metrics["utility"],
-                "asr": metrics["asr"],
-                "asr_status": "NOT_APPLICABLE" if asr_unavailable else "MEASURED",
-                "completion_steps": completion_steps(metrics),
-                "metrics": dict(metrics),
-            }
+            measurements[bundle.bundle_hash] = _measurement(metrics, bundle.bundle_hash)
         except Exception as exc:
             if is_credential_error(exc):
                 raise
@@ -123,6 +108,49 @@ def evaluate_versions(
         if journal is not None and journal.completed(operation_id):
             journal.record_result(operation_id, measurements[bundle.bundle_hash])
     return measurements
+
+
+def evaluate_no_skill(evaluate: Callable[[], Mapping[str, Any]], *, journal: Any) -> dict[str, Any]:
+    """A fresh official evaluation with no package and no learning-stage inputs."""
+    operation = "evaluation-no-skill"
+    if journal.result(operation) is not None:
+        return journal.result(operation)
+    try:
+        metrics = journal.dispatch(
+            operation,
+            {"baseline": "no_skill", "bundle_hash": None},
+            lambda: dict(evaluate()),
+        )
+        measurement = _measurement(metrics, None)
+    except Exception as exc:
+        if is_credential_error(exc):
+            raise
+        measurement = not_measured(
+            reason="result_unknown"
+            if type(exc).__name__ == "UnknownOperation"
+            else f"evaluation_failed:{type(exc).__name__}"
+        )
+    measurement["baseline"] = "no_skill"
+    if journal.completed(operation):
+        journal.record_result(operation, measurement)
+    return measurement
+
+
+def _measurement(metrics: Any, bundle_hash: str | None) -> dict[str, Any]:
+    if not isinstance(metrics, Mapping) or not _valid_metric(metrics.get("utility")):
+        raise ValueError("evaluation_missing_utility")
+    asr_unavailable = metrics.get("asr") is None and metrics.get("asr_status") == "NOT_APPLICABLE"
+    if not _valid_metric(metrics.get("asr")) and not asr_unavailable:
+        raise ValueError("evaluation_missing_asr")
+    return {
+        "status": "MEASURED",
+        "bundle_hash": bundle_hash,
+        "utility": metrics["utility"],
+        "asr": metrics["asr"],
+        "asr_status": "NOT_APPLICABLE" if asr_unavailable else "MEASURED",
+        "completion_steps": completion_steps(metrics),
+        "metrics": dict(metrics),
+    }
 
 
 def _valid_metric(value: Any) -> bool:
@@ -153,7 +181,7 @@ def case_views(case: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
         bundle.bundle_hash if hasattr(bundle, "bundle_hash") else bundle["bundle_hash"]
         for bundle in versions
     ]
-    final_hash = evolution.get("final_bundle_hash") or hashes[-1]
+    final_hash = evolution.get("final_bundle_hash") or case.get("final_bundle_hash") or hashes[-1]
     return {
         "frozen": measurements.get(hashes[0], not_measured(hashes[0])),
         "evolved": measurements.get(final_hash, not_measured(final_hash)),
@@ -176,6 +204,9 @@ def report_cases(
     rounds: dict[tuple[str, int], list[Mapping[str, Any]]] = defaultdict(list)
     round_stops: dict[tuple[str, int], dict[str, int]] = defaultdict(lambda: defaultdict(int))
     seen: set[tuple[str, Any]] = set()
+    baseline_conditions = {
+        str(case["condition"]) for case in cases if "no_skill_evaluation" in case
+    }
     for case in cases:
         condition = str(case["condition"])
         identity = (condition, case["task_id"])
@@ -185,8 +216,12 @@ def report_cases(
         if condition not in conditions:
             raise ValueError("unknown_condition")
         views = case_views(case)
+        if "no_skill_evaluation" in case:
+            grouped[(condition, "no_skill")].append((case, case["no_skill_evaluation"]))
         for arm, measurement in views.items():
             if arm == "frozen" and condition == "benign":
+                if condition in baseline_conditions:
+                    grouped[(condition, "initial")].append((case, measurement))
                 continue
             grouped[(condition, arm)].append((case, measurement))
         evolution = case.get("evolution") or {}
@@ -219,6 +254,15 @@ def report_cases(
     summaries = []
     for condition in conditions:
         arms = ("evolved",) if condition == "benign" else ("frozen", "evolved")
+        if condition in baseline_conditions:
+            arms = (
+                ("no_skill", "initial", "evolved")
+                if condition == "benign"
+                else (
+                    "no_skill",
+                    *arms,
+                )
+            )
         for arm in arms:
             rows = grouped[(condition, arm)]
             if len(rows) > task_denominator:
@@ -231,7 +275,15 @@ def report_cases(
             asr_sum = sum(float(item["asr"]) for item in asr_measured)
             stopped: dict[str, int] = defaultdict(int)
             for case, _ in rows:
-                reason = _stop_reason(case)
+                reason = (
+                    (
+                        "baseline_evaluated"
+                        if case["no_skill_evaluation"]["status"] == "MEASURED"
+                        else case["no_skill_evaluation"].get("reason", "stage_not_executed")
+                    )
+                    if arm == "no_skill"
+                    else _stop_reason(case)
+                )
                 stopped[str(reason)] += 1
             summaries.append(
                 {
@@ -241,13 +293,19 @@ def report_cases(
                     "actual_chains": sum(
                         bool((case.get("evolution") or {}).get("versions") or case.get("versions"))
                         for case, _ in rows
-                    ),
+                    )
+                    if arm != "no_skill"
+                    else 0,
+                    "actual_runs": len(rows) if arm == "no_skill" else None,
                     "measured_count": len(measured),
                     "not_measured_count": task_denominator - len(measured),
                     "measured_utility": utility_sum / len(measured) if measured else None,
                     "measured_asr": asr_sum / len(asr_measured) if asr_measured else None,
                     "asr_measured_count": len(asr_measured),
                     "end_to_end_utility": utility_sum / task_denominator,
+                    "task_pass_count": sum(item["utility"] == 1 for item in measured),
+                    "task_pass_rate": sum(item["utility"] == 1 for item in measured)
+                    / task_denominator,
                     # This is explicitly a count/full-denominator rate, not imputed stage ASR.
                     "observed_attack_successes_per_task": (
                         asr_sum / task_denominator if asr_measured else None
@@ -285,7 +343,7 @@ def report_cases(
     for case in cases:
         views = case_views(case)
         initial, final = views["frozen"], views["evolved"]
-        paired = initial["status"] == final["status"] == "MEASURED"
+        comparison = _paired_delta(initial, final)
         initial_metrics, final_metrics = initial.get("metrics") or {}, final.get("metrics") or {}
 
         def delta(left: Any, right: Any) -> float | None:
@@ -299,20 +357,12 @@ def report_cases(
                 "condition": case["condition"],
                 "initial_hash": initial.get("bundle_hash"),
                 "final_hash": final.get("bundle_hash"),
-                "paired_measured": paired,
-                "utility_delta": float(final["utility"]) - float(initial["utility"])
-                if paired
-                else None,
-                "rescued": initial["utility"] < 1 and final["utility"] == 1 if paired else None,
-                "degraded": initial["utility"] == 1 and final["utility"] < 1 if paired else None,
-                "reward_delta": delta(initial_metrics.get("reward"), final_metrics.get("reward")),
+                **comparison,
+                "same_content": initial.get("bundle_hash") is not None
+                and initial.get("bundle_hash") == final.get("bundle_hash"),
                 "action_recall_delta": delta(
                     completion_steps(initial_metrics)["rate"],
                     completion_steps(final_metrics)["rate"],
-                ),
-                "official_check_rate_delta": delta(
-                    (initial_metrics.get("official_checks") or {}).get("rate"),
-                    (final_metrics.get("official_checks") or {}).get("rate"),
                 ),
             }
         )
@@ -324,14 +374,7 @@ def report_cases(
         paired_summaries.append(
             {
                 "condition": condition,
-                "task_denominator": task_denominator,
-                "paired_count": len(paired),
-                "paired_coverage": len(paired) / task_denominator,
-                "mean_utility_delta": sum(row["utility_delta"] for row in paired) / len(paired)
-                if paired
-                else None,
-                "rescued_count": sum(row["rescued"] for row in paired),
-                "degraded_count": sum(row["degraded"] for row in paired),
+                **_paired_summary(paired, task_denominator),
             }
         )
     return {
@@ -341,7 +384,178 @@ def report_cases(
         "rounds": round_summaries,
         "progress": progress,
         "paired_progress": paired_summaries,
+        **_version_progress(cases, task_denominator),
+        **_baseline_progress(cases, task_denominator, conditions),
     }
+
+
+def _paired_delta(
+    left: Mapping[str, Any], right: Mapping[str, Any], *, require_executor: bool = False
+) -> dict[str, Any]:
+    """Compare a task's measurements within one Workflow-bound run identity.
+
+    Bank content versions may share an implicit executor; NoSkill pairs require an explicit one.
+    This compatibility rule does not establish comparability between different runs.
+    """
+    measured = left["status"] == right["status"] == "MEASURED"
+    left_metrics, right_metrics = left.get("metrics") or {}, right.get("metrics") or {}
+    left_executor, right_executor = left_metrics.get("executor"), right_metrics.get("executor")
+    executor_matches = left_executor == right_executor and (
+        bool(left_executor) or not require_executor
+    )
+    reason = (
+        "not_measured" if not measured else "executor_not_matched" if not executor_matches else None
+    )
+    paired = reason is None
+    reward_left, reward_right = left_metrics.get("reward"), right_metrics.get("reward")
+    reward_valid = paired and _valid_metric(reward_left) and _valid_metric(reward_right)
+    checks_left, checks_right = (
+        left_metrics.get("official_checks") or {},
+        right_metrics.get("official_checks") or {},
+    )
+    gt_reason = reason
+    if gt_reason is None:
+        if any(
+            checks.get("status") != "MEASURED" or not _valid_metric(checks.get("rate"))
+            for checks in (checks_left, checks_right)
+        ):
+            gt_reason = "official_checks_not_measured"
+        elif not checks_left.get("unit") or not checks_right.get("unit"):
+            gt_reason = "official_check_unit_not_recorded"
+        elif checks_left["unit"] != checks_right["unit"]:
+            gt_reason = "official_check_unit_mismatch"
+        elif (
+            type(checks_left.get("total")) is not int
+            or type(checks_right.get("total")) is not int
+            or checks_left["total"] <= 0
+            or checks_left["total"] != checks_right.get("total")
+        ):
+            gt_reason = "official_check_total_mismatch"
+        elif not checks_left.get("source") or not checks_right.get("source"):
+            gt_reason = "official_check_source_not_recorded"
+        elif checks_left["source"] != checks_right["source"]:
+            gt_reason = "official_check_source_mismatch"
+    return {
+        "paired_measured": paired,
+        "reason": reason,
+        "utility_delta": float(right["utility"]) - float(left["utility"]) if paired else None,
+        "rescued": left["utility"] < 1 and right["utility"] == 1 if paired else None,
+        "degraded": left["utility"] == 1 and right["utility"] < 1 if paired else None,
+        "reward_delta": float(reward_right) - float(reward_left) if reward_valid else None,
+        "reward_delta_reason": None if reward_valid else reason or "official_reward_not_measured",
+        "official_check_rate_delta": float(checks_right["rate"]) - float(checks_left["rate"])
+        if gt_reason is None
+        else None,
+        "official_check_delta_reason": gt_reason,
+    }
+
+
+def _paired_summary(rows: Sequence[Mapping[str, Any]], denominator: int) -> dict[str, Any]:
+    paired = [row for row in rows if row["paired_measured"]]
+    reward = [row["reward_delta"] for row in paired if row["reward_delta"] is not None]
+    gt = [
+        row["official_check_rate_delta"]
+        for row in paired
+        if row["official_check_rate_delta"] is not None
+    ]
+    return {
+        "task_denominator": denominator,
+        "paired_count": len(paired),
+        "paired_coverage": len(paired) / denominator,
+        "mean_utility_delta": sum(row["utility_delta"] for row in paired) / len(paired)
+        if paired
+        else None,
+        "rescued_count": sum(row["rescued"] for row in paired),
+        "degraded_count": sum(row["degraded"] for row in paired),
+        "reward_paired_count": len(reward),
+        "reward_paired_coverage": len(reward) / denominator,
+        "mean_reward_delta": sum(reward) / len(reward) if reward else None,
+        "official_check_paired_count": len(gt),
+        "official_check_paired_coverage": len(gt) / denominator,
+        "mean_official_check_rate_delta": sum(gt) / len(gt) if gt else None,
+        "same_content_count": sum(bool(row.get("same_content")) for row in paired),
+    }
+
+
+def _version_progress(cases: Sequence[Mapping[str, Any]], denominator: int) -> dict[str, Any]:
+    rows, grouped = [], defaultdict(list)
+    for case in cases:
+        versions = (case.get("evolution") or {}).get("versions") or case.get("versions") or []
+        evaluations = case.get("evaluations") or {}
+        previous = case.get("no_skill_evaluation")
+        previous_hash = None
+        for index, bundle in enumerate(versions):
+            bundle_hash = (
+                bundle.bundle_hash if hasattr(bundle, "bundle_hash") else bundle["bundle_hash"]
+            )
+            current = evaluations.get(bundle_hash, not_measured(bundle_hash))
+            if previous is not None:
+                row = {
+                    "task_id": case["task_id"],
+                    "condition": case["condition"],
+                    "from_label": "NoSkill" if index == 0 else f"S{index - 1}",
+                    "to_label": f"S{index}",
+                    "previous_hash": previous_hash,
+                    "bundle_hash": bundle_hash,
+                    **_paired_delta(previous, current, require_executor=index == 0),
+                }
+                rows.append(row)
+                grouped[(case["condition"], index)].append(row)
+            previous = current
+            previous_hash = bundle_hash
+    return {
+        "version_progress": rows,
+        "version_paired_progress": [
+            {
+                "condition": condition,
+                "from_label": "NoSkill" if index == 0 else f"S{index - 1}",
+                "to_label": f"S{index}",
+                "actual_chains": len(items),
+                **_paired_summary(items, denominator),
+            }
+            for (condition, index), items in sorted(grouped.items())
+        ],
+    }
+
+
+def _baseline_progress(
+    cases: Sequence[Mapping[str, Any]], task_denominator: int, conditions: Sequence[str]
+) -> dict[str, Any]:
+    rows = []
+    for case in cases:
+        baseline = case.get("no_skill_evaluation")
+        if baseline is None:
+            continue
+        for endpoint, measurement in case_views(case).items():
+            rows.append(
+                {
+                    "task_id": case["task_id"],
+                    "condition": case["condition"],
+                    "endpoint": "initial" if endpoint == "frozen" else "evolved",
+                    "bundle_hash": measurement.get("bundle_hash"),
+                    **_paired_delta(baseline, measurement, require_executor=True),
+                }
+            )
+    summaries = []
+    for condition in conditions:
+        for endpoint in ("initial", "evolved"):
+            paired = [
+                row
+                for row in rows
+                if row["condition"] == condition
+                and row["endpoint"] == endpoint
+                and row["paired_measured"]
+            ]
+            if not any(row["condition"] == condition for row in rows):
+                continue
+            summaries.append(
+                {
+                    "condition": condition,
+                    "endpoint": endpoint,
+                    **_paired_summary(paired, task_denominator),
+                }
+            )
+    return {"baseline_progress": rows, "baseline_paired_progress": summaries} if rows else {}
 
 
 def _stop_reason(case: Mapping[str, Any]) -> str:

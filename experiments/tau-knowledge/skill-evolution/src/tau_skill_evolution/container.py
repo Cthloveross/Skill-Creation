@@ -15,7 +15,7 @@ import tempfile
 import threading
 import time
 import uuid
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -100,7 +100,13 @@ class ProcessResult:
 
 class ProcessTransport(Protocol):
     def run(
-        self, command: Sequence[str], *, stdin: bytes, timeout: float, output_limit: int
+        self,
+        command: Sequence[str],
+        *,
+        stdin: bytes,
+        timeout: float,
+        output_limit: int,
+        env: Mapping[str, str] | None = None,
     ) -> ProcessResult: ...
 
 
@@ -111,7 +117,13 @@ class BoundedProcessTransport:
         self.kill_process_group = kill_process_group
 
     def run(
-        self, command: Sequence[str], *, stdin: bytes, timeout: float, output_limit: int
+        self,
+        command: Sequence[str],
+        *,
+        stdin: bytes,
+        timeout: float,
+        output_limit: int,
+        env: Mapping[str, str] | None = None,
     ) -> ProcessResult:
         process = subprocess.Popen(
             list(command),
@@ -119,6 +131,7 @@ class BoundedProcessTransport:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             start_new_session=self.kill_process_group,
+            env=None if env is None else dict(env),
         )
         assert process.stdin is not None and process.stdout is not None
         assert process.stderr is not None
@@ -219,7 +232,7 @@ def _stage_files(root: Path, files: Mapping[str, str]) -> None:
     root.chmod(0o555)
 
 
-def _remove_staging(path: str) -> None:
+def _remove_staging(path: str, *, allow_privileged_cleanup: bool = True) -> None:
     root = Path(path)
     if not shutil.rmtree.avoids_symlink_attacks:
         raise ContainerUnavailable(f"staging_cleanup_failed:{root}:unsafe_rmtree_platform")
@@ -253,6 +266,10 @@ def _remove_staging(path: str) -> None:
         except RetryCleanup:
             continue
         except PermissionError as exc:
+            if not allow_privileged_cleanup:
+                raise ContainerUnavailable(
+                    f"staging_cleanup_failed:{root}:host_permission_denied"
+                ) from exc
             # Official graders run as root and may leave root-owned subdirectories in
             # the bind-mounted staging area; the host user can neither chmod nor unlink
             # those, so delete them from inside a throwaway container instead.
@@ -267,6 +284,15 @@ def _remove_staging(path: str) -> None:
         except OSError as exc:
             raise ContainerUnavailable(f"staging_cleanup_failed:{root}:{exc}") from exc
     raise ContainerUnavailable(f"staging_cleanup_failed:{root}:permission_repair_limit")
+
+
+def _remove_runtime_staging(runner: Any, path: str) -> None:
+    local = getattr(runner, "runtime", None) in {
+        "workspace",
+        "bubblewrap",
+        "bubblewrap-demo",
+    } or bool(getattr(runner, "demo", None))
+    _remove_staging(path, allow_privileged_cleanup=not local)
 
 
 CLEANUP_IMAGE = "busybox:stable"
@@ -414,16 +440,63 @@ class DockerRunner:
     ) -> ProgramResult:
         return _run_verifier(self, public_inputs, frozen_base, trace, test_files)
 
+    def authoring_session(
+        self,
+        previous_bundle: Any,
+        public_inputs: Mapping[str, Any],
+        frozen_base: Any,
+        *,
+        workspace: Path | None = None,
+    ) -> Any:
+        self.image_lock.validate()
+        return _public_workspace(
+            self,
+            public_inputs,
+            frozen_base,
+            previous_bundle=previous_bundle,
+            workspace=workspace,
+        )
+
+    def public_verifier_session(
+        self,
+        public_inputs: Mapping[str, Any],
+        base: Any,
+        trace: Mapping[str, Any],
+        files: Mapping[str, str] | None = None,
+        readonly_tests: bool = False,
+        *,
+        workspace: Path | None = None,
+    ) -> Any:
+        self.image_lock.validate()
+        return _public_workspace(
+            self,
+            public_inputs,
+            base,
+            trace=trace,
+            test_files=files,
+            readonly_tests=readonly_tests,
+            workspace=workspace,
+        )
+
+    def _terminal(self, package: Path, work: Path, command: str) -> ProgramResult:
+        return self._run(package, work, ["/bin/sh", "-c", command], raw=True)
+
     def _run(
-        self, package: Path, work: Path, args: Sequence[str], stdin: bytes = b""
+        self,
+        package: Path,
+        work: Path,
+        args: Sequence[str],
+        stdin: bytes = b"",
+        *,
+        raw: bool = False,
     ) -> ProgramResult:
         name = f"tau-skill-{uuid.uuid4().hex}"
+        writable = _workspace_writable_roots(package)
         command = [
             self.docker,
             "run",
             "--name",
             name,
-            "--rm",
             "--pull",
             "never",
             "--interactive",
@@ -459,17 +532,20 @@ class DockerRunner:
             "--mount",
             f"type=bind,src={package.resolve()},dst=/bundle,readonly",
             "--mount",
-            f"type=bind,src={work.resolve()},dst=/work",
-            self.image_lock.reference,
-            *args,
+            f"type=bind,src={work.resolve()},dst=/work" + (",readonly" if writable else ""),
         ]
+        for relative in writable:
+            command.extend(
+                ["--mount", f"type=bind,src={(work / relative).resolve()},dst=/work/{relative}"]
+            )
+        command.extend([self.image_lock.reference, *args])
         cleanup: ProcessResult | None = None
         launch_failed = False
         try:
             result = self.transport.run(
                 command, stdin=stdin, timeout=self.timeout, output_limit=self.output_limit
             )
-            outcome = _program_result(result)
+            outcome = _program_result(result, raw=raw)
         except FileNotFoundError as exc:
             launch_failed = True
             outcome = ProgramResult(None, stderr=str(exc), failure="container_unavailable")
@@ -512,8 +588,15 @@ def _reject_constant(value: str) -> None:
     raise ValueError(f"invalid JSON constant: {value}")
 
 
-def _program_result(result: ProcessResult) -> ProgramResult:
+def _program_result(result: ProcessResult, *, raw: bool = False) -> ProgramResult:
     stderr = result.stderr.decode("utf-8", "replace")
+    if raw:
+        return ProgramResult(
+            result.returncode,
+            {"stdout": result.stdout.decode("utf-8", "replace"), "stderr": stderr},
+            stderr,
+            result.failure,
+        )
     if result.failure:
         return ProgramResult(result.returncode, stderr=stderr, failure=result.failure)
     try:
@@ -529,11 +612,218 @@ def _program_result(result: ProcessResult) -> ProgramResult:
         )
 
 
+def _workspace_writable_roots(package: Path) -> tuple[str, ...]:
+    policy = package / "_workspace_policy.json"
+    if not policy.exists():
+        return ()
+    values = json.loads(policy.read_text(encoding="utf-8"))
+    if not isinstance(values, list) or any(
+        value not in {"candidate", "tests", "scratch"} for value in values
+    ):
+        raise ValueError("invalid_workspace_policy")
+    return tuple(values)
+
+
+def _tree_manifest(root: Path) -> dict[str, str]:
+    """Hash regular bytes, never follow links or open a pipe/device."""
+    if root.is_symlink() or not root.is_dir():
+        raise ValueError("unsafe_workspace_root")
+    manifest = {}
+    for directory, directories, files in os.walk(root, followlinks=False):
+        for name in sorted([*directories, *files]):
+            path = Path(directory) / name
+            relative = path.relative_to(root).as_posix()
+            _safe_path(relative)
+            mode = path.lstat().st_mode
+            if stat.S_ISDIR(mode):
+                manifest[relative + "/"] = "directory"
+            elif stat.S_ISREG(mode):
+                # O_NOFOLLOW also rejects a link replacing a file after lstat.
+                descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+                with os.fdopen(descriptor, "rb") as source:
+                    if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
+                        raise ValueError("unsafe_workspace_file")
+                    manifest[relative] = hashlib.sha256(source.read()).hexdigest()
+            else:
+                raise ValueError("unsafe_workspace_file")
+    return manifest
+
+
+@dataclass
+class PublicWorkspaceSession:
+    """One isolated authoring/checking workspace; public mounts are immutable."""
+
+    package: Path
+    work: Path
+    target: Path
+    terminal_callback: Callable[[Path, Path, str], ProgramResult]
+    tests_callback: Callable[[Path, Path, Sequence[str]], ProgramResult]
+    readonly_tests: bool = False
+    tests: bool = False
+    cleanup_failed: bool = False
+
+    def terminal(self, command: str) -> ProgramResult:
+        if not isinstance(command, str) or not command or "\x00" in command:
+            raise ValueError("invalid_terminal_command")
+        result = self.terminal_callback(self.package, self.work, command)
+        self.cleanup_failed |= result.failure == "cleanup_failed"
+        return result
+
+    def files(self) -> dict[str, str]:
+        manifest = _tree_manifest(self.target)
+        files = {}
+        for relative in manifest:
+            if relative.endswith("/"):
+                continue
+            parts = Path(relative).parts
+            if ".pytest_cache" in parts[:-1] or (
+                "__pycache__" in parts[:-1] and Path(relative).suffix in {".pyc", ".pyo"}
+            ):
+                continue
+            path = self.target / relative
+            descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            with os.fdopen(descriptor, "r", encoding="utf-8") as source:
+                if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
+                    raise ValueError("unsafe_workspace_file")
+                key = "tests/" + relative if self.tests else relative
+                files[key] = source.read()
+        return files
+
+    def snapshot(self) -> dict[str, Any]:
+        manifest = {"public": _tree_manifest(self.package), "work": _tree_manifest(self.work)}
+        encoded = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()
+        return {
+            "files": self.files(),
+            "workspace_hash": hashlib.sha256(encoded).hexdigest(),
+            "manifest": manifest,
+        }
+
+    def run_tests(self) -> ProgramResult:
+        if not self.tests:
+            raise ValueError("tests_not_available_in_authoring")
+        from .verifier import _validate_test_source
+
+        _validate_test_source(self.files())
+        testroot = "/bundle/tests" if self.readonly_tests else "/work/tests"
+        result = self.tests_callback(
+            self.package, self.work, ["python", "-I", "/bundle/_harness.py", testroot]
+        )
+        self.cleanup_failed |= result.failure == "cleanup_failed"
+        return result
+
+
+@contextmanager
+def _public_workspace(
+    runner: Any,
+    public_inputs: Mapping[str, Any],
+    frozen_base: Any,
+    *,
+    previous_bundle: Any = None,
+    trace: Mapping[str, Any] | None = None,
+    test_files: Mapping[str, str] | None = None,
+    readonly_tests: bool = False,
+    workspace: Path | None = None,
+    terminal_callback: Callable[[Path, Path, str], ProgramResult] | None = None,
+    tests_callback: Callable[[Path, Path, Sequence[str]], ProgramResult] | None = None,
+) -> Iterator[PublicWorkspaceSession]:
+    from .core._canonical import thaw_json
+
+    base = frozen_base.to_dict() if hasattr(frozen_base, "to_dict") else thaw_json(frozen_base)
+    authoring = previous_bundle is not None
+    trace_value = thaw_json(trace or {})
+    trace_value.pop("public_artifacts_dir", None)
+    public = {
+        "public_inputs.json": json.dumps(
+            thaw_json(public_inputs), ensure_ascii=False, allow_nan=False
+        ),
+        "base.json": json.dumps(base, ensure_ascii=False, allow_nan=False),
+        "trace.json": json.dumps(trace_value, ensure_ascii=False, allow_nan=False),
+        "_harness.py": _PYTEST_HARNESS,
+        "_workspace_policy.json": json.dumps(
+            ["candidate", "scratch"]
+            if authoring
+            else ["scratch"]
+            if readonly_tests
+            else ["tests", "scratch"]
+        ),
+    }
+    if readonly_tests:
+        public.update(test_files or {})
+    staging = str(workspace) if workspace is not None else tempfile.mkdtemp(prefix="tau-public-")
+    root = Path(staging)
+    session = None
+    try:
+        if root.is_symlink():
+            raise ValueError("unsafe_workspace_root")
+        root.mkdir(parents=True, exist_ok=True)
+        package, work = root / "bundle", root / "work"
+        resumed = package.exists() or work.exists()
+        if resumed:
+            expected = {
+                relative: hashlib.sha256(content.encode()).hexdigest()
+                for relative, content in public.items()
+            }
+            observed = {
+                path: digest
+                for path, digest in _tree_manifest(package).items()
+                if not path.endswith("/")
+            }
+            if expected != observed:
+                raise ValueError("public_workspace_input_mismatch")
+            _tree_manifest(work)
+        else:
+            package.mkdir()
+            work.mkdir(mode=0o777)
+            work.chmod(0o777)
+            _stage_files(package, public)
+            for relative in _workspace_writable_roots(package):
+                (work / relative).mkdir(mode=0o777)
+                (work / relative).chmod(0o777)
+            initial = dict(previous_bundle.files) if authoring else dict(test_files or {})
+            for relative, content in initial.items():
+                path = (
+                    work / "candidate" / _safe_path(relative)
+                    if authoring
+                    else work / _safe_path(relative)
+                )
+                if readonly_tests:
+                    continue
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content, encoding="utf-8")
+                path.chmod(0o666)
+                for parent in path.parents:
+                    if parent == work:
+                        break
+                    parent.chmod(0o777)
+        target = (
+            work / "candidate"
+            if authoring
+            else package / "tests"
+            if readonly_tests
+            else work / "tests"
+        )
+        if readonly_tests and not target.exists():
+            raise ValueError("empty_test_suite")
+        session = PublicWorkspaceSession(
+            package,
+            work,
+            target,
+            terminal_callback or runner._terminal,
+            tests_callback or runner._run,
+            readonly_tests,
+            not authoring,
+        )
+        yield session
+    finally:
+        if workspace is None and (session is None or not session.cleanup_failed):
+            _remove_runtime_staging(runner, staging)
+
+
 @contextmanager
 def _episode(runner: Any, bundle: Any) -> Iterator[SkillEpisode]:
     from .artifacts import SkillBundle
 
-    bundle = SkillBundle.from_dict(bundle.to_dict())
+    files = {} if bundle is None else SkillBundle.from_dict(bundle.to_dict()).files
     staging = tempfile.mkdtemp(prefix="tau-skill-")
     episode: SkillEpisode | None = None
     try:
@@ -542,12 +832,12 @@ def _episode(runner: Any, bundle: Any) -> Iterator[SkillEpisode]:
         package.mkdir()
         work.mkdir(mode=0o777)
         work.chmod(0o777)
-        _stage_files(package, bundle.files)
-        episode = SkillEpisode(runner, package, work, bundle.files)
+        _stage_files(package, files)
+        episode = SkillEpisode(runner, package, work, files)
         yield episode
     finally:
         if episode is None or not episode.cleanup_failed:
-            _remove_staging(staging)
+            _remove_runtime_staging(runner, staging)
 
 
 def _run_verifier(
@@ -557,6 +847,9 @@ def _run_verifier(
     trace: Mapping[str, Any],
     test_files: Mapping[str, str],
 ) -> ProgramResult:
+    from .verifier import _validate_test_source
+
+    _validate_test_source(test_files)
     files = dict(test_files)
     files["public_inputs.json"] = json.dumps(public_inputs, ensure_ascii=False, allow_nan=False)
     files["base.json"] = json.dumps(frozen_base, ensure_ascii=False, allow_nan=False)
@@ -575,7 +868,7 @@ def _run_verifier(
         return result
     finally:
         if result is None or result.failure != "cleanup_failed":
-            _remove_staging(staging)
+            _remove_runtime_staging(runner, staging)
 
 
 @dataclass
@@ -614,15 +907,34 @@ import contextlib
 import json
 import pathlib
 import sys
+sys.dont_write_bytecode = True
 import pytest
+
+ROOT = pathlib.Path('/bundle')
+TESTROOT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'tests'
+# Keep final report formatting independent of ordinary module monkeypatches in tests.
+# Arbitrary Python in this process is still not a security boundary.
+_encode_report = json.JSONEncoder(ensure_ascii=False, allow_nan=False).encode
+_write_report = sys.stdout.write
+_exit = SystemExit
+_integer = int
 
 class Report:
     def __init__(self):
         self.items = []
-        self.collected = 0
+        self.nodeids = []
         self.collection_errors = 0
+    @pytest.fixture
+    def public_inputs(self):
+        return json.loads((ROOT/'public_inputs.json').read_text())
+    @pytest.fixture
+    def frozen_base(self):
+        return json.loads((ROOT/'base.json').read_text())
+    @pytest.fixture
+    def trace(self):
+        return json.loads((ROOT/'trace.json').read_text())
     def pytest_collection_finish(self, session):
-        self.collected = len(session.items)
+        self.nodeids = [item.nodeid for item in session.items]
     def pytest_collectreport(self, report):
         if report.failed:
             self.collection_errors += 1
@@ -631,6 +943,8 @@ class Report:
             self.items.append({'nodeid':report.nodeid,'stage':report.when,
                                'outcome':report.outcome,
                                'exception':getattr(report, 'tau_exception', None),
+                               'requirement_failure':getattr(report,
+                                                            'tau_requirement_failure', False),
                                'xfail':hasattr(report, 'wasxfail'),
                                'detail':str(report.longrepr)[:4000] if report.longrepr else ''})
     @pytest.hookimpl(hookwrapper=True)
@@ -638,26 +952,18 @@ class Report:
         outcome = yield
         report = outcome.get_result()
         report.tau_exception = call.excinfo.type.__name__ if call.excinfo else None
+        report.tau_requirement_failure = bool(call.excinfo and isinstance(
+            call.excinfo.value, (AssertionError, pytest.fail.Exception)))
 
 report = Report()
-# Fixtures contain public data only; no Skill or evaluator mount exists.
-fixture_source = '''import json, pathlib, pytest
-ROOT = pathlib.Path('/bundle')
-@pytest.fixture
-def public_inputs(): return json.loads((ROOT/'public_inputs.json').read_text())
-@pytest.fixture
-def frozen_base(): return json.loads((ROOT/'base.json').read_text())
-@pytest.fixture
-def trace(): return json.loads((ROOT/'trace.json').read_text())
-'''
-pathlib.Path('/work/conftest.py').write_text(fixture_source)
-# Put conftest and tests in one private writable tree; source remains readonly in /bundle.
-import shutil
-shutil.copytree('/bundle/tests', '/work/tests')
+# No generated conftest/plugin is loaded; this host-owned plugin supplies fixtures.
 with contextlib.redirect_stdout(sys.stderr):
-    code = pytest.main(['/work', '-q', '-p', 'no:cacheprovider', '--disable-warnings'],
+    code = pytest.main([str(TESTROOT), '--rootdir=' + str(TESTROOT.parent), '-q',
+                       '--noconftest', '-p', 'no:cacheprovider', '--disable-warnings'],
                        plugins=[report])
-result = {'exit_code':int(code),'collected':report.collected,
+result = {'exit_code':_integer(code),'collected':len(report.nodeids),
+          'collected_nodeids':report.nodeids,
           'collection_errors':report.collection_errors,'results':report.items}
-print(json.dumps(result, ensure_ascii=False, allow_nan=False))
+_write_report(_encode_report(result) + '\n')
+raise _exit(_integer(code))
 """

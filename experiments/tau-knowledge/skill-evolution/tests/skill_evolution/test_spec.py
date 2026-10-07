@@ -38,7 +38,7 @@ def _copy_config(tmp_path, mutate=None, source=DEFAULT_CONFIG):
 
 def test_full_tau_matrix_preserves_legacy_profiles_poison_sample_and_source():
     spec = load_spec()
-    assert spec.experiment == "tau" and spec.namespace == "tau.skill-evolution.v2"
+    assert spec.experiment == "tau" and spec.namespace == "tau.skill-evolution.v4"
     assert len(spec.tasks) == 97 and len(spec.cells) == 291 and spec.arms == ARMS
     assert list(spec.tasks) == sorted(spec.tasks)
     assert all(spec.profile(task) == profile for task, profile in LEGACY_ATTACK_PROFILES.items())
@@ -55,7 +55,12 @@ def test_full_tau_matrix_preserves_legacy_profiles_poison_sample_and_source():
         spec.values["source"]["root_tree"],
         spec.values["source"]["banking_tree"],
     ) == (UPSTREAM_COMMIT, UPSTREAM_ROOT_TREE, BANKING_TREE)
-    assert spec.values["evolution"] == {"max_revisions": 15, "max_oracles": 5}
+    assert spec.values["evolution"] == {
+        "max_revisions": 15,
+        "max_oracles": 5,
+        "max_oracle_errors": 5,
+        "revision_timeout_seconds": 3600,
+    }
     assert spec.values["acquisition"] == {
         "min_document_confidence": 0.1,
         "max_searches": 30,
@@ -71,7 +76,8 @@ def test_skillsbench_configuration_has_the_fixed_matrix_and_only_benign_arm():
     assert spec.values["source"]["commit"] == SKILLSBENCH_COMMIT
     assert len(spec.tasks) == len(set(spec.tasks)) == len(spec.cells) == 85
     assert list(spec.tasks) == sorted(spec.tasks)
-    assert spec.experiment == "skillsbench" and spec.namespace == "skillsbench.skill-evolution.v1"
+    assert spec.experiment == "skillsbench" and spec.namespace == "skillsbench.skill-evolution.v4"
+    assert spec.values["runtime"]["executor"] == "author-codex"
     assert spec.arms == ("benign",) and spec.targets("benign") == ()
     assert spec.profile(spec.tasks[0]) == "benign"
     assert spec.values["acquisition"]["max_reads"] == 0
@@ -79,8 +85,73 @@ def test_skillsbench_configuration_has_the_fixed_matrix_and_only_benign_arm():
     assert spec.values["roles"]["analyzer"]["prompt"] == "analyzer-skillsbench.md"
     assert spec.values["embedding"]["chunk_tokens"] == 2048
     assert spec.values["embedding"]["chunk_overlap_tokens"] == 128
+    assert spec.values["source"]["runtime_lock"] == (
+        "runtime/skillsbench-docker-{task_id}-v4-lock.json"
+    )
     with pytest.raises(ValueError, match="arm"):
         spec.targets("poison-5")
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "runtime/skillsbench-docker-{unknown}-lock.json",
+        "runtime/skillsbench-docker-{task_id}-{task_id}-lock.json",
+        "runtime/skillsbench-docker-{task_id}-{unknown}-lock.json",
+        "runtime/skillsbench-bubblewrap-{task_id}-lock.json",
+    ],
+)
+def test_skillsbench_rejects_unsupported_runtime_lock_templates(tmp_path, path):
+    with pytest.raises(ValueError, match="runtime lock only supports"):
+        load_spec(
+            _copy_config(
+                tmp_path,
+                lambda value: value["source"].update(runtime_lock=path),
+                SKILLSBENCH_CONFIG,
+            )
+        )
+
+
+def test_author_codex_cannot_use_a_historical_namespace(tmp_path):
+    with pytest.raises(ValueError, match="Codex requires.*v4"):
+        load_spec(
+            _copy_config(
+                tmp_path,
+                lambda value: value.update(schema_version="skillsbench.skill-evolution.v2"),
+                SKILLSBENCH_CONFIG,
+            )
+        )
+
+
+def test_codex_cli_digest_must_be_a_real_hex_digest(tmp_path):
+    with pytest.raises(ValueError, match="binary hash"):
+        load_spec(
+            _copy_config(
+                tmp_path,
+                lambda value: value["runtime"]["codex"].update(binary_sha256="z" * 64),
+                SKILLSBENCH_CONFIG,
+            )
+        )
+
+
+@pytest.mark.parametrize("problem", [None, "missing-pair", "hash", "missing-gpt56"])
+def test_codex_code_mode_companion_configuration(tmp_path, problem):
+    def change(value):
+        codex = value["runtime"]["codex"]
+        if problem != "missing-gpt56":
+            codex.update(code_mode_host_binary="/pinned/codex-code-mode-host")
+        if problem not in {"missing-pair", "missing-gpt56"}:
+            codex.update(code_mode_host_sha256="z" * 64 if problem == "hash" else "a" * 64)
+        if problem == "missing-gpt56":
+            value["provider"]["model"] = "openai.gpt-5.6-terra"
+
+    path = _copy_config(tmp_path, change, SKILLSBENCH_CONFIG)
+    if problem:
+        with pytest.raises(ValueError, match="Codex|code-mode"):
+            load_spec(path)
+    else:
+        spec = load_spec(path)
+        assert spec.values["runtime"]["codex"]["code_mode_host_sha256"] == "a" * 64
 
 
 @pytest.mark.skipif(
@@ -105,10 +176,55 @@ def test_generator_context_budget_is_explicit_and_separate_from_bank_admission()
     for path in (DEFAULT_CONFIG, SKILLSBENCH_CONFIG):
         spec = load_spec(path)
         generator = spec.values["roles"]["generator"]
-        assert generator["reasoning_effort"] == "high" and generator["max_output_tokens"] == 32768
+        assert generator["reasoning_effort"] == "high" and generator["max_output_tokens"] is None
         assert generator["max_input_tokens"] == int(272000 * 0.7) - 32768 == 157632
         assert spec.values["runtime"]["controls"]["max_input_tokens"] == 114688
         assert spec.values["roles"]["analyzer"]["max_input_tokens"] == 114688
+
+
+def test_gpt54_trial_can_select_medium_generator_effort_with_the_same_budgets(tmp_path):
+    def configure(value):
+        value["provider"]["model"] = "openai.gpt-5.4"
+        value["roles"]["generator"]["reasoning_effort"] = "medium"
+
+    spec = load_spec(_copy_config(tmp_path, configure, SKILLSBENCH_CONFIG))
+    assert spec.values["roles"]["generator"]["reasoning_effort"] == "medium"
+    assert spec.values["roles"]["generator"]["max_output_tokens"] is None
+    assert spec.values["evolution"]["max_revisions"] == 15
+    assert spec.values["evolution"]["max_oracles"] == 5
+
+
+def test_author_codex_trial_can_omit_output_limits_without_changing_input_admission(tmp_path):
+    def configure(value):
+        value["provider"]["model"] = "openai.gpt-5.4"
+        for role in value["roles"].values():
+            role["max_output_tokens"] = None
+        controls = value["runtime"]["controls"]
+        controls["assistant_completion_budget"] = None
+        for role in ("agent", "user"):
+            controls[role]["max_output_tokens"] = None
+
+    spec = load_spec(_copy_config(tmp_path, configure, SKILLSBENCH_CONFIG))
+    generator = spec.values["roles"]["generator"]
+    assert generator["reasoning_effort"] == "high"
+    assert generator["max_output_tokens"] is None
+    assert generator["max_input_tokens"] == 157632
+    assert generator["max_turns"] == 120
+    assert spec.values["evolution"]["max_revisions"] == 15
+    assert spec.values["evolution"]["max_oracles"] == 5
+
+
+@pytest.mark.parametrize("field", ["agent", "user", "assistant_completion_budget"])
+def test_local_bank_runtime_cannot_select_unsupported_null_limits(tmp_path, field):
+    def configure(value):
+        controls = value["runtime"]["controls"]
+        if field == "assistant_completion_budget":
+            controls[field] = None
+        else:
+            controls[field]["max_output_tokens"] = None
+
+    with pytest.raises(ValueError, match="null runtime output limits"):
+        load_spec(_copy_config(tmp_path, configure))
 
 
 @pytest.mark.parametrize(
@@ -134,6 +250,7 @@ def test_generator_context_budget_is_explicit_and_separate_from_bank_admission()
         lambda v: v["acquisition"].update(min_document_confidence=-0.1),
         lambda v: v["acquisition"].update(min_document_confidence=1.1),
         lambda v: v["evolution"].update(max_revisions=16),
+        lambda v: v["roles"]["generator"].update(reasoning_effort="invalid"),
         lambda v: v["roles"]["generator"].update(max_input_tokens=157633),
     ],
 )
@@ -204,7 +321,7 @@ def test_worker_config_has_separate_private_judge_model_and_public_runtime_paths
     spec = load_spec()
     config = spec.worker_config()
     assert config["allowed_task_ids"] == list(spec.tasks)
-    assert config["model"] == config["user_model"] == config["judge_model"] == "openai.gpt-5.5"
+    assert config["model"] == config["user_model"] == config["judge_model"] == "openai.gpt-5.4"
     assert config["api_base"] == "https://bedrock-mantle.us-east-1.api.aws/openai/v1"
     assert "digest" in config["docker"]
     assert "gold_documents" not in config and "expected_actions" not in config
@@ -227,6 +344,44 @@ def test_effective_region_is_bound_and_snapshot_has_no_implicit_default(tmp_path
         _ = spec.provider_settings
 
 
+def test_opus_configuration_selects_messages_and_binds_effective_region(tmp_path, monkeypatch):
+    spec = load_spec(
+        _copy_config(
+            tmp_path,
+            lambda value: value["provider"].update(
+                model="anthropic.claude-opus-4-8", transport="bedrock-messages", region=None
+            ),
+        )
+    )
+    monkeypatch.setenv("AWS_REGION", "us-east-1")
+    assert (
+        spec.provider_settings["api_base"]
+        == "https://bedrock-mantle.us-east-1.api.aws/anthropic/v1"
+    )
+    initial = spec.identity
+    monkeypatch.setenv("AWS_REGION", "us-east-2")
+    with pytest.raises(ValueError, match="Opus 4.8"):
+        _ = spec.provider_settings
+    assert initial["provider"]["model"] == "anthropic.claude-opus-4-8"
+
+
+@pytest.mark.parametrize(
+    "provider",
+    [
+        {"model": "anthropic.claude-opus-4-8", "transport": "bedrock-responses"},
+        {"model": "openai.gpt-5.6-terra", "transport": "bedrock-messages"},
+        {
+            "model": "anthropic.claude-opus-4-8",
+            "transport": "bedrock-messages",
+            "region": "us-east-2",
+        },
+    ],
+)
+def test_provider_rejects_wrong_transport_and_opus_region(tmp_path, provider):
+    with pytest.raises(ValueError):
+        load_spec(_copy_config(tmp_path, lambda value: value["provider"].update(provider)))
+
+
 def test_role_prompts_match_domain_capabilities_and_omit_quotes_by_default():
     spec = load_spec()
     analyzer = (spec.root / "prompts/analyzer.md").read_text()
@@ -237,7 +392,7 @@ def test_role_prompts_match_domain_capabilities_and_omit_quotes_by_default():
     assert '{"kind":"read_only"' not in sb and '{"kind":"clarify"' not in sb
     assert "budgets are zero" in sb
     verifier = (spec.root / "prompts/verifier.md").read_text()
-    assert "/public" not in verifier and "/bundle" in verifier
+    assert "/bundle/public_inputs.json" in verifier and "terminal" in verifier
 
 
 def test_preparing_another_domain_runtime_does_not_invalidate_a_checkpoint(tmp_path, monkeypatch):
@@ -255,3 +410,14 @@ def test_preparing_another_domain_runtime_does_not_invalidate_a_checkpoint(tmp_p
     sb_identity = sb.identity
     tau_lock.write_text('{"revision": 2}')
     assert sb.identity == sb_identity and tau.identity != tau_identity
+
+
+def test_workspace_worker_config_does_not_require_a_docker_image_lock(tmp_path, monkeypatch):
+    spec = load_spec()
+    monkeypatch.setattr(spec_module, "EXPERIMENT_ROOT", tmp_path)
+    config = spec.worker_config(runtime="workspace")
+    assert "docker" not in config
+    assert config["sandbox"] == {
+        "backend": "workspace",
+        "runtime_lock": str(tmp_path / "runtime/bubblewrap-lock.json"),
+    }

@@ -1,17 +1,5 @@
 #!/usr/bin/env python3
-"""Merge a primary matrix report with a retry run that re-sampled selected cells.
-
-Usage:
-    .venv/bin/python scripts/merge_reports.py --config CFG --primary RUN/matrix \
-        --retry RUN/matrix-retry-001 --cells /tmp/affected.json --output RUN/matrix-merged
-
-For every cell named in ``--cells`` (JSON list of "task|arm"), the retry run's case
-replaces the primary case; all other cells keep the primary case. Aggregates are
-recomputed with the package's own ``report_cases`` so denominators and NOT_MEASURED
-handling are identical to a single-run report. The merged report records, per cell,
-which run it came from and why the cell was re-sampled (infrastructure-caused unknown
-results in the primary run). Neither input directory is modified.
-"""
+"""Collect explicitly identified rerun trials without replacing primary matrix samples."""
 
 from __future__ import annotations
 
@@ -26,36 +14,73 @@ sys.path.insert(0, str(ROOT / "src"))
 
 
 def load_report(directory: Path) -> dict:
-    path = directory / "report.json"
-    if not path.is_file():
-        raise SystemExit(f"missing report: {path}")
-    return json.loads(path.read_text(encoding="utf-8"))
+    return json.loads((directory / "report.json").read_text(encoding="utf-8"))
 
 
-def merge_cases(primary: dict, retry: dict, cells: set[str]) -> tuple[list[dict], dict]:
-    retry_cases = {f"{c['task_id']}|{c['condition']}": c for c in retry["cases"]}
-    merged: list[dict] = []
-    provenance: dict[str, dict] = {}
-    for case in primary["cases"]:
+def case_index(report: dict) -> dict[str, dict]:
+    indexed = {}
+    for case in report["cases"]:
         key = f"{case['task_id']}|{case['condition']}"
-        if key in cells and key in retry_cases:
-            merged.append(retry_cases[key])
-            provenance[key] = {
-                "source": "retry",
-                "primary_status": case.get("status"),
-                "primary_stop_reason": case.get("stop_reason"),
-                "retry_status": retry_cases[key].get("status"),
-                "retry_stop_reason": retry_cases[key].get("stop_reason"),
+        if key in indexed:
+            raise ValueError(f"duplicate report cell: {key}")
+        indexed[key] = case
+    return indexed
+
+
+def validate_report(
+    report: dict, identity: dict, experiment: str, namespace: str, runtime: str | None = None
+) -> None:
+    if report.get("identity") != identity:
+        raise ValueError(
+            "report experiment identity differs or is missing; legacy reports stay separate"
+        )
+    if report.get("experiment") != experiment or report.get("namespace") != namespace:
+        raise ValueError("report does not belong to the selected experiment")
+    if not isinstance(report.get("trial_id"), str) or not report["trial_id"]:
+        raise ValueError("report must identify its independent trial")
+    backend = report.get("execution", {}).get("backend")
+    if (report.get("run_mode"), backend) not in {("formal", "docker"), ("workspace", "workspace")}:
+        raise ValueError("trial collection requires matching Docker or workspace reports")
+    if runtime is not None and backend != runtime:
+        raise ValueError("report runtime differs from the selected runtime")
+    if backend == "workspace" and report.get("formal_matrix_result", False):
+        raise ValueError("workspace results cannot claim Docker isolation acceptance")
+    case_index(report)
+
+
+def execution_identity(report: dict) -> dict:
+    return {
+        key: value for key, value in report["execution"].items() if key != "formal_matrix_result"
+    }
+
+
+def resampled_cases(primary: dict, retry: dict, cells: set[str]) -> list[dict]:
+    originals, reruns = case_index(primary), case_index(retry)
+    if cells - originals.keys() or cells - reruns.keys():
+        raise ValueError("selected rerun cells are missing from a report")
+    trials = []
+    for key in sorted(cells):
+        original, rerun = originals[key], reruns[key]
+        if rerun.get("stop_reason") == "not_started" or rerun.get("status") == "NOT_STARTED":
+            raise ValueError(f"rerun cell was not started: {key}")
+        trials.append(
+            {
+                "cell": key,
+                "trial_id": retry["trial_id"],
+                "primary_trial_id": primary["trial_id"],
+                "kind": "whole_chain_resample",
+                "primary_base_hash": original.get("acquisition", {}).get("base_hash"),
+                "primary_initial_bundle_hash": original.get("initial_bundle_hash"),
+                "primary_stop_reason": original.get("stop_reason"),
+                "resampled_base_hash": rerun.get("acquisition", {}).get("base_hash"),
+                "resampled_initial_bundle_hash": rerun.get("initial_bundle_hash"),
+                "case": rerun,
             }
-        else:
-            merged.append(case)
-            provenance[key] = {"source": "primary"}
-    missing = sorted(key for key in cells if key not in retry_cases)
-    return merged, {"cells": provenance, "retry_cells_missing_from_retry_run": missing}
+        )
+    return trials
 
 
 def merged_usage(primary: dict, retries: list[dict], names: list[str]) -> dict:
-    """Sum per-role provider usage across runs; keep each run's own usage for provenance."""
     fields = ("requests", "input_tokens", "output_tokens", "cached_input_tokens")
     roles: dict[str, dict] = {}
     for report in [primary, *retries]:
@@ -63,24 +88,19 @@ def merged_usage(primary: dict, retries: list[dict], names: list[str]) -> dict:
             target = roles.setdefault(role, dict.fromkeys(fields, 0))
             for field in fields:
                 value = row.get(field)
-                if target[field] is None or value is None:
-                    target[field] = None
-                else:
-                    target[field] += value
-    total = {
-        field: (
-            sum(row[field] for row in roles.values())
-            if roles and all(row[field] is not None for row in roles.values())
-            else None
-        )
-        for field in fields
-    }
+                target[field] = (
+                    None if target[field] is None or value is None else target[field] + value
+                )
     return {
         "status": "MEASURED" if roles else "NOT_MEASURED",
-        "basis": "provider_response_usage summed over primary and retry runs; "
-        "primary includes abandoned (re-sampled) cells",
+        "basis": "provider_response_usage across primary and separately reported rerun trials",
         "roles": roles,
-        "total": total,
+        "total": {
+            field: sum(row[field] for row in roles.values())
+            if roles and all(row[field] is not None for row in roles.values())
+            else None
+            for field in fields
+        },
         "cost_usd": None,
         "cost_status": "NOT_MEASURED",
         "cost_reason": "provider responses do not include billing charges",
@@ -92,16 +112,11 @@ def merged_usage(primary: dict, retries: list[dict], names: list[str]) -> dict:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
+    parser.add_argument("--runtime", choices=("workspace", "docker"), default="workspace")
     parser.add_argument("--primary", type=Path, required=True)
-    parser.add_argument(
-        "--retry",
-        type=Path,
-        action="append",
-        required=True,
-        help="retry run dir; repeatable, paired in order with --cells; later dirs win",
-    )
+    parser.add_argument("--retry", type=Path, action="append", required=True)
     parser.add_argument("--cells", type=Path, action="append", required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
@@ -111,82 +126,81 @@ def main() -> int:
     from tau_skill_evolution.spec import load_spec
     from tau_skill_evolution.workflow import Workflow
 
-    spec = load_spec(args.config.resolve())
     if len(args.retry) != len(args.cells):
-        raise SystemExit("--retry and --cells must be given the same number of times")
+        parser.error("--retry and --cells must be paired")
+    directories = [args.primary.resolve(), *(path.resolve() for path in args.retry)]
+    if len(set(directories)) != len(directories) or args.output.resolve() in directories:
+        parser.error("input trials and output must be separate directories")
+    spec = load_spec(args.config.resolve())
+    identity = spec.identity
     primary = load_report(args.primary)
-    for report, name in ((primary, "primary"),):
-        if report.get("namespace") != spec.namespace or report.get("experiment") != spec.experiment:
-            raise SystemExit(f"{name} report does not belong to this experiment/config")
-    merged_cases = primary["cases"]
-    provenance: dict = {"cells": {}, "retry_cells_missing_from_retry_run": []}
-    for retry_dir, cells_path in zip(args.retry, args.cells, strict=True):
-        retry = load_report(retry_dir)
-        if retry.get("namespace") != spec.namespace or retry.get("experiment") != spec.experiment:
-            raise SystemExit(f"{retry_dir} report does not belong to this experiment/config")
-        cells = set(json.loads(cells_path.read_text(encoding="utf-8")))
-        merged_cases, step = merge_cases({"cases": merged_cases}, retry, cells)
-        for key, value in step["cells"].items():
-            if value["source"] == "retry":
-                provenance["cells"][key] = {**value, "source": str(retry_dir)}
-            else:
-                provenance["cells"].setdefault(key, {"source": "primary"})
-        provenance["retry_cells_missing_from_retry_run"] += [
-            f"{retry_dir}:{key}" for key in step["retry_cells_missing_from_retry_run"]
-        ]
-    report = report_cases(
-        merged_cases,
-        task_denominator=len(spec.tasks),
-        conditions=tuple(spec.values["matrix"]["arms"]),
-    )
+    retries = [load_report(path) for path in args.retry]
+    trial_ids = set()
+    matrix_cells = {f"{task}|{arm}" for task, arm in spec.cells}
+    for report in [primary, *retries]:
+        validate_report(report, identity, spec.experiment, spec.namespace, args.runtime)
+        if execution_identity(report) != execution_identity(primary):
+            raise ValueError("report execution runtime or lock differs from the primary trial")
+        if report["trial_id"] in trial_ids:
+            raise ValueError("trial_id must be unique across independent runs")
+        trial_ids.add(report["trial_id"])
+        if case_index(report).keys() != matrix_cells:
+            raise ValueError("report task population differs from the fixed matrix")
+    resamples, trial_summaries = [], []
+    for directory, retry, path in zip(args.retry, retries, args.cells, strict=True):
+        selected = json.loads(path.read_text(encoding="utf-8"))
+        if (
+            not isinstance(selected, list)
+            or not selected
+            or any(not isinstance(cell, str) for cell in selected)
+            or len(selected) != len(set(selected))
+            or set(selected) - matrix_cells
+        ):
+            raise ValueError("--cells must contain unique cells from the fixed matrix")
+        trials = resampled_cases(primary, retry, set(selected))
+        resamples.extend({**trial, "source": str(directory)} for trial in trials)
+        trial_summaries.append(
+            {
+                "trial_id": retry["trial_id"],
+                "source": str(directory),
+                "selected_cells": selected,
+                "metrics": report_cases(
+                    [trial["case"] for trial in trials],
+                    task_denominator=len(spec.tasks),
+                    conditions=spec.arms,
+                ),
+            }
+        )
+    report = report_cases(primary["cases"], task_denominator=len(spec.tasks), conditions=spec.arms)
     report.update(
         namespace=spec.namespace,
         experiment=spec.experiment,
         protocol=spec.namespace,
-        run_mode="formal-merged",
-        formal_matrix_result=any(
-            m.get("status") == "MEASURED" for c in merged_cases for m in c["evaluations"].values()
-        ),
-        execution={
-            **primary.get("execution", {}),
-            "merged_from": [str(args.primary), str(args.retry)],
-        },
-        cases=merged_cases,
-        usage=merged_usage(
-            primary, [load_report(r) for r in args.retry], [str(r) for r in args.retry]
-        ),
-        merge_provenance={
-            "reason": (
-                "cells whose primary run had an infrastructure-caused unknown result "
-                "(900 s request timeouts) were re-sampled in the retry run"
-            ),
-            "retry_cell_count": sum(
-                1 for v in provenance["cells"].values() if v["source"] != "primary"
-            ),
-            **provenance,
-        },
+        identity=identity,
+        trial_id=primary["trial_id"],
+        run_mode="workspace-trials" if args.runtime == "workspace" else "formal-trials",
+        formal_matrix_result=args.runtime == "docker"
+        and primary.get("formal_matrix_result", False),
+        execution={**primary["execution"], "collected_from": [str(p) for p in directories]},
+        cases=primary["cases"],
+        resampled_trials=resamples,
+        trial_summaries=trial_summaries,
+        usage=merged_usage(primary, retries, [str(p) for p in args.retry]),
     )
     args.output.mkdir(parents=True, exist_ok=True)
     atomic_json(args.output / "report.json", report)
-    shim = SimpleNamespace(spec=spec, demo=False, root=args.output)
+    shim = SimpleNamespace(
+        spec=spec, demo=False, runtime=args.runtime, execution=report["execution"], root=args.output
+    )
     shim._write_report_tail = lambda *a, **k: Workflow._write_report_tail(shim, *a, **k)
     Workflow._write_report_md(shim, report)
     with (args.output / "REPORT.md").open("a", encoding="utf-8") as stream:
         stream.write(
-            "\n\n## Merge provenance\n\n"
-            f"{report['merge_provenance']['retry_cell_count']} cells were re-sampled in "
-            f"{', '.join(f'`{r}`' for r in args.retry)} because their earlier run ended in an "
-            "infrastructure-caused unknown result; see `merge_provenance` in report.json.\n"
+            "\n\nPrimary matrix metrics retain the original samples. "
+            f"{len(resamples)} separately identified whole-chain reruns appear in "
+            "`resampled_trials` and `trial_summaries`; they are not checkpoint resumes.\n"
         )
-    print(
-        json.dumps(
-            {
-                "output": str(args.output),
-                **{k: report["merge_provenance"][k] for k in ("retry_cell_count",)},
-                "missing": report["merge_provenance"]["retry_cells_missing_from_retry_run"],
-            }
-        )
-    )
+    print(json.dumps({"output": str(args.output), "resampled_trial_cells": len(resamples)}))
     return 0
 
 

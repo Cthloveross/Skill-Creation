@@ -4,15 +4,24 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+import uuid
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
 from .acquisition import READ_ONLY_TOOL_NAMES, AcquisitionBudgets, collect_base
 from .artifacts import FrozenBase, atomic_json, load_base, load_bundle, seal_base, seal_bundle
+from .bank import BankWorkerError
 from .credentials import bearer_token_source
-from .generator import SKILL_BUNDLE_RESPONSE_FORMAT, CreationFailure, generate_initial, revise
-from .journal import Journal, UnknownOperation, identity_temporary
+from .generator import (
+    SKILL_BUNDLE_RESPONSE_FORMAT,
+    CreationFailure,
+    execute_initial,
+    generate_initial,
+    revise,
+)
+from .journal import Journal, UnknownOperation, _create_identity_exclusive, identity_temporary
 from .model import (
     CredentialError,
     GenerationConfig,
@@ -21,7 +30,7 @@ from .model import (
     SerializedChatTokenCounter,
 )
 from .retrieval import prepare_corpus, text_counter
-from .spec import ExperimentSpec, digest
+from .spec import NAMESPACES, ExperimentSpec, digest
 
 
 def _launcher_entry(path: Path) -> bool:
@@ -53,9 +62,17 @@ class Workflow:
         demo: bool = False,
         demo_task: str | None = None,
         interim_report: bool = True,
+        runtime: str | None = None,
     ) -> None:
+        if spec.namespace != NAMESPACES[spec.experiment]:
+            raise ValueError("historical methods are read-only; start a new current-method trial")
         self.spec = spec
         self.demo = demo
+        self.runtime = runtime or ("bubblewrap-demo" if demo else "docker")
+        if self.runtime not in {"workspace", "docker", "bubblewrap-demo"}:
+            raise ValueError("unsupported runtime")
+        if demo != (self.runtime == "bubblewrap-demo"):
+            raise ValueError("demo and runtime differ")
         self.interim_report = interim_report
         self.demo_task = demo_task or spec.tasks[0]
         if demo and self.demo_task not in spec.tasks:
@@ -66,26 +83,30 @@ class Workflow:
             and not (self.root / "journal" / "identity.json").exists()
             and any(not _launcher_entry(path) for path in self.root.iterdir())
         ):
-            raise ValueError("run directory has no tau.skill-evolution.v1 checkpoint identity")
+            raise ValueError("run directory has no compatible Skill evolution checkpoint identity")
         self.identity = spec.identity
+        self.experiment_identity = dict(self.identity)
         self.execution: dict[str, Any] = {"backend": "docker", "formal_matrix_result": False}
-        if demo:
+        if self.runtime != "docker":
             lock_path = (
                 spec.root / spec.values["source"]["runtime_lock"]
                 if spec.experiment == "skillsbench"
                 else spec.root / "runtime" / "bubblewrap-lock.json"
             )
-            if spec.experiment == "tau":
+            if demo and spec.experiment == "tau":
                 from .bubblewrap import RuntimeLock
 
                 RuntimeLock.from_file(lock_path).validate()
             self.execution = {
-                "backend": "bubblewrap-demo",
+                "backend": self.runtime,
                 "formal_matrix_result": False,
                 "aggregate_limits_enforced": False,
                 "runtime_lock_hash": hashlib.sha256(lock_path.read_bytes()).hexdigest(),
-                "task_id": self.demo_task,
+                "formal_environment_equivalent": False,
+                "resources_scope": "local_process",
             }
+            if demo:
+                self.execution["task_id"] = self.demo_task
             self.identity = {
                 **self.identity,
                 "execution": self.execution,
@@ -94,6 +115,12 @@ class Workflow:
                 ),
             }
         self.journal = Journal(self.root / "journal", identity=self.identity)
+        trial_path = self.root / "journal" / "trial.json"
+        _create_identity_exclusive(trial_path, {"trial_id": uuid.uuid4().hex})
+        self.trial_id = json.loads(trial_path.read_text())["trial_id"]
+        if not isinstance(self.trial_id, str) or len(self.trial_id) != 32:
+            raise ValueError("invalid_trial_identity")
+        self.identity = {**self.identity, "trial_id": self.trial_id}
         self.bank_factory = bank_factory
         self.model_factory = model_factory
         self.corpus_factory = corpus_factory
@@ -116,7 +143,7 @@ class Workflow:
             selected = directory / f"{role}.md"
         return selected.read_text(encoding="utf-8")
 
-    def _model(self, role: str) -> Any:
+    def _model(self, role: str, *, phase: str = "create") -> Any:
         if self.model_factory is not None:
             return self.model_factory(role)
         provider = self.spec.provider_settings
@@ -136,11 +163,13 @@ class Workflow:
                 max_input_tokens=settings.get(
                     "max_input_tokens", self.spec.values["runtime"]["controls"]["max_input_tokens"]
                 ),
-                response_format=SKILL_BUNDLE_RESPONSE_FORMAT if role == "generator" else None,
+                response_format=SKILL_BUNDLE_RESPONSE_FORMAT
+                if role == "generator" and phase == "create"
+                else None,
             ),
             timeout_seconds=self.spec.values["runtime"]["request_timeout_seconds"],
             token_counter=SerializedChatTokenCounter(
-                self.counter, basis="embedding_serialized_text_estimate"
+                self.counter, basis="embedding_responses_input_estimate_with_reasoning_reserve"
             ),
             usage_path=self.root / "usage.jsonl",
             usage_role=role,
@@ -156,20 +185,18 @@ class Workflow:
                 self.spec,
                 task,
                 demo=self.demo,
+                runtime=self.runtime,
                 model_factory=self._model,
                 counter=self.counter,
                 artifact_root=self.root / "artifacts" / task,
+                model_journal_dir=self.root / "private" / "skillsbench-models",
             )
         from .bank import Bank
 
-        config = self.spec.worker_config()
+        config = self.spec.worker_config(runtime=self.runtime)
         config["usage_path"] = str((self.root / "usage.jsonl").resolve())
         config["worker_log_dir"] = str((self.root / "logs" / "workers").resolve())
-        if self.demo:
-            config["sandbox"] = {
-                "backend": "bubblewrap-demo",
-                "runtime_lock": str(self.spec.root / "runtime" / "bubblewrap-lock.json"),
-            }
+        config["model_journal_dir"] = str((self.root / "private" / "bank-models").resolve())
         config["attack_profile"] = self.spec.profile(task)
         return Bank(
             self.spec.upstream / ".venv" / "bin" / "python", self.spec.upstream, task, config
@@ -177,11 +204,12 @@ class Workflow:
 
     def _runner(self) -> Any:
         if self.runner is None:
-            if self.demo:
+            if self.runtime != "docker":
                 from .bubblewrap import BubblewrapRunner, RuntimeLock
 
                 self.runner = BubblewrapRunner(
-                    RuntimeLock.from_file(self.spec.root / "runtime" / "bubblewrap-lock.json")
+                    RuntimeLock.from_file(self.spec.root / "runtime" / "bubblewrap-lock.json"),
+                    runtime=self.runtime,
                 )
                 return self.runner
             from .container import DockerRunner, ImageLock
@@ -256,6 +284,8 @@ class Workflow:
 
     def _create_cell(self, task: str, arm: str) -> None:
         root, journal = self._cell(task, arm)
+        if journal.dispatched("imported-versions"):
+            raise ValueError("imported evaluation cells cannot create or evolve a new Skill")
         if journal.completed("creation"):
             record = journal.response("creation")
             if record["status"] == "CREATED":
@@ -269,7 +299,21 @@ class Workflow:
             else:
 
                 def acquire() -> dict[str, Any]:
-                    with bank.acquisition() as session:
+                    options = {}
+                    if self.spec.experiment == "tau":
+                        checkpoint = (
+                            self.root / "private" / "acquisition" / task / arm / "session.json"
+                        ).resolve()
+                        if not checkpoint.is_file() and any(
+                            json.loads(path.read_text())["operation_id"].startswith("acquisition/")
+                            for path in journal.root.glob("*/request.json")
+                        ):
+                            raise ValueError("acquisition_snapshot_missing_requires_new_trial")
+                        options = {
+                            "checkpoint": checkpoint,
+                            "identity": {**self.identity, "task": task, "arm": arm},
+                        }
+                    with bank.acquisition(**options) as session:
                         corpus = (
                             self.corpus_factory(task, arm)
                             if self.corpus_factory
@@ -310,11 +354,14 @@ class Workflow:
                             ],
                             journal=journal,
                             system_prompt=self._prompt("analyzer"),
+                            action_dispatcher=getattr(session, "perform", None),
                         )
                     seal_base(root / "base", collected)
                     return collected.to_dict()
 
-                base = FrozenBase.from_dict(journal.dispatch("collect-base", {}, acquire))
+                base = FrozenBase.from_dict(
+                    journal.dispatch("collect-base", {}, acquire, external=False)
+                )
                 seal_base(root / "base", base)
             if (root / "initial").exists():
                 bundle = load_bundle(root / "initial")
@@ -335,9 +382,11 @@ class Workflow:
                     context_fraction=self.spec.values["roles"]["generator"].get(
                         "context_beta", 0.7
                     ),
-                    reserved_output_tokens=self.spec.values["roles"]["generator"][
-                        "max_output_tokens"
-                    ],
+                    reserved_output_tokens=math.floor(
+                        self.spec.values["roles"]["generator"]["context_window"]
+                        * self.spec.values["roles"]["generator"]["context_beta"]
+                    )
+                    - self.spec.values["roles"]["generator"]["max_input_tokens"],
                 )
             record = {
                 "status": "CREATED",
@@ -349,6 +398,17 @@ class Workflow:
             # invocation instead of sealing a terminal CREATION_FAILED.
             raise
         except (CreationFailure, UnknownOperation, ValueError, OSError, RuntimeError) as exc:
+            if base is None and (
+                isinstance(exc, BankWorkerError)
+                and not exc.response_received
+                or isinstance(exc, ModelClientError)
+                and exc.code == "acquisition_recovery_failed"
+            ):
+                # The private checkpoint determines whether a lost worker reply
+                # can be recovered. Do not turn this transport loss into a new
+                # opening or a terminal creation result. Local replay failures
+                # also leave the same private state available for recovery.
+                raise
             record = {
                 "status": "CREATION_FAILED",
                 "reason": str(exc),
@@ -376,60 +436,127 @@ class Workflow:
             result = EvolutionResult.from_dict(journal.response("evolution-result"))
         else:
             bank = self._bank(task)
+            from .generator import RevisionConversation
 
-            def revision(
-                previous: Any,
-                inputs: Any,
-                frozen: Any,
-                report: Any,
-                *,
-                operation_id: str,
-                feedback_history: Any = (),
-            ) -> Any:
-                return revise(
-                    self._model("generator"),
-                    previous,
-                    inputs,
-                    frozen,
-                    report,
-                    journal=journal,
-                    operation_id=operation_id,
-                    tool_schemas=bank.tool_schemas,
-                    artifact_dir=root / "revisions" / operation_id,
-                    seed=self.spec.values["seed"],
-                    system_prompt=self._prompt("generator"),
-                    feedback_history=feedback_history,
-                    token_counter=SerializedChatTokenCounter(self.counter),
-                    context_window=self.spec.values["roles"]["generator"].get(
-                        "context_window", 272000
-                    ),
-                    context_fraction=self.spec.values["roles"]["generator"].get(
-                        "context_beta", 0.7
-                    ),
-                    reserved_output_tokens=self.spec.values["roles"]["generator"][
-                        "max_output_tokens"
-                    ],
+            conversation = RevisionConversation()
+            settings = self.spec.values["roles"]["generator"]
+            generator = self._model("generator", phase="revise")
+            options = {
+                "journal": journal,
+                "tool_schemas": bank.tool_schemas,
+                "seed": self.spec.values["seed"],
+                "system_prompt": self._prompt("generator"),
+                "token_counter": SerializedChatTokenCounter(self.counter),
+                "context_window": settings["context_window"],
+                "context_fraction": settings["context_beta"],
+                "reserved_output_tokens": math.floor(
+                    settings["context_window"] * settings["context_beta"]
                 )
-
-            engine = EvolutionEngine(
-                rollout=bank.rollout,
-                oracle=bank.oracle,
-                verifier=SurrogateVerifier(
-                    self._model("verifier"),
-                    bank.verifier_runner()
-                    if self.spec.experiment == "skillsbench" and self.runner is None
-                    else self._runner(),
-                    journal=journal,
-                    system_prompt=self._prompt("verifier"),
-                    max_output_tokens=self.spec.values["roles"]["verifier"]["max_output_tokens"],
-                    seed=self.spec.values["seed"],
+                - settings["max_input_tokens"],
+                "conversation": conversation,
+                "max_turns": settings.get("max_turns", 120),
+                "timeout_seconds": self.spec.values["evolution"].get(
+                    "revision_timeout_seconds", 3600
                 ),
-                revise=revision,
-                journal=journal,
-                max_revisions=self.spec.values["evolution"]["max_revisions"],
-                max_oracles=self.spec.values["evolution"]["max_oracles"],
-            )
-            result = engine.run(base.public_inputs, base, initial)
+            }
+            session_opened = False
+            result = None
+            try:
+                with bank.evolution_session(
+                    initial,
+                    base.public_inputs,
+                    base,
+                    journal=journal,
+                    workspace=root / "learning",
+                ) as session:
+                    session_opened = True
+
+                    def initial_execution(
+                        bundle: Any, inputs: Any, frozen: Any, **kwargs: Any
+                    ) -> Any:
+                        return execute_initial(
+                            generator,
+                            bundle,
+                            inputs,
+                            frozen,
+                            session=session,
+                            **options,
+                            **kwargs,
+                        )
+
+                    def revision(
+                        previous: Any,
+                        inputs: Any,
+                        frozen: Any,
+                        report: Any,
+                        *,
+                        operation_id: str,
+                        **kwargs: Any,
+                    ) -> Any:
+                        return revise(
+                            generator,
+                            previous,
+                            inputs,
+                            frozen,
+                            report,
+                            session=session,
+                            operation_id=operation_id,
+                            artifact_dir=root / "revisions" / operation_id,
+                            **options,
+                            **kwargs,
+                        )
+
+                    engine = EvolutionEngine(
+                        execute_initial=initial_execution,
+                        oracle=bank.oracle,
+                        verifier=SurrogateVerifier(
+                            self._model("verifier"),
+                            bank.verifier_runner()
+                            if self.spec.experiment == "skillsbench" and self.runner is None
+                            else self._runner(),
+                            journal=journal,
+                            system_prompt=self._prompt("verifier"),
+                            max_output_tokens=self.spec.values["roles"]["verifier"][
+                                "max_output_tokens"
+                            ],
+                            seed=self.spec.values["seed"],
+                            max_episodes=self.spec.values["roles"]["verifier"]["max_turns"],
+                            diagnosis_episodes=self.spec.values["roles"]["verifier"][
+                                "diagnosis_turns"
+                            ],
+                        ),
+                        revise=revision,
+                        journal=journal,
+                        max_revisions=self.spec.values["evolution"]["max_revisions"],
+                        max_oracles=self.spec.values["evolution"]["max_oracles"],
+                        max_oracle_errors=self.spec.values["evolution"].get("max_oracle_errors", 5),
+                    )
+                    result = engine.run(base.public_inputs, base, initial)
+            except (OSError, ValueError, RuntimeError) as exc:
+                stage = (
+                    "open" if not session_opened else "close" if result is not None else "active"
+                )
+                failures = [
+                    json.loads(path.read_text())["operation_id"]
+                    for path in journal.root.glob("*/request.json")
+                    if json.loads(path.read_text())["operation_id"].startswith(
+                        "learning-environment-failure-"
+                    )
+                ]
+                record = {
+                    "status": "NOT_MEASURED",
+                    "index": len(failures),
+                    "stage": stage,
+                    "error_type": type(exc).__name__,
+                    "reason": getattr(exc, "reason", None) or type(exc).__name__,
+                }
+                journal.dispatch(
+                    f"learning-environment-failure-{len(failures)}",
+                    {"initial_bundle_hash": initial.bundle_hash, "base_hash": base.base_hash},
+                    lambda: record,
+                    external=False,
+                )
+                raise
         for bundle in result.versions:
             seal_bundle(root / "versions" / bundle.bundle_hash, bundle)
 
@@ -459,6 +586,159 @@ class Workflow:
             evaluate_versions(versions, bank.evaluate, journal=journal)
             self._halt_on_authentication(task, arm)
 
+    def evaluate_no_skill(self, cells: tuple[tuple[str, str], ...]) -> None:
+        """Run the SkillsBench control without acquisition, generation or evolution."""
+        from .evaluation import evaluate_no_skill
+
+        self._require_codex_controls(cells)
+        for task, arm in cells:
+            if (task, arm) in self._historical_authentication_failures:
+                continue
+            _, journal = self._cell(task, arm)
+            evaluate_no_skill(self._bank(task).evaluate_no_skill, journal=journal)
+            self._halt_on_authentication(task, arm)
+
+    def _require_codex_controls(self, cells: tuple[tuple[str, str], ...]) -> None:
+        self._validate_cells(cells)
+        if self.spec.experiment != "skillsbench" or any(arm != "benign" for _, arm in cells):
+            raise ValueError("control evaluation requires SkillsBench benign tasks")
+        if (
+            self.spec.values["runtime"].get("executor") != "author-codex"
+            or self.runtime != "docker"
+        ):
+            raise ValueError("control evaluation requires the author Codex Docker executor")
+
+    def evaluate_imported(self, cells: tuple[tuple[str, str], ...], source_run: Path) -> None:
+        """Rescore immutable packages in a new run; never reuse source measurements."""
+        from .evaluation import evaluate_versions
+        from .evolution import EvolutionResult
+
+        self._require_codex_controls(cells)
+        source_run = Path(source_run).resolve()
+        if source_run == self.root.resolve():
+            raise ValueError("imported evaluations require a separate source run")
+        source_identity = None
+        source_trial = None
+        for task, arm in cells:
+            if (task, arm) in self._historical_authentication_failures:
+                continue
+            root, journal = self._cell(task, arm)
+            if journal.dispatched("creation"):
+                raise ValueError("cannot import versions into a creation checkpoint")
+            if journal.completed("imported-versions"):
+                imported = journal.response("imported-versions")
+                if imported["source_run"] != str(source_run):
+                    raise ValueError("imported source run differs from the sealed manifest")
+                versions = self._imported_bundles(root, imported)
+                evaluate_versions(versions, self._bank(task).evaluate, journal=journal)
+                self._halt_on_authentication(task, arm)
+                continue
+            if source_identity is None:
+                source_identity = json.loads((source_run / "journal" / "identity.json").read_text())
+                source_trial = json.loads((source_run / "journal" / "trial.json").read_text())[
+                    "trial_id"
+                ]
+                if source_identity["identity"].get("experiment") != "skillsbench":
+                    raise ValueError("imported source must be a SkillsBench run")
+            source_cell = source_run / "cells" / task / arm
+            cell_identity = json.loads((source_cell / "journal" / "identity.json").read_text())
+            binding = cell_identity["identity"]
+            if binding != {
+                **source_identity["identity"],
+                "task": task,
+                "arm": arm,
+                "trial_id": source_trial,
+            }:
+                raise ValueError("imported source task or trial identity differs")
+            source = Journal(source_cell / "journal", identity=binding)
+            creation = source.response("creation")
+            initial = load_bundle(source_cell / "initial")
+            if creation.get("status") != "CREATED" or (
+                initial.bundle_hash != creation.get("initial_bundle_hash")
+            ):
+                raise ValueError("imported creation does not match the sealed package")
+            result = (
+                EvolutionResult.from_dict(source.response("evolution-result"))
+                if (source.completed("evolution-result"))
+                else None
+            )
+            versions = result.versions if result is not None else (initial,)
+            final_hash = result.final_bundle_hash if result is not None else initial.bundle_hash
+            if (
+                not versions
+                or versions[0].bundle_hash != initial.bundle_hash
+                or len({bundle.bundle_hash for bundle in versions}) != len(versions)
+                or final_hash not in {bundle.bundle_hash for bundle in versions}
+            ):
+                raise ValueError("imported content-version lineage is invalid")
+            preceding_hashes: set[str] = set()
+            for index, bundle in enumerate(versions):
+                if (index == 0 and bundle.parent_hash is not None) or (
+                    index > 0 and bundle.parent_hash not in preceding_hashes
+                ):
+                    raise ValueError("imported parent hash differs")
+                sealed = (
+                    source_cell / "initial"
+                    if index == 0
+                    else (source_cell / "versions" / bundle.bundle_hash)
+                )
+                if load_bundle(sealed).to_dict() != bundle.to_dict():
+                    raise ValueError("imported package differs from the source evolution record")
+                preceding_hashes.add(bundle.bundle_hash)
+            manifest = {
+                "source": "imported_frozen_packages",
+                "source_run": str(source_run),
+                "source_identity_hash": digest(source_identity),
+                "source_trial_id": source_trial,
+                "source_stop_reason": result.stop_reason
+                if result
+                else (
+                    "evolution_result_unknown"
+                    if source.dispatched("evolution-result")
+                    else "evolution_not_started"
+                ),
+                "source_revision_attempts": result.revision_attempts if result else 0,
+                "source_oracle_calls": result.oracle_calls if result else 0,
+                "task_id": task,
+                "condition": arm,
+                "versions": [
+                    {
+                        "version": index,
+                        "bundle_hash": bundle.bundle_hash,
+                        "parent_hash": bundle.parent_hash,
+                    }
+                    for index, bundle in enumerate(versions)
+                ],
+                "initial_bundle_hash": initial.bundle_hash,
+                "final_bundle_hash": final_hash,
+                "final_bundle_ref": dict(result.final_bundle_ref)
+                if result is not None and result.final_bundle_ref is not None
+                else None,
+            }
+
+            def import_packages(
+                versions: Any = versions, root: Path = root, manifest: Any = manifest
+            ) -> dict[str, Any]:
+                for bundle in versions:
+                    seal_bundle(root / "imported" / bundle.bundle_hash, bundle)
+                return manifest
+
+            journal.dispatch("imported-versions", manifest, import_packages, external=False)
+            evaluate_versions(versions, self._bank(task).evaluate, journal=journal)
+            self._halt_on_authentication(task, arm)
+
+    def _imported_bundles(self, root: Path, manifest: dict[str, Any]) -> tuple[Any, ...]:
+        versions = tuple(
+            load_bundle(root / "imported" / item["bundle_hash"]) for item in manifest["versions"]
+        )
+        for item, bundle in zip(manifest["versions"], versions, strict=True):
+            if (bundle.bundle_hash, bundle.parent_hash) != (
+                item["bundle_hash"],
+                item["parent_hash"],
+            ):
+                raise ValueError("imported sealed package differs from its import manifest")
+        return versions
+
     def report(self) -> dict[str, Any]:
         from .evaluation import not_measured, report_cases
         from .evolution import EvolutionResult
@@ -476,6 +756,38 @@ class Workflow:
             }
             if (directory / "journal").exists():
                 _, journal = self._cell(task, arm)
+                if journal.dispatched("evaluation-no-skill"):
+                    case["no_skill_evaluation"] = journal.result("evaluation-no-skill") or {
+                        **not_measured(
+                            reason="result_unknown"
+                            if not journal.completed("evaluation-no-skill")
+                            else "evaluation_not_processed"
+                        ),
+                        "baseline": "no_skill",
+                    }
+                if journal.completed("imported-versions"):
+                    imported = journal.response("imported-versions")
+                    for bundle in self._imported_bundles(directory, imported):
+                        operation = f"evaluation-{bundle.bundle_hash}"
+                        case["evaluations"][bundle.bundle_hash] = journal.result(operation) or (
+                            not_measured(
+                                bundle.bundle_hash,
+                                "result_unknown"
+                                if journal.dispatched(operation)
+                                and not journal.completed(operation)
+                                else "stage_not_executed",
+                            )
+                        )
+                    case.update(
+                        status="IMPORTED_EVALUATION",
+                        versions=imported["versions"],
+                        initial_bundle_hash=imported["initial_bundle_hash"],
+                        final_bundle_hash=imported["final_bundle_hash"],
+                        final_bundle_ref=imported.get("final_bundle_ref"),
+                        stop_reason="imported_evaluation",
+                        evaluation_source=imported["source"],
+                        evaluation_import=imported,
+                    )
                 if journal.completed("creation"):
                     creation = journal.response("creation")
                     case["status"] = creation["status"]
@@ -484,42 +796,88 @@ class Workflow:
                         base, initial = self._created(directory, journal)
                         versions = (initial,)
                         final_hash = initial.bundle_hash
+                        final_ref = None
                         case["stop_reason"] = "evolution_not_started"
                         if journal.completed("evolution-result"):
                             result = EvolutionResult.from_dict(journal.response("evolution-result"))
                             versions = result.versions
                             final_hash = result.final_bundle_hash
+                            final_ref = (
+                                dict(result.final_bundle_ref)
+                                if result.final_bundle_ref is not None
+                                else None
+                            )
                             case.update(
                                 stop_reason=result.stop_reason,
                                 revision_attempts=result.revision_attempts,
                                 oracle_calls=result.oracle_calls,
+                                oracle_attempts=result.oracle_calls + len(result.oracle_failures),
+                                oracle_failures=list(result.oracle_failures),
                                 attempts=list(result.attempts),
                                 verifications=[
                                     {
-                                        key: check[key]
-                                        for key in (
-                                            "bundle_hash",
-                                            "test_version",
-                                            "test_hash",
-                                            "passed",
-                                            "pass_rate",
-                                            "failure",
-                                            "program_error",
-                                        )
+                                        **{
+                                            key: check[key]
+                                            for key in (
+                                                "submission_hash",
+                                                "trace_hash",
+                                                "execution_id",
+                                                "operation_cursor",
+                                                "initial",
+                                                "parent_hash",
+                                            )
+                                            if key in check
+                                        },
+                                        **{
+                                            key: check[key]
+                                            for key in (
+                                                "bundle_hash",
+                                                "test_version",
+                                                "test_hash",
+                                                "passed",
+                                                "pass_rate",
+                                                "failure",
+                                                "program_error",
+                                                "diagnosis",
+                                                "recommendations",
+                                                "results",
+                                            )
+                                        },
                                     }
                                     for check in result.verifications
                                 ],
                             )
+                        environment_failures = [
+                            journal.response(envelope["operation_id"])
+                            for path in journal.root.glob("*/request.json")
+                            if (envelope := json.loads(path.read_text()))[
+                                "operation_id"
+                            ].startswith("learning-environment-failure-")
+                            and journal.completed(envelope["operation_id"])
+                        ]
+                        if environment_failures:
+                            failure = max(environment_failures, key=lambda item: item["index"])
+                            if (
+                                not journal.completed("evolution-result")
+                                or failure["stage"] == "close"
+                            ):
+                                case["learning_environment_failure"] = failure
+                                case["evolution_stop_reason"] = case["stop_reason"]
+                                case["stop_reason"] = (
+                                    f"learning_environment_{failure['stage']}_failed"
+                                )
                         case["versions"] = [
                             {"bundle_hash": bundle.bundle_hash} for bundle in versions
                         ]
                         case["final_bundle_hash"] = final_hash
+                        case["final_bundle_ref"] = final_ref
                         case["initial_bundle_hash"] = initial.bundle_hash
                         case["frozen_control_hash"] = (
                             initial.bundle_hash if arm != "benign" else None
                         )
                         case["evolution"] = {
                             "final_bundle_hash": final_hash,
+                            "final_bundle_ref": final_ref,
                             "stop_reason": case["stop_reason"],
                         }
                         for bundle in versions:
@@ -544,6 +902,32 @@ class Workflow:
                             "base_tokens": base.token_count,
                             "stop_reason": base.stop_reason,
                         }
+                        if journal.completed("acquisition-summary"):
+                            summary = journal.response("acquisition-summary")
+                            case["acquisition"].update(
+                                {
+                                    name: summary[name]
+                                    for name in (
+                                        "stop_detail",
+                                        "counters",
+                                        "unreviewed_document_ids",
+                                        "unreviewable_document_ids",
+                                    )
+                                }
+                            )
+                        evidence_path = self._public_audit(directory, journal, base)
+                        case["public_audit"] = str(evidence_path.relative_to(self.root))
+                        evidence = json.loads(evidence_path.read_text())
+                        case["learning_execution_count"] = evidence["learning_execution_count"]
+                        case["terminal_calls"] = len(evidence["terminal_operations"])
+                        case["submission_count"] = len(evidence["submissions"])
+                        case["learning_operations_unknown"] = sum(
+                            item["status"] == "UNKNOWN"
+                            for item in (
+                                *evidence["terminal_operations"],
+                                *evidence["bank_actions"],
+                            )
+                        )
                         if self.spec.experiment == "tau" and any(
                             item["status"] == "MEASURED" for item in case["evaluations"].values()
                         ):
@@ -562,13 +946,25 @@ class Workflow:
             conditions=tuple(self.spec.values["matrix"]["arms"]),
         )
         report["namespace"] = self.spec.namespace
+        report["identity"] = self.experiment_identity
+        report["trial_id"] = self.trial_id
         report["experiment"] = self.spec.experiment
         report["protocol"] = self.spec.namespace
-        report["run_mode"] = "single-task-demo" if self.demo else "formal"
-        report["formal_matrix_result"] = not self.demo and any(
+        report["run_mode"] = (
+            "single-task-demo"
+            if self.demo
+            else "workspace"
+            if self.runtime == "workspace"
+            else "formal"
+        )
+        report["formal_matrix_result"] = self.runtime == "docker" and any(
             measurement["status"] == "MEASURED"
             for case in cases
-            for measurement in case["evaluations"].values()
+            for measurement in (
+                *case["evaluations"].values(),
+                case.get("no_skill_evaluation") or {},
+            )
+            if measurement
         )
         report["execution"] = {
             **self.execution,
@@ -580,14 +976,111 @@ class Workflow:
         self._write_report_md(report)
         return report
 
+    def _public_audit(self, directory: Path, journal: Journal, base: FrozenBase) -> Path:
+        """Export public evidence without model chats or private oracle/evaluator output."""
+        from .artifacts import EvolutionSubmission
+
+        submissions, terminal_operations, bank_actions = [], [], []
+        execution_ids: set[str] = set()
+        execution_count = 0
+        for request in sorted(journal.root.glob("*/request.json")):
+            envelope = json.loads(request.read_text())
+            operation = envelope["operation_id"]
+            payload = envelope["payload"]
+            name = payload.get("name")
+            if name is None and operation.endswith("/start") and journal.completed(operation):
+                start = journal.response(operation)
+                state = start.get("learning_execution_state", {})
+                execution_count = max(execution_count, state.get("execution_count", 0))
+                if state.get("execution_id"):
+                    execution_ids.add(state["execution_id"])
+            if name == "submit_revision" and journal.completed(operation):
+                response = journal.response(operation)
+                if "submission" not in response:
+                    continue
+                submitted = EvolutionSubmission.from_dict(response["submission"])
+                execution_ids.add(submitted.execution_id)
+                trace = submitted.to_dict()["public_trace"]
+                trace.pop("public_artifacts_dir", None)
+                submissions.append(
+                    {
+                        "operation_id": operation,
+                        "submission_hash": submitted.submission_hash,
+                        "trace_hash": submitted.trace_hash,
+                        "bundle_hash": submitted.bundle.bundle_hash,
+                        "parent_hash": submitted.bundle.parent_hash,
+                        "execution_id": submitted.execution_id,
+                        "operation_cursor": submitted.operation_cursor,
+                        "initial": submitted.initial,
+                        "public_trace": trace,
+                    }
+                )
+            elif name is not None:
+                record = {
+                    "operation_id": operation,
+                    "status": journal.status(operation),
+                    "tool": name,
+                }
+                if journal.completed(operation):
+                    result = journal.response(operation).get("result", {})
+                    state = result.get("state", {})
+                    if state.get("execution_id"):
+                        execution_ids.add(state["execution_id"])
+                    execution_count = max(execution_count, state.get("execution_count", 0))
+                    record.update(
+                        {key: result[key] for key in ("exit_code", "failure") if key in result}
+                    )
+                (terminal_operations if name == "terminal" else bank_actions).append(record)
+        checks = []
+        submission_order = {}
+        if journal.completed("evolution-result"):
+            evolution = journal.response("evolution-result")
+            checks = evolution["verifications"]
+            submission_order = {
+                item["submission_hash"]: index
+                for index, item in enumerate(evolution.get("submissions", ()))
+            }
+        submissions.sort(
+            key=lambda item: (
+                submission_order.get(item["submission_hash"], math.inf),
+                not item["initial"],
+                item["operation_cursor"],
+            )
+        )
+        path = directory / "public-audit.json"
+        atomic_json(
+            path,
+            {
+                "trial_id": self.trial_id,
+                "frozen_base": base.to_dict(),
+                "acquisition": journal.response("acquisition-summary")
+                if journal.completed("acquisition-summary")
+                else None,
+                "submissions": submissions,
+                "learning_execution_count": max(execution_count, len(execution_ids)),
+                "terminal_operations": terminal_operations,
+                "bank_actions": bank_actions,
+                "verifications": checks,
+            },
+        )
+        return path
+
     def _usage_summary(self) -> dict[str, Any]:
         roles: dict[str, dict[str, Any]] = defaultdict(
             lambda: {"requests": 0, "input_tokens": 0, "output_tokens": 0, "cached_input_tokens": 0}
         )
         path = self.root / "usage.jsonl"
-        for line in path.read_text().splitlines() if path.exists() else ():
-            item = json.loads(line)
-            row, usage = roles[item["role"]], item["usage"]
+        seen: dict[str, Any] = {}
+
+        def account(role: str, usage: dict[str, Any], key: str | None = None) -> None:
+            item = {"role": role, "usage": usage}
+            if key is not None:
+                if key in seen:
+                    if seen[key] != item:
+                        raise ValueError("usage_for_same_operation_differs")
+                    return
+                seen[key] = item
+            row = roles[role]
             row["requests"] += 1
             row["input_tokens"] += usage.get("input_tokens", usage.get("prompt_tokens", 0))
             row["output_tokens"] += usage.get("output_tokens", usage.get("completion_tokens", 0))
@@ -597,10 +1090,61 @@ class Workflow:
                 if row["cached_input_tokens"] is not None and cached is not None
                 else None
             )
+
+        for line in path.read_text().splitlines() if path.exists() else ():
+            item = json.loads(line)
+            account(item["role"], item["usage"], item.get("operation_key"))
+        delivery = {
+            status: 0 for status in ("NOT_SENT", "RECEIVED_INVALID", "COMPLETED", "UNKNOWN")
+        }
+        journal_roots = [
+            self.root / "journal",
+            *self.root.glob("cells/*/*/journal"),
+            self.root / "private" / "bank-models",
+            self.root / "private" / "skillsbench-models",
+        ]
+        counted_requests: set[Path] = set()
+        for request in (path for root in journal_roots for path in root.rglob("request.json")):
+            if (
+                json.loads(request.read_text()).get("payload", {}).get("delivery_policy")
+                != "single_post"
+            ):
+                continue
+            state = json.loads((request.parent / "state.json").read_text())["status"]
+            if (request.parent / "response.json").exists():
+                state = "COMPLETED"
+            delivery[state] += 1
+            counted_requests.add(request.resolve())
+        # Native sidecar statistics duplicate these sealed provider responses. Count
+        # each journal operation once, including compaction/model calls within an episode.
+        native_root = self.root / "private" / "skillsbench-models"
+        for identity_path in native_root.glob("*/*/provider/identity.json"):
+            identity = json.loads(identity_path.read_text())["identity"]
+            if identity.get("executor", {}).get("framework") != "author-codex":
+                continue
+            journal = Journal(identity_path.parent, identity=identity)
+            for request_path in journal.root.glob("*/request.json"):
+                request = json.loads(request_path.read_text())
+                operation = request["operation_id"]
+                state = journal.status(operation)
+                if request_path.resolve() not in counted_requests:
+                    delivery[state] += 1
+                    counted_requests.add(request_path.resolve())
+                if state == "COMPLETED":
+                    usage = journal.response(operation)["response"]["usage"]
+                    key = digest(
+                        {"journal": str(journal.root.resolve()), "operation_id": operation}
+                    )
+                    account("execution", usage, key)
         return {
             "status": "MEASURED" if roles else "NOT_MEASURED",
             "basis": "provider_response_usage; successful responses only",
             "roles": dict(roles),
+            "model_request_states": delivery,
+            "dispatched_model_requests": sum(
+                count for state, count in delivery.items() if state != "NOT_SENT"
+            ),
+            "unknown_requests_may_be_billed": delivery["UNKNOWN"],
             "total": {
                 name: (
                     sum(row[name] for row in roles.values())
@@ -660,10 +1204,19 @@ class Workflow:
             "",
             f"End-to-end rates use the full {len(self.spec.tasks)}-task arm denominator. "
             "Measured means use only valid measurements.",
+            "Until all tasks are measured, fixed-denominator rates report observed successes; "
+            "they are not complete matrix results.",
             "Missing measurements remain null in JSON and NOT_MEASURED here.",
             "The S0 evaluation also represents the frozen control; it is not another sample.",
         ]
-        if self.demo:
+        if self.execution.get("backend") == "workspace":
+            lines[4:4] = [
+                "Local workspace experiment: fresh episode directories and locked dependencies. "
+                "Bubblewrap restricts file/network access; aggregate cgroup limits and "
+                "equivalence to the original Docker task environment are not claimed.",
+                "",
+            ]
+        elif self.demo:
             lines[4:4] = [
                 "Single-task Bubblewrap demonstration; formal_matrix_result=false. "
                 "Aggregate cgroup CPU/memory/PID limits are not enforced.",
@@ -721,6 +1274,7 @@ class Workflow:
                 "Utility mean",
                 "ASR mean",
                 "End-to-end utility",
+                "Task pass rate",
                 "Observed ASR / task",
             ),
             (
@@ -735,6 +1289,7 @@ class Workflow:
                         "measured_utility",
                         "measured_asr",
                         "end_to_end_utility",
+                        "task_pass_rate",
                         "observed_attack_successes_per_task",
                     )
                 )
@@ -769,6 +1324,9 @@ class Workflow:
                 "Versions",
                 "Revision attempts",
                 "Oracle calls",
+                "Learning executions",
+                "Terminal calls",
+                "Submissions",
                 "Final hash",
             ),
             (
@@ -779,12 +1337,114 @@ class Workflow:
                     len(case["versions"]),
                     case.get("revision_attempts", 0),
                     case.get("oracle_calls", 0),
+                    case.get("learning_execution_count", 0),
+                    case.get("terminal_calls", 0),
+                    case.get("submission_count", 0),
                     case.get("final_bundle_hash"),
                 )
                 for case in report["cases"]
             ),
         )
         if self.spec.experiment == "skillsbench":
+            baseline_cases = [case for case in report["cases"] if "no_skill_evaluation" in case]
+            if baseline_cases:
+                lines.extend(
+                    [
+                        "",
+                        "No-Skill runs use no package and do not create S0. Baseline comparisons "
+                        "require the same sealed executor identity; "
+                        "evaluations do not enter learning.",
+                    ]
+                )
+                table(
+                    "No-Skill independent measurements",
+                    (
+                        "Task",
+                        "Status",
+                        "Utility",
+                        "Reward",
+                        "Official checks passed",
+                        "Official checks total",
+                        "Official check rate",
+                        "Official check unit",
+                    ),
+                    (
+                        (
+                            case["task_id"],
+                            case["no_skill_evaluation"]["status"],
+                            case["no_skill_evaluation"]["utility"],
+                            (case["no_skill_evaluation"].get("metrics") or {}).get("reward"),
+                            (
+                                (case["no_skill_evaluation"].get("metrics") or {}).get(
+                                    "official_checks"
+                                )
+                                or {}
+                            ).get("passed"),
+                            (
+                                (case["no_skill_evaluation"].get("metrics") or {}).get(
+                                    "official_checks"
+                                )
+                                or {}
+                            ).get("total"),
+                            (
+                                (case["no_skill_evaluation"].get("metrics") or {}).get(
+                                    "official_checks"
+                                )
+                                or {}
+                            ).get("rate"),
+                            (
+                                (case["no_skill_evaluation"].get("metrics") or {}).get(
+                                    "official_checks"
+                                )
+                                or {}
+                            ).get("unit"),
+                        )
+                        for case in baseline_cases
+                    ),
+                )
+                table(
+                    "No-Skill paired comparisons",
+                    (
+                        "Condition",
+                        "Endpoint",
+                        "Paired",
+                        "Denominator",
+                        "Utility delta",
+                        "Paired coverage",
+                        "Reward delta",
+                        "GT paired",
+                        "GT paired coverage",
+                        "GT delta (pp)",
+                        "Rescued",
+                        "Degraded",
+                    ),
+                    (
+                        tuple(
+                            100 * row[key]
+                            if key == "mean_official_check_rate_delta" and row[key] is not None
+                            else row[key]
+                            for key in (
+                                "condition",
+                                "endpoint",
+                                "paired_count",
+                                "task_denominator",
+                                "mean_utility_delta",
+                                "paired_coverage",
+                                "mean_reward_delta",
+                                "official_check_paired_count",
+                                "official_check_paired_coverage",
+                                "mean_official_check_rate_delta",
+                                "rescued_count",
+                                "degraded_count",
+                            )
+                        )
+                        for row in report["baseline_paired_progress"]
+                    ),
+                )
+            comparisons = {
+                (row["task_id"], row["condition"], row["to_label"]): row
+                for row in report["version_progress"]
+            }
             table(
                 "Independent measurements",
                 (
@@ -798,6 +1458,12 @@ class Workflow:
                     "Official checks passed",
                     "Official checks total",
                     "Official check rate",
+                    "Official check unit",
+                    "Previous",
+                    "Utility delta",
+                    "Reward delta",
+                    "GT delta (pp)",
+                    "GT delta reason",
                 ),
                 (
                     (
@@ -811,8 +1477,23 @@ class Workflow:
                         ((row.get("metrics") or {}).get("official_checks") or {}).get("passed"),
                         ((row.get("metrics") or {}).get("official_checks") or {}).get("total"),
                         ((row.get("metrics") or {}).get("official_checks") or {}).get("rate"),
+                        ((row.get("metrics") or {}).get("official_checks") or {}).get("unit"),
+                        comparison.get("from_label"),
+                        comparison.get("utility_delta"),
+                        comparison.get("reward_delta"),
+                        None
+                        if comparison.get("official_check_rate_delta") is None
+                        else 100 * comparison["official_check_rate_delta"],
+                        comparison.get("official_check_delta_reason")
+                        or comparison.get("reason")
+                        or ("no_previous_measurement" if not comparison else "MEASURED"),
                     )
                     for row in report["versions"]
+                    for comparison in (
+                        comparisons.get(
+                            (row["task_id"], row["condition"], f"S{row['version']}"), {}
+                        ),
+                    )
                 ),
             )
             lines.extend(
@@ -1030,8 +1711,67 @@ class Workflow:
 
     def _write_report_tail(self, lines: list[str], report: dict[str, Any], table: Any) -> None:
         table(
+            "Adjacent content paired coverage",
+            (
+                "Condition",
+                "From",
+                "To",
+                "Actual chains",
+                "Denominator",
+                "Paired",
+                "Paired coverage",
+                "Utility delta",
+                "Reward paired",
+                "Reward delta",
+                "GT paired",
+                "GT paired coverage",
+                "GT delta (pp)",
+            ),
+            (
+                (
+                    row["condition"],
+                    row["from_label"],
+                    row["to_label"],
+                    row["actual_chains"],
+                    row["task_denominator"],
+                    row["paired_count"],
+                    row["paired_coverage"],
+                    row["mean_utility_delta"],
+                    row["reward_paired_count"],
+                    row["mean_reward_delta"],
+                    row["official_check_paired_count"],
+                    row["official_check_paired_coverage"],
+                    None
+                    if row["mean_official_check_rate_delta"] is None
+                    else 100 * row["mean_official_check_rate_delta"],
+                )
+                for row in report["version_paired_progress"]
+            ),
+        )
+        lines.extend(
+            [
+                "",
+                "S labels enumerate sealed content hashes, not revision attempts. "
+                "Final aliases the selected content's existing evaluation; "
+                "early stopping adds no versions. "
+                "GT deltas require measured checks with matching unit, total and source. "
+                "Utility/reward and GT means use their own recorded pair counts; "
+                "different coverage cannot be subtracted as an evolution effect.",
+            ]
+        )
+        table(
             "Paired evolution progress",
-            ("Task", "Condition", "Paired measured", "Utility delta", "Reward delta", "Rescued"),
+            (
+                "Task",
+                "Condition",
+                "Paired measured",
+                "Utility delta",
+                "Reward delta",
+                "GT delta (pp)",
+                "GT delta reason",
+                "Final aliases S0",
+                "Rescued",
+            ),
             (
                 (
                     row["task_id"],
@@ -1039,10 +1779,53 @@ class Workflow:
                     row["paired_measured"],
                     row["utility_delta"],
                     row["reward_delta"],
+                    None
+                    if row["official_check_rate_delta"] is None
+                    else 100 * row["official_check_rate_delta"],
+                    row["official_check_delta_reason"] or "MEASURED",
+                    row["same_content"],
                     row["rescued"],
                 )
                 for row in report["progress"]
                 if row["initial_hash"] is not None
+            ),
+        )
+        table(
+            "S0-to-Final paired coverage",
+            (
+                "Condition",
+                "Denominator",
+                "Paired",
+                "Paired coverage",
+                "Utility delta",
+                "Reward paired",
+                "Reward delta",
+                "GT paired",
+                "GT paired coverage",
+                "GT delta (pp)",
+                "Same content",
+                "Rescued",
+                "Degraded",
+            ),
+            (
+                (
+                    row["condition"],
+                    row["task_denominator"],
+                    row["paired_count"],
+                    row["paired_coverage"],
+                    row["mean_utility_delta"],
+                    row["reward_paired_count"],
+                    row["mean_reward_delta"],
+                    row["official_check_paired_count"],
+                    row["official_check_paired_coverage"],
+                    None
+                    if row["mean_official_check_rate_delta"] is None
+                    else 100 * row["mean_official_check_rate_delta"],
+                    row["same_content_count"],
+                    row["rescued_count"],
+                    row["degraded_count"],
+                )
+                for row in report["paired_progress"]
             ),
         )
         table(

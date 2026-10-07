@@ -10,6 +10,8 @@ runs/
 !experiments/*/*/runs/
 experiments/*/*/runs/*
 !experiments/*/*/runs/.gitkeep
+# Archived raw runs remain local; previously tracked public records keep their Git history.
+experiments/*/*/archive/runs/
 artifacts/raw/
 .experiments/
 

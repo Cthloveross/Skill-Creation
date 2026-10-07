@@ -1,4 +1,4 @@
-"""User-approved Bubblewrap demo; resource limits are per process, not aggregate."""
+"""Locked local workspaces with Bubblewrap isolation and per-process limits."""
 
 from __future__ import annotations
 
@@ -24,8 +24,10 @@ from .container import (
     SkillEpisode,
     _episode,
     _program_result,
+    _public_workspace,
     _run_verifier,
     _safe_path,
+    _workspace_writable_roots,
 )
 
 
@@ -116,9 +118,13 @@ class BubblewrapRunner:
         prlimit: str = "prlimit",
         timeout: float = 60,
         output_limit: int = 65536,
+        runtime: str = "bubblewrap-demo",
     ) -> None:
         if not 0 < timeout <= 60 or not 0 < output_limit <= 65536:
             raise ValueError("sandbox limits cannot exceed protocol limits")
+        if runtime not in ("workspace", "bubblewrap-demo"):
+            raise ValueError("unknown Bubblewrap runtime")
+        self.runtime = runtime
         self.runtime_lock = runtime_lock
         self.transport = transport or BoundedProcessTransport(kill_process_group=True)
         self.bwrap, self.taskset, self.prlimit = bwrap, taskset, prlimit
@@ -127,7 +133,10 @@ class BubblewrapRunner:
 
     def preflight(self) -> dict[str, Any]:
         checks: dict[str, Any] = {
-            "demo_only": True,
+            "backend": self.runtime,
+            "demo_only": self.runtime == "bubblewrap-demo",
+            "resources_scope": "local_process",
+            "formal_environment_equivalent": False,
             "aggregate_limits_enforced": False,
             "limits": {
                 "cpu_affinity": self.cpu,
@@ -146,6 +155,7 @@ class BubblewrapRunner:
             shutil.which(name) for name in (self.bwrap, self.taskset, self.prlimit)
         )
         checks["dependencies"] = False
+        checks["terminal"] = False
         if checks["runtime_lock"] and checks["commands"]:
             code = (
                 "import json,sys,importlib.metadata as m; "
@@ -163,7 +173,31 @@ class BubblewrapRunner:
                 }
                 if not checks["dependencies"]:
                     checks["dependencies_error"] = result.to_dict()
-        checks["ready"] = all(checks[key] for key in ("runtime_lock", "commands", "dependencies"))
+                else:
+                    code = (
+                        "import json,pathlib,subprocess,sys; "
+                        "subprocess.run(['/bin/sh','-c',"
+                        '"mkdir -p /work/scripts /work/references; '
+                        "printf 'VALUE = 7\\n' > /work/scripts/helper.py; "
+                        "printf public > /work/references/policy.txt; "
+                        'cat /work/references/policy.txt > /work/copy"],check=True); '
+                        "sys.path.insert(0,'/work/scripts'); import helper; "
+                        "print(json.dumps({'terminal':True,'helper':helper.VALUE,"
+                        "'reference':pathlib.Path('/work/copy').read_text()}))"
+                    )
+                    terminal = self._run(
+                        root / "bundle", root / "work", ["python", "-I", "-c", code]
+                    )
+                    checks["terminal"] = terminal.failure is None and terminal.output == {
+                        "terminal": True,
+                        "helper": 7,
+                        "reference": "public",
+                    }
+                    if not checks["terminal"]:
+                        checks["terminal_error"] = terminal.to_dict()
+        checks["ready"] = all(
+            checks[key] for key in ("runtime_lock", "commands", "dependencies", "terminal")
+        )
         return checks
 
     @contextmanager
@@ -182,12 +216,60 @@ class BubblewrapRunner:
         self.runtime_lock.validate()
         return _run_verifier(self, public_inputs, frozen_base, trace, test_files)
 
+    def authoring_session(
+        self,
+        previous_bundle: Any,
+        public_inputs: Mapping[str, Any],
+        frozen_base: Any,
+        *,
+        workspace: Path | None = None,
+    ) -> Any:
+        self.runtime_lock.validate()
+        return _public_workspace(
+            self,
+            public_inputs,
+            frozen_base,
+            previous_bundle=previous_bundle,
+            workspace=workspace,
+        )
+
+    def public_verifier_session(
+        self,
+        public_inputs: Mapping[str, Any],
+        base: Any,
+        trace: Mapping[str, Any],
+        files: Mapping[str, str] | None = None,
+        readonly_tests: bool = False,
+        *,
+        workspace: Path | None = None,
+    ) -> Any:
+        self.runtime_lock.validate()
+        return _public_workspace(
+            self,
+            public_inputs,
+            base,
+            trace=trace,
+            test_files=files,
+            readonly_tests=readonly_tests,
+            workspace=workspace,
+        )
+
+    def _terminal(self, package: Path, work: Path, command: str) -> ProgramResult:
+        return self._run(package, work, ["/bin/sh", "-c", command], raw=True)
+
     def _run(
-        self, package: Path, work: Path, args: Sequence[str], stdin: bytes = b""
+        self,
+        package: Path,
+        work: Path,
+        args: Sequence[str],
+        stdin: bytes = b"",
+        *,
+        raw: bool = False,
     ) -> ProgramResult:
         self.runtime_lock.validate()
-        if not args or args[0] != "python":
+        if not args or (args[0] != "python" and not (raw and args[:2] == ["/bin/sh", "-c"])):
             raise ValueError("bubblewrap supports the locked Python interpreter only")
+        writable = _workspace_writable_roots(package)
         command = [
             self.taskset,
             "--cpu-list",
@@ -214,20 +296,26 @@ class BubblewrapRunner:
             "--ro-bind",
             str(package.resolve()),
             "/bundle",
-            "--bind",
+            "--ro-bind" if writable else "--bind",
             str(work.resolve()),
             "/work",
-            "--proc",
-            "/proc",
-            "--dev",
-            "/dev",
-            "--size",
-            "67108864",
-            "--tmpfs",
-            "/tmp",
-            "--chdir",
-            "/work",
         ]
+        for relative in writable:
+            command.extend(["--bind", str((work / relative).resolve()), f"/work/{relative}"])
+        command.extend(
+            [
+                "--proc",
+                "/proc",
+                "--dev",
+                "/dev",
+                "--size",
+                "67108864",
+                "--tmpfs",
+                "/tmp",
+                "--chdir",
+                "/work",
+            ]
+        )
         for name, value in {
             "PATH": "/usr/local/bin:/usr/bin:/bin",
             "LD_LIBRARY_PATH": "/usr/local/lib",
@@ -247,13 +335,12 @@ class BubblewrapRunner:
             "resource.setrlimit(resource.RLIMIT_NPROC,(64,64)); "
             "os.execv(sys.argv[1],sys.argv[1:])"
         )
-        command.extend(
-            ["--", "/usr/local/bin/python", "-I", "-c", wrapper, "/usr/local/bin/python", *args[1:]]
-        )
+        executable = "/usr/local/bin/python" if args[0] == "python" else args[0]
+        command.extend(["--", "/usr/local/bin/python", "-I", "-c", wrapper, executable, *args[1:]])
         try:
             result = self.transport.run(
                 command, stdin=stdin, timeout=self.timeout, output_limit=self.output_limit
             )
         except OSError as exc:
             return ProgramResult(None, stderr=str(exc), failure="container_unavailable")
-        return _program_result(result)
+        return _program_result(result, raw=raw)

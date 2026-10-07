@@ -4,6 +4,7 @@ import json
 
 import pytest
 from tau_skill_evolution.artifacts import (
+    EvolutionSubmission,
     FrozenBase,
     SkillBundle,
     load_base,
@@ -130,3 +131,25 @@ def test_seals_never_replace_different_artifacts_and_reject_old_protocol(tmp_pat
 def test_file_directory_path_collision_rejected():
     with pytest.raises(ValueError, match="both"):
         SkillBundle({"SKILL.md": "ok", "references/a": "file", "references/a/b": "nested"})
+
+
+def test_submission_binds_package_execution_and_public_snapshot():
+    bundle = SkillBundle({"SKILL.md": "instructions"})
+    trace = {"events": [{"status": "completed"}]}
+    submission = EvolutionSubmission(bundle, trace, "learning-episode", 3, initial=True)
+    trace["events"][0]["status"] = "tampered"
+    assert submission.public_trace["events"][0]["status"] == "completed"
+    assert EvolutionSubmission.from_dict(submission.to_dict()) == submission
+    for key, value in (
+        ("execution_id", "other"),
+        ("operation_cursor", 4),
+        ("bundle_hash", "0" * 64),
+    ):
+        altered = submission.to_dict()
+        altered["public_trace"][key] = value
+        with pytest.raises(ValueError, match="binding"):
+            EvolutionSubmission.from_dict(altered)
+    altered = submission.to_dict()
+    altered["public_trace"]["events"][0]["status"] = "other"
+    with pytest.raises(ValueError, match="hash"):
+        EvolutionSubmission.from_dict(altered)
