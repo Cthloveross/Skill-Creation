@@ -1,0 +1,118 @@
+{
+  "status": "NATIVE_BUDGET_STOP_COMPLETED_PUBLIC_PROJECTION",
+  "reviewed_at": "2026-10-08T10:52:33.019197+00:00",
+  "trial_id": "codex-author-fix-20261008-004",
+  "source_identity_hash": "0f39848aa3282daad7c3a4d0243fa03a378cb7896c00096552f39defcb4046f5",
+  "task": "dapt-intrusion-detection",
+  "stop_reason": "token_budget",
+  "learning_completed": true,
+  "independent_evaluation_status_at_review": "NOT_MEASURED",
+  "known_admission": {
+    "operation_id": "published-author-controller/generator-model-50",
+    "operation_request_hash": "b0afa14c1c6120f4fe9fabf1cf348672046003ff2afae8434f948132978b3bc3",
+    "request_record_sha256": "4f23237c69dcacb60a75258281575bfc441e9ce7f86fdb3973d868ef40c82816",
+    "state_record_sha256": "d0305347d24c135fc524cd1fe6e86b1e1899ceb1b9d22ca5a838ae9ddbc4d092",
+    "dispatch_state": "NOT_SENT",
+    "provider_response_present": false,
+    "admission_evidence_sha256": "441f6aa13fadd6142ec16da161e2e1dc5d1b8ce06ac6e7088c92bf4e87479778",
+    "source": "transport_admission",
+    "generator_model_cursor": 51,
+    "estimated_next_input_tokens": 148724,
+    "allowed_input_tokens_after_reserve": 148112,
+    "excess_input_tokens": 612,
+    "no_later_generator_operation_recorded": true
+  },
+  "context_decomposition": {
+    "effective_observed_window": 258400,
+    "context_fraction": 0.7,
+    "occupancy_limit": 180880,
+    "last_provider_input_tokens": 147288,
+    "last_provider_output_tokens": 314,
+    "output_reserve_tokens": 32768,
+    "last_native_occupancy": 180370,
+    "visible_input_estimate": 77456,
+    "projected_next_occupancy": 181492,
+    "scope": "Current context occupancy is separate from cumulative billed tokens. The preserved reserve is admission headroom, not an imposed output-token or spending quota."
+  },
+  "native_completion": {
+    "whole_run_operation_state": "COMPLETED",
+    "whole_run_response_sha256": "d3c1cf16efaeded9b7a876635118077d377e972dbc8bcf3159a11d1e9b981b7e",
+    "original_evolution_log_sha256": "d29c5d7ee382f90a6f73769d53fba7b247af156a2fb1327942f19238284830a3",
+    "original_exit_reason": "token_budget",
+    "original_interrupted_exception_type": "InputTokenBudgetExceeded",
+    "author_counters": {
+      "generator_episodes": 47,
+      "generator_model_attempts": 51,
+      "generator_responses": 50,
+      "generator_terminal_calls": 83,
+      "normal_oracle_interventions": 1,
+      "surrogate_retries": 1,
+      "verifier_terminal_calls": 19
+    },
+    "observed_completed_generator_operations": 50,
+    "exception_gate": {
+      "implementation_sha256": "cffb48f2b20df7a5a92097af2efb97c21539578bd51cb63f19d2dbe11e4ab5d3",
+      "required_conditions": [
+        "The thrown exception is the exact Generator input_budget_stop object.",
+        "bridge.check passes; no fatal UNKNOWN is suppressed.",
+        "The unchanged author run already completed its post-final path.",
+        "The original evolution log records exit_reason token_budget."
+      ],
+      "scope": "Runtime result and source gate are bound together; object identity itself is enforced by the frozen code, not reconstructed from public logs."
+    }
+  },
+  "selection": {
+    "final_bundle_ref": {
+      "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+      "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f"
+    },
+    "selection_reason": "published_controller",
+    "actual_gt_runs": [
+      {
+        "phase": "normal",
+        "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+        "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+        "status": "MEASURED",
+        "passed": false,
+        "official_reward": 0.0,
+        "author_resolved_score": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 11,
+          "total": 14,
+          "rate": 0.7857142857142857,
+          "unit": "reporter_group"
+        },
+        "grader_evidence_hash": "b936bb8ce217b5a1d36e35d09b1ae0a098c6aa691c7ceebb2cc73d3cfd721461",
+        "failure_code": null
+      },
+      {
+        "phase": "post_final",
+        "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+        "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+        "status": "MEASURED",
+        "passed": false,
+        "official_reward": 0.0,
+        "author_resolved_score": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 11,
+          "total": 14,
+          "rate": 0.7857142857142857,
+          "unit": "reporter_group"
+        },
+        "grader_evidence_hash": "879b00e439a7b7d43870e40f7159635f4f3b253dbc48b89d32bbf2464157eee3",
+        "failure_code": null
+      }
+    ],
+    "rollback_status": "COMPLETED",
+    "later_submitted_s2_entered_gt": false,
+    "interpretation": "The earlier S1 was the best eligible officially observed snapshot. Reward remained zero and ties retained the earlier snapshot. S2 had only failed public checks, so it was not selected using any later independent evaluation."
+  },
+  "limitations": [
+    "This is a completed known predispatch capacity stop, not an unresolved UNKNOWN or infrastructure failure.",
+    "Underlying provider HTTP retry counts are not observable; one rejected application-level operation was not reissued.",
+    "Independent S0/S1/S2 metrics were pending at this review and are not replaced by selection-time GT results."
+  ],
+  "privacy": "No model body, reasoning, private file paths, diagnosis, official test names or assertions are copied. No feedback was sent to learning."
+}

@@ -6,7 +6,7 @@
 
 给定公开任务输入 `x`、共享资料池 `D` 和任务环境 `E`，Analyzer 多轮检索并冻结资料集合 `B*`；Generator 根据 `x` 和 `B*` 一次创建 Skill `S0`，之后继承并修改已有包。每题独立形成一条演化链，不共享跨题 Skill 或学习会话。
 
-Skill 包包含 `SKILL.md` 及可选脚本和 references。`S0、S1、…` 表示按完整文件 hash 去重的内容版本，不等于模型请求、修订尝试或执行次数。A→B→A 只有两个内容版本，但最终 A 的实际父版本为 B。最终包 `Sfinal` 按各域的演化停止与选择规则确定。
+Skill 包包含 `SKILL.md` 及脚本、references、evals、assets 等安全文本附件。`S0、S1、…` 表示按完整文件 hash 去重的内容版本，不等于模型请求、修订尝试或执行次数。A→B→A 只有两个内容版本，但最终 A 的实际父版本为 B。最终包 `Sfinal` 按各域的演化停止与选择规则确定。
 
 研究问题如下：
 
@@ -50,7 +50,7 @@ Analyzer、Generator、Verifier 使用同一 backbone，但消息历史独立。
 | Verifier | 公开任务、B*、任务输入和实际执行结果；编写与运行自己的测试 | 不读取 Generator 推理或隐藏评分；SkillsBench 的源码访问限制采用作者命令与日志防护 |
 | 正式评分 agent | 当前题输入、封存 Skill 和常规工具 | 不继承学习会话、工作区补丁、外部 B* 或全局检索 |
 
-τ 的 Verifier 使用独立容器和公开快照；SkillsBench v5 使用作者独立模型会话，在**同一个持续任务容器**中验证实际文件与服务。后者可观察完整运行状态，但角色隔离主要依靠作者命令审查与日志审查，不能宣称具有独立容器的物理隔离强度。官方 grader 在学习侧不可用，仅在 fresh 评分执行关闭模型和公开工具后注入。
+τ 的 Verifier 使用独立容器和公开快照；SkillsBench v6 使用作者独立模型会话，在**同一个持续任务容器**中验证实际文件与服务。后者可观察完整运行状态，初建采用作者提示与日志审查，不能宣称具有独立容器的物理隔离强度。作者诊断路径没有重复初建的 Skill 禁读提示及同等日志审核；真实试跑已观测诊断读取共享环境中的 `SKILL.md`，因此独立模型会话不等于全阶段对 Skill 源码不可见。官方 grader 在学习侧不可用，仅在 fresh 评分执行关闭模型和公开工具后注入。
 
 公开导出排除系统提示、推理、私有模拟器事件、模型日志和 Skill 内容；任务要求交付的程序文件可以作为公开产物。τ 脚本事件只提供状态，canary 学习执行记录与正式 ASR 分开。
 
@@ -70,21 +70,25 @@ Analyzer 分解任务要求，围绕知识缺口组织查询，维护证据、co
 
 S0 一次响应返回完整包，host 仅做安全结构校验：拒绝路径穿越、绝对路径、重复路径、链接和特殊文件；完整文件清单及内容进入包 hash。响应接受严格 JSON，或整条响应恰为一个 `json` 代码块，不从混杂文字中抽取 JSON。
 
+封包接受规范相对路径的 UTF-8 文件，宿主 `manifest.json` 保留名不可由模型提供；不能将目录名或脚本语言当作路径安全判断。银行脚本执行接口仍限 Python。候选采集排除运行产生的 pytest/字节码缓存，已封存包的校验仍拒绝额外文件。SkillsBench 补全作者导出遗漏的附件，使 oracle、best 与回滚使用同一完整包；未安全封存的草稿测试不能记为父包通过，封包接口故障中止而不消耗模型重试。
+
 **创建阶段不执行、自测、诊断或反馈重生成，最多一个模型 HTTP POST。** 空输出、非法封装及已派发结果未知均终止创建。脚本语法和内容质量留给演化。封存后才首跑 S0，首跑修改包不能冒充 S0。
 
-后续修改从完整父包开始，只有显式提交才形成版本。提交绑定包与实际父版本、execution ID、操作游标、公开快照 hash；提交期间暂停工具派发，拒绝包与旧快照错配。未提交草稿不封存，也不自动提交。非 UTF-8 候选保留原字节和结构错误，允许在同一交互中修正；任务的二进制交付物不按 Skill 文本解析。
+τ 后续修改从完整父包开始，只有显式提交才形成版本；SkillsBench 使用作者的 task_complete 门禁与 idle/stale 强制门禁，分别标记模型提交和 host 强制检查。提交绑定包与实际父版本、execution ID、操作游标、公开快照 hash；提交期间暂停工具派发，拒绝包与旧快照错配。未进入作者检查门禁的中间编辑不展开为内容版本；末端 GT 实际检查的安全完整包另行封存。非 UTF-8 候选保留原字节和结构错误，允许在同一交互中修正；任务的二进制交付物不按 Skill 文本解析。
 
-### 3.4 SkillsBench：作者式执行与交替验证（v5）
+### 3.4 SkillsBench：作者式执行与交替验证（v6）
 
 Generator 在同题持续官方容器或 Compose 项目中编辑 Skill、运行任务并观察结果，任务文件、依赖安装和服务持续存在。每条终端命令使用作者式新 shell，**cwd 和 shell 环境变量不跨命令隐式保留**；模型须在命令中显式设置。修复应写入包，不能只依赖现场补丁。
 
-Verifier 复用固定作者源码与原始提示，在该任务环境独立交互建测试、运行及诊断。初建/升级最多 30 个有效 episode，诊断最多 8 个。正常任务失败后锁定有效 suite；诊断备份并恢复测试。未生成有效程序或测试程序错误属于验证干预，不能算任务通过。未锁定时继续生成；锁定测试不因普通断言失败而被改写。Oracle 失败后先让 Generator 修改与执行，再解锁测试进行 adversarial recheck；测试可以继承、修正和补充检查。
+SkillsBench 直接调用固定版本的 `HarborTerminus2Evolution.setup/run`、Terminus 执行循环、`IndependentVerifier` 和 `SelfVerifier`；源码、原始提示及 skill-creator 保留原字节与许可证。本地层只连接模型/Journal、持续 MAIN、fresh Codex 评分和完整包/轨迹封存，不再复制演化状态机。Verifier 在同一任务环境独立交互建测试、运行及诊断。初建/升级最多 30 个有效 episode，诊断最多 8 个。正常任务失败后锁定有效 suite；诊断备份并恢复测试。未生成有效程序或测试程序错误属于验证干预，不能算任务通过。未锁定时继续生成；锁定测试不因普通断言失败而被改写。Oracle 失败后先让 Generator 修改与执行，再解锁测试进行 adversarial recheck；测试可以继承、修正和补充检查。
 
-v5 不再套用银行 Verifier 的义务结构、AST 新颖性与“一次程序修复”合同。作者程序执行 pytest 并审查行为，但仍可能生成错误前提、漏项或误判；同容器源码和日志防护也不能证明任意 Python 代码安全。一个错误但有效的固定 suite 仍可能阻挡 oracle，这是保留的机制限制。
+v6 不再套用银行 Verifier 的义务结构、AST 新颖性与“一次程序修复”合同。作者程序执行 pytest 并审查行为，但仍可能生成错误前提、漏项或误判；同容器源码和日志防护也不能证明任意 Python 代码安全。一个错误但有效的固定 suite 仍可能阻挡 oracle，这是保留的机制限制。
+
+公开输入适配保留当前题原始文件的只读副本与哈希，路径为 `/work/public-inputs/manifest.json`，不包含 grader、其他题或隐藏答案。`prompts/skillsbench-verifier-adapter.txt` 明确原始模板位置、背景资料与当前指令的优先级；仅对任务明确要求的公开可执行交付物允许在临时 fixture 中做有界检查。缺少公开阈值、单位或约定时记录歧义，不能用必失败占位检查替代证据。这是单独封存的提示适配，原作者提示不改字节，也不能证明测试语义正确。
 
 Generator 得到发布代码式 surrogate 粗失败类别、同题 oracle pass/fail，以及自己可见的 schema 问题和公开进度清单。作者另外提供的 GT 推导粗维度和涉事公开字段不回流，本实验保留布尔 oracle 合同。完整测试源码、名称、断言值、traceback、诊断正文和官方 reward 不回流。Verifier 的可选诊断失败保留已取得的实测结果并单列阶段错误；鉴权、UNKNOWN 和清理失败仍中止。
 
-**预算与门禁。** r15 是公开验证干预次数，不是十五次 Skill 修改：未锁定生成失败、锁定重跑异常/程序错误、公开测试失败或不完整，以及第一次未完成清单，均累计一次。该计数不因 oracle 失败清零。Skill schema 另允许两次修复反馈，第三次失败停止，不占 r15；清单第一次阻止 oracle 并占 r15，第二次仍未完成时按作者规则继续。有效 Generator episode 上限 120；纯 Skill 工具、解析错误和无有效操作的回复不计，但 HTTP 与全部模型响应仍另记。
+**预算与门禁。** r15 是公开验证干预次数，不是十五次 Skill 修改：未锁定生成失败、锁定重跑异常/程序错误、公开测试失败或不完整，以及第一次未完成清单，均累计一次。该计数不因 oracle 失败清零。Skill schema 另允许两次修复反馈，第三次失败停止，不占 r15；清单第一次阻止 oracle 并占 r15，第二次仍未完成时按作者规则继续。有效 Generator episode 上限 120；纯 Skill 工具和解析错误不计；解析成功进入普通执行/完成分支的响应即使命令列表为空也计一次，但 HTTP 与全部模型响应仍另记。
 
 正常 oracle 门禁上限 K=5；基础设施故障退回该次门禁计数，最多五次**连续**故障，有效 pass/fail 清零。达到 r15 时可以发生 cap-final oracle，停止后还可能发生 post-final oracle；这两类不增加正常门禁计数，因此 K5 不代表物理调用最多五次，边界路径可有六次。每次调用的阶段、成绩和用量单列，不隐藏终验成本。
 
@@ -106,7 +110,9 @@ Oracle 和各实际内容版本的独立评估均在 fresh 环境只使用封存
 
 官方原始 reward、逐项报告和日志先封存到私有评分目录再解析，无效结果也保留证据。官方任务需要的外部凭据逐题映射，不借用模型凭据；缺必需凭据为 `NOT_READY`。
 
-Generator 固定资料只发送一次，之后追加父包/base 标识和新增允许反馈；保留本角色历史与 opaque continuation，不清空历史绕过 β。工具原始结果先封存，回流状态、退出码、引用/hash及最多 8 KiB 预览，长结果按需分段读取。上下文到边界明确停止；不设置已取消的输出 token 或费用额度。
+Generator 固定资料只发送一次，之后追加父包/base 标识和新增允许反馈；保留本角色历史与 opaque continuation，不清空历史绕过 β。工具原始结果先封存，回流状态、退出码、引用/hash及最多 8 KiB 预览，长结果按需分段读取。SkillsBench 的传输适配将有效窗口设为配置的 272,000 与已观测 provider 窗口的较小值，β=0.7、预留32,768不变。准入同时考虑完整可见会话估算，以及最近 provider 实际 input/output（含 reasoning）加后续内容增量；累计计费 tokens 只衡量用量，不当作上下文占用。opaque usage 投影仅用于延续同一 thread；独立新建的 Verifier Chat 保留已观测窗口，但不把上一 Chat 的占用或累计计费量带入当前上下文估算。
+
+SkillsBench 在有效 episode 门禁把上述占用交给原作者的 `token_budget` 停止分支。若 Generator 请求派发前明确触发 `InputTokenBudgetExceeded`，不再请求该 Generator，但允许原作者继续 schema、best/reuse及 post-final 收尾；仅在原运行日志可解析且记录 `token_budget` 时归为预算停止，不伪造模型响应。已派发的未知请求仍中止，不借预算例外续跑。不设置已取消的输出 token 或费用额度。
 
 模型请求、终端、银行动作和提交分别使用稳定 operation ID，先记录派发，再保存原始响应和状态。已完成操作复用结果；`NOT_SENT` 可以首次派发；`UNKNOWN` 不自动重发，银行写入未知外层中止。τ 保存私有 JSON 数据库、模拟器与路由状态；SkillsBench 绑定实际 container/Compose 身份和启动代次。容器丢失或重启不能靠快照冒充进程恢复。新源码与方法身份不续接旧 checkpoint，重采样另开 trial。
 
@@ -131,6 +137,10 @@ Generator 固定资料只发送一次，之后追加父包/base 标识和新增�
 
 SkillsBench 两套完整 benign 配置固定 Bedrock `openai.gpt-5.6-terra` 和 `anthropic.claude-opus-4-8`，均在 `us-east-1`。每套三个学习角色与正式执行同型号，两套不共享 B*、包、会话或 checkpoint；数据、检索和评价预算一致。GPT 使用 Mantle Responses，Opus 使用 Mantle Messages；正式执行均使用 native Codex，经 host 协议转换支持 Opus 签名 thinking。CLI 按型号选择工具协议，两套均关闭子agent。模型依据 [GPT-5.6 Terra 模型卡](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-56-terra.html)与 [Opus 4.8 模型卡](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-opus-4-8.html)。这是整条同型号 pipeline 的比较，不能单独归因于 Generator；相同 effort 名称不代表计算量相同。
 
+Codex 订阅诊断试跑单独封存。`codex-plan` 使用固定 CLI 的官方 app-server、已有 ChatGPT 登录及实际可访问的 `gpt-6.1-sol`，不读取 API key或将登录文件放入任务容器。角色会话独立，模型返回结构化决定，动作仍由现有控制器和任务内 Codex执行；仅任务产物的内联图片作为图像输入。此传输只能验证 S0 至多一次创建 turn，底层 HTTP 次数与内部重试记为 `NOT_OBSERVABLE`，不满足主实验的单 HTTP POST可观测合同。模型、传输和上下文包装均有差异，成绩不与 Bedrock矩阵合并；传输故障试跑明确排除，保留原始证据。app-server 的系统包装、重复表示和 opaque reasoning 不能由外部可见历史精确重建，故窗口与占用采用上述保守估算，实际 provider usage 单列。原生工具事件与 compaction 分开识别；两者均先私有封存已接收事件流、再停止为 `UNKNOWN`，不能自动重发。`codex-author-fix-20261008-003` 的具体事件类型不能由现有证据确证。该传输不采用请求seed，失败请求可能仍消耗订阅，恢复记账按turn ID去重。
+
+当前 `codex-author-fix-20261008-004` 已完成五题的NoSkill、S0、实际内容版本及Final独评；它是gpt-6.1-sol订阅传输的小样本实测，结果见SkillsBench HANDOFF，不作为上述两模型85题矩阵或论文复现成绩。
+
 以任务为单位报告配对收益、救回数、退化数和覆盖率；只在身份一致且两端实测时比较。单次或预选小样本不足以支持总体显著提升或因果结论，需要预先声明的重复评估。
 
 ## 5. 参数与环境
@@ -154,11 +164,13 @@ SkillsBench 两套完整 benign 配置固定 Bedrock `openai.gpt-5.6-terra` 和 
 | 作者 timeout multiplier | 5；命令 min(任务 agent timeout×5, 900秒)，Verifier 每阶段最多900秒，均受剩余 deadline 限制 |
 | SkillsBench fresh agent | oracle 按任务 agent timeout×5并受学习 deadline限制；独评固定7,200秒作为实验附加测量预算 |
 | Verifier | 初建/升级30、诊断8；τ另有每suite一次程序修复，SkillsBench用作者生命周期 |
-| Generator context | 272,000窗口，β0.7，预留32,768；完整输入 admission157,632 tokens |
+| Generator context | 配置窗口272,000，β0.7，预留32,768，输入上限157,632；SkillsBench窗口取与已观测provider窗口的较小值 |
 | 其他角色输入 | 114,688 tokens；Codex 内联图像另有保守估算 |
 | 种子 / Codex | 数据种子20260904；CLI0.160.1，二进制与依赖hash固定 |
 
-β 控制单次完整上下文容量，不是累计计费 tokens。tokenizer、图片估算与 provider usage 不能视为厂商精确计数。SkillsBench 不再叠加“15次修改”、全部响应120轮、单段3,600秒或 fresh Codex100 POST 的额外停止规则；τ 原合同保持。
+β 控制单次完整上下文容量，不是累计计费 tokens。可见 token 估算与 provider usage 分开封存；缺少实际 usage 或窗口时保留估算来源，不把它冒充精确占用。SkillsBench 不再叠加“15次修改”、全部响应120轮、单段3,600秒或 fresh Codex100 POST 的额外停止规则；τ 原合同保持。
+
+SkillsBench 的内部 fresh oracle 与学习闭环共用绝对 deadline；容器启动后，CLI 及通过 `exec` 调用的环境检查再次按剩余时间收紧 timeout。到期不再派发模型或任务执行；CLI 安装、文件复制、证据封存、进程终止及容器清理分别保留有界时间，因此 7,200 秒不是所有宿主操作完成的精确墙钟界限。取消等待中的评分不会自动重发；已派发操作若完成则保存其结果，中断的整条作者运行仍不能冒充可恢复 checkpoint。
 
 正式运行要求 Docker preflight。银行 helper 使用锁定禁网沙箱；SkillsBench 保留各题官方 USER、WORKDIR、ENTRYPOINT、依赖、Compose sidecar 和网络。镜像按原 recipe 构建缓存，构建准备、启动、模型和评分耗时分开；缺依赖、凭据或实际 image ID 不一致不能标 READY，不能降级宿主执行。允许任务公开源码依赖的明确 setup 延期，但评分驱动错误不得延期掩盖。
 
@@ -186,8 +198,10 @@ SkillsBench 另报 host 的 best/terminal/retained 结果和选包来源。**ret
 
 ## 7. 方法边界与复现
 
-SkillsBench v5 迁移固定作者源码的 Verifier 会话、同环境执行、测试生命周期、r15/清单/schema门禁和 best/终验选择；τ v4 保留独立容器与银行适配。仍有共同的实验差异：共享检索冻结、S0单次POST且禁止自测、显式提交、受限反馈、单POST journal、provider/上下文适配，以及附加独立评估。作者循环的 idle/stale自动完成不用于封存未提交草稿。发布代码与论文诊断细节并不完全一致，来源及适配见[来源记录](meta/coevo-authoring/SOURCE.md)，不能标为完整论文复现。
+SkillsBench v6 直接执行固定作者完整控制器的 Verifier 会话、同环境执行、测试生命周期、r15/清单/schema门禁和 best/终验选择；τ v4 保留独立容器与银行适配。仍有共同的实验差异：共享检索冻结、S0单次POST且禁止自测、显式提交、受限反馈、单POST journal、provider/上下文适配，以及附加独立评估。SkillsBench 保留作者 idle/stale 自动门禁，记录 `host_forced_submission`，不伪装成模型显式提交或免费 S0 执行。发布代码与论文诊断细节并不完全一致，来源及适配见[来源记录](meta/coevo-authoring/SOURCE.md)，不能标为完整论文复现。
 
-命名空间为 `tau.skill-evolution.v4` / `skillsbench.skill-evolution.v5`。身份绑定配置、源码、提示原字节、来源清单、资料与环境hash。模型原始响应、失败证据、测试和评分分别封存；完整审计信息不进入Generator。逻辑请求与真实HTTP派发次数分开，缺派发证据则未测；历史自动重发变体不混入单POST成绩。
+命名空间为 `tau.skill-evolution.v4` / `skillsbench.skill-evolution.v6`。身份绑定配置、源码、提示原字节、来源清单、资料与环境hash。模型原始响应、失败证据、测试和评分分别封存；完整审计信息不进入Generator。逻辑请求与真实HTTP派发次数分开，缺派发证据则未测；历史自动重发变体不混入单POST成绩。
 
 Analyzer充分性和测试语义仍可能有误。固定B*无法补所有知识缺口，公开验证不保证官方成功。同环境防护不证明任意恶意代码安全；Docker与模拟provider的机制验收不算模型成绩。新身份付费smoke和完整矩阵在实际封存前为 `NOT_MEASURED`。历史结果见 `archive/runs/` 与[归档索引](archive/index.json)。运行与恢复步骤见[τ交接](runs/tau/HANDOFF.md)和[SkillsBench交接](runs/skillsbench/HANDOFF.md)。
+
+原始输入、包和完成结果按运行身份校验。完整作者控制器尚不提供可移植的中途状态 checkpoint：已完成的 `evolution-result` 可直接复用；已启动但未完成的作者学习链不得再次 `run()` 重置计数或重放操作，明确停止并要求独立新 trial。新 trial 不冒充恢复或演化收益。作者普通 host 导出可能省略 references，最终测量使用对应完整封存包；回滚结果需核对实际文件 hash，历史最佳成绩、实际回滚和 fresh 独评分别记录。

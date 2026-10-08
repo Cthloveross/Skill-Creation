@@ -36,6 +36,17 @@ def _copy_config(tmp_path, mutate=None, source=DEFAULT_CONFIG):
     return path
 
 
+def _codex_plan_provider(values):
+    pinned = values["runtime"]["codex"]
+    values["provider"] = {
+        "model": "gpt-6.1-sol",
+        "transport": "codex-plan",
+        "binary": "/opt/codex-0.160.1/codex",
+        "version": pinned["version"],
+        "binary_sha256": pinned["binary_sha256"],
+    }
+
+
 def test_full_tau_matrix_preserves_legacy_profiles_poison_sample_and_source():
     spec = load_spec()
     assert spec.experiment == "tau" and spec.namespace == "tau.skill-evolution.v4"
@@ -76,7 +87,7 @@ def test_skillsbench_configuration_has_the_fixed_matrix_and_only_benign_arm():
     assert spec.values["source"]["commit"] == SKILLSBENCH_COMMIT
     assert len(spec.tasks) == len(set(spec.tasks)) == len(spec.cells) == 85
     assert list(spec.tasks) == sorted(spec.tasks)
-    assert spec.experiment == "skillsbench" and spec.namespace == "skillsbench.skill-evolution.v5"
+    assert spec.experiment == "skillsbench" and spec.namespace == "skillsbench.skill-evolution.v6"
     assert spec.values["runtime"]["executor"] == "author-codex"
     assert spec.arms == ("benign",) and spec.targets("benign") == ()
     assert spec.profile(spec.tasks[0]) == "benign"
@@ -94,7 +105,7 @@ def test_skillsbench_configuration_has_the_fixed_matrix_and_only_benign_arm():
 
 def test_skillsbench_author_budgets_do_not_keep_extra_revision_or_post_caps():
     spec = load_spec(SKILLSBENCH_CONFIG)
-    assert spec.namespace == "skillsbench.skill-evolution.v5"
+    assert spec.namespace == "skillsbench.skill-evolution.v6"
     assert spec.values["evolution"] == {
         "max_surrogate_retries": 15,
         "max_oracles": 5,
@@ -114,15 +125,15 @@ def test_skillsbench_author_budgets_do_not_keep_extra_revision_or_post_caps():
 @pytest.mark.parametrize(
     "folder,model",
     [
-        ("full-85-gpt56-v5", "openai.gpt-5.6-terra"),
-        ("full-85-opus48-v5", "anthropic.claude-opus-4-8"),
+        ("full-85-gpt56-v6", "openai.gpt-5.6-terra"),
+        ("full-85-opus48-v6", "anthropic.claude-opus-4-8"),
     ],
 )
 def test_new_author_handoff_configs_preserve_the_old_population_and_models(folder, model):
     root = EXPERIMENT_ROOT / "runs/skillsbench"
-    old = load_spec(root / folder.replace("-v5", "-v4") / "config.yaml")
+    old = load_spec(root / folder.replace("-v6", "-v4") / "config.yaml")
     new = load_spec(root / folder / "config.yaml")
-    assert new.namespace == "skillsbench.skill-evolution.v5"
+    assert new.namespace == "skillsbench.skill-evolution.v6"
     assert old.namespace == "skillsbench.skill-evolution.v4"
     assert old.tasks == new.tasks and old.values["source"] == new.values["source"]
     for name in ("provider", "retrieval", "embedding", "acquisition", "matrix_commitment"):
@@ -137,7 +148,11 @@ def test_new_author_handoff_configs_preserve_the_old_population_and_models(folde
         lambda v: v["evolution"].update(revision_timeout_seconds=3600),
         lambda v: v["evolution"].update(max_surrogate_retries=True),
         lambda v: v["evolution"].update(max_surrogate_retries=16),
+        lambda v: v["evolution"].update(max_surrogate_retries=14),
+        lambda v: v["evolution"].update(max_oracles=4),
+        lambda v: v["evolution"].update(max_oracle_errors=4),
         lambda v: v["evolution"].update(timeout_multiplier=True),
+        lambda v: v["evolution"].update(timeout_multiplier=2),
         lambda v: v["evolution"].update(timeout_seconds=0),
         lambda v: v["roles"]["generator"].update(max_turns=120),
         lambda v: v["roles"]["generator"].update(max_episodes=121),
@@ -147,7 +162,7 @@ def test_new_author_handoff_configs_preserve_the_old_population_and_models(folde
         lambda v: v["roles"]["verifier"].update(prompt="verifier-skillsbench.md"),
     ],
 )
-def test_skillsbench_v5_rejects_legacy_caps_and_invalid_author_limits(tmp_path, mutate):
+def test_skillsbench_v6_rejects_legacy_caps_and_invalid_author_limits(tmp_path, mutate):
     with pytest.raises(ValueError):
         load_spec(_copy_config(tmp_path, mutate, SKILLSBENCH_CONFIG))
 
@@ -376,6 +391,11 @@ def test_identity_binds_source_prompt_meta_manifest_lock_but_excludes_keys_and_r
     source = root / "src/tau_skill_evolution/acquisition.py"
     source.parent.mkdir(parents=True)
     source.write_text("# source v1\n")
+    shutil.copytree(
+        EXPERIMENT_ROOT / "src/tau_skill_evolution/author",
+        source.parent / "author",
+        ignore=shutil.ignore_patterns("__pycache__"),
+    )
     meta = root / "data/upstream/coevo-skills/meta_skills/skill-creator/SKILL.md"
     meta.parent.mkdir(parents=True)
     meta.write_text("Authoring rules\n")
@@ -405,7 +425,7 @@ def test_identity_binds_source_prompt_meta_manifest_lock_but_excludes_keys_and_r
         Journal(tmp_path / "journal", identity=spec.identity)
 
 
-def test_v5_identity_binds_byte_preserved_verifier_sources_and_prompts(tmp_path, monkeypatch):
+def test_v6_identity_binds_byte_preserved_verifier_sources_and_prompts(tmp_path, monkeypatch):
     root = tmp_path / "resources"
     root.mkdir()
     author = root / "src/tau_skill_evolution/author"
@@ -415,7 +435,8 @@ def test_v5_identity_binds_byte_preserved_verifier_sources_and_prompts(tmp_path,
     prompt.parent.mkdir(parents=True)
     prompt.write_bytes(b"Author prompt\r\n")
     manifest = author / "VERIFIER_SOURCE.json"
-    manifest.write_text('{"commit":"pinned"}\n')
+    prompt_relative = prompt.relative_to(author).as_posix()
+    manifest.write_text(json.dumps({"commit": "pinned", "files": {prompt_relative: {}}}))
     monkeypatch.setattr(spec_module, "EXPERIMENT_ROOT", root)
     spec = load_spec(_copy_config(tmp_path, source=SKILLSBENCH_CONFIG))
     initial = spec.identity
@@ -426,7 +447,7 @@ def test_v5_identity_binds_byte_preserved_verifier_sources_and_prompts(tmp_path,
     prompt.write_bytes(b"Author prompt\n")
     assert spec.identity["identity_hash"] != initial["identity_hash"]
     after_prompt = spec.identity
-    manifest.write_text('{"commit":"different"}\n')
+    manifest.write_text(json.dumps({"commit": "different", "files": {prompt_relative: {}}}))
     assert spec.identity["identity_hash"] != after_prompt["identity_hash"]
 
 
@@ -495,6 +516,56 @@ def test_provider_rejects_wrong_transport_and_opus_region(tmp_path, provider):
         load_spec(_copy_config(tmp_path, lambda value: value["provider"].update(provider)))
 
 
+def test_codex_plan_is_an_explicit_credential_free_skillsbench_trial(tmp_path, monkeypatch):
+    spec = load_spec(_copy_config(tmp_path, _codex_plan_provider, SKILLSBENCH_CONFIG))
+    monkeypatch.delenv("AWS_REGION", raising=False)
+    provider = spec.provider_settings
+    assert provider["api_base"] == "http://127.0.0.1/codex-plan"
+    assert "api_key_env" not in provider and "region" not in provider
+    assert len(spec.tasks) == 85 and len(spec.cells) == 85
+    identity = spec.identity["provider"]
+    assert identity["model"] == "gpt-6.1-sol"
+    assert identity["initial_creation"] == "one_codex_turn"
+    assert identity["underlying_http_requests"] == "NOT_OBSERVABLE"
+    assert identity["credential_source"] == "local_codex_chatgpt_login"
+    assert identity["bedrock_equivalent"] is False
+    assert identity["binary_sha256"] == provider["binary_sha256"]
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda v: v["provider"].update(model="gpt-5.4"),
+        lambda v: v["provider"].update(binary="codex"),
+        lambda v: v["provider"].update(version="0.162.0"),
+        lambda v: v["provider"].update(binary_sha256="0" * 64),
+        lambda v: v["provider"].update(api_key_env="AWS_BEARER_TOKEN_BEDROCK"),
+        lambda v: v.update(schema_version="skillsbench.skill-evolution.v4"),
+    ],
+)
+def test_codex_plan_rejects_silent_model_or_pin_changes(tmp_path, mutate):
+    def configure(values):
+        _codex_plan_provider(values)
+        mutate(values)
+
+    with pytest.raises(ValueError, match="Codex plan"):
+        load_spec(_copy_config(tmp_path, configure, SKILLSBENCH_CONFIG))
+
+
+def test_tau_does_not_accept_codex_plan_transport(tmp_path):
+    def configure(values):
+        values["provider"] = {
+            "model": "gpt-6.1-sol",
+            "transport": "codex-plan",
+            "binary": "/opt/codex/codex",
+            "version": "0.160.1",
+            "binary_sha256": "0" * 64,
+        }
+
+    with pytest.raises(ValueError, match="SkillsBench v6"):
+        load_spec(_copy_config(tmp_path, configure))
+
+
 def test_role_prompts_match_domain_capabilities_and_omit_quotes_by_default():
     spec = load_spec()
     analyzer = (spec.root / "prompts/analyzer.md").read_text()
@@ -510,6 +581,11 @@ def test_role_prompts_match_domain_capabilities_and_omit_quotes_by_default():
 
 def test_preparing_another_domain_runtime_does_not_invalidate_a_checkpoint(tmp_path, monkeypatch):
     tau, sb = load_spec(), load_spec(SKILLSBENCH_CONFIG)
+    shutil.copytree(
+        EXPERIMENT_ROOT / "src/tau_skill_evolution/author",
+        tmp_path / "src/tau_skill_evolution/author",
+        ignore=shutil.ignore_patterns("__pycache__"),
+    )
     monkeypatch.setattr(spec_module, "EXPERIMENT_ROOT", tmp_path)
     runtime = tmp_path / "runtime"
     runtime.mkdir()

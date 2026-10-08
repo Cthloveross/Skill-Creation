@@ -16,7 +16,7 @@ meta_skills/skill-creator/SKILL.md:
   policy constraints, prerequisite checks, and observable failure modes.
 - Give SKILL.md YAML metadata with a clear name and description explaining when the Skill
   applies. Write concise instructions that explain the method and its assumptions.
-  For SkillsBench, the declared installed directory is `current`: use YAML `name: current`
+  For SkillsBench, the declared installed directory is `evo-current`: use YAML `name: evo-current`
   so the author's schema validation can match the installed directory.
 - Put deterministic, repeated computation into small Python helpers with explicit interfaces;
   compose them in an end-to-end entrypoint when useful. Document a runnable call example

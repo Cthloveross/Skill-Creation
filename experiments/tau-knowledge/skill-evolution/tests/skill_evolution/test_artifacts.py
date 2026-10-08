@@ -17,6 +17,7 @@ from tau_skill_evolution.artifacts import (
     verify_base,
     verify_bundle,
 )
+from tau_skill_evolution.container import PublicWorkspaceSession
 
 
 def test_frozen_base_binds_exact_public_inputs_documents_and_evidence(tmp_path):
@@ -62,9 +63,8 @@ def test_document_admission_requires_full_text_and_valid_exact_hash():
         "scripts/../bad.py",
         "scripts//bad.py",
         "scripts/./bad.py",
-        "scripts/bad.sh",
         "manifest.json",
-        "scripts",
+        "manifest.json/nested.txt",
         "scripts\\bad.py",
         "references/bad\x00",
         "C:/bad",
@@ -99,6 +99,70 @@ def test_package_hash_covers_helpers_and_references_and_restores_exact_bytes(tmp
     assert child.parent_hash == bundle.bundle_hash
     with pytest.raises(TypeError):
         bundle.files["SKILL.md"] = "changed"
+
+
+def test_author_package_preserves_evals_assets_shell_and_other_safe_text(tmp_path):
+    files = {
+        "SKILL.md": "---\nname: evo-current\ndescription: Fixture.\n---\n",
+        "evals/evals.json": '{"evals": [{"prompt": "Public example"}]}\n',
+        "assets/schema.csv": "column,type\nvalue,float\n",
+        "scripts/run.sh": "#!/bin/sh\npython3 scripts/main.py\n",
+        "scripts/main.py": "print('public')\n",
+        "README.md": "Public usage instructions.\n",
+        "helpers/config.toml": "precision=6\n",
+        "assets/manifest.json": '{"format": "public task asset"}\n',
+    }
+    bundle = SkillBundle(files)
+    package = seal_bundle(tmp_path / "skill", bundle)
+    assert load_bundle(package).files == files
+    assert load_bundle(package).bundle_hash == bundle.bundle_hash
+    for name in files:
+        assert (package / name).read_bytes() == files[name].encode()
+    (package / "evals/evals.json").write_text('{"evals": []}\n')
+    with pytest.raises(ValueError, match="hash"):
+        load_bundle(package)
+
+
+def test_runtime_caches_are_filtered_only_when_collecting_a_candidate(tmp_path):
+    from tau_skill_evolution.skillsbench_evolution import _read_package
+
+    target = tmp_path / "candidate"
+    target.mkdir()
+    (target / "SKILL.md").write_text("Public instructions.\n")
+    (target / "scripts").mkdir()
+    (target / "scripts/main.py").write_text("print('public')\n")
+    (target / "scripts/__pycache__").mkdir()
+    (target / "scripts/__pycache__/main.cpython-311.pyc").write_bytes(b"\xff\x00cache")
+    (target / ".pytest_cache").mkdir()
+    (target / ".pytest_cache/nodeids").write_bytes(b"\xffpytest-cache")
+    session = PublicWorkspaceSession(tmp_path, tmp_path, target, None, None)
+    files = session.files()
+    assert set(files) == {"SKILL.md", "scripts/main.py"}
+    # The author-export reader must apply the same collection policy; otherwise
+    # executing a helper poisons its otherwise unchanged sealed package.
+    assert _read_package(target, None).bundle_hash == SkillBundle(files).bundle_hash
+    sealed = seal_bundle(tmp_path / "sealed", SkillBundle(files))
+    (sealed / "scripts/__pycache__").mkdir()
+    (sealed / "scripts/__pycache__/main.cpython-311.pyc").write_text("extra cache")
+    with pytest.raises(ValueError):
+        load_bundle(sealed)
+
+
+def test_candidate_cache_does_not_hide_symlinks_or_non_cache_binary_files(tmp_path):
+    target = tmp_path / "candidate"
+    target.mkdir()
+    (target / "SKILL.md").write_text("Public instructions.\n")
+    cache = target / "__pycache__"
+    cache.mkdir()
+    (cache / "helper.cpython-311.pyc").symlink_to(tmp_path / "external")
+    session = PublicWorkspaceSession(tmp_path, tmp_path, target, None, None)
+    with pytest.raises(ValueError, match="unsafe_workspace"):
+        session.files()
+    (cache / "helper.cpython-311.pyc").unlink()
+    (target / "assets").mkdir()
+    (target / "assets/input.bin").write_bytes(b"\xff")
+    with pytest.raises(ValueError, match="non_utf8_package_file: assets/input.bin"):
+        session.files()
 
 
 def test_sealed_package_rejects_extra_files_symlinks_and_special_files(tmp_path):

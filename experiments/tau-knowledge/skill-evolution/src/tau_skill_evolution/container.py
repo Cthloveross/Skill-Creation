@@ -686,17 +686,14 @@ class PublicWorkspaceSession:
         return result
 
     def files(self) -> dict[str, str]:
-        from .artifacts import decode_package_text
+        from .artifacts import decode_package_text, is_runtime_cache
 
         manifest = _tree_manifest(self.target)
         files = {}
         for relative in manifest:
             if relative.endswith("/"):
                 continue
-            parts = Path(relative).parts
-            if ".pytest_cache" in parts[:-1] or (
-                "__pycache__" in parts[:-1] and Path(relative).suffix in {".pyc", ".pyo"}
-            ):
+            if is_runtime_cache(relative):
                 continue
             path = self.target / relative
             descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)

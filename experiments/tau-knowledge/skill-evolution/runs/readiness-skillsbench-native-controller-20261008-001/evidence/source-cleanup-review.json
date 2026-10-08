@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "scope": "assigned-source-cleanup-and-native-transport-regression",
+  "author_commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+  "checks": {
+    "EvolutionResult_definition_unchanged": true,
+    "tau_old_author_false_result_exact_matches": 16,
+    "tau_regression_passed": 55,
+    "tau_and_skillsbench_runtime_regression_passed": 328,
+    "runtime_opt_in_skipped": 5,
+    "native_controller_hooks_and_transport_regression_passed": 33,
+    "native_component_Docker_status": "PASS",
+    "old_SkillsBench_copy_controller_removed": true,
+    "old_AuthorSkillsBenchVerifier_facade_removed": true,
+    "source_hashes_and_skill_creator_preserved": true,
+    "model_inference": "SIMULATED_ONLY",
+    "paid_model_calls": 0,
+    "native_component_Docker_proof": "author-component-docker.json"
+  },
+  "reviewed_files_sha256": {
+    "src/tau_skill_evolution/evolution.py": "ae57440ae56d509a58ce6f17fc42e98d563921ea40fa44190a363388bafd8a5e",
+    "src/tau_skill_evolution/author_verifier.py": "b52b8d94d03ce7f233f9dc31af7693f472b0064ab9be85ba3831cd78b934b7dd",
+    "src/tau_skill_evolution/skillsbench_runtime.py": "d2646ef62d91e92855cd0ab70e38653b8df09e8ff5fcf28b78d3d422fc773bb0",
+    "src/tau_skill_evolution/codex_runtime.py": "33f079179f54e074d84453fbdc9643d81ca3a9c9fb4c7672fd726f55efa4500d",
+    "tests/skill_evolution/test_author_evolution.py": "b8e4bc18a9b09efda2089641d039802557d0e954be30b6b03c2827c65f971ec3",
+    "tests/skill_evolution/test_author_branch_parity.py": "5cbb0b83964a40fe2ab57baef10c8073f0c9a578435b9b28851339cba49bb9e2",
+    "tests/skill_evolution/test_author_controller_bridge.py": "7a409d156d8c07762360e423ff269132b5c8679c9f7dbbb99d07351a82ff88b8",
+    "tests/skill_evolution/test_author_verifier_docker.py": "5b7c4b9093a2228ae22b6ba63ebf93ffe71476144f080cbf902ec1ede22badd3"
+  },
+  "limitations": [
+    "Not a utility improvement claim",
+    "Real model compatibility and score progression are not measured by these fixtures",
+    "Final whole-repository source identity belongs to root freeze"
+  ]
+}

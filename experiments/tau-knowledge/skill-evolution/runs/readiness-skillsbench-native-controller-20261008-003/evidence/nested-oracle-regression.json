@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "scope": "Real asyncio.run transport counterexample in facade-mapping fixture, no model/API or official grader calls.",
+  "root_cause": "Original async controller synchronously invoked adapter.oracle, which calls execute_codex and nests asyncio.run on its running loop.",
+  "before": {
+    "source_sha256": "72b30159e6cfd239093c9facb023ce249bd3ffced20e73169798152cc848f9c3",
+    "pytest_exit_code": 1,
+    "failed": 1,
+    "deselected": 21,
+    "error": "asyncio.run() cannot be called from a running event loop",
+    "log_path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-native-controller-20261008-003/evidence/nested-oracle-before.log",
+    "log_sha256": "4096910cc052c4b96429dea23c45b6455ee7e751834e12a76e2b8d48c548d758"
+  },
+  "after": {
+    "source_sha256": "fd75cc7479b6efa99ae54f1f4a5a87596e4ac967d7712128fba43c3cbe941f25",
+    "test_sha256": "f08f97a061ab30b8da944038cd53506d9532853fce52be4b965147d05bf2a3f8",
+    "pytest_exit_code": 0,
+    "log_path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-native-controller-20261008-003/evidence/nested-oracle-after.log",
+    "log_sha256": "9a0df1667500f47c23d5d7326a705933f47d30e413d8adb43fbf3dae498ce77e",
+    "pytest_summary": "22 passed in 6.80s",
+    "checks": [
+      "The synchronous oracle runs asyncio.run successfully on a separate worker thread.",
+      "Custom task ContextVar and exact original author _RUN context object are inherited through asyncio.to_thread.",
+      "Controller thread context remains unchanged.",
+      "One GT dispatch and whole controller result are completed, without replay."
+    ]
+  },
+  "other_boundaries_reviewed": {
+    "local_asyncio_run_sites": [
+      "skillsbench_evolution.run_author_evolution outer entry",
+      "codex_runtime.execute_codex"
+    ],
+    "fresh_independent_and_no_skill_entry": "synchronous workflow, outside native loop",
+    "known_unresolved_nested_asyncio_site": null
+  },
+  "limits": [
+    "This counterexample is not the real pinned Codex CLI integration proof; the latter must be separately supplied.",
+    "The failed prior trial is not resumed or relabeled by this test.",
+    "Only test code was appended by the reviewer; implementation patch belongs to root and vendored code is unchanged."
+  ]
+}

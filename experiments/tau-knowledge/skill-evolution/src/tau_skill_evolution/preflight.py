@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import tempfile
 import urllib.error
 import urllib.request
 from typing import Any
@@ -43,6 +44,36 @@ def bedrock_authentication(spec: ExperimentSpec) -> dict[str, Any]:
     if not any(item.get("id") == model for item in value.get("data", [])):
         raise ValueError(f"Bedrock catalog does not expose the configured model {model}")
     return {"status": status, "model": model, "generation_requested": False}
+
+
+def codex_plan_authentication(spec: ExperimentSpec) -> dict[str, Any]:
+    """Read public app-server metadata without inference or exporting account identity."""
+    from .codex_plan import CodexPlanClient
+
+    provider = spec.provider_settings
+    with tempfile.TemporaryDirectory(prefix="skillsbench-codex-admission-") as directory:
+        client = CodexPlanClient(
+            model=provider["model"],
+            role="preflight",
+            journal_dir=directory,
+            binary=provider["binary"],
+            timeout_seconds=30,
+        )
+        try:
+            metadata = client.metadata()
+        finally:
+            client.close()
+    if metadata.get("authentication") != "chatgpt":
+        raise ValueError("Codex must be logged in using ChatGPT for subscription inference")
+    if provider["model"] not in metadata.get("models", []):
+        raise ValueError(f"Codex catalog does not expose the configured model {provider['model']}")
+    return {
+        "model": provider["model"],
+        "authentication": "chatgpt",
+        "used_percent": metadata.get("used_percent"),
+        "generation_requested": False,
+        "s0_http_post_count": "NOT_OBSERVABLE",
+    }
 
 
 def preflight(
@@ -105,6 +136,26 @@ def preflight(
 
     def credential() -> str:
         return describe_credential(spec.values["provider"]["api_key_env"])
+
+    def codex_installation() -> dict[str, Any]:
+        from .codex_runtime import codex_identity
+
+        if spec.experiment != "skillsbench":
+            raise ValueError("Codex subscription transport is only supported by SkillsBench")
+        provider = spec.provider_settings
+        identity = codex_identity(provider)
+        return {key: identity[key] for key in ("binary", "codex_version", "binary_sha256")}
+
+    def codex_login() -> str:
+        result = subprocess.run(
+            [spec.provider_settings["binary"], "login", "status"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        if result.returncode or "Logged in using ChatGPT" not in result.stdout + result.stderr:
+            raise ValueError("Codex is not logged in using ChatGPT")
+        return "Logged in using ChatGPT"
 
     def docker_cli() -> str:
         command = shutil.which("docker")
@@ -208,11 +259,18 @@ def preflight(
     if spec.experiment == "tau":
         check("pinned_upstream", upstream)
         check("official_python", interpreter)
-    check("bedrock_model", bedrock_model)
-    check("bedrock_region", bedrock_region)
-    check("credential", credential)
-    if authenticate:
-        check("bedrock_authentication", lambda: bedrock_authentication(spec))
+    codex_plan = spec.values["provider"]["transport"] == "codex-plan"
+    if codex_plan:
+        check("codex_cli", codex_installation)
+        check("codex_login", codex_login)
+        if authenticate:
+            check("codex_catalog", lambda: codex_plan_authentication(spec))
+    else:
+        check("bedrock_model", bedrock_model)
+        check("bedrock_region", bedrock_region)
+        check("credential", credential)
+        if authenticate:
+            check("bedrock_authentication", lambda: bedrock_authentication(spec))
     if spec.experiment == "skillsbench":
         from .skillsbench import skillsbench_preflight
 
@@ -232,7 +290,7 @@ def preflight(
             check("container_dependencies", container_dependencies)
     check("embedding_service", embedding)
     ready = all(item["ok"] for item in checks)
-    return {
+    result = {
         "namespace": spec.namespace,
         "experiment": spec.experiment,
         "ready": ready,
@@ -248,3 +306,17 @@ def preflight(
         ),
         "checks": checks,
     }
+    if codex_plan:
+        model_checks = {"codex_cli", "codex_login", "codex_catalog"}
+        result.update(
+            environment_ready=all(
+                item["ok"] for item in checks if item["name"] not in model_checks
+            ),
+            model_access_ready=(
+                all(item["ok"] for item in checks if item["name"] in model_checks)
+                if authenticate
+                else None
+            ),
+            s0_http_post_count="NOT_OBSERVABLE",
+        )
+    return result

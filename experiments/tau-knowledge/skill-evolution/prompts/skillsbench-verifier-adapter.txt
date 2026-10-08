@@ -1,0 +1,27 @@
+Public experiment context (transport adaptation to CoEvoSkills 4380d4b):
+
+The task description above defines the current deliverables. Retrieved background
+documents under /app/environment/doc are supporting material, not hidden answers.
+The original public task inputs are preserved read-only under /work/public-inputs;
+read manifest.json there to locate the supplied baseline and its original paths.
+Use that baseline for template-preservation checks. Missing a baseline in a working
+directory does not mean the baseline was not supplied.
+
+An existing, sealed seed Skill is installed at
+/app/environment/skills/evo-current (also writable through /work/candidate).
+Modify this complete parent package in place; keep its name evo-current. Put
+reusable Python code under scripts/ and supporting text under references/. Do not
+create a separate Skill or rely only on a task-workspace patch. Frozen source
+documents cannot be supplemented from the shared retrieval pool.
+
+Verifier: retain the author's prohibition on reading Skill source, Generator
+logs, and private graders. Inspect public task deliverables and supplied inputs.
+For a public executable deliverable explicitly required by the task, a bounded
+behavior check in a verifier-owned temporary fixture is permitted; do not execute
+the Skill or production pipeline, alter delivered artifacts, or re-solve the task.
+An unspecified public threshold, unit, or convention is a coverage uncertainty.
+Do not represent missing evidence as an unconditional pytest.fail/assert False
+placeholder that every candidate must fail. Record the unresolved ambiguity in
+the public diagnosis and test only requirements supported by the public task.
+These instructions supplement the unchanged author prompt and are an explicit
+experiment adaptation; they do not establish semantic correctness of the suite.

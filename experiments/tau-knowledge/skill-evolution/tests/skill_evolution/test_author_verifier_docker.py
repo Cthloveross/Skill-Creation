@@ -1,5 +1,6 @@
 """Opt-in real MAIN + local HTTP model acceptance; no paid provider is used."""
 
+import asyncio
 import base64
 import io
 import json
@@ -11,10 +12,13 @@ import time
 import urllib.request
 import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from tau_skill_evolution.artifacts import FrozenBase, SkillBundle
-from tau_skill_evolution.author_verifier import AuthorSkillsBenchVerifier, author_source
+from tau_skill_evolution.author_controller import AuthorControllerBridge
+from tau_skill_evolution.author_verifier import _RUN, author_module, author_source
 from tau_skill_evolution.constants import EXPERIMENT_ROOT
 from tau_skill_evolution.container import _public_workspace
 from tau_skill_evolution.journal import Journal
@@ -150,7 +154,7 @@ def test_public_output():
     )
     skill_marker = "PRIVATE_GENERATOR_SKILL_SOURCE_MARKER"
     journal = Journal(tmp_path / "journal", identity={"task": "author-real-main"})
-    evidence = {"scope": "author_component_real_MAIN_local_HTTP", "paid_model_calls": 0}
+    evidence = {"scope": "native_author_component_real_MAIN_local_HTTP", "paid_model_calls": 0}
     container_name = None
     try:
         with _public_workspace(  # noqa: SIM117
@@ -188,29 +192,65 @@ HTTPServer(('127.0.0.1', 19761), Handler).serve_forever()
                     timeout_sec=30,
                 )
                 assert setup.returncode == 0, setup.stderr.decode()
-                instance = AuthorSkillsBenchVerifier(
+                binding = AuthorControllerBridge(
+                    SimpleNamespace(),
                     model,
                     runner,
-                    journal=journal,
+                    journal,
+                    operation_id="native-verifier",
+                    environment_dir=tmp_path / "private-task/environment",
                     token_counter=lambda text: len(text) // 4,
                     max_input_tokens=200000,
-                    logs_dir=tmp_path / "author-logs",
                 )
-                suite = instance.create_suite(base.public_inputs, base, {"submission": 1})
-                initial = instance.verify(base.public_inputs, base, {"submission": 1}, suite)
-                assert initial.passed and initial.author_result["tests_passed"] == 2
-                assert len(requests) == 1
+                verifier = author_module("evolution.independent_verifier").IndependentVerifier(
+                    model_name="fixture"
+                )
+
+                async def generate():
+                    token = _RUN.set(binding.runs["verifier"])
+                    try:
+                        value = await verifier.generate_and_run(
+                            binding.environment,
+                            base.public_inputs["opening"],
+                            tmp_path / "author-logs",
+                        )
+                        binding.check()
+                        return value
+                    finally:
+                        _RUN.reset(token)
+
+                initial = asyncio.run(generate())
+                assert initial.source == "script" and initial.tests_passed == 2
+                assert initial.tests_failed == 0 and len(requests) == 1
                 assert (
                     runner.author_exec(
                         "printf changed > /root/author-fixture-output.txt"
                     ).returncode
                     == 0
                 )
-                failed = instance.verify(
-                    base.public_inputs, base, {"submission": 2}, suite, operation_id="changed"
+                failed = asyncio.run(
+                    author_module("evolution.self_verifier")
+                    .SelfVerifier()
+                    .verify(binding.environment)
                 )
-                assert not failed.passed and failed.author_result["tests_failed"] == 1
-                assert failed.author_result["tests_passed"] == 1
+                assert failed.source == "script" and failed.tests_failed == 1
+                assert failed.tests_passed == 1
+
+                async def diagnose():
+                    token = _RUN.set(binding.runs["verifier"])
+                    try:
+                        value = await verifier.diagnose_failures(
+                            binding.environment,
+                            base.public_inputs["opening"],
+                            tmp_path / "diagnosis-logs",
+                            failed,
+                        )
+                        binding.check()
+                        return value
+                    finally:
+                        _RUN.reset(token)
+
+                failed.diagnosis = asyncio.run(diagnose())
                 assert failed.diagnosis == "Current public output differs from the initial value."
                 restored = runner.author_exec("cat /root/verifier/test_outputs.py")
                 assert restored.stdout.decode() == test_script
@@ -245,8 +285,7 @@ HTTPServer(('127.0.0.1', 19761), Handler).serve_forever()
         )
         evidence["learning_cleaned_at_owner_exit"] = True
         output = (
-            EXPERIMENT_ROOT
-            / "runs/readiness-skillsbench-author-v5-20261007-001/author-component-docker.json"
+            Path(os.environ.get("TAU_READINESS_DIR", tmp_path)) / "author-component-docker.json"
         )
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n")

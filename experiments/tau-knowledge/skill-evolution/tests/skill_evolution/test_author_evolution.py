@@ -1,349 +1,241 @@
-"""Released CoEvo branch contracts, without a provider or private grader."""
+"""Run the published controller hooks with local task files and simulated GT.
 
+Only Verifier/provider outcomes and the source audit are fixture inputs. Counters,
+checklists, schema checks, interventions, export and selection remain author code.
+"""
+
+import asyncio
+import json
+import shutil
+import subprocess
+import sys
 from collections import deque
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
-from tau_skill_evolution.artifacts import EvolutionSubmission, FrozenBase, SkillBundle
-from tau_skill_evolution.evolution import EvolutionEngine, EvolutionResult, OracleUnavailable
-from tau_skill_evolution.journal import Journal, UnknownOperation
-from tau_skill_evolution.verifier import TestSuite, VerificationReport
+from tau_skill_evolution.author_verifier import _RUN, _Run, author_module
 
 
-class Session:
-    def __init__(self, unchecked=()):
-        self.unchecked = list(unchecked)
-        self.rollbacks = []
-        self.resets = 0
-        self.invalid_schema = False
-        self.snapshots = {}
-        self.lose_snapshot = False
+class LocalEnvironment:
+    def __init__(self, root):
+        self.root = root
+        self.environment_dir = root / "task/environment"
+        self.environment_dir.mkdir(parents=True)
+        (self.environment_dir.parent / "task.toml").write_text("[agent]\ntimeout_sec=15\n")
+        self.calls = []
 
-    def save_best_bundle(self, bundle, *, operation_id):
-        self.snapshots[operation_id] = bundle
-        return {
-            "operation_id": operation_id,
-            "bundle_hash": bundle.bundle_hash,
-            "parent_hash": bundle.parent_hash,
-        }
-
-    def load_best_bundle(self, ref):
-        return None if self.lose_snapshot else self.snapshots[ref["operation_id"]]
-
-    def schema_issues(self, bundle):
-        return ["name mismatch"] if self.invalid_schema else []
-
-    def read_progress(self):
-        return {"text": "public checklist", "unchecked": self.unchecked, "sha256": "fixture"}
-
-    def reset_progress(self):
-        self.resets += 1
-        return self.read_progress()
-
-    def rollback_bundle(self, bundle, *, operation_id):
-        self.rollbacks.append(bundle.bundle_hash)
-        return {"status": "ROLLED_BACK", "bundle_hash": bundle.bundle_hash}
-
-
-class Verifier:
-    def __init__(self, outcomes):
-        self.outcomes = deque(outcomes)
-        self.events = []
-
-    def create_suite(self, inputs, base, trace, previous_tests=None, **kwargs):
-        self.events.append(("generate", trace["bundle_hash"]))
-        return TestSuite(
-            {"tests/test_outputs.py": "def test_output(): assert 1 == 1"},
-            version=0 if previous_tests is None else previous_tests.version + 1,
+    async def exec(self, command, timeout_sec=None, **kwargs):
+        mapped = command.replace("/app/environment", str(self.root / "app/environment"))
+        mapped = mapped.replace("/root/", str(self.root / "root") + "/")
+        mapped = mapped.replace("python3", sys.executable)
+        result = subprocess.run(
+            ["/bin/bash", "-c", mapped],
+            capture_output=True,
+            text=True,
+            cwd=self.root / "root",
+            env={"PATH": "/usr/bin:/bin", "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"},
+            timeout=timeout_sec,
+        )
+        self.calls.append(command)
+        stdout = result.stdout.replace(str(self.root / "app/environment"), "/app/environment")
+        return SimpleNamespace(
+            return_code=result.returncode,
+            stdout=stdout.replace(str(self.root / "root"), "/root"),
+            stderr=result.stderr,
         )
 
-    def verify(self, inputs, base, trace, suite, **kwargs):
-        self.events.append(("verify", trace["bundle_hash"]))
-        outcome = self.outcomes.popleft() if self.outcomes else False
-        if isinstance(outcome, Exception):
-            raise outcome
-        return VerificationReport(suite, bool(outcome), 1.0 if outcome else 0.0)
+
+class VerifierOutcome:
+    def __init__(self, value):
+        self.value = value
+        self._generation_count = 0
+        self.generation_flags = []
+
+    async def verify(self, **kwargs):
+        if isinstance(self.value, Exception):
+            raise self.value
+        return self.value
+
+    async def generate_and_run(self, *, adversarial_recheck, **kwargs):
+        self._generation_count += 1
+        self.generation_flags.append(adversarial_recheck)
+        return await self.verify()
 
 
-def bundle(content="initial", parent=None):
-    return SkillBundle({"SKILL.md": content}, parent_hash=parent)
+def result(*, passed=False, source="script"):
+    model = author_module("evolution.models")
+    return model.VerificationResult(
+        estimated_success=passed,
+        source=source,
+        total_tests=1,
+        tests_passed=int(passed),
+        tests_failed=int(not passed),
+        diagnosis="Offline fixture; no model call.",
+        test_details=[{"name": "test_numeric_value", "status": "PASSED" if passed else "FAILED"}],
+    )
 
 
-def submission(value, *, initial=False):
-    return EvolutionSubmission(value, {"events": []}, "learning", 0, initial)
+@pytest.fixture
+def native_controller(tmp_path):
+    module = author_module("agents.terminus_2.harbor_terminus_2_evolution")
 
+    class Controller(module.HarborTerminus2Evolution):
+        async def _audit_exported_evolved_skills(self, *args, **kwargs):
+            return []
 
-def run(checks, rewards, *, session=None, journal=None, retries=15, revisions=None):
-    first = bundle()
-    session = session or Session()
-    verifier = Verifier(checks)
-    scores = deque(rewards)
-    calls = []
-
-    def oracle(value, *, phase):
-        calls.append((phase, value.bundle_hash))
-        outcome = scores.popleft()
-        if isinstance(outcome, Exception):
-            raise outcome
-        return {
-            "status": "MEASURED",
-            "phase": phase,
-            "passed": outcome == 1,
-            "canonical_reward": outcome,
-            "resolved_reward": outcome,
-            "reward_source": "reward",
-            "bundle_hash": value.bundle_hash,
-            "parent_hash": value.parent_hash,
-        }
-
-    def revise(previous, inputs, base, report, *, feedback_history, **kwargs):
-        assert all(
-            set(item)
-            <= {
-                "kind",
-                "base_hash",
-                "bundle_hash",
-                "passed",
-                "call",
-                "failure_categories",
-                "verification_unavailable",
-                "unchecked_phases",
-                "public_schema_issues",
-                "oracle_infrastructure_unavailable",
+        async def _run_gt_oracle_check(self, *args, oracle_label, **kwargs):
+            self.gt_calls.append(oracle_label)
+            reward = self.gt_results.popleft()
+            if isinstance(reward, Exception):
+                raise reward
+            return {
+                "passed": reward == 1,
+                "reward": reward,
+                "pass_rate": reward,
+                "tests_passed": int(reward * 100),
+                "total_tests": 100,
+                "test_details": [],
             }
-            for item in feedback_history
+
+    token = _RUN.set(_Run(SimpleNamespace(), "offline-native-constructor"))
+    try:
+        agent = Controller(logs_dir=tmp_path / "logs", model_name="offline", timeout_multiplier=5)
+    finally:
+        _RUN.reset(token)
+    agent.logs_dir.mkdir()
+    root = tmp_path / "root"
+    root.mkdir()
+    skill = tmp_path / "app/environment/skills/evo-fixture"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").write_text(
+        "---\nname: evo-fixture\ndescription: Produce a reusable fixture.\n---\n"
+        "Run scripts/main.py.\n"
+    )
+    (skill / "scripts").mkdir()
+    (skill / "scripts/main.py").write_text("print('fixture')\n")
+    verifier = root / "verifier"
+    verifier.mkdir()
+    (verifier / "test_outputs.py").write_text("def test_numeric_value(): assert False\n")
+    (root / "progress.md").write_text("# Progress\n- [x] P1: Skill\n- [x] P2: execute\n")
+    environment = LocalEnvironment(tmp_path)
+    agent._instruction = "Produce a fixture through the existing evo-fixture Skill."
+    agent._environment = environment
+    agent._skill_dirs = [Path("/app/environment/skills")]
+    agent._surrogate_tests_locked = True
+    outcome = VerifierOutcome(result())
+    agent._verifier = agent._independent_verifier = outcome
+    agent.gt_calls, agent.gt_results = [], deque()
+    assert agent._max_host_interventions == 5
+    assert agent._max_surrogate_retries == 15
+    assert agent._max_episodes == 120
+    try:
+        yield agent, environment, outcome, root
+    finally:
+        if agent._best_gt_snapshot:
+            shutil.rmtree(agent._best_gt_snapshot["skills_dir"], ignore_errors=True)
+
+
+def submit(agent, environment, episode=1, *, complete=True, commands=()):
+    parsed = agent._parser.parse_response(
+        json.dumps(
+            {
+                "analysis": "fixture",
+                "plan": "fixture",
+                "commands": list(commands),
+                "task_complete": complete,
+            }
         )
-        value = (
-            revisions(previous)
-            if revisions
-            else bundle(previous.files["SKILL.md"] + "+", previous.bundle_hash)
-        )
-        return submission(value)
-
-    engine = EvolutionEngine(
-        execute_initial=lambda value, *args, **kwargs: submission(value, initial=True),
-        oracle=oracle,
-        verifier=verifier,
-        revise=revise,
-        journal=journal,
-        skillsbench_session=session,
-        max_surrogate_retries=retries,
-        max_revisions=None,
     )
-    return engine.run({}, FrozenBase((), {}), first), verifier, session, calls
+    return asyncio.run(agent._check_episode_exit(episode, parsed, environment, "fixture output"))
 
 
-def test_oracle_rejection_returns_to_generator_before_test_upgrade():
-    result, verifier, _, calls = run([True, True], [0.75, 1])
-    assert result.revision_attempts == 1
-    generations = [value for kind, value in verifier.events if kind == "generate"]
-    assert len(generations) == 2 and generations[0] != generations[1]
-    assert result.stop_reason == "oracle_success"
-    assert [phase for phase, _ in calls] == ["normal", "normal"]
-
-
-def test_r15_failure_cap_still_runs_terminal_oracle():
-    result, _, _, calls = run([False] * 15, [0.25, 0.20])
-    assert result.author_counters["surrogate_retries"] == 15
-    assert [phase for phase, _ in calls] == ["cap_final", "post_final"]
-    assert result.best_oracle_ref is not None
-    assert result.author_terminal_result["resolved_reward"] == 0.25
-    assert result.oracle_history[-1]["resolved_reward"] == 0.20
-
-
-def test_four_normal_rejections_and_r15_can_run_six_physical_gt_checks():
-    result, _, _, calls = run([True] * 4 + [False] * 15, [0.4, 0.3, 0.2, 0.1, 0.35, 0.3])
-    assert [phase for phase, _ in calls] == ["normal"] * 4 + ["cap_final", "post_final"]
-    assert result.author_counters["normal_oracle_interventions"] == 4
-    assert result.oracle_calls == 6
-    assert result.final_bundle_hash == result.versions[0].bundle_hash
-
-
-def test_five_normal_gt_results_reuse_best_without_terminal_request():
-    result, _, session, calls = run([True] * 5, [0.25, 0.75, 0.42, 0.75, 0.2])
-    assert len(calls) == 5 and all(phase == "normal" for phase, _ in calls)
-    assert result.final_bundle_hash == result.versions[1].bundle_hash
-    assert session.rollbacks == [result.final_bundle_hash]
-    assert result.best_oracle_ref["bundle_hash"] == result.final_bundle_hash
-    assert result.selection_reason == "recorded_best_terminal"
-
-
-def test_first_checklist_failure_counts_once_then_allows_gt():
-    result, _, _, calls = run([True, True], [1], session=Session(["P6"]))
-    assert result.author_counters["surrogate_retries"] == 1
-    assert result.revision_attempts == 1 and len(calls) == 1
-    assert result.author_counters["normal_oracle_interventions"] == 1
-
-
-def test_program_errors_consume_r15_instead_of_local_one_repair_stop():
-    result, _, _, calls = run([RuntimeError("locked run")] * 3, [1], retries=3)
-    assert result.author_counters["surrogate_retries"] == 3
-    assert result.stop_reason == "oracle_success"
-    assert [phase for phase, _ in calls] == ["cap_final"]
-
-
-def test_more_than_fifteen_revisions_are_not_a_local_m15_limit():
-    result, _, _, _ = run([True] + [False] * 14, [0.25, 0.2, 0.1], retries=15)
-    assert result.revision_attempts == 16  # One GT rejection plus fifteen surrogate interventions.
-    assert result.author_counters["surrogate_retries"] == 15
-
-
-def test_unknown_oracle_does_not_trigger_finalization_or_resend():
-    result, _, _, calls = run([True], [UnknownOperation("sent")])
-    assert len(calls) == 1 and result.oracle_calls == 0
-    assert result.stop_reason == "oracle_result_unknown"
-    assert result.best_oracle_ref is None
-
-
-def test_consecutive_oracle_error_counter_resets_on_valid_outcome():
-    result, _, _, calls = run(
-        [True] * 4, [OracleUnavailable("infra"), 0.5, OracleUnavailable("infra"), 1]
-    )
-    assert len(calls) == 4
-    assert result.author_counters["normal_oracle_interventions"] == 2
-    assert result.author_counters["oracle_infrastructure_failures"] == 0
-    assert len(result.oracle_failures) == 2
-
-
-def test_schema_gate_precedes_best_rollback():
-    session = Session()
-
-    def revise(previous):
-        session.invalid_schema = True
-        return bundle("invalid schema", previous.bundle_hash)
-
-    result, _, _, calls = run([True], [0.75], session=session, revisions=revise)
-    assert len(calls) == 1 and not session.rollbacks
-    assert result.best_oracle_ref is not None
-    assert result.stop_reason == "skill_schema_invalid"
-    assert result.selection_reason == "skill_schema_gate"
-
-
-def test_sealed_best_selection_resumes_without_any_external_call(tmp_path):
-    journal = Journal(tmp_path / "journal")
-    result, _, _, calls = run([True] * 5, [0.7, 0.2, 0.1, 0.3, 0.4], journal=journal)
-    assert len(calls) == 5
-    restored = EvolutionEngine(
-        execute_initial=lambda *a, **k: pytest.fail("sealed initial"),
-        oracle=lambda *a, **k: pytest.fail("sealed oracle"),
-        verifier=None,
-        revise=lambda *a, **k: pytest.fail("sealed revision"),
-        skillsbench_session=Session(),
-        max_surrogate_retries=15,
-        max_revisions=None,
-        journal=journal,
-    ).run({}, FrozenBase((), {}), result.versions[0])
-    assert EvolutionResult.from_dict(restored.to_dict()).to_dict() == result.to_dict()
-
-
-def test_content_reversion_retains_selected_observation_parent():
-    sequence = deque(["middle", "initial", "later", "last"])
-    result, _, _, _ = run(
-        [True] * 5,
-        [0.1, 0.2, 0.8, 0.3, 0.4],
-        revisions=lambda prev: bundle(sequence.popleft(), prev.bundle_hash),
-    )
-    assert len(result.versions) == 4
-    assert result.final_bundle_hash == result.versions[0].bundle_hash
-    assert result.final_bundle.parent_hash == result.versions[1].bundle_hash
-    assert result.versions[0].parent_hash is None
-
-
-def test_unchanged_submission_records_actual_parent_without_new_content_version():
-    result, _, _, _ = run(
-        [False, True], [1], revisions=lambda prev: bundle(prev.files["SKILL.md"], prev.bundle_hash)
-    )
-    assert len(result.versions) == 1
-    assert result.attempts[0]["status"] == "unchanged"
-    assert result.final_bundle.parent_hash == result.versions[0].bundle_hash
-    assert result.versions[0].parent_hash is None
-
-
-def test_unknown_post_final_does_not_dispatch_rollback_or_another_gt():
-    result, _, session, calls = run([False] * 3, [0.75, UnknownOperation("sent")], retries=3)
-    assert len(calls) == 2
-    assert result.stop_reason == "oracle_result_unknown"
-    assert not session.rollbacks
-    assert result.oracle_calls == 1
-
-
-def test_missing_best_snapshot_keeps_score_but_does_not_claim_rollback():
-    session = Session()
-    session.lose_snapshot = True
-    result, _, _, calls = run([True] * 5, [0.7, 0.2, 0.1, 0.3, 0.4], session=session)
-    assert len(calls) == 5
-    assert result.author_terminal_result["resolved_reward"] == 0.7
-    assert result.final_bundle_hash == result.versions[-1].bundle_hash
-    assert result.best_snapshot["record_available"] is True
-    assert result.best_snapshot["snapshot_available"] is False
-    assert result.best_snapshot["rollback"] is None and not session.rollbacks
-
-
-def test_corrupted_best_snapshot_stops_without_scoring_or_claiming_rollback():
-    session = Session()
-
-    def broken(ref):
-        raise ValueError("snapshot hash mismatch")
-
-    session.load_best_bundle = broken
-    result, _, _, calls = run([False] * 3, [0.75], session=session, retries=3)
-    assert len(calls) == 1 and not session.rollbacks
-    assert result.stop_reason == "best_snapshot_failed"
-    assert result.best_snapshot["snapshot_available"] is False
-    assert result.selection_reason == "best_snapshot_invalid"
-
-
-def test_author_initial_minus_one_score_sentinel_does_not_create_best():
-    result, _, session, calls = run([False] * 3, [-1, -2], session=Session(), retries=3)
-    assert len(calls) == 2
-    assert result.best_oracle_ref is None and not session.rollbacks
-    assert result.author_terminal_result["resolved_reward"] == -2
-
-
-def test_failed_rollback_preserves_actual_result_and_failure_evidence():
-    session = Session()
-
-    def broken(*args, **kwargs):
-        raise RuntimeError("rollback failed")
-
-    session.rollback_bundle = broken
-    result, _, _, _ = run([True] * 5, [0.75, 0.4, 0.2, 0.1, 0.3], session=session)
-    assert result.stop_reason == "rollback_failed"
-    assert result.best_snapshot["rollback"]["status"] == "FAILED"
-    assert result.author_terminal_result["resolved_reward"] == 0.75
-
-
-def test_unknown_snapshot_save_does_not_start_another_gt_or_revision():
-    session = Session()
-
-    def unknown(*args, **kwargs):
-        raise UnknownOperation("snapshot dispatched")
-
-    session.save_best_bundle = unknown
-    result, _, _, calls = run([True], [0.75], session=session)
-    assert len(calls) == 1 and result.revision_attempts == 0
-    assert result.stop_reason == "best_snapshot_result_unknown"
-
-
-def test_invalid_test_upgrade_returns_to_unlocked_generation_without_repeat_adversarial_flag(
-    monkeypatch,
+@pytest.mark.parametrize(
+    "locked,outcome,unchecked,trigger",
+    [
+        (True, RuntimeError("fixture verifier failure"), False, "locked_rerun_exception"),
+        (True, "no_script", False, "locked_no_script"),
+        (False, RuntimeError("fixture generation failure"), False, "verifier_exception"),
+        (False, "script_error", False, "verifier_script_error"),
+        (True, False, False, "surrogate_fail"),
+        (True, True, True, "surrogate_pass_checklist_fail"),
+    ],
+)
+def test_native_six_retry_events_have_published_counts(
+    native_controller, locked, outcome, unchecked, trigger
 ):
-    original = Verifier
+    agent, environment, verifier, root = native_controller
+    agent._surrogate_tests_locked = locked
+    verifier.value = (
+        outcome
+        if isinstance(outcome, Exception)
+        else result(
+            passed=outcome is True, source=outcome if isinstance(outcome, str) else "script"
+        )
+    )
+    if unchecked:
+        (root / "progress.md").write_text("- [ ] P2: execute\n")
+    exit_result = submit(agent, environment)
+    assert not exit_result.should_exit
+    assert agent._surrogate_retry_count == 1 and agent._host_intervention_count == 0
+    assert agent._intervention_history[-1]["trigger"] == trigger
+    assert not agent.gt_calls
 
-    class UnlockedVerifier(original):
-        generated = []
 
-        def create_suite(self, *args, **kwargs):
-            self.generated.append(kwargs.get("adversarial_recheck"))
-            if len(self.generated) == 2:
-                error = RuntimeError("nonempty invalid test script")
-                error.source = "script_error"
-                error.author_result = {"source": "script_error"}
-                raise error
-            return super().create_suite(*args, **kwargs)
+def test_native_r15_uses_fifteen_failures_then_terminal_gt(native_controller):
+    agent, environment, _, _ = native_controller
+    for episode in range(1, 16):
+        assert not submit(agent, environment, episode).should_exit
+        assert agent._surrogate_retry_count == episode
+    agent.gt_results.append(0.25)
+    terminal = submit(agent, environment, 16)
+    assert terminal.should_exit and terminal.exit_reason == "max_surrogate_retries"
+    assert agent._surrogate_retry_count == 15 and agent._host_intervention_count == 0
+    assert len(agent.gt_calls) == 1 and agent._best_gt_snapshot["reward"] == 0.25
 
-    monkeypatch.setitem(run.__globals__, "Verifier", UnlockedVerifier)
-    result, _, _, calls = run([True, True], [0.75, 1])
-    assert UnlockedVerifier.generated == [False, True, False]
-    assert len(calls) == 2 and result.revision_attempts == 2
-    assert result.author_counters["surrogate_retries"] == 1
-    assert any(item["trigger"] == "verifier_script_error" for item in result.interventions)
+
+def test_native_checklist_blocks_once_then_runs_gt(native_controller):
+    agent, environment, verifier, root = native_controller
+    verifier.value = result(passed=True)
+    (root / "progress.md").write_text("- [ ] P2: execute\n")
+    first = submit(agent, environment)
+    assert not first.should_exit and not agent.gt_calls
+    agent.gt_results.append(1.0)
+    second = submit(agent, environment, 2)
+    assert second.should_exit and second.exit_reason == "gt_oracle_pass"
+    assert agent._surrogate_retry_count == 1 and agent._host_intervention_count == 1
+    assert len(agent.gt_calls) == 1
+
+
+def test_native_oracle_failure_unlocks_tests_after_returning_generator(native_controller):
+    agent, environment, verifier, _ = native_controller
+    verifier.value = result(passed=True)
+    agent.gt_results.extend([0.75, 1.0])
+    first = submit(agent, environment)
+    assert not first.should_exit and not agent._surrogate_tests_locked
+    assert agent._adversarial_surrogate_recheck
+    assert verifier.generation_flags == []
+    second = submit(agent, environment, 2)
+    assert second.should_exit and verifier.generation_flags == [True]
+    assert agent._host_intervention_count == 2 and agent._surrogate_retry_count == 0
+
+
+def test_native_active_command_executes_without_spending_retry_or_gt(native_controller):
+    agent, environment, _, root = native_controller
+    command = author_module("agents.terminus_2.harbor_terminus_2_evolution").Command(
+        keystrokes="printf 'executed\\n' > /root/fixture.txt\n", duration_sec=0.1
+    )
+    output = asyncio.run(agent._execute_commands(environment, [command]))
+    parsed = agent._parser.parse_response(
+        json.dumps(
+            {
+                "analysis": "fixture",
+                "plan": "fixture",
+                "task_complete": False,
+                "commands": [{"keystrokes": command.keystrokes, "duration": 0.1}],
+            }
+        )
+    )
+    exit_result = asyncio.run(agent._check_episode_exit(1, parsed, environment, output))
+    assert not exit_result.should_exit and (root / "fixture.txt").read_text() == "executed\n"
+    assert agent._surrogate_retry_count == agent._host_intervention_count == 0

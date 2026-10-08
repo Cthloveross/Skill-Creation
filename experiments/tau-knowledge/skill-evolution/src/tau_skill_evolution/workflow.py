@@ -9,6 +9,7 @@ import re
 import time
 import uuid
 from collections import defaultdict
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -146,7 +147,7 @@ class Workflow:
             selected = directory / f"{role}.md"
         return selected.read_text(encoding="utf-8")
 
-    def _model(self, role: str, *, phase: str = "create") -> Any:
+    def _model(self, role: str, *, phase: str = "create", scope: str = "unscoped") -> Any:
         if self.model_factory is not None:
             return self.model_factory(role)
         provider = self.spec.provider_settings
@@ -155,10 +156,8 @@ class Workflow:
             if role in self.spec.values["roles"]
             else self.spec.values["runtime"]["controls"]["agent"]
         )
-        return OpenAICompatibleClient(
-            provider["api_base"],
-            api_key=bearer_token_source(provider["api_key_env"]),
-            config=GenerationConfig(
+        options = {
+            "config": GenerationConfig(
                 model=provider["model"],
                 transport=provider["transport"],
                 reasoning_effort=settings["reasoning_effort"],
@@ -170,13 +169,49 @@ class Workflow:
                 if role == "generator" and phase == "create"
                 else None,
             ),
-            timeout_seconds=self.spec.values["runtime"]["request_timeout_seconds"],
-            token_counter=SerializedChatTokenCounter(
+            "timeout_seconds": self.spec.values["runtime"]["request_timeout_seconds"],
+            "token_counter": SerializedChatTokenCounter(
                 self.counter, basis="embedding_responses_input_estimate_with_reasoning_reserve"
             ),
-            usage_path=self.root / "usage.jsonl",
-            usage_role=role,
+            "usage_path": self.root / "usage.jsonl",
+            "usage_role": role,
+        }
+        if provider["transport"] == "codex-plan":
+            from .codex_plan import CodexPlanClient
+
+            return CodexPlanClient(
+                role=role,
+                binary=provider["binary"],
+                journal_dir=self.root / "private" / "codex-plan" / scope / role / phase,
+                context_window=settings.get("context_window"),
+                context_fraction=settings.get("context_beta"),
+                output_reserve=(
+                    int(settings["context_window"] * settings["context_beta"])
+                    - settings["max_input_tokens"]
+                    if "context_window" in settings
+                    else 0
+                ),
+                **options,
+            )
+        return OpenAICompatibleClient(
+            provider["api_base"],
+            api_key=bearer_token_source(provider["api_key_env"]),
+            **options,
         )
+
+    @contextmanager
+    def _model_context(self, role: str, *, phase: str = "create", scope: str) -> Any:
+        model = self._model(role, phase=phase, scope=scope)
+        try:
+            yield model
+        finally:
+            self._close_model(model)
+
+    @staticmethod
+    def _close_model(model: Any) -> None:
+        close = getattr(model, "close", None)
+        if callable(close):
+            close()
 
     def _bank(self, task: str) -> Any:
         if self.bank_factory is not None:
@@ -254,7 +289,7 @@ class Workflow:
         if status is not None:
             raise ModelClientError(
                 "authentication_failed",
-                f"Bedrock authentication failed (HTTP {status}); later cells stopped",
+                f"Model provider authentication failed (HTTP {status}); later cells stopped",
                 status=status,
             )
 
@@ -335,30 +370,31 @@ class Workflow:
                             if schema.get("function", {}).get("name") in allowed_reads
                         ]
                         settings = self.spec.values["acquisition"]
-                        collected = collect_base(
-                            self._model("analyzer"),
-                            session.public_inputs,
-                            corpus,
-                            reads,
-                            session.clarify,
-                            self.counter,
-                            budgets=AcquisitionBudgets(
-                                searches=settings["max_searches"],
-                                clarifications=settings["max_clarifications"],
-                                read_only_queries=settings["max_reads"],
-                                base_tokens=settings["base_token_limit"],
-                                analyzer_steps=settings.get("max_steps", 50),
-                            ),
-                            allowed_read_only_tool_names=frozenset(allowed_reads),
-                            min_document_confidence=settings["min_document_confidence"],
-                            tool_schemas=schemas,
-                            input_token_limit=self.spec.values["roles"]["analyzer"][
-                                "max_input_tokens"
-                            ],
-                            journal=journal,
-                            system_prompt=self._prompt("analyzer"),
-                            action_dispatcher=getattr(session, "perform", None),
-                        )
+                        with self._model_context("analyzer", scope=f"{task}/{arm}") as analyzer:
+                            collected = collect_base(
+                                analyzer,
+                                session.public_inputs,
+                                corpus,
+                                reads,
+                                session.clarify,
+                                self.counter,
+                                budgets=AcquisitionBudgets(
+                                    searches=settings["max_searches"],
+                                    clarifications=settings["max_clarifications"],
+                                    read_only_queries=settings["max_reads"],
+                                    base_tokens=settings["base_token_limit"],
+                                    analyzer_steps=settings.get("max_steps", 50),
+                                ),
+                                allowed_read_only_tool_names=frozenset(allowed_reads),
+                                min_document_confidence=settings["min_document_confidence"],
+                                tool_schemas=schemas,
+                                input_token_limit=self.spec.values["roles"]["analyzer"][
+                                    "max_input_tokens"
+                                ],
+                                journal=journal,
+                                system_prompt=self._prompt("analyzer"),
+                                action_dispatcher=getattr(session, "perform", None),
+                            )
                     seal_base(root / "base", collected)
                     return collected.to_dict()
 
@@ -369,28 +405,29 @@ class Workflow:
             if (root / "initial").exists():
                 bundle = load_bundle(root / "initial")
             else:
-                bundle = generate_initial(
-                    self._model("generator"),
-                    base.public_inputs,
-                    base,
-                    journal=journal,
-                    tool_schemas=bank.tool_schemas,
-                    artifact_dir=root / "initial",
-                    seed=self.spec.values["seed"],
-                    system_prompt=self._prompt("generator"),
-                    token_counter=SerializedChatTokenCounter(self.counter),
-                    context_window=self.spec.values["roles"]["generator"].get(
-                        "context_window", 272000
-                    ),
-                    context_fraction=self.spec.values["roles"]["generator"].get(
-                        "context_beta", 0.7
-                    ),
-                    reserved_output_tokens=math.floor(
-                        self.spec.values["roles"]["generator"]["context_window"]
-                        * self.spec.values["roles"]["generator"]["context_beta"]
+                with self._model_context("generator", scope=f"{task}/{arm}") as generator:
+                    bundle = generate_initial(
+                        generator,
+                        base.public_inputs,
+                        base,
+                        journal=journal,
+                        tool_schemas=bank.tool_schemas,
+                        artifact_dir=root / "initial",
+                        seed=self.spec.values["seed"],
+                        system_prompt=self._prompt("generator"),
+                        token_counter=SerializedChatTokenCounter(self.counter),
+                        context_window=self.spec.values["roles"]["generator"].get(
+                            "context_window", 272000
+                        ),
+                        context_fraction=self.spec.values["roles"]["generator"].get(
+                            "context_beta", 0.7
+                        ),
+                        reserved_output_tokens=math.floor(
+                            self.spec.values["roles"]["generator"]["context_window"]
+                            * self.spec.values["roles"]["generator"]["context_beta"]
+                        )
+                        - self.spec.values["roles"]["generator"]["max_input_tokens"],
                     )
-                    - self.spec.values["roles"]["generator"]["max_input_tokens"],
-                )
             record = {
                 "status": "CREATED",
                 "base_hash": base.base_hash,
@@ -441,7 +478,6 @@ class Workflow:
             bank = self._bank(task)
             from .generator import RevisionConversation
 
-            conversation = RevisionConversation()
             author = self.spec.experiment == "skillsbench"
             deadline = None
             if author:
@@ -455,29 +491,10 @@ class Workflow:
                 deadline = timing["deadline"]
                 bank.deadline = deadline
             settings = self.spec.values["roles"]["generator"]
-            generator = self._model("generator", phase="revise")
-            if author and isinstance(generator, OpenAICompatibleClient):
+            generator = self._model("generator", phase="revise", scope=f"{task}/{arm}")
+            verifier_model = None
+            if author and hasattr(generator, "request_deadline"):
                 generator.request_deadline = deadline
-            options = {
-                "journal": journal,
-                "tool_schemas": bank.tool_schemas,
-                "seed": self.spec.values["seed"],
-                "system_prompt": self._prompt("generator"),
-                "token_counter": SerializedChatTokenCounter(self.counter),
-                "context_window": settings["context_window"],
-                "context_fraction": settings["context_beta"],
-                "reserved_output_tokens": math.floor(
-                    settings["context_window"] * settings["context_beta"]
-                )
-                - settings["max_input_tokens"],
-                "conversation": conversation,
-                "max_turns": None if author else settings.get("max_turns", 120),
-                "max_episodes": settings["max_episodes"] if author else None,
-                "timeout_seconds": None
-                if author
-                else self.spec.values["evolution"].get("revision_timeout_seconds", 3600),
-                "deadline": deadline,
-            }
             session_opened = False
             result = None
             try:
@@ -491,26 +508,59 @@ class Workflow:
                 ) as session:
                     session_opened = True
                     if author:
-                        from .author_verifier import AuthorSkillsBenchVerifier
+                        from .skillsbench_evolution import run_author_evolution
 
-                        verifier_model = self._model("verifier")
-                        if isinstance(verifier_model, OpenAICompatibleClient):
+                        verifier_model = self._model("verifier", scope=f"{task}/{arm}")
+                        if hasattr(verifier_model, "request_deadline"):
                             verifier_model.request_deadline = deadline
-                        verifier = AuthorSkillsBenchVerifier(
+                        result = run_author_evolution(
+                            session,
+                            initial,
+                            base,
+                            generator,
                             verifier_model,
-                            session.runner,
                             journal=journal,
+                            root=root,
                             token_counter=self.counter,
-                            max_input_tokens=self.spec.values["roles"]["verifier"][
-                                "max_input_tokens"
-                            ],
-                            seed=self.spec.values["seed"],
-                            logs_dir=root / "private" / "author-verifier",
+                            settings=settings,
+                            deadline=deadline,
+                            adapter_prompt=(
+                                self.spec.root / "prompts" / "skillsbench-verifier-adapter.txt"
+                            ).read_text(),
                         )
-                        session.generator_conversation = conversation
+                        journal.dispatch(
+                            "evolution-result",
+                            {
+                                "initial_bundle_hash": initial.bundle_hash,
+                                "base_hash": base.base_hash,
+                            },
+                            result.to_dict,
+                            external=False,
+                        )
                     else:
+                        conversation = RevisionConversation()
+                        options = {
+                            "journal": journal,
+                            "tool_schemas": bank.tool_schemas,
+                            "seed": self.spec.values["seed"],
+                            "system_prompt": self._prompt("generator"),
+                            "token_counter": SerializedChatTokenCounter(self.counter),
+                            "context_window": settings["context_window"],
+                            "context_fraction": settings["context_beta"],
+                            "reserved_output_tokens": math.floor(
+                                settings["context_window"] * settings["context_beta"]
+                            )
+                            - settings["max_input_tokens"],
+                            "conversation": conversation,
+                            "max_turns": settings.get("max_turns", 120),
+                            "timeout_seconds": self.spec.values["evolution"].get(
+                                "revision_timeout_seconds", 3600
+                            ),
+                            "deadline": deadline,
+                        }
+                        verifier_model = self._model("verifier", scope=f"{task}/{arm}")
                         verifier = SurrogateVerifier(
-                            self._model("verifier"),
+                            verifier_model,
                             self._runner(),
                             journal=journal,
                             system_prompt=self._prompt("verifier"),
@@ -524,58 +574,54 @@ class Workflow:
                             ],
                         )
 
-                    def initial_execution(
-                        bundle: Any, inputs: Any, frozen: Any, **kwargs: Any
-                    ) -> Any:
-                        return execute_initial(
-                            generator,
-                            bundle,
-                            inputs,
-                            frozen,
-                            session=session,
-                            **options,
-                            **kwargs,
-                        )
+                        def initial_execution(
+                            bundle: Any, inputs: Any, frozen: Any, **kwargs: Any
+                        ) -> Any:
+                            return execute_initial(
+                                generator,
+                                bundle,
+                                inputs,
+                                frozen,
+                                session=session,
+                                **options,
+                                **kwargs,
+                            )
 
-                    def revision(
-                        previous: Any,
-                        inputs: Any,
-                        frozen: Any,
-                        report: Any,
-                        *,
-                        operation_id: str,
-                        **kwargs: Any,
-                    ) -> Any:
-                        return revise(
-                            generator,
-                            previous,
-                            inputs,
-                            frozen,
-                            report,
-                            session=session,
-                            operation_id=operation_id,
-                            artifact_dir=root / "revisions" / operation_id,
-                            **options,
-                            **kwargs,
-                        )
+                        def revision(
+                            previous: Any,
+                            inputs: Any,
+                            frozen: Any,
+                            report: Any,
+                            *,
+                            operation_id: str,
+                            **kwargs: Any,
+                        ) -> Any:
+                            return revise(
+                                generator,
+                                previous,
+                                inputs,
+                                frozen,
+                                report,
+                                session=session,
+                                operation_id=operation_id,
+                                artifact_dir=root / "revisions" / operation_id,
+                                **options,
+                                **kwargs,
+                            )
 
-                    engine = EvolutionEngine(
-                        execute_initial=initial_execution,
-                        oracle=bank.oracle,
-                        verifier=verifier,
-                        revise=revision,
-                        journal=journal,
-                        max_revisions=None
-                        if author
-                        else self.spec.values["evolution"]["max_revisions"],
-                        skillsbench_session=session if author else None,
-                        max_surrogate_retries=self.spec.values["evolution"].get(
-                            "max_surrogate_retries", 15
-                        ),
-                        max_oracles=self.spec.values["evolution"]["max_oracles"],
-                        max_oracle_errors=self.spec.values["evolution"].get("max_oracle_errors", 5),
-                    )
-                    result = engine.run(base.public_inputs, base, initial)
+                        engine = EvolutionEngine(
+                            execute_initial=initial_execution,
+                            oracle=bank.oracle,
+                            verifier=verifier,
+                            revise=revision,
+                            journal=journal,
+                            max_revisions=self.spec.values["evolution"]["max_revisions"],
+                            max_oracles=self.spec.values["evolution"]["max_oracles"],
+                            max_oracle_errors=self.spec.values["evolution"].get(
+                                "max_oracle_errors", 5
+                            ),
+                        )
+                        result = engine.run(base.public_inputs, base, initial)
             except (OSError, ValueError, RuntimeError) as exc:
                 stage = (
                     "open" if not session_opened else "close" if result is not None else "active"
@@ -601,6 +647,11 @@ class Workflow:
                     external=False,
                 )
                 raise
+            finally:
+                try:
+                    self._close_model(verifier_model)
+                finally:
+                    self._close_model(generator)
         for bundle in result.versions:
             seal_bundle(root / "versions" / bundle.bundle_hash, bundle)
 

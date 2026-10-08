@@ -145,6 +145,37 @@ def test_null_request_limit_does_not_reintroduce_a_post_budget(factory):
         assert gateway.statistics["requests"] == len(calls) == 101
 
 
+def test_codex_plan_gateway_never_resolves_or_sends_credentials(factory, monkeypatch):
+    def no_credential(*args, **kwargs):
+        raise AssertionError("subscription transport must not resolve an API key")
+
+    monkeypatch.setattr(provider_module, "bearer_token_source", no_credential)
+    observed = []
+
+    def opener(req, **kwargs):
+        observed.append(req)
+        assert req.get_header("Authorization") is None
+        return Response(json.dumps(completed()).encode())
+
+    provider = {
+        "model": "gpt-6.1-sol",
+        "transport": "codex-plan",
+        "api_base": "http://127.0.0.1/codex-plan",
+    }
+    with factory(opener, provider=provider) as gateway:
+        assert request(gateway, payload())[0] == 200
+        assert gateway.statistics["underlying_http_posts"] == "NOT_OBSERVABLE"
+        assert len(observed) == 1
+
+
+def test_codex_plan_gateway_requires_in_process_opener(factory):
+    with (
+        pytest.raises(ValueError, match="in-process"),
+        factory(None, provider={"transport": "codex-plan"}),
+    ):
+        pass
+
+
 def test_expired_learning_deadline_does_not_dispatch_a_native_codex_post(factory, monkeypatch):
     calls = []
     monkeypatch.setattr(provider_module.time, "time", lambda: 10.0)

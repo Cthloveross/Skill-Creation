@@ -1,0 +1,175 @@
+...................................................................FF... [ 43%]
+............F........................................................... [ 86%]
+.......................                                                  [100%]
+=================================== FAILURES ===================================
+_ test_identity_binds_source_prompt_meta_manifest_lock_but_excludes_keys_and_runs _
+
+tmp_path = PosixPath('/tmp/pytest-of-tc442/pytest-935/test_identity_binds_source_pro0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x72192cddc1d0>
+
+    def test_identity_binds_source_prompt_meta_manifest_lock_but_excludes_keys_and_runs(
+        tmp_path, monkeypatch
+    ):
+        root = tmp_path / "resources"
+        for directory in ("prompts", "injections", "runtime", "configs"):
+            shutil.copytree(EXPERIMENT_ROOT / directory, root / directory)
+        source = root / "src/tau_skill_evolution/acquisition.py"
+        source.parent.mkdir(parents=True)
+        source.write_text("# source v1\n")
+        meta = root / "data/upstream/coevo-skills/meta_skills/skill-creator/SKILL.md"
+        meta.parent.mkdir(parents=True)
+        meta.write_text("Authoring rules\n")
+        public = root / "data/skillsbench/public-manifest.json"
+        public.parent.mkdir(parents=True)
+        public.write_text('{"documents":[]}\n')
+        (public.parent / "source-tree.json").write_text("{}\n")
+        monkeypatch.setattr(spec_module, "EXPERIMENT_ROOT", root)
+        spec = load_spec(_copy_config(tmp_path, source=SKILLSBENCH_CONFIG))
+>       initial = spec.identity
+                  ^^^^^^^^^^^^^
+
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_spec.py:403: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/spec.py:191: in identity
+    manifest = json.loads((author / "VERIFIER_SOURCE.json").read_text())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1029: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/pytest-of-tc442/pytest-935/test_identity_binds_source_pro0/resources/src/tau_skill_evolution/author/VERIFIER_SOURCE.json')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-tc442/pytest-935/test_identity_binds_source_pro0/resources/src/tau_skill_evolution/author/VERIFIER_SOURCE.json'
+
+/usr/lib/python3.12/pathlib.py:1015: FileNotFoundError
+______ test_v5_identity_binds_byte_preserved_verifier_sources_and_prompts ______
+
+tmp_path = PosixPath('/tmp/pytest-of-tc442/pytest-935/test_v5_identity_binds_byte_pr0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x72192c933d10>
+
+    def test_v5_identity_binds_byte_preserved_verifier_sources_and_prompts(tmp_path, monkeypatch):
+        root = tmp_path / "resources"
+        root.mkdir()
+        author = root / "src/tau_skill_evolution/author"
+        prompt = (
+            author / "coevo/libs/terminus_agent/evolution/prompt_templates/independent_verifier.txt"
+        )
+        prompt.parent.mkdir(parents=True)
+        prompt.write_bytes(b"Author prompt\r\n")
+        manifest = author / "VERIFIER_SOURCE.json"
+        manifest.write_text('{"commit":"pinned"}\n')
+        monkeypatch.setattr(spec_module, "EXPERIMENT_ROOT", root)
+        spec = load_spec(_copy_config(tmp_path, source=SKILLSBENCH_CONFIG))
+>       initial = spec.identity
+                  ^^^^^^^^^^^^^
+
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_spec.py:436: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ExperimentSpec(path=PosixPath('/tmp/pytest-of-tc442/pytest-935/test_v5_identity_binds_byte_pr0/snapshot.yaml'), values...output_tokens': None}, 'max_input_tokens': 114688, 'assistant_completion_budget': None}}, 'experiment': 'skillsbench'})
+
+    @property
+    def identity(self) -> dict[str, Any]:
+        runtime_locks = sorted((self.root / "runtime").glob("*lock*"))
+        runtime_locks = [
+            path
+            for path in runtime_locks
+            if path.name.startswith("skillsbench") == (self.experiment == "skillsbench")
+        ]
+        files = [
+            *sorted((self.root / "src" / "tau_skill_evolution").rglob("*.py")),
+            *sorted((self.root / "prompts").glob("*.*")),
+            *sorted((self.root / "meta").rglob("*.md")),
+            *runtime_locks,
+        ]
+        if self.experiment == "tau":
+            files.extend(sorted((self.root / "injections").glob("*.txt")))
+            files.extend(
+                self.root / "configs" / name
+                for name in (
+                    "upstream-manifest.json",
+                    "upstream-checkout-manifest.json",
+                )
+            )
+        else:
+            files.extend(
+                self.root / "data" / "skillsbench" / name
+                for name in ("source-tree.json", "source-manifest.json", "corpus/manifest.json")
+            )
+            if self.namespace in {
+                "skillsbench.skill-evolution.v4",
+                "skillsbench.skill-evolution.v6",
+            }:
+                files.extend(
+                    self.root / "src/tau_skill_evolution/author" / name
+                    for name in ("SOURCE.json", "LICENSE")
+                )
+            if self.namespace == "skillsbench.skill-evolution.v6":
+                author = self.root / "src/tau_skill_evolution/author"
+                files.append(author / "VERIFIER_SOURCE.json")
+                manifest = json.loads((author / "VERIFIER_SOURCE.json").read_text())
+>               files.extend(author / relative for relative in sorted(manifest["files"]))
+                                                                      ^^^^^^^^^^^^^^^^^
+E               KeyError: 'files'
+
+experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/spec.py:192: KeyError
+____ test_preparing_another_domain_runtime_does_not_invalidate_a_checkpoint ____
+
+tmp_path = PosixPath('/tmp/pytest-of-tc442/pytest-935/test_preparing_another_domain_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x72192ce14080>
+
+    def test_preparing_another_domain_runtime_does_not_invalidate_a_checkpoint(tmp_path, monkeypatch):
+        tau, sb = load_spec(), load_spec(SKILLSBENCH_CONFIG)
+        monkeypatch.setattr(spec_module, "EXPERIMENT_ROOT", tmp_path)
+        runtime = tmp_path / "runtime"
+        runtime.mkdir()
+        tau_lock = runtime / "image-lock.json"
+        sb_lock = runtime / "skillsbench-bubblewrap-lock.json"
+        tau_lock.write_text('{"revision": 1}')
+        sb_lock.write_text('{"revision": 1}')
+>       tau_identity, sb_identity = tau.identity, sb.identity
+                                                  ^^^^^^^^^^^
+
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_spec.py:585: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/spec.py:191: in identity
+    manifest = json.loads((author / "VERIFIER_SOURCE.json").read_text())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1029: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/pytest-of-tc442/pytest-935/test_preparing_another_domain_0/src/tau_skill_evolution/author/VERIFIER_SOURCE.json')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-tc442/pytest-935/test_preparing_another_domain_0/src/tau_skill_evolution/author/VERIFIER_SOURCE.json'
+
+/usr/lib/python3.12/pathlib.py:1015: FileNotFoundError
+=========================== short test summary info ============================
+FAILED experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_spec.py::test_identity_binds_source_prompt_meta_manifest_lock_but_excludes_keys_and_runs
+FAILED experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_spec.py::test_v5_identity_binds_byte_preserved_verifier_sources_and_prompts
+FAILED experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_spec.py::test_preparing_another_domain_runtime_does_not_invalidate_a_checkpoint
+3 failed, 164 passed in 172.90s (0:02:52)

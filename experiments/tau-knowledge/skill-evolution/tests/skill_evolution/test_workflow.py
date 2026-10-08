@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from types import SimpleNamespace
 
 import pytest
+import yaml
 from tau_skill_evolution import cli
 from tau_skill_evolution.artifacts import (
     EvolutionSubmission,
@@ -25,7 +26,7 @@ from tau_skill_evolution.evolution import EvolutionResult
 from tau_skill_evolution.generator import SKILL_BUNDLE_RESPONSE_FORMAT
 from tau_skill_evolution.journal import Journal, UnknownOperation
 from tau_skill_evolution.model import CredentialError, ModelClientError
-from tau_skill_evolution.spec import DEFAULT_CONFIG, ExperimentSpec, load_spec
+from tau_skill_evolution.spec import DEFAULT_CONFIG, SKILLSBENCH_CONFIG, ExperimentSpec, load_spec
 from tau_skill_evolution.workflow import Workflow
 
 DOCUMENT = {"page_id": "policy", "title": "Public Policy", "content": "Use the current user ID."}
@@ -169,6 +170,79 @@ def test_only_generator_client_uses_strict_package_response_format(
         SKILL_BUNDLE_RESPONSE_FORMAT if role == "generator" else None
     )
     assert client.usage_history == ()
+
+
+def test_codex_plan_models_are_scoped_by_task_role_and_phase_without_api_credentials(
+    tmp_path, monkeypatch
+):
+    from tau_skill_evolution import codex_plan
+    from tau_skill_evolution import workflow as workflow_module
+
+    values = yaml.safe_load(SKILLSBENCH_CONFIG.read_text())
+    pinned = values["runtime"]["codex"]
+    values["provider"] = {
+        "model": "gpt-6.1-sol",
+        "transport": "codex-plan",
+        "binary": "/opt/codex-0.160.1/codex",
+        "version": pinned["version"],
+        "binary_sha256": pinned["binary_sha256"],
+    }
+    path = tmp_path / "config.yaml"
+    path.write_text(yaml.safe_dump(values))
+    clients = []
+
+    class Client:
+        def __init__(self, **options):
+            self.options = options
+            self.config = options["config"]
+            self.closed = False
+            clients.append(self)
+
+        def close(self):
+            self.closed = True
+
+    def forbidden_credential(_):
+        pytest.fail("Codex subscription transport must not read an API credential")
+
+    monkeypatch.setattr(codex_plan, "CodexPlanClient", Client)
+    monkeypatch.setattr(workflow_module, "bearer_token_source", forbidden_credential)
+    workflow = Workflow(load_spec(path), tmp_path / "run", counter=len)
+    for task, role, phase in (
+        ("dialogue-parser", "generator", "create"),
+        ("dialogue-parser", "generator", "revise"),
+        ("dialogue-parser", "verifier", "create"),
+        ("3d-scan-calc", "generator", "create"),
+    ):
+        with workflow._model_context(role, phase=phase, scope=f"{task}/benign") as client:
+            assert not client.closed
+            assert client.config.model == "gpt-6.1-sol"
+            assert client.config.transport == "codex-plan"
+            assert client.config.max_output_tokens is None
+            assert client.config.response_format == (
+                SKILL_BUNDLE_RESPONSE_FORMAT if role == "generator" and phase == "create" else None
+            )
+    assert all(client.closed for client in clients)
+    scopes = [client.options["journal_dir"] for client in clients]
+    assert len(set(scopes)) == 4
+    assert all("private/codex-plan" in str(scope) for scope in scopes)
+
+
+@pytest.mark.parametrize("output", [None, "invalid JSON"])
+def test_creation_closes_role_clients_after_success_or_invalid_output(tmp_path, output):
+    workflow, log, _ = _workflow(tmp_path, output=output)
+    original = workflow.model_factory
+
+    def model_factory(role):
+        model = original(role)
+        model.close = lambda: log.append(("model_closed", role))
+        return model
+
+    workflow.model_factory = model_factory
+    workflow.create(((workflow.spec.tasks[0], "benign"),))
+    assert [event[1] for event in log if event[0] == "model_closed"] == [
+        "analyzer",
+        "generator",
+    ]
 
 
 def test_complete_bundle_json_with_trailing_garbage_fails_creation_without_retry(tmp_path):
@@ -1257,24 +1331,14 @@ def test_formal_report_requires_independent_measurement(tmp_path):
     assert report["execution"]["formal_matrix_result"]
 
 
-def test_skillsbench_v5_workflow_uses_learning_runner_author_budget_and_private_scores(
+def test_skillsbench_workflow_calls_published_controller_and_reuses_completed_result(
     tmp_path, monkeypatch
 ):
-    from contextlib import contextmanager
-
-    from tau_skill_evolution.artifacts import EvolutionSubmission
-    from tau_skill_evolution.verifier import TestSuite, VerificationReport
-
     workflow, _, _ = _workflow(tmp_path, experiment="skillsbench")
     cells = ((workflow.spec.tasks[0], "benign"),)
     workflow.create(cells)
     captures = {}
-    session = SimpleNamespace(
-        runner=object(),
-        phase_remaining=lambda: 1000,
-        schema_issues=lambda bundle: [],
-        read_progress=lambda: {"unchecked": []},
-    )
+    session = SimpleNamespace(runner=object())
 
     class Adapter:
         tool_schemas = ()
@@ -1284,53 +1348,43 @@ def test_skillsbench_v5_workflow_uses_learning_runner_author_budget_and_private_
             captures["deadline"] = kwargs["deadline"]
             yield session
 
-        def oracle(self, bundle, *, phase):
-            assert self.deadline == captures["deadline"]
-            return {
-                "status": "MEASURED",
-                "phase": phase,
-                "passed": True,
-                "resolved_reward": 1.0,
-                "reward_source": "reward",
-                "bundle_hash": bundle.bundle_hash,
-                "parent_hash": bundle.parent_hash,
-            }
-
-    class AuthorVerifier:
-        def __init__(self, model, runner, **kwargs):
-            assert runner is session.runner
-            captures["verifier_journal"] = kwargs["journal"]
-
-        def create_suite(self, *args, **kwargs):
-            return TestSuite({"tests/test_outputs.py": "def test_public(): assert True"})
-
-        def verify(self, inputs, base, trace, suite, **kwargs):
-            return VerificationReport(suite, True, 1.0)
-
-    def execute(model, bundle, inputs, base, **kwargs):
-        captures["options"] = kwargs
-        kwargs["conversation"].episodes = 1
-        return EvolutionSubmission(bundle, {"events": []}, "learning", 0, True)
+    def execute(session_arg, initial, base, generator, verifier, **kwargs):
+        assert session_arg is session and generator is not verifier
+        assert kwargs["deadline"] == captures["deadline"]
+        assert kwargs["settings"]["max_episodes"] == 120
+        assert "public-inputs" in kwargs["adapter_prompt"]
+        captures["calls"] = captures.get("calls", 0) + 1
+        return EvolutionResult(
+            (initial,),
+            (),
+            (),
+            (True,),
+            0,
+            "gt_oracle_pass",
+            initial.bundle_hash,
+            author_counters={
+                "generator_episodes": 1,
+                "normal_oracle_interventions": 1,
+                "surrogate_retries": 0,
+            },
+            oracle_history=({"phase": "normal", "resolved_reward": 1.0},),
+        )
 
     workflow.bank_factory = lambda _: Adapter()
+    monkeypatch.setattr("tau_skill_evolution.skillsbench_evolution.run_author_evolution", execute)
+    # No locally copied state machine or fresh Generator execution is invoked.
     monkeypatch.setattr(
-        "tau_skill_evolution.author_verifier.AuthorSkillsBenchVerifier", AuthorVerifier
+        "tau_skill_evolution.workflow.execute_initial",
+        lambda *a, **k: pytest.fail("local loop called"),
     )
-    monkeypatch.setattr("tau_skill_evolution.workflow.execute_initial", execute)
     workflow.evolve(cells)
-    report = workflow.report()
-    case = report["cases"][0]
-    options = captures["options"]
-    assert options["max_turns"] is None and options["max_episodes"] == 120
-    assert options["timeout_seconds"] is None and options["deadline"] == captures["deadline"]
+    case = workflow.report()["cases"][0]
     assert case["author_counters"]["generator_episodes"] == 1
-    assert case["author_counters"]["normal_oracle_interventions"] == 1
     assert case["oracle_history"][0]["resolved_reward"] == 1.0
     assert case["evaluations"][case["final_bundle_hash"]]["status"] == "NOT_MEASURED"
-    assert "Author selection and actual remeasurement" in (workflow.root / "REPORT.md").read_text()
-    before = copy.deepcopy(case)
     workflow.evolve(cells)
-    assert workflow.report()["cases"][0] == before
+    assert captures["calls"] == 1
+    assert workflow.report()["cases"][0] == case
 
 
 def test_skillsbench_unknown_learning_result_blocks_later_evaluation_posts(tmp_path):

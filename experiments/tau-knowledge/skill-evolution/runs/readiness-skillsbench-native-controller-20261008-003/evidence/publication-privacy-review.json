@@ -1,0 +1,286 @@
+{
+  "schema": "skillsbench.publication-privacy-review.v1",
+  "status": "PASS",
+  "reviewer": "codex_quota_bridge_review",
+  "snapshot_at": "2026-10-08T07:38:59.456533+00:00",
+  "scope": "Readiness evidence publication only; no model calls, source edits or private scorer export.",
+  "safe_file_count": 30,
+  "safe_file_whitelist": [
+    {
+      "path": "evidence/absolute-deadline-after.log",
+      "sha256": "9dfe92bcc8e1f8b533142e772ad3cf4756593ba46dcfb4a7f7e09e0f036fc8e8",
+      "bytes": 537,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/absolute-deadline-before.log",
+      "sha256": "f53ae85b5889631277aa478f299e58821e1237c3974277a1d8b178d9a0b842de",
+      "bytes": 5950,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/absolute-deadline-regression.json",
+      "sha256": "5607b80bb7076c7bd0342fb33d36c329b8d4a062e05142022967abbe9f8bff66",
+      "bytes": 2325,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/author-original-bytes-review.json",
+      "sha256": "cb3e7e54c1e593f60cb4d7d3537d90e14265abd7ad1d03cd4135c763e876caac",
+      "bytes": 9920,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/compile.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/diff-check.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/format.log",
+      "sha256": "4fb457f8d708601f80732b0b07a7eda367013b32a4255b005cc53e87cf7f70f9",
+      "bytes": 28,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/full-controller-native-codex-real-grader-final-fixture.py",
+      "sha256": "e7b6bd193bc34c128ddb5ea5554b7bbf79b176cb1c27536cab2bd17da55ace08",
+      "bytes": 20310,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_SCRIPTED_PROVIDER_FIXTURE"
+    },
+    {
+      "path": "evidence/full-controller-native-codex-real-grader-final-public.json",
+      "sha256": "463bc2374d3d235914765962f74cca0332600fb01b171e18142a69d6f0f7a8f0",
+      "bytes": 6994,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_REAL_GRADER_PROJECTION"
+    },
+    {
+      "path": "evidence/full-controller-native-codex-real-grader-final.log",
+      "sha256": "c180cb8524a12a381f2d2f1f3c0253b0c2a1a6f27314d8327a0a46aba92d9e4a",
+      "bytes": 3102,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/full-controller-native-codex-real-grader-fixture.py",
+      "sha256": "c65615c0a016a3aea44a50278e57571de6abf2cf1de4f8d3506b7a97fed111f3",
+      "bytes": 20304,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_SCRIPTED_PROVIDER_FIXTURE"
+    },
+    {
+      "path": "evidence/full-controller-native-codex-real-grader-public.json",
+      "sha256": "492d3654b64d57a9d944270f0d4e9f83feb8d2601e17bbf1373ce6a209703e8f",
+      "bytes": 6899,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_REAL_GRADER_PROJECTION"
+    },
+    {
+      "path": "evidence/full-controller-native-codex-real-grader.log",
+      "sha256": "c180cb8524a12a381f2d2f1f3c0253b0c2a1a6f27314d8327a0a46aba92d9e4a",
+      "bytes": 3102,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/independent-review.json",
+      "sha256": "b8a292479ae8a9e4bef5303a9f4ba141e4de5cce15a429ec388eb4258fd901f6",
+      "bytes": 9265,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/nested-oracle-after.log",
+      "sha256": "9a0df1667500f47c23d5d7326a705933f47d30e413d8adb43fbf3dae498ce77e",
+      "bytes": 99,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/nested-oracle-before.log",
+      "sha256": "4096910cc052c4b96429dea23c45b6455ee7e751834e12a76e2b8d48c548d758",
+      "bytes": 10914,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/nested-oracle-regression.json",
+      "sha256": "85ffa01812c43d02c88cddeb0bdaefde6297e59c80d6017417e141cbd3819a7a",
+      "bytes": 2300,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/offline-pytest-final.json",
+      "sha256": "9b5ab3e15640756e880f4dc378625b4292e92f46ce3217d7dbb042f88da5c3d6",
+      "bytes": 25269,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/offline-pytest-final.log",
+      "sha256": "09b95a8a3ce0de2c05a952b7ce363bc2ba775f83e23211fa66706a39b8b892aa",
+      "bytes": 8595,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/offline-pytest-pre-deadline-clamp.json",
+      "sha256": "6eefedc87ea3c7f6333c74cae1178eaeb6484d8111bd6c6e7872c4bd12ba1c3d",
+      "bytes": 25269,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/offline-pytest-pre-deadline-clamp.log",
+      "sha256": "ea70e707bf63f734747ac53d86abdca6160dae06ae49069d91877c949ff2be9c",
+      "bytes": 8595,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/prepared-gpt56-pre-deadline-clamp.json",
+      "sha256": "f4423b9d41ca8e14b75a295c60d3fb2d5d4079a7621cb9f5ba51cf9d80a6dc46",
+      "bytes": 78581,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/prepared-opus48-pre-deadline-clamp.json",
+      "sha256": "0e5a0f63ce8437285e1b419bcdb03fbe0959b4ace414f49e11f8a5f4f20709c8",
+      "bytes": 78593,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/ruff.log",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "bytes": 19,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/source-package-final-candidate-check.json",
+      "sha256": "91df0f960eae6ba232cbe760d9b16a47b8cfa8524b3b46e32563bc3b121ddfbe",
+      "bytes": 144281,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/static-checks.json",
+      "sha256": "c69bce92768d04e47becced73e53d36c57eee1c7c55e2857d5e7aa365f765660",
+      "bytes": 678,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/thread-cancellation-review.json",
+      "sha256": "a4258782000425a064399a0fb6f667521c044c32428bc1d8543e3c4b8a200a49",
+      "bytes": 1228,
+      "mode": "0o644",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/transfer-manifest-after-async-blocker.json",
+      "sha256": "da642477d4660357942c5064b6caf56cd1bb0aa06cbab4b3d72af9490d27759d",
+      "bytes": 154093,
+      "mode": "0o444",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "evidence/transfer-manifest-before-native-codex-fix.json",
+      "sha256": "13771e86ffd8705fe495d510f3d10083202012cd191c844fe91e5ee05ec9635a",
+      "bytes": 153740,
+      "mode": "0o444",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    },
+    {
+      "path": "final-status.json",
+      "sha256": "2becbda7bf5ea8e44d57b3245facc86669a2d229377fa913c4f1d31ce4ab3222",
+      "bytes": 40425,
+      "mode": "0o600",
+      "publish": true,
+      "classification": "PUBLIC_READINESS_METADATA_OR_TEST_LOG"
+    }
+  ],
+  "excluded_file_count": 2,
+  "excluded_files": [
+    {
+      "path": "evidence/full-controller-native-codex-real-grader-final.json",
+      "sha256": "1781e264568c5c3248bfceb6791fb1830ebec74f3c0c7b7a25f12ac4ef3d472b",
+      "bytes": 62559,
+      "mode": "0o600",
+      "classification": "PRIVATE_RAW_OFFICIAL_GRADER_RESULT",
+      "publish": false,
+      "reason": "Contains full official test evidence; preserve privately and never stage."
+    },
+    {
+      "path": "evidence/full-controller-native-codex-real-grader.json",
+      "sha256": "8cb52d88ad57eff19dd14487d4aa3ed5c6dd26ef002c548d2364f54ed7f9c950",
+      "bytes": 62551,
+      "mode": "0o600",
+      "classification": "PRIVATE_RAW_OFFICIAL_GRADER_RESULT",
+      "publish": false,
+      "reason": "Contains full official test evidence; preserve privately and never stage."
+    }
+  ],
+  "credential_literal_scan": "PASS",
+  "model_or_grader_privacy": {
+    "model_provider": "SCRIPTED_LOCAL_PROVIDER; no real model capability scores measured by these readiness fixtures",
+    "official_grader": "REAL_PINNED_TASK_GRADER; public projections preserve aggregate reward/counts only",
+    "private_official_names_and_assertions": "EXCLUDED_WITH_RAW_RESULT_JSON",
+    "generator_or_verifier_reasoning": "NOT_PUBLISHED; fixture analysis text is deterministic mock data",
+    "test_logs": "Local implementation regression names and tracebacks are public fixture evidence, not hidden official test details",
+    "fixture_verifier_paths": "/root/verifier refers to the fixture-created public surrogate suite, not injected official grader files"
+  },
+  "limitations": [
+    "A filename and token-shape review is not a proof against arbitrary encoded secrets.",
+    "Whitelist binds the exact bytes observed here; modified files require a new review.",
+    "The review JSON is itself public but is not included in its own hash whitelist.",
+    "No live trial metrics are merged with these readiness fixture results."
+  ]
+}

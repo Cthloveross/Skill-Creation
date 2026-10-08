@@ -1,0 +1,22 @@
+{
+  "inflight_gt_state": "UNKNOWN",
+  "subsequent_dispatches_blocked": 2,
+  "outer_state": "UNKNOWN",
+  "late_gt_state": "COMPLETED",
+  "actual_oracle_callbacks": 1,
+  "model_calls_after_cancel": 0,
+  "status": "PASS",
+  "scope": "Local real asyncio cancellation and Journal fixture; no model, container or official score measured",
+  "source_sha256": "fd75cc7479b6efa99ae54f1f4a5a87596e4ac967d7712128fba43c3cbe941f25",
+  "conclusion": "Cancelling to_thread await does not cancel an already dispatched worker. Shared fatal state stops future roles. If worker returns, its original GT response can complete, while incomplete outer author operation remains UNKNOWN and cannot be replayed.",
+  "deadline_static_review": {
+    "absolute_deadline_reaches": [
+      "adapter.deadline",
+      "runner.execution_deadline",
+      "model gateway and CodexPlanClient request_deadline",
+      "Runner terminal/grader phase_remaining"
+    ],
+    "remaining_gap": "Codex CLI process timeout currently lacks a final phase_remaining clamp; root is preparing the narrow fix after this frozen proof.",
+    "cleanup_overhead": "Bounded cleanup may occur after the model/task deadline and is disclosed, not treated as extra learning budget."
+  }
+}

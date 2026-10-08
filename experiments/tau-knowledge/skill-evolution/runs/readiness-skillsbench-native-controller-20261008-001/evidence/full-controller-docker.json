@@ -1,0 +1,371 @@
+{
+  "paid_model_calls": 0,
+  "real_model_scores": "NOT_MEASURED",
+  "official_reward": "MOCK_ONLY",
+  "fixture_base_hash": "5779df0d9c1a7ba50de2cd56abe0801b7cbea40c8b377078b0b9d55154a091a1",
+  "fixture_initial_hash": "63368d11a6477a2763cd456ba4d0e7d793812bddc914218d6e016bb389b0490d",
+  "fixture_source_hash": "768e2eedeedbf1ab55b6f11f8c576eb3056992fdfa2f239d59de79896931ff61",
+  "fixture_adaptation": "Explicit offline frontmatter name adaptation; not a model result.",
+  "source_commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+  "root": "/tmp/coevo-full-controller-docker-proof-006",
+  "source_hashes_at_start": {
+    "author_controller.py": "87de67e6c4bea3c5d11a934f3f2ad74749ddab48a6cd05e0e1cfa0a2de40743f",
+    "author_verifier.py": "b52b8d94d03ce7f233f9dc31af7693f472b0064ab9be85ba3831cd78b934b7dd",
+    "skillsbench_evolution.py": "e25dc7018d4266a39b9bb7cfaf0f784ace562914eb41ad94b56f26ccbe79835f",
+    "author/VERIFIER_SOURCE.json": "e3691bb73754019016621a9b618b8f5e38d3829a590dd3030379717a916f4932"
+  },
+  "fixture_script_sha256": "c22225bb1cd1b08e41d5f6c1efd5ea322a29db31d23cb6e1747dc62a778a8f87",
+  "status": "PASS",
+  "result": {
+    "versions": [
+      {
+        "protocol": "tau.skill-evolution.v1",
+        "files": {
+          "SKILL.md": "---\nname: evo-current\ndescription: Parse bracket-delimited dialogue scripts into validated JSON directed graphs and Graphviz DOT, exporting an importable solution.py with parse_script(text).\n---\n\n# Dialogue graph parser\n\n## Contract and prerequisites\nUse this skill for text scripts whose records start with standalone `[Identifier]` headers, whose dialogue uses `Speaker: text`, whose numbered choices use `1. text` (or `1) text`), and whose transitions end with `-> Target`. The task requires `/app/solution.py`, `/app/dialogue.json`, and `/app/dialogue.dot`. The exported module must expose `parse_script(text: str)` returning `{\"nodes\": [...], \"edges\": [...]}`. Use Python 3.12 and its standard library; Graphviz installation and network access are unnecessary.\n\nBefore execution, read the supplied task and inspect `/app/script.txt`, including its beginning, representative choice/line records, terminal records, and final record. Discover the actual headers, encoding, transitions, terminal conventions, and any instructions concerning field semantics. Do not substitute the illustrative dialogue or any background identifiers for runtime data. The supported default external terminal is `End`, because the public task explicitly names it. Other external sentinels require evidence in the supplied script or task and an explicit `terminals` configuration. A declared terminal remains an ordinary declared node. Do not exempt arbitrary dangling targets merely because they occur near EOF.\n\n## Field semantics\nOne declared record produces one node, in source order. Node keys are exactly `id`, `text`, `speaker`, and `type`, all strings; type is `line` or `choice`. For dialogue, `speaker` is the prefix before the first colon, and `text` excludes that prefix and transition syntax. Unattributed narration has an empty speaker. Multiple dialogue lines with one speaker are joined with newlines; multiple distinct speakers in a single record are unsupported rather than silently conflated.\n\nA numbered record is a choice node. Its text retains option numbering, tags, punctuation, and line order but excludes transition suffixes. Optional prompt lines retain their content after a speaker prefix. Each option transition becomes an edge whose text is the option label without numbering; tags such as `[Lie]` remain. Non-choice transitions have an empty edge text. All edges have exactly the string fields `from`, `to`, and `text`. Repeated references, cycles, and repeated edges are preserved. Duplicate record declarations are errors. Source wording is retained apart from structural syntax and leading/trailing whitespace.\n\n`parse_script` parses syntax without demanding a closed graph, so partial snippets can be imported and parsed. The executable entrypoint additionally validates the complete graph: every source exists, every target is declared or an explicitly allowed external sentinel, and every declared node is reachable from the first declared node. It never adds an undeclared sentinel to the JSON node array.\n\n## Execute and export\nThe packaged script reads one JSON object from stdin and emits one JSON object on stdout. Its input fields are:\n- `input_path`: source script, default `/app/script.txt`.\n- `encoding`: explicit Python text encoding, default `utf-8-sig` (also accepts ordinary UTF-8). Determine another encoding from runtime evidence if needed; never decode with replacement.\n- `solution_path`: exported executable module, default `/app/solution.py`.\n- `json_path`: graph artifact, default `/app/dialogue.json`.\n- `dot_path`: visualization artifact, default `/app/dialogue.dot`.\n- `terminals`: array of explicitly permitted external terminal IDs, default `[\"End\"]`.\n\nRun in the supplied writable task runtime, using the actual installed skill directory:\n\n```sh\nprintf '%s\\n' '{\"input_path\":\"/app/script.txt\"}' | python /app/environment/skills/current/scripts/solution.py\n# Verify that the exported entrypoint itself regenerates and validates the artifacts:\nprintf '%s\\n' '{\"input_path\":\"/app/script.txt\"}' | python /app/solution.py\n```\n\nRepeat the same nondefault configuration on the exported invocation when applicable. Successful stdout reports `ok: true`, artifact paths, node/edge counts, and verified reachability. Failure emits `ok: false` with a diagnostic and exits nonzero; do not treat stale artifacts as a successful result.\n\nThe script validates before writing, exports itself as the standalone `solution.py`, writes UTF-8 JSON and DOT atomically per file, rereads both, and checks JSON equality against a fresh parse plus exact DOT regeneration. DOT uses quoted, escaped identifiers and labels; external sentinels appear only as edge targets (Graphviz may display an implicit endpoint). No PNG is required.\n\n## Verification and unsupported input\nInspect the generated outputs against representative source records: first and final node, a speaker line, numbered labels with tags, a repeated destination, and terminal transitions. Check that choice labels have not become invented nodes and that speaker/text separation has not lost punctuation. Import `/app/solution.py` and call `parse_script` on public snippets when useful; only the complete input must satisfy reachability and target validation. The exported entrypoint must regenerate both outputs, not merely import successfully.\n\nMissing files, decoding failures, unrecognized pre-header text, duplicate IDs, malformed/empty transitions, ambiguous mixed speakers, unresolved targets, and unreachable records are explicit failures. Inspect the source and error before proceeding. Do not prune unreachable records, invent destinations, change source text, or relax validation to conceal an error. If the real format exceeds these conventions, implement a reusable, evidence-based extension in the executor's solution when task permissions allow it, preserving this schema and all validation obligations; otherwise report the unsupported syntax and do not claim completion. Creation does not execute or test this package.\n",
+          "scripts/solution.py": "\"\"\"Standalone dialogue parser, validator, DOT writer, and JSON-stdin entrypoint.\"\"\"\nimport json\nimport os\nfrom pathlib import Path\nimport re\nimport sys\nimport tempfile\n\nHEADER = re.compile(r'^\\s*\\[([^\\[\\]\\r\\n]+)\\]\\s*$')\nOPTION = re.compile(r'^\\s*(\\d+[.)])\\s+(.+)$')\n\n\ndef _transition(line, lineno):\n    if '->' not in line:\n        return line.strip(), None\n    body, _, target = line.rpartition('->')\n    body, target = body.strip(), target.strip()\n    if target.startswith('[') and target.endswith(']'):\n        target = target[1:-1].strip()\n    if not body or not target or any(c in target for c in '[]\\r\\n'):\n        raise ValueError(f'Line {lineno}: malformed transition')\n    return body, target\n\n\ndef _speech(body):\n    if ':' in body:\n        speaker, text = body.split(':', 1)\n        if speaker.strip():\n            return speaker.strip(), text.strip()\n    return '', body\n\n\ndef _parse_record(identifier, lines):\n    has_options = any(OPTION.match(line) for _, line in lines if line.strip())\n    fragments = []\n    speakers = []\n    edges = []\n    for lineno, raw in lines:\n        if not raw.strip():\n            fragments.append('')\n            continue\n        body, target = _transition(raw, lineno)\n        option = OPTION.match(body)\n        if option:\n            label = option.group(2).strip()\n            fragments.append(body)\n            if target is not None:\n                edges.append({'from': identifier, 'to': target, 'text': label})\n        else:\n            speaker, speech = _speech(body)\n            if speaker and speaker not in speakers:\n                speakers.append(speaker)\n            fragments.append(speech)\n            if target is not None:\n                edges.append({'from': identifier, 'to': target, 'text': ''})\n    if len(speakers) > 1:\n        raise ValueError(f'Record {identifier!r}: multiple speakers in one node are unsupported')\n    while fragments and not fragments[0]:\n        fragments.pop(0)\n    while fragments and not fragments[-1]:\n        fragments.pop()\n    node = {'id': identifier, 'text': '\\n'.join(fragments),\n            'speaker': speakers[0] if speakers else '',\n            'type': 'choice' if has_options else 'line'}\n    return node, edges\n\n\ndef parse_script(text: str):\n    \"\"\"Parse declared records; graph-wide validity is checked separately.\"\"\"\n    if not isinstance(text, str):\n        raise TypeError('parse_script expects a string')\n    text = text.removeprefix('\\ufeff')\n    records = []\n    seen = set()\n    current = None\n    body = []\n    for lineno, line in enumerate(text.splitlines(), 1):\n        match = HEADER.fullmatch(line)\n        if match:\n            if current is not None:\n                records.append((current, body))\n            current = match.group(1).strip()\n            if not current or current in seen:\n                raise ValueError(f'Line {lineno}: empty or duplicate record ID {current!r}')\n            seen.add(current)\n            body = []\n        elif current is None:\n            if line.strip():\n                raise ValueError(f'Line {lineno}: text before the first record header')\n        else:\n            body.append((lineno, line))\n    if current is not None:\n        records.append((current, body))\n    nodes, edges = [], []\n    for identifier, lines in records:\n        node, outgoing = _parse_record(identifier, lines)\n        nodes.append(node)\n        edges.extend(outgoing)\n    return {'nodes': nodes, 'edges': edges}\n\n\ndef validate_graph(graph, terminals=('End',)):\n    if not isinstance(graph, dict) or set(graph) != {'nodes', 'edges'}:\n        raise ValueError('Graph must have exactly nodes and edges')\n    if not isinstance(graph['nodes'], list) or not isinstance(graph['edges'], list):\n        raise ValueError('nodes and edges must be arrays')\n    if not isinstance(terminals, (list, tuple)) or any(\n            not isinstance(t, str) or not t for t in terminals):\n        raise ValueError('terminals must be an array of nonempty strings')\n    if not graph['nodes']:\n        raise ValueError('No declared nodes')\n    ids = set()\n    for node in graph['nodes']:\n        if not isinstance(node, dict) or set(node) != {'id', 'text', 'speaker', 'type'}:\n            raise ValueError('Invalid node fields')\n        if any(not isinstance(v, str) for v in node.values()):\n            raise ValueError('Node fields must be strings')\n        if not node['id'] or node['id'] in ids or node['type'] not in ('line', 'choice'):\n            raise ValueError(f'Invalid node ID or type: {node!r}')\n        ids.add(node['id'])\n    allowed = set(terminals)\n    adjacency = {identifier: [] for identifier in ids}\n    missing = []\n    for edge in graph['edges']:\n        if not isinstance(edge, dict) or set(edge) != {'from', 'to', 'text'}:\n            raise ValueError('Invalid edge fields')\n        if any(not isinstance(v, str) for v in edge.values()):\n            raise ValueError('Edge fields must be strings')\n        if edge['from'] not in ids:\n            raise ValueError(f'Undeclared edge source: {edge[\"from\"]!r}')\n        if edge['to'] not in ids and edge['to'] not in allowed:\n            missing.append((edge['from'], edge['to']))\n        elif edge['to'] in ids:\n            adjacency[edge['from']].append(edge['to'])\n    if missing:\n        raise ValueError(f'Unresolved nonterminal targets: {missing!r}')\n    reached = set()\n    pending = [graph['nodes'][0]['id']]\n    while pending:\n        identifier = pending.pop()\n        if identifier in reached:\n            continue\n        reached.add(identifier)\n        pending.extend(adjacency[identifier])\n    unreachable = [node['id'] for node in graph['nodes'] if node['id'] not in reached]\n    if unreachable:\n        raise ValueError(f'Unreachable declared nodes: {unreachable!r}')\n    return {'reachable_nodes': len(reached), 'external_targets': sorted(\n        {edge['to'] for edge in graph['edges'] if edge['to'] not in ids})}\n\n\ndef _quote(value):\n    # JSON double-quoted strings escape quotes, backslashes and newlines for DOT.\n    return json.dumps(value, ensure_ascii=False)\n\n\ndef to_dot(graph):\n    lines = ['digraph dialogue {', '  rankdir=LR;']\n    for node in graph['nodes']:\n        parts = [node['id']]\n        if node['speaker']:\n            parts.append(node['speaker'] + ': ' + node['text'])\n        elif node['text']:\n            parts.append(node['text'])\n        shape = 'diamond' if node['type'] == 'choice' else 'box'\n        lines.append('  ' + _quote(node['id']) + ' [shape=' + shape +\n                     ', label=' + _quote('\\n'.join(parts)) + '];')\n    for edge in graph['edges']:\n        lines.append('  ' + _quote(edge['from']) + ' -> ' + _quote(edge['to']) +\n                     ' [label=' + _quote(edge['text']) + '];')\n    lines.append('}')\n    return '\\n'.join(lines) + '\\n'\n\n\ndef _atomic_write(path, content):\n    path.parent.mkdir(parents=True, exist_ok=True)\n    name = None\n    try:\n        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', newline='\\n',\n                                         dir=path.parent, delete=False) as stream:\n            name = stream.name\n            stream.write(content)\n        os.replace(name, path)\n    finally:\n        if name and os.path.exists(name):\n            os.unlink(name)\n\n\ndef execute(config):\n    if not isinstance(config, dict):\n        raise ValueError('Input must be a JSON object')\n    supported = {'input_path', 'encoding', 'solution_path', 'json_path', 'dot_path', 'terminals'}\n    unknown = set(config) - supported\n    if unknown:\n        raise ValueError(f'Unknown configuration keys: {sorted(unknown)!r}')\n    defaults = {'input_path': '/app/script.txt', 'solution_path': '/app/solution.py',\n                'json_path': '/app/dialogue.json', 'dot_path': '/app/dialogue.dot'}\n    paths = {}\n    for key, default in defaults.items():\n        value = config.get(key, default)\n        if not isinstance(value, str) or not value:\n            raise ValueError(f'{key} must be a nonempty path string')\n        paths[key] = Path(value).resolve()\n    if len(set(paths.values())) != len(paths):\n        raise ValueError('Input, solution, JSON and DOT paths must be distinct')\n    own_path = Path(__file__).resolve()\n    if any(paths[key] == own_path for key in ('input_path', 'json_path', 'dot_path')):\n        raise ValueError('Input and graph artifacts must not overwrite the running module')\n    encoding = config.get('encoding', 'utf-8-sig')\n    if not isinstance(encoding, str) or not encoding:\n        raise ValueError('encoding must be a nonempty string')\n    terminals = config.get('terminals', ['End'])\n    text = paths['input_path'].read_bytes().decode(encoding)\n    graph = parse_script(text)\n    checks = validate_graph(graph, terminals)\n    dot = to_dot(graph)\n    serialized = json.dumps(graph, ensure_ascii=False, indent=2) + '\\n'\n    if paths['solution_path'] != own_path:\n        _atomic_write(paths['solution_path'], own_path.read_text(encoding='utf-8'))\n    _atomic_write(paths['json_path'], serialized)\n    _atomic_write(paths['dot_path'], dot)\n    written = json.loads(paths['json_path'].read_text(encoding='utf-8'))\n    validate_graph(written, terminals)\n    fresh_text = paths['input_path'].read_bytes().decode(encoding)\n    if written != parse_script(fresh_text):\n        raise ValueError('Written JSON differs from a fresh source parse')\n    if paths['dot_path'].read_text(encoding='utf-8') != to_dot(written):\n        raise ValueError('Written DOT differs from graph rendering')\n    if not paths['solution_path'].is_file():\n        raise ValueError('Exported solution.py is missing')\n    return {'ok': True, 'nodes': len(written['nodes']), 'edges': len(written['edges']),\n            'validation': checks,\n            'artifacts': {key: str(paths[key]) for key in\n                          ('solution_path', 'json_path', 'dot_path')}}\n\n\ndef main():\n    try:\n        result = execute(json.load(sys.stdin))\n    except Exception as exc:\n        print(json.dumps({'ok': False, 'error': type(exc).__name__ + ': ' + str(exc)},\n                         ensure_ascii=False))\n        return 1\n    print(json.dumps(result, ensure_ascii=False))\n    return 0\n\n\nif __name__ == '__main__':\n    raise SystemExit(main())\n"
+        },
+        "manifest": [
+          {
+            "path": "SKILL.md",
+            "content_hash": "59e4d5d3e8ba28007c0c4ae140660859d5b2b6373680626af94418e3c5c0c564",
+            "bytes": 6020
+          },
+          {
+            "path": "scripts/solution.py",
+            "content_hash": "393909e6843871110d72bffaa23f0952d1049e23be681f0d8398e8f23ba2f8f5",
+            "bytes": 10212
+          }
+        ],
+        "bundle_hash": "63368d11a6477a2763cd456ba4d0e7d793812bddc914218d6e016bb389b0490d",
+        "parent_hash": null
+      },
+      {
+        "protocol": "tau.skill-evolution.v1",
+        "files": {
+          "SKILL.md": "---\nname: evo-current\ndescription: Parse bracket-delimited dialogue scripts into validated JSON directed graphs and Graphviz DOT, exporting an importable solution.py with parse_script(text).\n---\n\n# Dialogue graph parser\n\n## Contract and prerequisites\nUse this skill for text scripts whose records start with standalone `[Identifier]` headers, whose dialogue uses `Speaker: text`, whose numbered choices use `1. text` (or `1) text`), and whose transitions end with `-> Target`. The task requires `/app/solution.py`, `/app/dialogue.json`, and `/app/dialogue.dot`. The exported module must expose `parse_script(text: str)` returning `{\"nodes\": [...], \"edges\": [...]}`. Use Python 3.12 and its standard library; Graphviz installation and network access are unnecessary.\n\nBefore execution, read the supplied task and inspect `/app/script.txt`, including its beginning, representative choice/line records, terminal records, and final record. Discover the actual headers, encoding, transitions, terminal conventions, and any instructions concerning field semantics. Do not substitute the illustrative dialogue or any background identifiers for runtime data. The supported default external terminal is `End`, because the public task explicitly names it. Other external sentinels require evidence in the supplied script or task and an explicit `terminals` configuration. A declared terminal remains an ordinary declared node. Do not exempt arbitrary dangling targets merely because they occur near EOF.\n\n## Field semantics\nOne declared record produces one node, in source order. Node keys are exactly `id`, `text`, `speaker`, and `type`, all strings; type is `line` or `choice`. For dialogue, `speaker` is the prefix before the first colon, and `text` excludes that prefix and transition syntax. Unattributed narration has an empty speaker. Multiple dialogue lines with one speaker are joined with newlines; multiple distinct speakers in a single record are unsupported rather than silently conflated.\n\nA numbered record is a choice node. Its text retains option numbering, tags, punctuation, and line order but excludes transition suffixes. Optional prompt lines retain their content after a speaker prefix. Each option transition becomes an edge whose text is the option label without numbering; tags such as `[Lie]` remain. Non-choice transitions have an empty edge text. All edges have exactly the string fields `from`, `to`, and `text`. Repeated references, cycles, and repeated edges are preserved. Duplicate record declarations are errors. Source wording is retained apart from structural syntax and leading/trailing whitespace.\n\n`parse_script` parses syntax without demanding a closed graph, so partial snippets can be imported and parsed. The executable entrypoint additionally validates the complete graph: every source exists, every target is declared or an explicitly allowed external sentinel, and every declared node is reachable from the first declared node. It never adds an undeclared sentinel to the JSON node array.\n\n## Execute and export\nThe packaged script reads one JSON object from stdin and emits one JSON object on stdout. Its input fields are:\n- `input_path`: source script, default `/app/script.txt`.\n- `encoding`: explicit Python text encoding, default `utf-8-sig` (also accepts ordinary UTF-8). Determine another encoding from runtime evidence if needed; never decode with replacement.\n- `solution_path`: exported executable module, default `/app/solution.py`.\n- `json_path`: graph artifact, default `/app/dialogue.json`.\n- `dot_path`: visualization artifact, default `/app/dialogue.dot`.\n- `terminals`: array of explicitly permitted external terminal IDs, default `[\"End\"]`.\n\nRun in the supplied writable task runtime, using the actual installed skill directory:\n\n```sh\nprintf '%s\\n' '{\"input_path\":\"/app/script.txt\"}' | python /app/environment/skills/current/scripts/solution.py\n# Verify that the exported entrypoint itself regenerates and validates the artifacts:\nprintf '%s\\n' '{\"input_path\":\"/app/script.txt\"}' | python /app/solution.py\n```\n\nRepeat the same nondefault configuration on the exported invocation when applicable. Successful stdout reports `ok: true`, artifact paths, node/edge counts, and verified reachability. Failure emits `ok: false` with a diagnostic and exits nonzero; do not treat stale artifacts as a successful result.\n\nThe script validates before writing, exports itself as the standalone `solution.py`, writes UTF-8 JSON and DOT atomically per file, rereads both, and checks JSON equality against a fresh parse plus exact DOT regeneration. DOT uses quoted, escaped identifiers and labels; external sentinels appear only as edge targets (Graphviz may display an implicit endpoint). No PNG is required.\n\n## Verification and unsupported input\nInspect the generated outputs against representative source records: first and final node, a speaker line, numbered labels with tags, a repeated destination, and terminal transitions. Check that choice labels have not become invented nodes and that speaker/text separation has not lost punctuation. Import `/app/solution.py` and call `parse_script` on public snippets when useful; only the complete input must satisfy reachability and target validation. The exported entrypoint must regenerate both outputs, not merely import successfully.\n\nMissing files, decoding failures, unrecognized pre-header text, duplicate IDs, malformed/empty transitions, ambiguous mixed speakers, unresolved targets, and unreachable records are explicit failures. Inspect the source and error before proceeding. Do not prune unreachable records, invent destinations, change source text, or relax validation to conceal an error. If the real format exceeds these conventions, implement a reusable, evidence-based extension in the executor's solution when task permissions allow it, preserving this schema and all validation obligations; otherwise report the unsupported syntax and do not claim completion. Creation does not execute or test this package.\n\nOffline transport fixture: reusable package changed.\n",
+          "scripts/solution.py": "\"\"\"Standalone dialogue parser, validator, DOT writer, and JSON-stdin entrypoint.\"\"\"\nimport json\nimport os\nfrom pathlib import Path\nimport re\nimport sys\nimport tempfile\n\nHEADER = re.compile(r'^\\s*\\[([^\\[\\]\\r\\n]+)\\]\\s*$')\nOPTION = re.compile(r'^\\s*(\\d+[.)])\\s+(.+)$')\n\n\ndef _transition(line, lineno):\n    if '->' not in line:\n        return line.strip(), None\n    body, _, target = line.rpartition('->')\n    body, target = body.strip(), target.strip()\n    if target.startswith('[') and target.endswith(']'):\n        target = target[1:-1].strip()\n    if not body or not target or any(c in target for c in '[]\\r\\n'):\n        raise ValueError(f'Line {lineno}: malformed transition')\n    return body, target\n\n\ndef _speech(body):\n    if ':' in body:\n        speaker, text = body.split(':', 1)\n        if speaker.strip():\n            return speaker.strip(), text.strip()\n    return '', body\n\n\ndef _parse_record(identifier, lines):\n    has_options = any(OPTION.match(line) for _, line in lines if line.strip())\n    fragments = []\n    speakers = []\n    edges = []\n    for lineno, raw in lines:\n        if not raw.strip():\n            fragments.append('')\n            continue\n        body, target = _transition(raw, lineno)\n        option = OPTION.match(body)\n        if option:\n            label = option.group(2).strip()\n            fragments.append(body)\n            if target is not None:\n                edges.append({'from': identifier, 'to': target, 'text': label})\n        else:\n            speaker, speech = _speech(body)\n            if speaker and speaker not in speakers:\n                speakers.append(speaker)\n            fragments.append(speech)\n            if target is not None:\n                edges.append({'from': identifier, 'to': target, 'text': ''})\n    if len(speakers) > 1:\n        raise ValueError(f'Record {identifier!r}: multiple speakers in one node are unsupported')\n    while fragments and not fragments[0]:\n        fragments.pop(0)\n    while fragments and not fragments[-1]:\n        fragments.pop()\n    node = {'id': identifier, 'text': '\\n'.join(fragments),\n            'speaker': speakers[0] if speakers else '',\n            'type': 'choice' if has_options else 'line'}\n    return node, edges\n\n\ndef parse_script(text: str):\n    \"\"\"Parse declared records; graph-wide validity is checked separately.\"\"\"\n    if not isinstance(text, str):\n        raise TypeError('parse_script expects a string')\n    text = text.removeprefix('\\ufeff')\n    records = []\n    seen = set()\n    current = None\n    body = []\n    for lineno, line in enumerate(text.splitlines(), 1):\n        match = HEADER.fullmatch(line)\n        if match:\n            if current is not None:\n                records.append((current, body))\n            current = match.group(1).strip()\n            if not current or current in seen:\n                raise ValueError(f'Line {lineno}: empty or duplicate record ID {current!r}')\n            seen.add(current)\n            body = []\n        elif current is None:\n            if line.strip():\n                raise ValueError(f'Line {lineno}: text before the first record header')\n        else:\n            body.append((lineno, line))\n    if current is not None:\n        records.append((current, body))\n    nodes, edges = [], []\n    for identifier, lines in records:\n        node, outgoing = _parse_record(identifier, lines)\n        nodes.append(node)\n        edges.extend(outgoing)\n    return {'nodes': nodes, 'edges': edges}\n\n\ndef validate_graph(graph, terminals=('End',)):\n    if not isinstance(graph, dict) or set(graph) != {'nodes', 'edges'}:\n        raise ValueError('Graph must have exactly nodes and edges')\n    if not isinstance(graph['nodes'], list) or not isinstance(graph['edges'], list):\n        raise ValueError('nodes and edges must be arrays')\n    if not isinstance(terminals, (list, tuple)) or any(\n            not isinstance(t, str) or not t for t in terminals):\n        raise ValueError('terminals must be an array of nonempty strings')\n    if not graph['nodes']:\n        raise ValueError('No declared nodes')\n    ids = set()\n    for node in graph['nodes']:\n        if not isinstance(node, dict) or set(node) != {'id', 'text', 'speaker', 'type'}:\n            raise ValueError('Invalid node fields')\n        if any(not isinstance(v, str) for v in node.values()):\n            raise ValueError('Node fields must be strings')\n        if not node['id'] or node['id'] in ids or node['type'] not in ('line', 'choice'):\n            raise ValueError(f'Invalid node ID or type: {node!r}')\n        ids.add(node['id'])\n    allowed = set(terminals)\n    adjacency = {identifier: [] for identifier in ids}\n    missing = []\n    for edge in graph['edges']:\n        if not isinstance(edge, dict) or set(edge) != {'from', 'to', 'text'}:\n            raise ValueError('Invalid edge fields')\n        if any(not isinstance(v, str) for v in edge.values()):\n            raise ValueError('Edge fields must be strings')\n        if edge['from'] not in ids:\n            raise ValueError(f'Undeclared edge source: {edge[\"from\"]!r}')\n        if edge['to'] not in ids and edge['to'] not in allowed:\n            missing.append((edge['from'], edge['to']))\n        elif edge['to'] in ids:\n            adjacency[edge['from']].append(edge['to'])\n    if missing:\n        raise ValueError(f'Unresolved nonterminal targets: {missing!r}')\n    reached = set()\n    pending = [graph['nodes'][0]['id']]\n    while pending:\n        identifier = pending.pop()\n        if identifier in reached:\n            continue\n        reached.add(identifier)\n        pending.extend(adjacency[identifier])\n    unreachable = [node['id'] for node in graph['nodes'] if node['id'] not in reached]\n    if unreachable:\n        raise ValueError(f'Unreachable declared nodes: {unreachable!r}')\n    return {'reachable_nodes': len(reached), 'external_targets': sorted(\n        {edge['to'] for edge in graph['edges'] if edge['to'] not in ids})}\n\n\ndef _quote(value):\n    # JSON double-quoted strings escape quotes, backslashes and newlines for DOT.\n    return json.dumps(value, ensure_ascii=False)\n\n\ndef to_dot(graph):\n    lines = ['digraph dialogue {', '  rankdir=LR;']\n    for node in graph['nodes']:\n        parts = [node['id']]\n        if node['speaker']:\n            parts.append(node['speaker'] + ': ' + node['text'])\n        elif node['text']:\n            parts.append(node['text'])\n        shape = 'diamond' if node['type'] == 'choice' else 'box'\n        lines.append('  ' + _quote(node['id']) + ' [shape=' + shape +\n                     ', label=' + _quote('\\n'.join(parts)) + '];')\n    for edge in graph['edges']:\n        lines.append('  ' + _quote(edge['from']) + ' -> ' + _quote(edge['to']) +\n                     ' [label=' + _quote(edge['text']) + '];')\n    lines.append('}')\n    return '\\n'.join(lines) + '\\n'\n\n\ndef _atomic_write(path, content):\n    path.parent.mkdir(parents=True, exist_ok=True)\n    name = None\n    try:\n        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', newline='\\n',\n                                         dir=path.parent, delete=False) as stream:\n            name = stream.name\n            stream.write(content)\n        os.replace(name, path)\n    finally:\n        if name and os.path.exists(name):\n            os.unlink(name)\n\n\ndef execute(config):\n    if not isinstance(config, dict):\n        raise ValueError('Input must be a JSON object')\n    supported = {'input_path', 'encoding', 'solution_path', 'json_path', 'dot_path', 'terminals'}\n    unknown = set(config) - supported\n    if unknown:\n        raise ValueError(f'Unknown configuration keys: {sorted(unknown)!r}')\n    defaults = {'input_path': '/app/script.txt', 'solution_path': '/app/solution.py',\n                'json_path': '/app/dialogue.json', 'dot_path': '/app/dialogue.dot'}\n    paths = {}\n    for key, default in defaults.items():\n        value = config.get(key, default)\n        if not isinstance(value, str) or not value:\n            raise ValueError(f'{key} must be a nonempty path string')\n        paths[key] = Path(value).resolve()\n    if len(set(paths.values())) != len(paths):\n        raise ValueError('Input, solution, JSON and DOT paths must be distinct')\n    own_path = Path(__file__).resolve()\n    if any(paths[key] == own_path for key in ('input_path', 'json_path', 'dot_path')):\n        raise ValueError('Input and graph artifacts must not overwrite the running module')\n    encoding = config.get('encoding', 'utf-8-sig')\n    if not isinstance(encoding, str) or not encoding:\n        raise ValueError('encoding must be a nonempty string')\n    terminals = config.get('terminals', ['End'])\n    text = paths['input_path'].read_bytes().decode(encoding)\n    graph = parse_script(text)\n    checks = validate_graph(graph, terminals)\n    dot = to_dot(graph)\n    serialized = json.dumps(graph, ensure_ascii=False, indent=2) + '\\n'\n    if paths['solution_path'] != own_path:\n        _atomic_write(paths['solution_path'], own_path.read_text(encoding='utf-8'))\n    _atomic_write(paths['json_path'], serialized)\n    _atomic_write(paths['dot_path'], dot)\n    written = json.loads(paths['json_path'].read_text(encoding='utf-8'))\n    validate_graph(written, terminals)\n    fresh_text = paths['input_path'].read_bytes().decode(encoding)\n    if written != parse_script(fresh_text):\n        raise ValueError('Written JSON differs from a fresh source parse')\n    if paths['dot_path'].read_text(encoding='utf-8') != to_dot(written):\n        raise ValueError('Written DOT differs from graph rendering')\n    if not paths['solution_path'].is_file():\n        raise ValueError('Exported solution.py is missing')\n    return {'ok': True, 'nodes': len(written['nodes']), 'edges': len(written['edges']),\n            'validation': checks,\n            'artifacts': {key: str(paths[key]) for key in\n                          ('solution_path', 'json_path', 'dot_path')}}\n\n\ndef main():\n    try:\n        result = execute(json.load(sys.stdin))\n    except Exception as exc:\n        print(json.dumps({'ok': False, 'error': type(exc).__name__ + ': ' + str(exc)},\n                         ensure_ascii=False))\n        return 1\n    print(json.dumps(result, ensure_ascii=False))\n    return 0\n\n\nif __name__ == '__main__':\n    raise SystemExit(main())\n"
+        },
+        "manifest": [
+          {
+            "path": "SKILL.md",
+            "content_hash": "622a68d8c568cfc2b82e42a6476f70cac2f238c31b102aeaccf931e59404df57",
+            "bytes": 6074
+          },
+          {
+            "path": "scripts/solution.py",
+            "content_hash": "393909e6843871110d72bffaa23f0952d1049e23be681f0d8398e8f23ba2f8f5",
+            "bytes": 10212
+          }
+        ],
+        "bundle_hash": "be049ad3169f78f9738733ac94da2aa9716665f25fc59d9ff2c03155845ca9d9",
+        "parent_hash": "63368d11a6477a2763cd456ba4d0e7d793812bddc914218d6e016bb389b0490d"
+      }
+    ],
+    "attempts": [
+      {
+        "attempt": 1,
+        "parent_hash": "63368d11a6477a2763cd456ba4d0e7d793812bddc914218d6e016bb389b0490d",
+        "bundle_hash": "be049ad3169f78f9738733ac94da2aa9716665f25fc59d9ff2c03155845ca9d9",
+        "status": "changed"
+      }
+    ],
+    "verifications": [
+      {
+        "bundle_hash": "63368d11a6477a2763cd456ba4d0e7d793812bddc914218d6e016bb389b0490d",
+        "test_version": 1,
+        "test_hash": "c5b85ccceac52b7b78b8277da5536f0efc8f85194a4f0987c8335a768adc073e",
+        "passed": false,
+        "pass_rate": 0.5,
+        "failure": null,
+        "program_error": false,
+        "diagnosis": "The public fixture output is incomplete. Complete its public requirement without changing the locked checks.",
+        "recommendations": [],
+        "results": [
+          {
+            "name": "test_persistent_installed_dependency_and_service",
+            "full_name": "../root/verifier/test_outputs.py::test_persistent_installed_dependency_and_service",
+            "status": "PASSED",
+            "message": ""
+          },
+          {
+            "name": "test_public_outputs",
+            "full_name": "../root/verifier/test_outputs.py::test_public_outputs",
+            "status": "FAILED",
+            "message": "assert 'bad' == 'good'"
+          }
+        ],
+        "author_result": {
+          "estimated_success": false,
+          "pass_rate": 0.5,
+          "failure_reasons": [
+            "test_public_outputs: assert 'bad' == 'good'"
+          ],
+          "reasoning": "pytest: 1/2 passed (pass_rate=0.50, return_code=1)",
+          "source": "script",
+          "total_tests": 2,
+          "tests_passed": 1,
+          "tests_failed": 1,
+          "test_details": [
+            {
+              "name": "test_persistent_installed_dependency_and_service",
+              "full_name": "../root/verifier/test_outputs.py::test_persistent_installed_dependency_and_service",
+              "status": "PASSED",
+              "message": ""
+            },
+            {
+              "name": "test_public_outputs",
+              "full_name": "../root/verifier/test_outputs.py::test_public_outputs",
+              "status": "FAILED",
+              "message": "assert 'bad' == 'good'"
+            }
+          ],
+          "raw_output": "============================= test session starts ==============================\nplatform linux -- Python 3.12.8, pytest-9.1.1, pluggy-1.6.0 -- /usr/local/bin/python3\ncachedir: .pytest_cache\nrootdir: /root/verifier\ncollecting ... collected 2 items\n\n../root/verifier/test_outputs.py::test_persistent_installed_dependency_and_service PASSED [ 50%]\n../root/verifier/test_outputs.py::test_public_outputs FAILED             [100%]\n\n=================================== FAILURES ===================================\n_____________________________ test_public_outputs ______________________________\n/root/verifier/test_outputs.py:11: in test_public_outputs\n    assert Path('/root/native-fixture-output.txt').read_text() == 'good'\nE   AssertionError: assert 'bad' == 'good'\nE     \nE     - good\nE     + bad\n=========================== short test summary info ============================\nFAILED ../root/verifier/test_outputs.py::test_public_outputs - AssertionError...\n========================= 1 failed, 1 passed in 0.05s ==========================\n",
+          "error": null,
+          "diagnosis": "The public fixture output is incomplete. Complete its public requirement without changing the locked checks."
+        }
+      },
+      {
+        "bundle_hash": "be049ad3169f78f9738733ac94da2aa9716665f25fc59d9ff2c03155845ca9d9",
+        "test_version": 1,
+        "test_hash": "c5b85ccceac52b7b78b8277da5536f0efc8f85194a4f0987c8335a768adc073e",
+        "passed": true,
+        "pass_rate": 1.0,
+        "failure": null,
+        "program_error": false,
+        "diagnosis": "",
+        "recommendations": [],
+        "results": [
+          {
+            "name": "test_persistent_installed_dependency_and_service",
+            "full_name": "../root/verifier/test_outputs.py::test_persistent_installed_dependency_and_service",
+            "status": "PASSED",
+            "message": ""
+          },
+          {
+            "name": "test_public_outputs",
+            "full_name": "../root/verifier/test_outputs.py::test_public_outputs",
+            "status": "PASSED",
+            "message": ""
+          }
+        ],
+        "author_result": {
+          "estimated_success": true,
+          "pass_rate": 1.0,
+          "failure_reasons": [],
+          "reasoning": "pytest: 2/2 passed (pass_rate=1.00, return_code=0)",
+          "source": "script",
+          "total_tests": 2,
+          "tests_passed": 2,
+          "tests_failed": 0,
+          "test_details": [
+            {
+              "name": "test_persistent_installed_dependency_and_service",
+              "full_name": "../root/verifier/test_outputs.py::test_persistent_installed_dependency_and_service",
+              "status": "PASSED",
+              "message": ""
+            },
+            {
+              "name": "test_public_outputs",
+              "full_name": "../root/verifier/test_outputs.py::test_public_outputs",
+              "status": "PASSED",
+              "message": ""
+            }
+          ],
+          "raw_output": "============================= test session starts ==============================\nplatform linux -- Python 3.12.8, pytest-9.1.1, pluggy-1.6.0 -- /usr/local/bin/python3\ncachedir: .pytest_cache\nrootdir: /root/verifier\ncollecting ... collected 2 items\n\n../root/verifier/test_outputs.py::test_persistent_installed_dependency_and_service PASSED [ 50%]\n../root/verifier/test_outputs.py::test_public_outputs PASSED             [100%]\n\n============================== 2 passed in 0.04s ===============================\n",
+          "error": null,
+          "diagnosis": ""
+        }
+      }
+    ],
+    "oracle_results": [
+      true
+    ],
+    "oracle_calls": 1,
+    "revision_attempts": 1,
+    "stop_reason": "gt_oracle_pass",
+    "final_bundle_hash": "be049ad3169f78f9738733ac94da2aa9716665f25fc59d9ff2c03155845ca9d9",
+    "oracle_failures": [],
+    "oracle_attempts": 1,
+    "submissions": [
+      {
+        "bundle_hash": "63368d11a6477a2763cd456ba4d0e7d793812bddc914218d6e016bb389b0490d",
+        "parent_hash": null,
+        "execution_id": "2ffddfeddfc0413683d53dc645e6b71b",
+        "operation_cursor": 27,
+        "initial": true,
+        "submission_kind": "model_task_complete",
+        "submission_hash": "8d7efec85af17df55157a4a41fa4c2f6373b0df22ba8f652a2b8d22eb84b0e07",
+        "trace_hash": "5878ef1d1b0126165bc323fe407fc2253c470eaf9febf7ce1c947a77ab5ab616"
+      },
+      {
+        "bundle_hash": "be049ad3169f78f9738733ac94da2aa9716665f25fc59d9ff2c03155845ca9d9",
+        "parent_hash": "63368d11a6477a2763cd456ba4d0e7d793812bddc914218d6e016bb389b0490d",
+        "execution_id": "2ffddfeddfc0413683d53dc645e6b71b",
+        "operation_cursor": 59,
+        "initial": false,
+        "submission_kind": "model_task_complete",
+        "submission_hash": "820622b08d4e1b7baeeef242223f5f9d8a545a08fd3dc8fea5c3b5a97d733ac5",
+        "trace_hash": "6d035674a2c357a69f5beecb8a63f57dd3739369240446147a1f469b7d2b18e3"
+      }
+    ],
+    "stage_failures": [],
+    "submitted_learning_executions": 1,
+    "final_bundle_ref": {
+      "bundle_hash": "be049ad3169f78f9738733ac94da2aa9716665f25fc59d9ff2c03155845ca9d9",
+      "parent_hash": "63368d11a6477a2763cd456ba4d0e7d793812bddc914218d6e016bb389b0490d"
+    },
+    "author_counters": {
+      "surrogate_retries": 1,
+      "normal_oracle_interventions": 1,
+      "generator_responses": 2,
+      "generator_episodes": 2,
+      "generator_terminal_calls": 5,
+      "verifier_terminal_calls": 2
+    },
+    "oracle_history": [
+      {
+        "operation_id": "author-gt-0",
+        "status": "MEASURED",
+        "passed": true,
+        "canonical_reward": 1.0,
+        "resolved_reward": 1.0,
+        "reward": 1.0,
+        "tests_passed": 1,
+        "total_tests": 1,
+        "test_details": [
+          {
+            "name": "MOCK_ONLY",
+            "status": "passed"
+          }
+        ],
+        "bundle_hash": "be049ad3169f78f9738733ac94da2aa9716665f25fc59d9ff2c03155845ca9d9",
+        "parent_hash": "63368d11a6477a2763cd456ba4d0e7d793812bddc914218d6e016bb389b0490d",
+        "phase": "normal",
+        "execution_id": "tau-sb-ea34c4e2d86a4b89ba0c041a9ef30a34",
+        "score_source": "local_mock_not_official_grader"
+      }
+    ],
+    "best_oracle_ref": {
+      "operation_id": "author-gt-0",
+      "status": "MEASURED",
+      "passed": true,
+      "canonical_reward": 1.0,
+      "resolved_reward": 1.0,
+      "reward": 1.0,
+      "tests_passed": 1,
+      "total_tests": 1,
+      "test_details": [
+        {
+          "name": "MOCK_ONLY",
+          "status": "passed"
+        }
+      ],
+      "bundle_hash": "be049ad3169f78f9738733ac94da2aa9716665f25fc59d9ff2c03155845ca9d9",
+      "parent_hash": "63368d11a6477a2763cd456ba4d0e7d793812bddc914218d6e016bb389b0490d",
+      "phase": "normal",
+      "execution_id": "tau-sb-ea34c4e2d86a4b89ba0c041a9ef30a34",
+      "score_source": "local_mock_not_official_grader"
+    },
+    "author_terminal_result": {
+      "passed": true,
+      "tests_passed": 1,
+      "total_tests": 1,
+      "pass_rate": 1.0,
+      "reward": 1.0,
+      "resolved_reward": 1.0
+    },
+    "selection_reason": "published_controller",
+    "interventions": [
+      {
+        "intervention_number": 1,
+        "timestamp": "2026-10-08T05:25:01.381314+00:00",
+        "trigger": "surrogate_fail",
+        "surrogate_result": {
+          "tests_passed": 1,
+          "tests_failed": 1,
+          "total_tests": 2,
+          "pass_rate": 0.5
+        },
+        "surrogate_tests_locked": true,
+        "gt_result": null,
+        "skills_snapshot": [
+          "evo-current",
+          "skill-creator"
+        ]
+      },
+      {
+        "intervention_number": 2,
+        "timestamp": "2026-10-08T05:25:08.533220+00:00",
+        "trigger": "surrogate_pass",
+        "surrogate_result": {
+          "tests_passed": 2,
+          "tests_failed": 0,
+          "total_tests": 2,
+          "pass_rate": 1.0
+        },
+        "surrogate_tests_locked": true,
+        "gt_result": {
+          "source": "gt_oracle",
+          "passed": true,
+          "pass_rate": 1.0,
+          "reward": 1.0,
+          "tests_passed": 1,
+          "total_tests": 1,
+          "test_details": [],
+          "failure_reasons": null,
+          "raw_output": ""
+        },
+        "skills_snapshot": [
+          "evo-current",
+          "skill-creator"
+        ]
+      }
+    ],
+    "best_snapshot": {
+      "author_record": {
+        "passed": true,
+        "reward": 1.0,
+        "pass_rate": 1.0,
+        "tests_passed": 1,
+        "total_tests": 1,
+        "intervention_number": 1
+      },
+      "record_available": true,
+      "rollback": null
+    }
+  },
+  "core_calls": {
+    "run": 1,
+    "_check_episode_exit": 2,
+    "_read_progress_checklist": 1
+  },
+  "raw_controller_sha256": "f87e0a7fd760688a71269672a512db2c1e2a53aa71cd5d9b9908a61d794390f1",
+  "local_model_requests": {
+    "generator": 2,
+    "verifier": 2
+  },
+  "learning_container_id": "tau-sb-182de0b721ca475ab9ff4496dcacde43",
+  "fresh_container_ids": [
+    "tau-sb-ea34c4e2d86a4b89ba0c041a9ef30a34"
+  ],
+  "shared_dependency_and_service": true,
+  "fixed_suite_reused": true,
+  "task_container_not_cleaned_by_verifier": true,
+  "generator_verifier_separate_clients": true,
+  "fresh_environment_separation": true,
+  "container_residuals": [],
+  "cleanup_verified": true,
+  "source_hashes_at_finish": {
+    "author_controller.py": "87de67e6c4bea3c5d11a934f3f2ad74749ddab48a6cd05e0e1cfa0a2de40743f",
+    "author_verifier.py": "b52b8d94d03ce7f233f9dc31af7693f472b0064ab9be85ba3831cd78b934b7dd",
+    "skillsbench_evolution.py": "e25dc7018d4266a39b9bb7cfaf0f784ace562914eb41ad94b56f26ccbe79835f",
+    "author/VERIFIER_SOURCE.json": "e3691bb73754019016621a9b618b8f5e38d3829a590dd3030379717a916f4932"
+  },
+  "source_unchanged_during_execution": true,
+  "limitations": [
+    "Scripted localhost model and mocked official reward; no real model capability or official task success was measured.",
+    "The GT callback used a separate fresh real Docker Runner and sealed package, with mocked score.",
+    "This fixture uses maximum 8 episodes and 420 seconds; budget exhaustion requires separate offline cases.",
+    "Original published run and _check_episode_exit methods executed, with local task transport/evidence I/O hooks."
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "schema": "skillsbench.final-publication-independent-review.v1",
+  "reviewed_at": "2026-10-08T11:15:04.960370+00:00",
+  "reviewer": "codex_quota_bridge_review",
+  "status": "PASS_WITH_EXPLICIT_SCOPE",
+  "scope": "Immutable public source archive, exact current-file byte consistency, public metadata closure and planned exact-path publication. This is not a declaration that final Git staging or push has completed.",
+  "source_identity_hash": "0f39848aa3282daad7c3a4d0243fa03a378cb7896c00096552f39defcb4046f5",
+  "artifact": {
+    "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/skillsbench-v6-final-20261008-004-source.tar.gz",
+    "sha256": "18cdab20296263ad853cae94c693537c19c824612d0787e74add044701dce486",
+    "bytes": 2580300,
+    "regular_unique_members_verified": 580,
+    "all_member_bytes_equal_current_worktree": true,
+    "descriptor_member_hashes_verified": 580,
+    "declared_original_author_resource_hashes_verified": 44
+  },
+  "bindings": {
+    "transfer_manifest_sha256": "64d8500d4465fec99d3a46b7d2066df8a71dfd0d21752554c28160485c18a380",
+    "source_package_verification_sha256": "42bedb5126296c4085e754ad62c038072156ff6eb8c7adb4135594e4d07f2983",
+    "final_trial_public_summary_sha256": "e7ac342903f78ab1d8a298197e1f2b90da55af57c31710dfcc71b1b943586a97",
+    "final_trial_independent_data_review_sha256": "4a6ce523a0450fd74c15a1633b9a394dfe2ef14ddf40199887ee3ada60257c02",
+    "final_trial_manifest_sha256": "699f49535d6d2dcfc2e34a7d524613d78bc0e3def0d1c9ceb883f0c81a2364ab",
+    "public_path_plan_sha256": "a309cb38da027cd6fc81f1b33f53372e0399c7012279266d52f929e7dfce72d9"
+  },
+  "public_data_review": {
+    "status": "PASS_WITH_EXPLICIT_LIMITATIONS",
+    "passed_checks": 97,
+    "all_checks_passed": true,
+    "NoSkill_task_pass": {
+      "passed": 1,
+      "total": 5
+    },
+    "S0_task_pass": {
+      "passed": 2,
+      "total": 5
+    },
+    "Final_task_pass": {
+      "passed": 4,
+      "total": 5
+    },
+    "full_population_denominator": 85,
+    "full_population_scores": "NOT_MEASURED",
+    "actual_model": "gpt-6.1-sol",
+    "transport": "codex-plan",
+    "old_trials_merged": false,
+    "DAPT_selection_post_final_and_independent_measurements_kept_distinct": true,
+    "DAPT_unselected_S2_not_reselected_from_independent_results": true,
+    "known_NOT_SENT_local_context_budget_stop_preserved": true
+  },
+  "public_boundaries": {
+    "source_archive_contains_credentials": false,
+    "source_archive_contains_private_model_or_grader_logs": false,
+    "source_archive_contains_official_test_or_solution_contents": false,
+    "raw_provider_reasoning_commands_diagnosis_or_official_assertions_in_reviewed_public_projection": false,
+    "user_analysis_or_internal_AUDIT_documents_in_current_index_or_archive": false,
+    "original_author_audit_background_docs_python_source_is_permitted": true,
+    "credential_shape_findings": [],
+    "forbidden_current_index_path_findings": [],
+    "official_scores_are_actual_fresh_measurements_not_mock_performance": true,
+    "scripted_provider_evidence_clearly_labeled_MODEL_SCRIPTED": true
+  },
+  "metadata_closure": {
+    "historical_descriptor_refs": [
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-native-controller-20261008-002/evidence/transfer-manifest-before-package-fix.json",
+        "sha256": "2681158785957bb0f9dd41e9689b98537d1ec16cd4f1ba4729ff10a4e73e2545",
+        "public_safe_metadata_only": true
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-native-controller-20261008-004/evidence/transfer-manifest-before-final-delivery.json",
+        "sha256": "fedef5d36a0295b1cdb50862a00ca39c104434c9612dfa3427055854298d3e3c",
+        "public_safe_metadata_only": true
+      }
+    ],
+    "dapt_fresh_public_comparison_sha256": "c26785e5b55c34a861f6a66821506446272cb6d9749460cc9651115043f412f6",
+    "dapt_public_comparison_privacy_approved": true,
+    "descriptor_and_this_review_are_outside_immutable_archive": true,
+    "no_descriptor_archive_document_hash_cycle": true,
+    "frozen_trial_manifest_summary_and_review_not_rewritten": true
+  },
+  "pre_final_staging_snapshot": {
+    "paths_count": 136,
+    "sorted_paths_sha256": "7d82fa21b107a0898d845f1d9c716bb69f80a6417391ce9475019b8ee542ab23",
+    "planned_additional_unique_paths": 52,
+    "planned_final_changed_path_union_count": 187,
+    "existing_index_bodies_requiring_restaging": [
+      "experiments/tau-knowledge/skill-evolution/PROTOCOL.md",
+      "experiments/tau-knowledge/skill-evolution/README.md",
+      "experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md",
+      "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-gpt56-v6/manifest.json",
+      "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-opus48-v6/manifest.json",
+      "experiments/tau-knowledge/skill-evolution/runs/skillsbench/transfer-manifest.json"
+    ],
+    "descriptor_restaging_already_in_exact_additional_paths": true,
+    "permitted_staged_deletion": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_author_verifier.py",
+    "final_staging_verified": "PENDING_ROOT_EXACT_INDEX_CHECK",
+    "staging_or_commit_performed_by_reviewer": false
+  },
+  "limitations": [
+    "Credential-shaped byte scanning and targeted public-field review cannot prove absence of every possible secret.",
+    "The source archive is not a Docker image, complete task environment, or receiving-machine environment admission.",
+    "The five selected subscription task results do not establish full-85 performance or compatibility of the two planned Bedrock models.",
+    "Current context guard is configured local beta/reserve policy, not proof of a provider hard-window rejection.",
+    "App-server underlying HTTP count/retries are NOT_OBSERVABLE; subscription monetary cost is NOT_MEASURED."
+  ]
+}

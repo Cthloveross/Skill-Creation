@@ -20,7 +20,7 @@ import uuid
 import zipfile
 from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -952,7 +952,7 @@ class SkillsBenchAdapter:
         if self.executor == "author-codex":
             self.public_inputs["environment"].update(
                 execution_agent="author-codex",
-                skill_directory="/app/environment/skills/current",
+                skill_directory="/app/environment/skills/evo-current",
                 execution_interface=(
                     "Native Codex terminal; read files and run scripts with shell commands."
                 ),
@@ -1300,11 +1300,28 @@ class SkillsBenchAdapter:
         }
         episode_id = uuid.uuid4().hex
         self._codex_logs = self.model_journal_dir / episode_id / "codex"
-        with tempfile.TemporaryDirectory(prefix="sb-provider-") as temporary:
+        with ExitStack() as stack:
+            temporary = stack.enter_context(tempfile.TemporaryDirectory(prefix="sb-provider-"))
             directory = Path(temporary) / "gateway"
+            opener = None
+            provider = self.spec.provider_settings
+            if provider["transport"] == "codex-plan":
+                from .codex_plan import CodexPlanClient, CodexPlanOpener
+
+                client = CodexPlanClient(
+                    model=provider["model"],
+                    role="execution",
+                    journal_dir=self.model_journal_dir / episode_id / "codex-plan",
+                    binary=provider["binary"],
+                    reasoning_effort=settings["controls"]["agent"]["reasoning_effort"],
+                    timeout_seconds=settings["request_timeout_seconds"],
+                    request_deadline=self.runner.execution_deadline,
+                )
+                stack.callback(client.close)
+                opener = CodexPlanOpener(client)
             with open_provider(
                 directory,
-                self.spec.provider_settings,
+                provider,
                 settings["controls"],
                 self.model_journal_dir / episode_id / "provider",
                 {
@@ -1317,6 +1334,7 @@ class SkillsBenchAdapter:
                 timeout_seconds=settings["request_timeout_seconds"],
                 request_deadline=self.runner.execution_deadline,
                 max_requests=settings["max_turns"],
+                opener=opener,
             ) as gateway:
                 self._codex_gateway = gateway
                 self.runner.provider_directory = directory
@@ -1581,7 +1599,7 @@ class SkillsBenchAdapter:
                             + stderr,
                             error_output=stderr,
                             allow_finite_reward=getattr(self.spec, "namespace", None)
-                            == "skillsbench.skill-evolution.v5",
+                            in {"skillsbench.skill-evolution.v5", "skillsbench.skill-evolution.v6"},
                         )
                         metrics["status"] = "MEASURED"
                         details = data.get("results", {}).get("tests", []) if data else []

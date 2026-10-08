@@ -141,6 +141,81 @@ def public_source(tmp_path, monkeypatch):
     return source
 
 
+def test_public_input_baseline_is_current_task_allowlist_with_original_bytes(
+    public_source, tmp_path
+):
+    runner = SkillsBenchRunner(public_source.root, "xlsx-recover-data", demo=False)
+    work = tmp_path / "work"
+    work.mkdir()
+    runner._prepare_public_input_baseline(work)
+    baseline = work / "public-inputs"
+    assert baseline.stat().st_mode & 0o777 == 0o755
+    manifest = json.loads((baseline / "manifest.json").read_text())
+    assert manifest["task_id"] == "xlsx-recover-data"
+    assert [f["relative_path"] for f in manifest["files"]] == [
+        "environment/nasa_budget_incomplete.xlsx"
+    ]
+    entry = manifest["files"][0]
+    copied = work / entry["baseline_path"].removeprefix("/work/")
+    assert copied.read_text() == "public input"
+    assert hashlib.sha256(copied.read_bytes()).hexdigest() == entry["sha256"]
+    assert copied.stat().st_mode & 0o777 == 0o444
+    assert not (baseline / "files/environment/groundtruth").exists()
+    assert not (baseline / "files/environment/Dockerfile").exists()
+    before = copied.stat().st_mtime_ns
+    runner._prepare_public_input_baseline(work)
+    assert copied.stat().st_mtime_ns == before
+
+
+@pytest.mark.parametrize("change", ["file", "manifest", "extra", "symlink"])
+def test_public_input_baseline_resume_rejects_tampering(public_source, tmp_path, change):
+    from tau_skill_evolution.container import ContainerUnavailable
+
+    runner = SkillsBenchRunner(public_source.root, "3d-scan-calc", demo=False)
+    work = tmp_path / "work"
+    work.mkdir()
+    runner._prepare_public_input_baseline(work)
+    baseline = work / "public-inputs"
+    if change == "file":
+        target = baseline / "files/environment/scan_data.stl"
+        target.chmod(0o644)
+        target.write_text("modified")
+    elif change == "manifest":
+        target = baseline / "manifest.json"
+        target.chmod(0o644)
+        target.write_text("broken JSON")
+    elif change == "extra":
+        (baseline / "extra").write_text("not declared")
+    else:
+        (baseline / "extra").symlink_to(baseline / "files/environment/scan_data.stl")
+    with pytest.raises(ContainerUnavailable, match="public_input_baseline_changed"):
+        runner._prepare_public_input_baseline(work)
+
+
+def test_public_input_baseline_source_tampering_is_not_repaired(public_source, tmp_path):
+    from tau_skill_evolution.container import ContainerUnavailable
+
+    runner = SkillsBenchRunner(public_source.root, "3d-scan-calc", demo=False)
+    (runner.task_directory / "environment/scan_data.stl").write_text("changed original")
+    work = tmp_path / "work"
+    work.mkdir()
+    with pytest.raises(ContainerUnavailable, match="public_input_baseline_source_changed"):
+        runner._prepare_public_input_baseline(work)
+    assert not (work / "public-inputs").exists()
+
+
+def test_fresh_author_codex_public_input_declares_exportable_skill_alias(public_source):
+    adapter = SkillsBenchAdapter(
+        SimpleNamespace(root=public_source.root, values={"runtime": {"executor": "author-codex"}}),
+        "3d-scan-calc",
+        demo=False,
+    )
+    assert (
+        adapter.public_inputs["environment"]["skill_directory"]
+        == "/app/environment/skills/evo-current"
+    )
+
+
 def test_copy_allowlist_excludes_unseen_groundtruth_and_preserves_destinations(tmp_path):
     task = tmp_path / "task"
     environment = task / "environment"
@@ -1376,6 +1451,11 @@ def test_direct_generator_submits_actual_same_environment_and_keeps_parent(evolu
         mounts = {v["target"]: v for v in definition["services"]["main"]["volumes"]}
         assert mounts["/bundle"]["read_only"] and mounts["/work"]["read_only"]
         assert not mounts["/work/candidate"]["read_only"]
+        assert not mounts["/app/environment/skills/evo-current"]["read_only"]
+        assert mounts["/app/environment/public-inputs"]["read_only"]
+        assert mounts["/app/environment/public-inputs"]["source"] == str(
+            session.public.work / "public-inputs"
+        )
         assert "/run/skill-provider" not in mounts and "/logs/verifier" not in mounts
         assert not any(str(journal.root) in v["source"] for v in mounts.values())
     assert json.loads((workspace / "evolution-runtime.json").read_text())["status"] == "CLOSED"
@@ -1406,7 +1486,12 @@ def test_direct_generator_raw_results_are_readonly_and_snapshot_ignores_live_out
         assert (workspace / "evolution-runtime.json").stat().st_mode & 0o777 == 0o600
         public = adapter._seal_public_workspace(
             {"/work": session.public.work},
-            excluded_roots=("/work/candidate", "/work/observations", "/work/scratch"),
+            excluded_roots=(
+                "/work/candidate",
+                "/work/observations",
+                "/work/scratch",
+                "/work/public-inputs",
+            ),
         )
         assert public["public_artifact_count"] == 0
 
@@ -3901,3 +3986,22 @@ def test_runtime_rejects_unsupported_docker_lock_templates(public_source, templa
             demo=False,
             runtime_lock_path=Path("runtime") / template,
         )
+
+
+@pytest.mark.parametrize("reward", ["2", "-0.1"])
+def test_author_finite_reward_admission_does_not_change_default_range_or_dependency_checks(reward):
+    from tau_skill_evolution.skillsbench_runtime import _validate_grader_warmup
+
+    with pytest.raises(RuntimeError, match="reward_invalid"):
+        _validate_grader_warmup(0, reward, None, "")
+    _validate_grader_warmup(0, reward, None, "", allow_finite_reward=True)
+    with pytest.raises(RuntimeError, match="dependency_or_collection_error"):
+        _validate_grader_warmup(
+            1,
+            reward,
+            None,
+            "ModuleNotFoundError: No module named 'missing_grader_dependency'",
+            allow_finite_reward=True,
+        )
+    with pytest.raises(RuntimeError, match="reward_invalid"):
+        _validate_grader_warmup(0, "nan", None, "", allow_finite_reward=True)

@@ -1,0 +1,274 @@
+{
+  "status": "PASS",
+  "phase": "environment_and_model_catalog_preflight",
+  "limitations": [
+    "This admission does not measure task utility or a paid model response. Final source binding is recorded separately after fixes."
+  ],
+  "tasks": [
+    {
+      "task_id": "dialogue-parser",
+      "ready": true,
+      "environment_ready": true,
+      "model_access_ready": true,
+      "raw_log_sha256": "5df0ffa9c626127d7b9fb2934fa31177206b7b9f5cff55ad386df3dc92236d16",
+      "checks": [
+        {
+          "name": "codex_cli",
+          "ok": true
+        },
+        {
+          "name": "codex_login",
+          "ok": true
+        },
+        {
+          "name": "codex_catalog",
+          "ok": true
+        },
+        {
+          "name": "docker_cli",
+          "ok": true
+        },
+        {
+          "name": "docker_daemon",
+          "ok": true
+        },
+        {
+          "name": "author_codex",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_source",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_public_pool",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_dense_index",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_environment:dialogue-parser",
+          "ok": true
+        },
+        {
+          "name": "embedding_service",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "task_id": "3d-scan-calc",
+      "ready": true,
+      "environment_ready": true,
+      "model_access_ready": true,
+      "raw_log_sha256": "238fcf1e5f2f0886f7e5893a84bb8b28b2da528f03731e7a9e7ec1d77035600b",
+      "checks": [
+        {
+          "name": "codex_cli",
+          "ok": true
+        },
+        {
+          "name": "codex_login",
+          "ok": true
+        },
+        {
+          "name": "codex_catalog",
+          "ok": true
+        },
+        {
+          "name": "docker_cli",
+          "ok": true
+        },
+        {
+          "name": "docker_daemon",
+          "ok": true
+        },
+        {
+          "name": "author_codex",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_source",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_public_pool",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_dense_index",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_environment:3d-scan-calc",
+          "ok": true
+        },
+        {
+          "name": "embedding_service",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "task_id": "adaptive-cruise-control",
+      "ready": true,
+      "environment_ready": true,
+      "model_access_ready": true,
+      "raw_log_sha256": "a3480ee3ec1144575349476928ed035676166a2af7d0825014d12e166843553f",
+      "checks": [
+        {
+          "name": "codex_cli",
+          "ok": true
+        },
+        {
+          "name": "codex_login",
+          "ok": true
+        },
+        {
+          "name": "codex_catalog",
+          "ok": true
+        },
+        {
+          "name": "docker_cli",
+          "ok": true
+        },
+        {
+          "name": "docker_daemon",
+          "ok": true
+        },
+        {
+          "name": "author_codex",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_source",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_public_pool",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_dense_index",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_environment:adaptive-cruise-control",
+          "ok": true
+        },
+        {
+          "name": "embedding_service",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "task_id": "dapt-intrusion-detection",
+      "ready": true,
+      "environment_ready": true,
+      "model_access_ready": true,
+      "raw_log_sha256": "6cfd14936fcabf237f9b41e8a9b9bf52388e1eb472c173314d3f59963951ee3c",
+      "checks": [
+        {
+          "name": "codex_cli",
+          "ok": true
+        },
+        {
+          "name": "codex_login",
+          "ok": true
+        },
+        {
+          "name": "codex_catalog",
+          "ok": true
+        },
+        {
+          "name": "docker_cli",
+          "ok": true
+        },
+        {
+          "name": "docker_daemon",
+          "ok": true
+        },
+        {
+          "name": "author_codex",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_source",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_public_pool",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_dense_index",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_environment:dapt-intrusion-detection",
+          "ok": true
+        },
+        {
+          "name": "embedding_service",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "task_id": "pddl-tpp-planning",
+      "ready": true,
+      "environment_ready": true,
+      "model_access_ready": true,
+      "raw_log_sha256": "f6a3e7082ed9c3aaac0bd88dcbbcb4ec0b6e36461ce6d02bd46e676080c0b369",
+      "checks": [
+        {
+          "name": "codex_cli",
+          "ok": true
+        },
+        {
+          "name": "codex_login",
+          "ok": true
+        },
+        {
+          "name": "codex_catalog",
+          "ok": true
+        },
+        {
+          "name": "docker_cli",
+          "ok": true
+        },
+        {
+          "name": "docker_daemon",
+          "ok": true
+        },
+        {
+          "name": "author_codex",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_source",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_public_pool",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_dense_index",
+          "ok": true
+        },
+        {
+          "name": "skillsbench_environment:pddl-tpp-planning",
+          "ok": true
+        },
+        {
+          "name": "embedding_service",
+          "ok": true
+        }
+      ]
+    }
+  ]
+}

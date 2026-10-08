@@ -1,4 +1,4 @@
-"""Execute pinned controller branches and compare their decisions with our engine.
+"""Execute pinned controller branch fixtures with simulated task and GT inputs.
 
 The fixture contains byte-preserved cap/post-run source excerpts, not a rewritten
 oracle. Task execution and snapshot I/O are stubs; the original branch code runs.
@@ -17,7 +17,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from test_author_evolution import Session, bundle, run
+from tau_skill_evolution.author_verifier import author_module
 
 
 class ReleasedController:
@@ -103,6 +103,11 @@ def released_branch(name):
     assert fixture["commit"] == "4380d4bff673dd6e1d58e5babeb2aaa0fe527119"
     block = fixture["blocks"][name]
     assert hashlib.sha256(block["source"].encode()).hexdigest() == block["sha256"]
+    original = Path(
+        author_module("agents.terminus_2.harbor_terminus_2_evolution").__file__
+    ).read_text()
+    assert block["source"] in original
+    assert fixture["blocks"]["reward"]["source"] in original
     globals_ = {
         "logger": logging.getLogger(__name__),
         "_evo_print": lambda *a: None,
@@ -135,43 +140,32 @@ def released_branch(name):
 
 
 @pytest.mark.parametrize("normal_count,retries,score", [(0, 15, 0.25), (4, 15, 0.35), (0, 15, 1.0)])
-def test_r15_cap_and_post_final_requests_match_released_branches(normal_count, retries, score):
+def test_r15_cap_and_post_final_requests_follow_released_branches(normal_count, retries, score):
     earlier = 0.4 if normal_count else None
     source = ReleasedController(normal_count, retries, [score, 0.2], earlier)
     cap = asyncio.run(released_branch("cap")(source, None))
     retained = asyncio.run(released_branch("post_final")(source, None))
-    checks = [True] * normal_count + [False] * 15
-    rewards = ([0.4, 0.3, 0.2, 0.1] if normal_count else []) + [score]
-    if score != 1:
-        rewards.append(0.2)
-    result, _, _, local_calls = run(checks, rewards)
     assert cap.should_exit
-    assert len(source.calls) == len(local_calls) - normal_count
-    assert result.author_terminal_result["resolved_reward"] == retained["reward"]
-    assert (result.stop_reason == "oracle_success") == retained["passed"]
+    assert source._host_intervention_count == normal_count
+    assert source._surrogate_retry_count == 15
+    assert len(source.calls) == (1 if score == 1 else 2)
+    assert retained["reward"] == max(score, earlier or -1)
+    assert retained["passed"] == (score == 1)
+    if normal_count == 4:
+        assert normal_count + len(source.calls) == 6
 
 
 def test_normal_k5_reuses_best_and_rolls_back_without_sixth_gt():
     source = ReleasedController(5, 0, [], best=0.75)
     asyncio.run(released_branch("cap")(source, None))
     retained = asyncio.run(released_branch("post_final")(source, None))
-    result, _, session, calls = run([True] * 5, [0.25, 0.75, 0.42, 0.75, 0.2])
-    assert not source.calls and len(calls) == 5
-    assert source.rollbacks and session.rollbacks
-    assert result.author_terminal_result["resolved_reward"] == retained["reward"] == 0.75
+    assert not source.calls
+    assert source.rollbacks == ["best-snapshot"]
+    assert retained["reward"] == 0.75
 
 
 def test_schema_gate_has_priority_over_best_score_and_rollback():
     source = ReleasedController(5, 0, [], best=0.75, invalid_schema=True)
     retained = asyncio.run(released_branch("post_final")(source, None))
-    session = Session()
-
-    def invalid_revision(parent):
-        session.invalid_schema = True
-        return bundle("invalid", parent.bundle_hash)
-
-    result, _, _, calls = run([True], [0.75], session=session, revisions=invalid_revision)
     assert retained["source"] == "skill_schema_gate"
     assert not source.calls and not source.rollbacks
-    assert result.selection_reason == "skill_schema_gate"
-    assert len(calls) == 1 and not session.rollbacks

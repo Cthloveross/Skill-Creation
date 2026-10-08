@@ -1,0 +1,1104 @@
+{
+  "schema": "skillsbench.live-independent-review.v1",
+  "reviewed_at": "2026-10-08T11:01:54.996585+00:00",
+  "status": "PASS_WITH_EXPLICIT_LIMITATIONS",
+  "trial_id": "codex-author-fix-20261008-004",
+  "source_identity_hash": "0f39848aa3282daad7c3a4d0243fa03a378cb7896c00096552f39defcb4046f5",
+  "public_summary_sha256": "e7ac342903f78ab1d8a298197e1f2b90da55af57c31710dfcc71b1b943586a97",
+  "manifest_sha256": "699f49535d6d2dcfc2e34a7d524613d78bc0e3def0d1c9ceb883f0c81a2364ab",
+  "scope": "Independent read-only cross-check of frozen packages, original author resources, journal outcomes, role/thread metadata, official metric projections, selection lineage, known budget stop and learning-owner cleanup; no model requests or private grader contents reviewed.",
+  "checks": [
+    {
+      "code": "manifest_and_summary_complete_same_identity",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:s0_once_completed",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:native_complete",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:all_actual_content_measured",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:S0:metrics_raw_match",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:S0:sealed_parent_match",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:S1:metrics_raw_match",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:S1:sealed_parent_match",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:noskill_raw_match",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:final_alias_same_evaluation",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:final_actual_parent_match",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:all_submissions_and_parents_match",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:official_selection_history_matches",
+      "passed": true,
+      "comparison": "Original numeric reward file text parsed as finite numeric value, compared with public raw_numeric_reward; resolved score independently compared."
+    },
+    {
+      "code": "dialogue-parser:public_surrogate_matches",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:counters_native_match",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:generator_attempt_response_actual_state_match",
+      "passed": true
+    },
+    {
+      "code": "dialogue-parser:learning_closed",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:s0_once_completed",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:native_complete",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:all_actual_content_measured",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:S0:metrics_raw_match",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:S0:sealed_parent_match",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:S1:metrics_raw_match",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:S1:sealed_parent_match",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:noskill_raw_match",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:final_alias_same_evaluation",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:final_actual_parent_match",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:all_submissions_and_parents_match",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:official_selection_history_matches",
+      "passed": true,
+      "comparison": "Original numeric reward file text parsed as finite numeric value, compared with public raw_numeric_reward; resolved score independently compared."
+    },
+    {
+      "code": "3d-scan-calc:public_surrogate_matches",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:counters_native_match",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:generator_attempt_response_actual_state_match",
+      "passed": true
+    },
+    {
+      "code": "3d-scan-calc:learning_closed",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:s0_once_completed",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:native_complete",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:all_actual_content_measured",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:S0:metrics_raw_match",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:S0:sealed_parent_match",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:S1:metrics_raw_match",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:S1:sealed_parent_match",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:S2:metrics_raw_match",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:S2:sealed_parent_match",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:noskill_raw_match",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:final_alias_same_evaluation",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:final_actual_parent_match",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:all_submissions_and_parents_match",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:official_selection_history_matches",
+      "passed": true,
+      "comparison": "Original numeric reward file text parsed as finite numeric value, compared with public raw_numeric_reward; resolved score independently compared."
+    },
+    {
+      "code": "adaptive-cruise-control:public_surrogate_matches",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:counters_native_match",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:generator_attempt_response_actual_state_match",
+      "passed": true
+    },
+    {
+      "code": "adaptive-cruise-control:learning_closed",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:s0_once_completed",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:native_complete",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:all_actual_content_measured",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:S0:metrics_raw_match",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:S0:sealed_parent_match",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:S1:metrics_raw_match",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:S1:sealed_parent_match",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:S2:metrics_raw_match",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:S2:sealed_parent_match",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:noskill_raw_match",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:final_alias_same_evaluation",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:final_actual_parent_match",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:all_submissions_and_parents_match",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:official_selection_history_matches",
+      "passed": true,
+      "comparison": "Original numeric reward file text parsed as finite numeric value, compared with public raw_numeric_reward; resolved score independently compared."
+    },
+    {
+      "code": "dapt-intrusion-detection:public_surrogate_matches",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:counters_native_match",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:generator_attempt_response_actual_state_match",
+      "passed": true
+    },
+    {
+      "code": "dapt-intrusion-detection:learning_closed",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:s0_once_completed",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:native_complete",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:all_actual_content_measured",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:S0:metrics_raw_match",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:S0:sealed_parent_match",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:S1:metrics_raw_match",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:S1:sealed_parent_match",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:noskill_raw_match",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:final_alias_same_evaluation",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:final_actual_parent_match",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:all_submissions_and_parents_match",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:official_selection_history_matches",
+      "passed": true,
+      "comparison": "Original numeric reward file text parsed as finite numeric value, compared with public raw_numeric_reward; resolved score independently compared."
+    },
+    {
+      "code": "pddl-tpp-planning:public_surrogate_matches",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:counters_native_match",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:generator_attempt_response_actual_state_match",
+      "passed": true
+    },
+    {
+      "code": "pddl-tpp-planning:learning_closed",
+      "passed": true
+    },
+    {
+      "code": "all_five_learning_owner_containers_absent",
+      "passed": true
+    },
+    {
+      "code": "distinct_client_threads_all_roles_and_fresh_execs",
+      "passed": true
+    },
+    {
+      "code": "all_actual_models_match_catalog_choice",
+      "passed": true
+    },
+    {
+      "code": "24_fresh_execution_receipts_actual_model",
+      "passed": true
+    },
+    {
+      "code": "44_original_author_files_still_byte_identical",
+      "passed": true
+    },
+    {
+      "code": "reviewed_sources_unchanged",
+      "passed": true
+    },
+    {
+      "code": "complete_fixed_sample_denominator",
+      "passed": true
+    },
+    {
+      "code": "12_distinct_contents_17_evaluations",
+      "passed": true
+    },
+    {
+      "code": "NoSkill:aggregate_matches",
+      "passed": true
+    },
+    {
+      "code": "S0:aggregate_matches",
+      "passed": true
+    },
+    {
+      "code": "Final:aggregate_matches",
+      "passed": true
+    },
+    {
+      "code": "no_unknown_or_invalid_model_operations",
+      "passed": true
+    }
+  ],
+  "tasks": [
+    {
+      "task_id": "dialogue-parser",
+      "status": "STAGES_FINISHED",
+      "stop_reason": "gt_oracle_pass",
+      "base_hash": "729a1ffdb959480df0dd8b411e35292aa621c19b7f054a8938e822b1470a8a86",
+      "base_integrity_verified": true,
+      "no_skill": {
+        "status": "MEASURED",
+        "utility": false,
+        "official_reward": 0.833,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 5,
+          "total": 6,
+          "rate": 0.8333333333333334,
+          "unit": "reporter_group"
+        }
+      },
+      "content_versions": [
+        {
+          "version": "S0",
+          "bundle_hash": "fc94691dfd9c8d4fca06460ad479c993d0eb4e729f14575bc3e9a19f33787887",
+          "parent_hash": null,
+          "evaluation_response_sha256": "6675c3eed0c86df32907204fa512ff9b3ab707ad4a358a4148802faf73d482e4",
+          "status": "MEASURED",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 6,
+            "total": 6,
+            "rate": 1.0,
+            "unit": "reporter_group"
+          }
+        },
+        {
+          "version": "S1",
+          "bundle_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+          "parent_hash": "fc94691dfd9c8d4fca06460ad479c993d0eb4e729f14575bc3e9a19f33787887",
+          "evaluation_response_sha256": "c6974d1d888f2946d12bb6d8fe81b3fd1f0cf655dd221191a6eb5ba2e18dc7ca",
+          "status": "MEASURED",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 6,
+            "total": 6,
+            "rate": 1.0,
+            "unit": "reporter_group"
+          }
+        }
+      ],
+      "final_bundle_ref": {
+        "bundle_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+        "parent_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106"
+      },
+      "final_aliases_measured_content": true,
+      "native_result_response_sha256": "ca3aa3cfc2d1c433de573f10918a157d5cb7b641c7b84bcea76091573474cd48",
+      "selection": {
+        "historical_best_bundle_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+        "actual_gt_runs": [
+          {
+            "phase": "normal",
+            "bundle_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+            "parent_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+            "official_reward": 1.0,
+            "passed": true,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 6,
+              "total": 6,
+              "rate": 1.0,
+              "unit": "reporter_group"
+            }
+          }
+        ],
+        "rollback_status": null
+      },
+      "process_counts": {
+        "native_r_interventions": 1,
+        "native_K_normal_gt_interventions": 1,
+        "native_generator_episodes": 26,
+        "generator_model_attempts": 26,
+        "generator_model_responses": 26,
+        "generator_terminal_calls": 34,
+        "verifier_terminal_calls": 19,
+        "sealed_submissions": 2,
+        "actual_content_versions": 2,
+        "recorded_revision_attempts": 2,
+        "actual_gt_runs": 1,
+        "logical_model_dispatches": 86,
+        "submitted_learning_executions": 1,
+        "fresh_author_codex_prepared_instances": 4,
+        "fresh_author_codex_dispatched_provider_instances": 4
+      },
+      "learning_runtime_sha256": "42fbcefa59e5abd2c42f7e406a183b04f23b8451e0a4d154da0b51d3ad0e92a6",
+      "learning_container_id_hashes": [
+        "5d59da1cbf51ebe9bea011c1da322fcd84c2223520a48b45850ef7a60847f67e"
+      ],
+      "stage_errors": []
+    },
+    {
+      "task_id": "3d-scan-calc",
+      "status": "STAGES_FINISHED",
+      "stop_reason": "gt_oracle_pass",
+      "base_hash": "1073b0c9590a97a0807617ec607b9cb64a7d9c8cc8da0049cc8e79dfa4891018",
+      "base_integrity_verified": true,
+      "no_skill": {
+        "status": "MEASURED",
+        "utility": true,
+        "official_reward": 1.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 2,
+          "total": 2,
+          "rate": 1.0,
+          "unit": "reporter_group"
+        }
+      },
+      "content_versions": [
+        {
+          "version": "S0",
+          "bundle_hash": "76b0234be081fc83dde6acb30ca0e09f76b170de3d2a7261d45b9763b928b1c3",
+          "parent_hash": null,
+          "evaluation_response_sha256": "8bbf5cdfc99f6315a332f50cda3efbff7c9c63c68f0b04fe4005ac21754a638a",
+          "status": "MEASURED",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 0,
+            "total": 2,
+            "rate": 0.0,
+            "unit": "reporter_group"
+          }
+        },
+        {
+          "version": "S1",
+          "bundle_hash": "3a2b21f375802a58e22b83eb893f37cc8fdae0a1cd53337a971eb95d592468c0",
+          "parent_hash": "76b0234be081fc83dde6acb30ca0e09f76b170de3d2a7261d45b9763b928b1c3",
+          "evaluation_response_sha256": "1f1f5123a7f0ddbf9a9d80ded81639f0f4bb52ab099ea77b688f4b12bbd3ccfa",
+          "status": "MEASURED",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 2,
+            "total": 2,
+            "rate": 1.0,
+            "unit": "reporter_group"
+          }
+        }
+      ],
+      "final_bundle_ref": {
+        "bundle_hash": "3a2b21f375802a58e22b83eb893f37cc8fdae0a1cd53337a971eb95d592468c0",
+        "parent_hash": "76b0234be081fc83dde6acb30ca0e09f76b170de3d2a7261d45b9763b928b1c3"
+      },
+      "final_aliases_measured_content": true,
+      "native_result_response_sha256": "ac0ed630e819cbf0364cfb2822256fd4537191a3bfe2855c890cf2d5d6092211",
+      "selection": {
+        "historical_best_bundle_hash": "3a2b21f375802a58e22b83eb893f37cc8fdae0a1cd53337a971eb95d592468c0",
+        "actual_gt_runs": [
+          {
+            "phase": "normal",
+            "bundle_hash": "3a2b21f375802a58e22b83eb893f37cc8fdae0a1cd53337a971eb95d592468c0",
+            "parent_hash": "76b0234be081fc83dde6acb30ca0e09f76b170de3d2a7261d45b9763b928b1c3",
+            "official_reward": 1.0,
+            "passed": true,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 2,
+              "total": 2,
+              "rate": 1.0,
+              "unit": "reporter_group"
+            }
+          }
+        ],
+        "rollback_status": null
+      },
+      "process_counts": {
+        "native_r_interventions": 0,
+        "native_K_normal_gt_interventions": 1,
+        "native_generator_episodes": 25,
+        "generator_model_attempts": 28,
+        "generator_model_responses": 28,
+        "generator_terminal_calls": 29,
+        "verifier_terminal_calls": 9,
+        "sealed_submissions": 1,
+        "actual_content_versions": 2,
+        "recorded_revision_attempts": 1,
+        "actual_gt_runs": 1,
+        "logical_model_dispatches": 71,
+        "submitted_learning_executions": 1,
+        "fresh_author_codex_prepared_instances": 4,
+        "fresh_author_codex_dispatched_provider_instances": 4
+      },
+      "learning_runtime_sha256": "55c2dc2239de4b81bfa1851f84e01b312b0bcad906cb72530da94a95aed2b711",
+      "learning_container_id_hashes": [
+        "ce036ae0d00df7215032243c2fbea2b5ea612b1711512cad4bbad6c372cdeb20"
+      ],
+      "stage_errors": []
+    },
+    {
+      "task_id": "adaptive-cruise-control",
+      "status": "STAGES_FINISHED",
+      "stop_reason": "gt_oracle_pass",
+      "base_hash": "65165f028a79bf0eec0875562a110340439c2f9893eceda88cfd457d3cc7e05f",
+      "base_integrity_verified": true,
+      "no_skill": {
+        "status": "MEASURED",
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 10,
+          "total": 12,
+          "rate": 0.8333333333333334,
+          "unit": "reporter_group"
+        }
+      },
+      "content_versions": [
+        {
+          "version": "S0",
+          "bundle_hash": "7340f8b987b28eb2fdfd2e5730664ea5ec7f62d4c2abb41a04304539b6a4631f",
+          "parent_hash": null,
+          "evaluation_response_sha256": "5cd45b5e38b4818251dacc0c1f0703c65708e2b0dc8da5ca415280c3373ad98c",
+          "status": "MEASURED",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 5,
+            "total": 12,
+            "rate": 0.4166666666666667,
+            "unit": "reporter_group"
+          }
+        },
+        {
+          "version": "S1",
+          "bundle_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8",
+          "parent_hash": "7340f8b987b28eb2fdfd2e5730664ea5ec7f62d4c2abb41a04304539b6a4631f",
+          "evaluation_response_sha256": "bd4d081325efd53888de1e72a9d11c04c2d07154b604eda8635258aad93ed14e",
+          "status": "MEASURED",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 5,
+            "total": 12,
+            "rate": 0.4166666666666667,
+            "unit": "reporter_group"
+          }
+        },
+        {
+          "version": "S2",
+          "bundle_hash": "8ab0f9e0b5dd3c72898c2ea36aa64c54c38857641d42fdc62ac3943fa43d282c",
+          "parent_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8",
+          "evaluation_response_sha256": "4d054e35744360a642279ca0ae31c8182d04bc8b832e2279b0c7911b1c1839fa",
+          "status": "MEASURED",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 12,
+            "total": 12,
+            "rate": 1.0,
+            "unit": "reporter_group"
+          }
+        }
+      ],
+      "final_bundle_ref": {
+        "bundle_hash": "8ab0f9e0b5dd3c72898c2ea36aa64c54c38857641d42fdc62ac3943fa43d282c",
+        "parent_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8"
+      },
+      "final_aliases_measured_content": true,
+      "native_result_response_sha256": "5d2c57ee88a057df48f69fbfd317a0635f3bb7361b5152de8e496cf5703c4dcb",
+      "selection": {
+        "historical_best_bundle_hash": "8ab0f9e0b5dd3c72898c2ea36aa64c54c38857641d42fdc62ac3943fa43d282c",
+        "actual_gt_runs": [
+          {
+            "phase": "normal",
+            "bundle_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8",
+            "parent_hash": "7340f8b987b28eb2fdfd2e5730664ea5ec7f62d4c2abb41a04304539b6a4631f",
+            "official_reward": 0.0,
+            "passed": false,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 5,
+              "total": 12,
+              "rate": 0.4166666666666667,
+              "unit": "reporter_group"
+            }
+          },
+          {
+            "phase": "normal",
+            "bundle_hash": "8ab0f9e0b5dd3c72898c2ea36aa64c54c38857641d42fdc62ac3943fa43d282c",
+            "parent_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8",
+            "official_reward": 1.0,
+            "passed": true,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 12,
+              "total": 12,
+              "rate": 1.0,
+              "unit": "reporter_group"
+            }
+          }
+        ],
+        "rollback_status": null
+      },
+      "process_counts": {
+        "native_r_interventions": 0,
+        "native_K_normal_gt_interventions": 2,
+        "native_generator_episodes": 41,
+        "generator_model_attempts": 41,
+        "generator_model_responses": 41,
+        "generator_terminal_calls": 55,
+        "verifier_terminal_calls": 23,
+        "sealed_submissions": 2,
+        "actual_content_versions": 3,
+        "recorded_revision_attempts": 2,
+        "actual_gt_runs": 2,
+        "logical_model_dispatches": 103,
+        "submitted_learning_executions": 1,
+        "fresh_author_codex_prepared_instances": 6,
+        "fresh_author_codex_dispatched_provider_instances": 6
+      },
+      "learning_runtime_sha256": "4c17fb51002e1c3a055a1724545d5485a364b1ba195610f6477aabed7f6fc989",
+      "learning_container_id_hashes": [
+        "645c0170211fb3529902df7f5f92d41ba08a31eabb81d1fedfadd1328126199d"
+      ],
+      "stage_errors": []
+    },
+    {
+      "task_id": "dapt-intrusion-detection",
+      "status": "STAGES_FINISHED",
+      "stop_reason": "token_budget",
+      "base_hash": "90be81deca73873316dba70b50e991763197f69c84af4701f3a64c197b16b2b6",
+      "base_integrity_verified": true,
+      "no_skill": {
+        "status": "MEASURED",
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 3,
+          "total": 14,
+          "rate": 0.21428571428571427,
+          "unit": "reporter_group"
+        }
+      },
+      "content_versions": [
+        {
+          "version": "S0",
+          "bundle_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+          "parent_hash": null,
+          "evaluation_response_sha256": "c701d7ee6689bcbfb4b8952eb1fc69db600b8a84890aee8aab26d4deef84379a",
+          "status": "MEASURED",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 9,
+            "total": 14,
+            "rate": 0.6428571428571429,
+            "unit": "reporter_group"
+          }
+        },
+        {
+          "version": "S1",
+          "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+          "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+          "evaluation_response_sha256": "03a7fe30d252a76af95522131fe018f740af88d8936d40f89f7152815e7330d1",
+          "status": "MEASURED",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 9,
+            "total": 14,
+            "rate": 0.6428571428571429,
+            "unit": "reporter_group"
+          }
+        },
+        {
+          "version": "S2",
+          "bundle_hash": "49ac97f8e018613243a36051a789ca76fad65ee34af160668bb3b98b006342c8",
+          "parent_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+          "evaluation_response_sha256": "fefcbf636cf97cf292c22826f493e29d9c75d46e1682b1ca9a38a23d642a8664",
+          "status": "MEASURED",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 12,
+            "total": 14,
+            "rate": 0.8571428571428571,
+            "unit": "reporter_group"
+          }
+        }
+      ],
+      "final_bundle_ref": {
+        "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+        "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f"
+      },
+      "final_aliases_measured_content": true,
+      "native_result_response_sha256": "d3c1cf16efaeded9b7a876635118077d377e972dbc8bcf3159a11d1e9b981b7e",
+      "selection": {
+        "historical_best_bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+        "actual_gt_runs": [
+          {
+            "phase": "normal",
+            "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+            "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+            "official_reward": 0.0,
+            "passed": false,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 11,
+              "total": 14,
+              "rate": 0.7857142857142857,
+              "unit": "reporter_group"
+            }
+          },
+          {
+            "phase": "post_final",
+            "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+            "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+            "official_reward": 0.0,
+            "passed": false,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 11,
+              "total": 14,
+              "rate": 0.7857142857142857,
+              "unit": "reporter_group"
+            }
+          }
+        ],
+        "rollback_status": "COMPLETED"
+      },
+      "process_counts": {
+        "native_r_interventions": 1,
+        "native_K_normal_gt_interventions": 1,
+        "native_generator_episodes": 47,
+        "generator_model_attempts": 51,
+        "generator_model_responses": 50,
+        "generator_terminal_calls": 83,
+        "verifier_terminal_calls": 19,
+        "sealed_submissions": 2,
+        "actual_content_versions": 3,
+        "recorded_revision_attempts": 2,
+        "actual_gt_runs": 2,
+        "logical_model_dispatches": 105,
+        "submitted_learning_executions": 1,
+        "fresh_author_codex_prepared_instances": 6,
+        "fresh_author_codex_dispatched_provider_instances": 6
+      },
+      "learning_runtime_sha256": "022ab822efe14963b60467748f4afd37a059044590a856854723b256a2112443",
+      "learning_container_id_hashes": [
+        "7dd2b0833d6d7f5687f83f2b36ee0dfcaa3c404f3a19545a81d0fae1cef5941d"
+      ],
+      "stage_errors": [
+        {
+          "stage": "native_evolution",
+          "operation_hash": "2c0bb067088ca174ccd835a1291c7be8a6f1ca26221a34c3c3d4920d9544f08b",
+          "operation_state": "NOT_SENT",
+          "error_type": "InputTokenBudgetExceeded",
+          "error_code": "input_token_budget_exceeded"
+        }
+      ]
+    },
+    {
+      "task_id": "pddl-tpp-planning",
+      "status": "STAGES_FINISHED",
+      "stop_reason": "gt_oracle_pass",
+      "base_hash": "be31dd66435c171225a5a834f6084183d83f969d9e778391f75cab7b7a26f92f",
+      "base_integrity_verified": true,
+      "no_skill": {
+        "status": "MEASURED",
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 1,
+          "total": 2,
+          "rate": 0.5,
+          "unit": "reporter_group"
+        }
+      },
+      "content_versions": [
+        {
+          "version": "S0",
+          "bundle_hash": "083896fdd70c0c3107271020f46ff08aa4312022414ba5e8ddb12a5eaf525b73",
+          "parent_hash": null,
+          "evaluation_response_sha256": "95136978c7dbe32b5c524caa9373d5aee5dd5666b55bb0f6558d994ba4782c58",
+          "status": "MEASURED",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 2,
+            "total": 2,
+            "rate": 1.0,
+            "unit": "reporter_group"
+          }
+        },
+        {
+          "version": "S1",
+          "bundle_hash": "daffdcd276b8e7bb52165839cba65cdecbda9a4271db9db1853abc52582005d2",
+          "parent_hash": "083896fdd70c0c3107271020f46ff08aa4312022414ba5e8ddb12a5eaf525b73",
+          "evaluation_response_sha256": "cd2870a38a9f22ab77d02d04a53556d784b4a35968d5e58e037fff6b236d288b",
+          "status": "MEASURED",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 2,
+            "total": 2,
+            "rate": 1.0,
+            "unit": "reporter_group"
+          }
+        }
+      ],
+      "final_bundle_ref": {
+        "bundle_hash": "daffdcd276b8e7bb52165839cba65cdecbda9a4271db9db1853abc52582005d2",
+        "parent_hash": "083896fdd70c0c3107271020f46ff08aa4312022414ba5e8ddb12a5eaf525b73"
+      },
+      "final_aliases_measured_content": true,
+      "native_result_response_sha256": "6fe41b08b2a675fa0244110258a1c135bc8454e0580cfb3e1ba6140af4223c99",
+      "selection": {
+        "historical_best_bundle_hash": "daffdcd276b8e7bb52165839cba65cdecbda9a4271db9db1853abc52582005d2",
+        "actual_gt_runs": [
+          {
+            "phase": "normal",
+            "bundle_hash": "daffdcd276b8e7bb52165839cba65cdecbda9a4271db9db1853abc52582005d2",
+            "parent_hash": "083896fdd70c0c3107271020f46ff08aa4312022414ba5e8ddb12a5eaf525b73",
+            "official_reward": 1.0,
+            "passed": true,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 2,
+              "total": 2,
+              "rate": 1.0,
+              "unit": "reporter_group"
+            }
+          }
+        ],
+        "rollback_status": null
+      },
+      "process_counts": {
+        "native_r_interventions": 0,
+        "native_K_normal_gt_interventions": 1,
+        "native_generator_episodes": 23,
+        "generator_model_attempts": 26,
+        "generator_model_responses": 26,
+        "generator_terminal_calls": 30,
+        "verifier_terminal_calls": 9,
+        "sealed_submissions": 1,
+        "actual_content_versions": 2,
+        "recorded_revision_attempts": 1,
+        "actual_gt_runs": 1,
+        "logical_model_dispatches": 70,
+        "submitted_learning_executions": 1,
+        "fresh_author_codex_prepared_instances": 4,
+        "fresh_author_codex_dispatched_provider_instances": 4
+      },
+      "learning_runtime_sha256": "c1aa4832c71e961a4ddb458edea48cbd3beac52a6544b9703117ee8a5399c8d9",
+      "learning_container_id_hashes": [
+        "2bd6591c47bbc6af82f4bebdece40614311f2cd0e8e5e3328d0f741366fcdcc3"
+      ],
+      "stage_errors": []
+    }
+  ],
+  "aggregate": {
+    "NoSkill": {
+      "measured_tasks": 5,
+      "passed_tasks": 1,
+      "task_pass_rate": 0.2,
+      "mean_official_reward": 0.3666,
+      "official_reporter_groups_passed": 21,
+      "official_reporter_groups_total": 36
+    },
+    "S0": {
+      "measured_tasks": 5,
+      "passed_tasks": 2,
+      "task_pass_rate": 0.4,
+      "mean_official_reward": 0.4,
+      "official_reporter_groups_passed": 22,
+      "official_reporter_groups_total": 36
+    },
+    "Final": {
+      "measured_tasks": 5,
+      "passed_tasks": 4,
+      "task_pass_rate": 0.8,
+      "mean_official_reward": 0.8,
+      "official_reporter_groups_passed": 31,
+      "official_reporter_groups_total": 36
+    }
+  },
+  "role_thread_review": {
+    "persisted_clients": 44,
+    "roles": {
+      "generator": 10,
+      "analyzer": 5,
+      "verifier": 5,
+      "execution": 24
+    },
+    "actual_models": {
+      "gpt-6.1-sol": 44
+    },
+    "distinct_threads": 44,
+    "public_thread_ids_omitted": true,
+    "fresh_execution_receipts": 24
+  },
+  "lifecycle_review": {
+    "learning_sessions_closed": 5,
+    "learning_owner_container_count": 5,
+    "actual_docker_query_exit_code": 0,
+    "owned_containers_found": 0,
+    "cleanup_call_count": "NOT_OBSERVABLE",
+    "scope": "Exact owner IDs from all five final learning-runtime records checked against the current Docker daemon; no deletion or global prune executed. Fresh execution receipts reviewed, but per-container fresh cleanup telemetry is not available in these records."
+  },
+  "usage": {
+    "status": "MEASURED",
+    "basis": "stable operation_key, fallback observed response_id; completed provider usage only",
+    "roles": {
+      "analyzer": {
+        "responses": 155,
+        "input_tokens": 3619136,
+        "output_tokens": 136670,
+        "cached_input_tokens": 499200
+      },
+      "generator": {
+        "responses": 176,
+        "input_tokens": 9711256,
+        "output_tokens": 238076,
+        "cached_input_tokens": 9001088
+      },
+      "verifier": {
+        "responses": 104,
+        "input_tokens": 3363408,
+        "output_tokens": 115622,
+        "cached_input_tokens": 2927488
+      },
+      "execution": {
+        "responses": 229,
+        "input_tokens": 5764064,
+        "output_tokens": 62913,
+        "cached_input_tokens": 4973056
+      }
+    },
+    "total": {
+      "responses": 664,
+      "input_tokens": 22457864,
+      "output_tokens": 553281,
+      "cached_input_tokens": 17400832
+    },
+    "deduplication_conflicts": 0,
+    "logical_model_request_states": {
+      "NOT_SENT": 1,
+      "RECEIVED_INVALID": 0,
+      "COMPLETED": 664,
+      "UNKNOWN": 0
+    },
+    "http_dispatches": {
+      "status": "NOT_OBSERVABLE",
+      "count": null
+    },
+    "subscription_cost": {
+      "status": "NOT_MEASURED",
+      "amount": null
+    },
+    "unresolved_model_operations_may_be_billed": 0
+  },
+  "interpretation": {
+    "NoSkill_to_S0": "20% to 40% task pass on these five selected tasks; two creation gains, one creation regression, two remain failed.",
+    "S0_to_Final": "40% to 80% task pass; paired official task repairs in 3D and ACC, stable success in Dialogue and PDDL, DAPT remains failed.",
+    "3D": "Evolution restores an already-successful NoSkill baseline. S0 refuses final report without unambiguous unit evidence; S1 adds an explicit conditional convention. Official success does not resolve physical unit correctness.",
+    "ACC": "S0 and S1 fresh checks are 5/12; S2 fresh is 12/12. First public suite passed 69/69 despite fresh official failure; submitted and fresh required artifacts match hashes.",
+    "DAPT": "Independent S0/S1/S2 reporter checks 9/14,9/14,12/14 with reward 0 throughout. Final is eligible historical S1 because S2 never entered selection-stage GT; independent improvement is not used to choose the package. Selection GT and post-final both 11/14 on S1, distinct from its later independent 9/14.",
+    "budget": "One Generator request was rejected locally before dispatch because estimated next occupancy exceeded beta=0.7 with a 32768 context headroom reserve by 612 tokens. The provider hard context window was not exhausted or asked to reject that request. Original post-final completed; no UNKNOWN was waived or replayed.",
+    "suite_comparison": "Different test hashes/versions are not a common denominator; no cross-suite surrogate delta is claimed.",
+    "sampling": "One fresh evaluation per content in a selected five-task benign sample does not establish statistical robustness or full-85 performance."
+  },
+  "limitations": [
+    "Underlying HTTP retries/dispatch count are NOT_OBSERVABLE under app-server transport; one S0 application-level turn per task is verified.",
+    "Shared-task-container Verifier independence is semantic/session based, not physical isolation; generated public checks can miss or misinterpret obligations.",
+    "Reported GT test pass rates count official reporter groups, not necessarily individual internal assertions.",
+    "Final reuses the evaluation of identical selected content; it is not an additional independent replicate.",
+    "Only the current trial is included; preceding diagnostic runs and scripted mechanism fixtures are excluded from capability scores.",
+    "57 opt-in checks from shared offline acceptance remain skipped; these actual five tasks are not proof that every SkillsBench environment is ready."
+  ],
+  "reviewer_correction": {
+    "prior_review_sha256": "f5bd3475eaeccb97733cdecb5fddc6c1df91b8fcdea594fd41b8ea81a0c5acfb",
+    "prior_review_ref": "evidence/public-summary-independent-review-before-numeric-parsing.json",
+    "scope": "The preliminary reviewer compared reward file text directly to its numeric public projection, producing five type-only mismatches. Deterministic finite-number parsing confirms all five records match; no pipeline or source change occurred."
+  }
+}

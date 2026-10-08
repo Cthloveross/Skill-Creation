@@ -1,0 +1,103 @@
+{
+  "status": "PASS",
+  "kind": "tau-author-false-removal-differential",
+  "cases": [
+    {
+      "pattern": 0,
+      "max_revisions": 0,
+      "max_oracles": 0,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 0,
+      "max_revisions": 1,
+      "max_oracles": 1,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 0,
+      "max_revisions": 4,
+      "max_oracles": 5,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 0,
+      "max_revisions": 15,
+      "max_oracles": 5,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 1,
+      "max_revisions": 0,
+      "max_oracles": 0,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 1,
+      "max_revisions": 1,
+      "max_oracles": 1,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 1,
+      "max_revisions": 4,
+      "max_oracles": 5,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 1,
+      "max_revisions": 15,
+      "max_oracles": 5,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 2,
+      "max_revisions": 0,
+      "max_oracles": 0,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 2,
+      "max_revisions": 1,
+      "max_oracles": 1,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 2,
+      "max_revisions": 4,
+      "max_oracles": 5,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 2,
+      "max_revisions": 15,
+      "max_oracles": 5,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 3,
+      "max_revisions": 0,
+      "max_oracles": 0,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 3,
+      "max_revisions": 1,
+      "max_oracles": 1,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 3,
+      "max_revisions": 4,
+      "max_oracles": 5,
+      "status": "MATCH"
+    },
+    {
+      "pattern": 3,
+      "max_revisions": 15,
+      "max_oracles": 5,
+      "status": "MATCH"
+    }
+  ],
+  "model_calls": 0
+}

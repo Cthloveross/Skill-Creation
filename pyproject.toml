@@ -33,7 +33,7 @@ package-dir = {"" = "experiments/tau-knowledge/skill-evolution/src"}
 where = ["experiments/tau-knowledge/skill-evolution/src"]
 
 [tool.setuptools.package-data]
-"tau_skill_evolution.author" = ["LICENSE", "SOURCE.json", "VERIFIER_SOURCE.json", "coevo/**/*.py", "coevo/**/*.txt"]
+"tau_skill_evolution.author" = ["LICENSE", "SOURCE.json", "VERIFIER_SOURCE.json", "coevo/**/*.py", "coevo/**/*.txt", "coevo/**/*.md", "coevo/**/*.html"]
 
 [tool.ruff]
 target-version = "py310"

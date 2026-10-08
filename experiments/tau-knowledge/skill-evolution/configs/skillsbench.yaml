@@ -1,4 +1,4 @@
-schema_version: skillsbench.skill-evolution.v5
+schema_version: skillsbench.skill-evolution.v6
 seed: 20260904
 matrix_commitment: ba9697db76b872fc5153044ac2cb6b5db993214974d6beb4e12344d8078d72e7
 source:

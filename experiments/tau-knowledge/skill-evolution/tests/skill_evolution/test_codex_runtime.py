@@ -157,6 +157,7 @@ def test_timeout_stops_real_cli_process_group_and_keeps_raw_output_private(tmp_p
         agent_timeout_seconds=3000,
         config={"agent": {"timeout_sec": 7200}},
         episode_started=time.monotonic() - 10,
+        phase_remaining=lambda: 6000,
     )
     environment = module._EpisodeEnvironment(runner, tmp_path)
     result = asyncio.run(environment.exec("codex exec --json"))
@@ -175,6 +176,87 @@ def test_environment_rejects_provider_keys_in_task_env(tmp_path: Path) -> None:
     environment = module._EpisodeEnvironment(runner, tmp_path)
     with pytest.raises(ValueError, match="credentials_forbidden"):
         asyncio.run(environment.exec("true", env={"OPENAI_API_KEY": "secret"}))
+
+
+@pytest.mark.parametrize(
+    ("command", "remaining", "requested", "expected"),
+    [
+        ("codex exec --json", 2, None, 2),
+        ("codex exec --json", 6000, None, 2990),
+        ("true", 2, 30, 2),
+        ("true", 6000, 30, 30),
+    ],
+)
+def test_codex_task_command_obeys_absolute_deadline(
+    tmp_path: Path, monkeypatch, command, remaining, requested, expected
+) -> None:
+    pytest.importorskip("harbor")
+    calls = []
+
+    class Transport:
+        def run(self, arguments, **kwargs):
+            calls.append((arguments, kwargs))
+            if "codex exec " in arguments[-1]:
+                return ProcessResult(-9, b"private model output", b"private error", "timeout")
+            return ProcessResult(0)
+
+    monkeypatch.setattr(module.time, "monotonic", lambda: 1010)
+    runner = SimpleNamespace(
+        transport=Transport(),
+        public_open=True,
+        container_name="owned-episode",
+        task_id="example",
+        source=SimpleNamespace(task=lambda _: {"environment": {"workdir": "/app"}}),
+        agent_timeout_seconds=3000,
+        config={"agent": {"timeout_sec": 7200}},
+        episode_started=1000,
+        phase_remaining=lambda: remaining,
+    )
+    environment = module._EpisodeEnvironment(runner, tmp_path)
+    result = asyncio.run(environment.exec(command, timeout_sec=requested))
+    assert calls[0][1]["timeout"] == expected
+    assert all(runner.container_name in arguments for arguments, _ in calls)
+    if command.startswith("codex exec "):
+        assert result.return_code == -9
+        assert environment.last_agent_result.failure == "timeout"
+        assert "private model output" not in json.dumps(environment.executions)
+        assert "kill -TERM" in calls[1][0][-1]
+    else:
+        assert result.return_code == 0
+    environment.cleanup()
+    assert all(kwargs["timeout"] <= 30 for _, kwargs in calls[1:])
+    assert "rm -rf" in calls[-1][0][-1]
+
+
+def test_expired_codex_deadline_blocks_dispatch_but_allows_bounded_cleanup(tmp_path: Path) -> None:
+    pytest.importorskip("harbor")
+    calls = []
+
+    class Transport:
+        def run(self, arguments, **kwargs):
+            calls.append((arguments, kwargs))
+            return ProcessResult(0)
+
+    runner = SimpleNamespace(
+        transport=Transport(),
+        public_open=True,
+        container_name="owned-episode",
+        task_id="example",
+        source=SimpleNamespace(task=lambda _: {"environment": {"workdir": "/app"}}),
+        agent_timeout_seconds=3000,
+        config={"agent": {"timeout_sec": 7200}},
+        episode_started=time.monotonic(),
+        phase_remaining=lambda: 0,
+    )
+    environment = module._EpisodeEnvironment(runner, tmp_path)
+    with pytest.raises(TimeoutError, match="deadline"):
+        asyncio.run(environment.exec("codex exec --json"))
+    assert calls == []
+    assert environment.executions == []
+    environment.cleanup()
+    assert len(calls) == 1
+    assert calls[0][1]["timeout"] == 30
+    assert runner.container_name in calls[0][0]
 
 
 @pytest.mark.parametrize("mount_mode", ["rw", "ro"])
@@ -222,7 +304,7 @@ def test_author_readonly_installation_adaptation_rejects_writable_mount(
                 def read_text(self):
                     return "\n".join(
                         f"1 0 0:0 /fixture {target} {mount_mode},relatime - ext4 fixture rw"
-                        for target in ("/bundle", "/app/environment/skills/current")
+                        for target in ("/bundle", "/app/environment/skills/evo-current")
                     )
 
                 def rglob(self, _pattern):
@@ -443,7 +525,7 @@ def test_real_native_codex_and_unix_relay_with_fake_model(
     image_path = "/root/codex-vision-fixture.png"
     task_command = (
         "import json,os;from pathlib import Path;"
-        "p=Path('/app/environment/skills/current/SKILL.md');"
+        "p=Path('/app/environment/skills/evo-current/SKILL.md');"
         "proof={'skill_available':p.is_file(),"
         f"'task_input':Path({input_path!r}).is_file(),"
         "'private_tests':Path('/tests/test.sh').exists(),"

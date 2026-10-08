@@ -116,13 +116,16 @@ def validate_relative_path(value: str) -> str:
         raise ValueError("package paths must be canonical relative paths")
     if ":" in value or any(ord(char) < 32 for char in value):
         raise ValueError("invalid package path")
-    if value == "SKILL.md":
-        return value
-    if len(path.parts) < 2 or path.parts[0] not in {"scripts", "references"}:
-        raise ValueError("package files must be SKILL.md, scripts/*.py or references/*")
-    if path.parts[0] == "scripts" and path.suffix != ".py":
-        raise ValueError("script files must have a .py extension")
+    if path.parts[0] == "manifest.json":
+        raise ValueError("manifest.json is reserved for host package metadata")
     return value
+
+
+def is_runtime_cache(relative_path: str) -> bool:
+    path = PurePosixPath(relative_path)
+    return ".pytest_cache" in path.parts[:-1] or (
+        "__pycache__" in path.parts[:-1] and path.suffix in {".pyc", ".pyo"}
+    )
 
 
 def decode_package_text(content: bytes, relative_path: str) -> str:

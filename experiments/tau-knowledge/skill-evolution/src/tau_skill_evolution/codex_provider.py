@@ -254,6 +254,9 @@ class ProviderGateway:
         self.relay_path = directory / "relay.py"
         self.provider, self.controls, self.journal = dict(provider), controls, journal
         self.messages_transport = self.provider.get("transport") == "bedrock-messages"
+        self.plan_transport = self.provider.get("transport") == "codex-plan"
+        if self.plan_transport and opener is None:
+            raise ValueError("codex-plan requires its in-process app-server opener")
         self.token_counter, self.timeout_seconds = token_counter, timeout_seconds
         self.request_deadline = request_deadline
         self._opener = opener or urllib.request.urlopen
@@ -280,6 +283,7 @@ class ProviderGateway:
             "closed": False,
             "failure_code": None,
             "authentication_status": None,
+            "underlying_http_posts": "NOT_OBSERVABLE" if self.plan_transport else None,
             "unknown_operation": False,
             "terminal_stop": None,
         }
@@ -495,10 +499,16 @@ class ProviderGateway:
             "streamed": streamed,
             "response": response,
             "provider_transport": (
-                "bedrock-messages" if self.messages_transport else "bedrock-responses"
+                "codex-plan"
+                if self.plan_transport
+                else "bedrock-messages"
+                if self.messages_transport
+                else "bedrock-responses"
             ),
             "response_origin": (
-                "host_messages_to_responses_conversion"
+                "host_app_server_structured_decision"
+                if self.plan_transport
+                else "host_messages_to_responses_conversion"
                 if self.messages_transport
                 else "provider_responses"
             ),
@@ -573,15 +583,17 @@ class ProviderGateway:
 
                 def prepare() -> urllib.request.Request:
                     self._request_timeout()
-                    token = bearer_token_source(self.provider["api_key_env"])()
+                    headers = {"Content-Type": "application/json"}
+                    if not self.plan_transport:
+                        token = bearer_token_source(self.provider["api_key_env"])()
+                        headers["Authorization"] = f"Bearer {token}"
                     return urllib.request.Request(
                         # Codex continues to use Responses only at its local relay.
                         self.provider["api_base"].rstrip("/")
                         + ("/messages" if self.messages_transport else "/responses"),
                         data=encoded,
                         headers={
-                            "Authorization": f"Bearer {token}",
-                            "Content-Type": "application/json",
+                            **headers,
                             **(
                                 {"anthropic-version": "2023-06-01"}
                                 if self.messages_transport

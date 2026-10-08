@@ -376,3 +376,130 @@ def test_workspace_failure_has_no_docker_fallback(infrastructure, monkeypatch):
     assert not result["ready"]
     assert state["requests"] == []
     assert any(item["name"] == "workspace_runtime" and not item["ok"] for item in result["checks"])
+
+
+@pytest.fixture
+def codex_plan_infrastructure(infrastructure, monkeypatch):
+    from tau_skill_evolution import codex_runtime, skillsbench
+
+    spec, state, _ = infrastructure
+    provider = {
+        "transport": "codex-plan",
+        "model": "gpt-6.1-sol",
+        "binary": "/pinned/codex",
+        "version": "0.160.1",
+        "binary_sha256": "a" * 64,
+    }
+    spec.values["provider"] = provider
+    monkeypatch.setattr(ExperimentSpec, "experiment", property(lambda self: "skillsbench"))
+    monkeypatch.setattr(ExperimentSpec, "provider_settings", property(lambda self: provider))
+
+    def identity(settings):
+        assert settings == provider
+        return {
+            "binary": provider["binary"],
+            "codex_version": provider["version"],
+            "binary_sha256": provider["binary_sha256"],
+        }
+
+    original_run = admission.subprocess.run
+
+    def process(command, **kwargs):
+        if command == [provider["binary"], "login", "status"]:
+            state["login_checked"] = True
+            logged_in = state["fault"] != "codex_login"
+            return subprocess.CompletedProcess(
+                command,
+                0 if logged_in else 1,
+                "",
+                "Logged in using ChatGPT" if logged_in else "private login error",
+            )
+        return original_run(command, **kwargs)
+
+    monkeypatch.setattr(codex_runtime, "codex_identity", identity)
+    monkeypatch.setattr(admission.subprocess, "run", process)
+    monkeypatch.setattr(
+        skillsbench,
+        "skillsbench_preflight",
+        lambda *args, **kwargs: {
+            "checks": [{"name": "task_environment", "ok": True, "detail": "offline fixture"}]
+        },
+    )
+
+    def unexpected_credentials(*args):
+        raise AssertionError("Codex subscription admission must not inspect Bedrock credentials")
+
+    monkeypatch.setattr(admission, "describe_credential", unexpected_credentials)
+    monkeypatch.setattr(admission, "bearer_token_source", unexpected_credentials)
+    return spec, state, provider
+
+
+def test_codex_plan_admission_uses_pinned_binary_and_local_login(codex_plan_infrastructure):
+    spec, state, provider = codex_plan_infrastructure
+    result = admission.preflight(spec)
+    checks = {item["name"]: item for item in result["checks"]}
+    assert result["ready"] and result["environment_ready"]
+    assert result["model_access_ready"] is None
+    assert result["s0_http_post_count"] == "NOT_OBSERVABLE"
+    assert state["login_checked"]
+    assert checks["codex_cli"]["detail"]["binary"] == provider["binary"]
+    assert "codex_catalog" not in checks and "bedrock_model" not in checks
+
+
+def test_codex_plan_login_failure_does_not_mislabel_task_environment(codex_plan_infrastructure):
+    spec, state, _ = codex_plan_infrastructure
+    state["fault"] = "codex_login"
+    result = admission.preflight(spec)
+    assert not result["ready"] and result["environment_ready"]
+    check = next(item for item in result["checks"] if item["name"] == "codex_login")
+    assert not check["ok"] and "private login error" not in check["detail"]
+
+
+@pytest.mark.parametrize("failure", [None, "model", "authentication", "rpc"])
+def test_codex_plan_metadata_is_no_inference_sanitized_and_closed(
+    codex_plan_infrastructure, monkeypatch, failure
+):
+    from tau_skill_evolution import codex_plan
+
+    spec, _, provider = codex_plan_infrastructure
+    calls = []
+
+    class Client:
+        def __init__(self, **kwargs):
+            calls.append(("init", kwargs))
+            assert kwargs["model"] == provider["model"]
+            assert kwargs["binary"] == provider["binary"]
+            assert kwargs["role"] == "preflight" and kwargs["timeout_seconds"] == 30
+
+        def metadata(self):
+            calls.append(("metadata", None))
+            if failure == "rpc":
+                raise RuntimeError("codex_plan_rpc_error")
+            return {
+                "models": ["another-model"] if failure == "model" else [provider["model"]],
+                "authentication": "apiKey" if failure == "authentication" else "chatgpt",
+                "used_percent": 37,
+                "email": "never-export@example.invalid",
+                "credential": "never-export",
+            }
+
+        def close(self):
+            calls.append(("close", None))
+
+    monkeypatch.setattr(codex_plan, "CodexPlanClient", Client)
+    result = admission.preflight(spec, authenticate=True)
+    assert [name for name, _ in calls] == ["init", "metadata", "close"]
+    assert result["model_access_ready"] == (failure is None)
+    assert result["environment_ready"]
+    assert "never-export" not in json.dumps(result)
+    if failure is None:
+        check = next(item for item in result["checks"] if item["name"] == "codex_catalog")
+        assert check["detail"] == {
+            "model": provider["model"],
+            "authentication": "chatgpt",
+            "used_percent": 37,
+            "generation_requested": False,
+            "s0_http_post_count": "NOT_OBSERVABLE",
+        }
+    elif failure == "model":
+        assert "does not expose the configured model gpt-6.1-sol" in json.dumps(result)

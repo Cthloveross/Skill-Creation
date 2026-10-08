@@ -310,6 +310,7 @@ class GenerationConfig:
         if not (
             (self.model in RESPONSES_MODELS and self.transport == "bedrock-responses")
             or (self.model == MESSAGES_MODEL and self.transport == "bedrock-messages")
+            or (self.model == "gpt-6.1-sol" and self.transport == "codex-plan")
         ):
             raise ValueError("model and supported Bedrock Mantle transport must match")
         if self.reasoning_effort not in {None, "none", "low", "medium", "high", "xhigh"}:

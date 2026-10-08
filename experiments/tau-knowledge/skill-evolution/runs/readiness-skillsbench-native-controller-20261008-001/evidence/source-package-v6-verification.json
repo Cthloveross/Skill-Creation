@@ -1,0 +1,38 @@
+{
+  "status": "PASS",
+  "scope": "v6 public source package byte and exclusion validation; not model or full-85 environment acceptance",
+  "artifact": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/skillsbench-v6-source.tar.gz",
+  "artifact_sha256": "bd196eedc0cea5d5e1548273b2fcde909ae96fdd2e7991df6635e5c11bee36f3",
+  "artifact_bytes": 2560185,
+  "file_count": 580,
+  "source_manifest_sha256": "2863f853ae528200836d0b3b2f637f0ba91717b40834b3c47fdaa752b5ef01ab",
+  "public_file_manifest_sha256": "e6771145995871a13adf9b459612f404450b70879fd3939753809bd310bd7fdd",
+  "transfer_manifest_sha256": "2cd29ec654c1120aab5166a04d91e7d8a7d7149a46c1eab1ae97975987575df3",
+  "variant_identities": {
+    "full-85-gpt56-v6": {
+      "identity_hash": "7030913755b2d9de018f44815fae99470ff31e76d6e38dbc0ed95b1dc5d90254",
+      "manifest_sha256": "3d71c633be44cb68f8bd0a0b8ead508b54e4781e42a5f7d6ccc64adf2436e1dc",
+      "config_sha256": "820f89b296df8beb35b61fca3351ff0164249fc6d1a81d404c9fd9947736041d",
+      "model": "openai.gpt-5.6-terra",
+      "transport": "bedrock-responses"
+    },
+    "full-85-opus48-v6": {
+      "identity_hash": "04c99c89e393a382609cd137072ba955a2a4020cf53bc9f6e229f2928226c81a",
+      "manifest_sha256": "adbc55e0b9cc9fe3c0dcad5a177d9003f3a1e39e4f0625e89a0859fa51f669fe",
+      "config_sha256": "4a3e6889d00cc64d8f8937ff37ad7a0d31ffd1ed8eea412c3bb4e18fc3f506e4",
+      "model": "anthropic.claude-opus-4-8",
+      "transport": "bedrock-messages"
+    }
+  },
+  "old_artifact_sha256": "2b7d27b3609b4f6fbcc3336f0da972d3d6d6af8cecc13dac4a5c54d39cf41059",
+  "old_transfer_manifest_sha256": "9c97dcfe3b69b653e0e3a9e1863918a5f44e99c25b0a011072a8971eafea5b78",
+  "verification": {
+    "all_members_regular": true,
+    "member_sha256_verified": true,
+    "source_hashes_unchanged_during_export": true,
+    "author_original_byte_hashes_verified": 44,
+    "variant_identity_file_hashes_verified": true,
+    "old_v5_artifact_and_manifest_unchanged": true,
+    "deterministic_tar_and_gzip_metadata": true
+  }
+}

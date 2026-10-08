@@ -1,0 +1,22 @@
+{
+  "ruff": {
+    "exit_code": 0,
+    "elapsed_seconds": 0.04147148132324219,
+    "log_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+  },
+  "format": {
+    "exit_code": 0,
+    "elapsed_seconds": 0.0412747859954834,
+    "log_sha256": "4fb457f8d708601f80732b0b07a7eda367013b32a4255b005cc53e87cf7f70f9"
+  },
+  "compile": {
+    "exit_code": 0,
+    "elapsed_seconds": 0.03741288185119629,
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "diff-check": {
+    "exit_code": 0,
+    "elapsed_seconds": 0.028457164764404297,
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

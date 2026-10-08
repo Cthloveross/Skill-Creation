@@ -197,6 +197,10 @@ class _EpisodeEnvironment:
         budget = self.runner.agent_timeout_seconds or self.runner.config["agent"]["timeout_sec"]
         remaining = budget - (time.monotonic() - self.runner.episode_started)
         timeout = max(0.1, remaining) if is_agent else float(timeout_sec or 30)
+        phase_remaining = self.runner.phase_remaining()
+        if phase_remaining <= 0:
+            raise TimeoutError("skillsbench_execution_deadline_exhausted")
+        timeout = min(timeout, phase_remaining)
         result = self._run(arguments, timeout=timeout, output_limit=_OUTPUT_LIMIT)
         self.executions.append(
             {
@@ -352,7 +356,7 @@ def _agent_classes() -> tuple[type, type]:
                         raise
                     mount_check = (
                         "from pathlib import Path;import hashlib;"
-                        "roots=['/bundle','/app/environment/skills/current'];"
+                        "roots=['/bundle','/app/environment/skills/evo-current'];"
                         "mounts=[line.split() for line in Path('/proc/self/mountinfo').read_text()"
                         ".splitlines()];"
                         "assert all(any(row[4]==root and 'ro' in row[5].split(',') "

@@ -1521,6 +1521,12 @@ class SkillsBenchRunner:
                     "read_only": True,
                 },
                 {"type": "bind", "source": str(session.work), "target": "/work", "read_only": True},
+                {
+                    "type": "bind",
+                    "source": str(session.work / "public-inputs"),
+                    "target": "/app/environment/public-inputs",
+                    "read_only": True,
+                },
                 *[
                     {
                         "type": "bind",
@@ -1528,7 +1534,7 @@ class SkillsBenchRunner:
                         "target": target,
                         "read_only": False,
                     }
-                    for target in ("/work/candidate", "/app/environment/skills/current")
+                    for target in ("/work/candidate", "/app/environment/skills/evo-current")
                 ],
                 {
                     "type": "bind",
@@ -1554,7 +1560,7 @@ class SkillsBenchRunner:
                         "target": target,
                         "read_only": True,
                     }
-                    for target in ("/bundle", "/app/environment/skills/current")
+                    for target in ("/bundle", "/app/environment/skills/evo-current")
                 ]
             if self.provider_directory is None:
                 raise ContainerUnavailable("codex_provider_not_started")
@@ -1610,7 +1616,7 @@ class SkillsBenchRunner:
         self.episode_started = time.monotonic()
         self._guard_public_episode(episode)
         skill_boundary = (
-            "test -f /app/environment/skills/current/SKILL.md"
+            "test -f /app/environment/skills/evo-current/SKILL.md"
             if self.learning_workspace is not None
             or (self.execution_framework == "author-codex" and self.codex_skill_mode)
             else "test ! -e /app/environment/skills"
@@ -1648,6 +1654,70 @@ class SkillsBenchRunner:
             path = directory / name
             path.write_text(document["content"], encoding="utf-8")
             path.chmod(0o444)
+
+    def _prepare_public_input_baseline(self, work: Path) -> None:
+        """Preserve only the current task's declared public originals for verification."""
+        from .container import _tree_manifest
+
+        directory = work / "public-inputs"
+        entries = self.source.task(self.task_id)["public_input_manifest"]
+        expected, files = [], {}
+        for entry in entries:
+            relative = _safe_path(entry["relative_path"])
+            source = self.task_directory / relative
+            if (
+                relative.parts[0] != "environment"
+                or _private_path(relative.as_posix())
+                or source.is_symlink()
+                or not source.resolve().is_relative_to(self.task_directory.resolve())
+                or not source.is_file()
+                or _hash(source) != entry["sha256"]
+            ):
+                raise ContainerUnavailable("skillsbench_public_input_baseline_source_changed")
+            name = "files/" + relative.as_posix()
+            if name in files:
+                raise ContainerUnavailable("skillsbench_public_input_baseline_duplicate")
+            files[name] = entry["sha256"]
+            expected.append({**entry, "baseline_path": "/work/public-inputs/" + name})
+        manifest = {
+            "schema": "skillsbench.public-input-baseline.v1",
+            "task_id": self.task_id,
+            "files": expected,
+        }
+        files.update(
+            (parent.as_posix() + "/", "directory")
+            for name in tuple(files)
+            for parent in Path(name).parents
+            if parent != Path(".")
+        )
+        if not directory.exists():
+            staging = Path(tempfile.mkdtemp(prefix=".public-inputs-", dir=work))
+            try:
+                staging.chmod(0o755)
+                for entry in expected:
+                    target = staging / "files" / entry["relative_path"]
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(self.task_directory / entry["relative_path"], target)
+                    if _hash(target) != entry["sha256"]:
+                        raise ContainerUnavailable("skillsbench_public_input_baseline_copy_changed")
+                    target.chmod(0o444)
+                atomic_json(staging / "manifest.json", manifest)
+                (staging / "manifest.json").chmod(0o444)
+                os.replace(staging, directory)
+            finally:
+                if staging.exists():
+                    shutil.rmtree(staging)
+        try:
+            valid = (
+                not directory.is_symlink()
+                and json.loads((directory / "manifest.json").read_text()) == manifest
+                and _tree_manifest(directory)
+                == {**files, "manifest.json": _hash(directory / "manifest.json")}
+            )
+        except (OSError, ValueError):
+            valid = False
+        if not valid:
+            raise ContainerUnavailable("skillsbench_public_input_baseline_changed")
 
     def stage_frozen_documents(self, base: Mapping[str, Any]) -> None:
         """Check the frozen host bytes mounted at the author's public doc path."""
@@ -2107,6 +2177,7 @@ class SkillsBenchRunner:
             }
             atomic_json(checkpoint, state)
         self.learning_workspace = session
+        self._prepare_public_input_baseline(session.work)
         self.learning_deadline = state.get("learning_deadline")
         if not isinstance(self.learning_deadline, (int, float)):
             raise ContainerUnavailable("skillsbench_learning_deadline_missing")

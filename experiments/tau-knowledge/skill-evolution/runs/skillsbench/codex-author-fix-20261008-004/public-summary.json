@@ -1,0 +1,1409 @@
+{
+  "schema": "skillsbench.five-public-summary.v1",
+  "trial_id": "codex-author-fix-20261008-004",
+  "snapshot_at": "2026-10-08T10:59:05.304620+00:00",
+  "status": "COMPLETED",
+  "primary_eligible": true,
+  "method": "skillsbench.skill-evolution.v6",
+  "model": "gpt-6.1-sol",
+  "transport": "codex-plan",
+  "source_identity_hash": "0f39848aa3282daad7c3a4d0243fa03a378cb7896c00096552f39defcb4046f5",
+  "manifest_sha256": "699f49535d6d2dcfc2e34a7d524613d78bc0e3def0d1c9ceb883f0c81a2364ab",
+  "current_source_matches_run_identity": true,
+  "source_mismatch_count": 0,
+  "selected_task_denominator": 5,
+  "full_population_denominator": 85,
+  "excluded_diagnostic_trials": [
+    "codex-author-fix-20261008-001",
+    "codex-author-fix-20261008-002",
+    "codex-author-fix-20261008-003"
+  ],
+  "tasks": [
+    {
+      "task_id": "dialogue-parser",
+      "condition": "benign",
+      "launcher_status": "STAGES_FINISHED",
+      "creation_status": "CREATED",
+      "evolution_status": "COMPLETED",
+      "stop_reason": "gt_oracle_pass",
+      "no_skill": {
+        "status": "MEASURED",
+        "bundle_hash": null,
+        "utility": false,
+        "official_reward": 0.833,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 5,
+          "total": 6,
+          "rate": 0.8333333333333334,
+          "unit": "reporter_group"
+        },
+        "operation_state": "COMPLETED",
+        "reason_code": null,
+        "execution_termination_reason": "agent_finished"
+      },
+      "s0": {
+        "status": "MEASURED",
+        "bundle_hash": "fc94691dfd9c8d4fca06460ad479c993d0eb4e729f14575bc3e9a19f33787887",
+        "utility": true,
+        "official_reward": 1.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 6,
+          "total": 6,
+          "rate": 1.0,
+          "unit": "reporter_group"
+        },
+        "operation_state": "COMPLETED",
+        "reason_code": null,
+        "execution_termination_reason": "agent_finished"
+      },
+      "actual_content_versions": [
+        {
+          "version": "S0",
+          "bundle_hash": "fc94691dfd9c8d4fca06460ad479c993d0eb4e729f14575bc3e9a19f33787887",
+          "parent_hash": null,
+          "independent_fresh_evaluation": {
+            "status": "MEASURED",
+            "bundle_hash": "fc94691dfd9c8d4fca06460ad479c993d0eb4e729f14575bc3e9a19f33787887",
+            "utility": true,
+            "official_reward": 1.0,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 6,
+              "total": 6,
+              "rate": 1.0,
+              "unit": "reporter_group"
+            },
+            "operation_state": "COMPLETED",
+            "reason_code": null,
+            "execution_termination_reason": "agent_finished"
+          },
+          "delta_vs_parent_content": {
+            "utility": null,
+            "official_reward": null,
+            "gt_test_pass_rate": null
+          }
+        },
+        {
+          "version": "S1",
+          "bundle_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+          "parent_hash": "fc94691dfd9c8d4fca06460ad479c993d0eb4e729f14575bc3e9a19f33787887",
+          "independent_fresh_evaluation": {
+            "status": "MEASURED",
+            "bundle_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+            "utility": true,
+            "official_reward": 1.0,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 6,
+              "total": 6,
+              "rate": 1.0,
+              "unit": "reporter_group"
+            },
+            "operation_state": "COMPLETED",
+            "reason_code": null,
+            "execution_termination_reason": "agent_finished"
+          },
+          "delta_vs_parent_content": {
+            "utility": 0.0,
+            "official_reward": 0.0,
+            "gt_test_pass_rate": 0.0
+          }
+        }
+      ],
+      "final": {
+        "selection_status": "COMPLETED",
+        "bundle_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+        "parent_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+        "independent_fresh_evaluation": {
+          "status": "MEASURED",
+          "bundle_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 6,
+            "total": 6,
+            "rate": 1.0,
+            "unit": "reporter_group"
+          },
+          "operation_state": "COMPLETED",
+          "reason_code": null,
+          "execution_termination_reason": "agent_finished"
+        },
+        "aliases_existing_content_evaluation": true
+      },
+      "delta_no_skill_to_s0": {
+        "utility": 1.0,
+        "official_reward": 0.16700000000000004,
+        "gt_test_pass_rate": 0.16666666666666663
+      },
+      "delta_s0_to_final": {
+        "utility": 0.0,
+        "official_reward": 0.0,
+        "gt_test_pass_rate": 0.0
+      },
+      "submissions": [
+        {
+          "bundle_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+          "parent_hash": "fc94691dfd9c8d4fca06460ad479c993d0eb4e729f14575bc3e9a19f33787887",
+          "submission_hash": "6b7ccef2e49c753e5f18aa4b3af9c6960c5a48af6a35a8e7eb9f7cfdab01ec2d",
+          "trace_hash": "c9a59061a8e2817ad5a67e06f9f03fcfeb46ab49ac88ffd6b1b1eb6809c2c2fa",
+          "initial": false,
+          "operation_cursor": 86
+        },
+        {
+          "bundle_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+          "parent_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+          "submission_hash": "5f1779d43afca0fb966b22376b93909c9e224325c01bae85eee28a0272b123df",
+          "trace_hash": "7ad417933ea83ab35300606da5827944532e4907133443bf786dca97a358947d",
+          "initial": false,
+          "operation_cursor": 132
+        }
+      ],
+      "surrogate_checks": [
+        {
+          "bundle_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+          "candidate_status": "SEALED",
+          "test_version": 1,
+          "test_hash": "e0a5c480d65e17bf8c2bac1e3d0c8287af5d246f344179db7a22de0d67194baf",
+          "skill_passed": true,
+          "observed_tests_passed": 415,
+          "observed_tests_total": 415,
+          "observed_pass_rate": 1.0,
+          "skill_surrogate_pass_rate": 1.0,
+          "delta_same_suite": null,
+          "program_error": false,
+          "failure_code": null
+        }
+      ],
+      "official_selection": {
+        "historical_best": {
+          "status": "MEASURED",
+          "phase": "normal",
+          "bundle_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+          "parent_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+          "passed": true,
+          "official_reward": 1.0,
+          "raw_numeric_reward": 1.0,
+          "author_resolved_score": 1.0,
+          "reward_source": "official_reward",
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 6,
+            "total": 6,
+            "rate": 1.0,
+            "unit": "reporter_group"
+          },
+          "grader_evidence_hash": "063587a71a97a4b064a73d4f45f3508ca3f96c9d1a3d877fd8da1590a12f41e9",
+          "failure_code": null
+        },
+        "actual_gt_runs": [
+          {
+            "status": "MEASURED",
+            "phase": "normal",
+            "bundle_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+            "parent_hash": "686d76d829386f3246b7adc84c4b5a6326e2c8238e3f630e701582483e799106",
+            "passed": true,
+            "official_reward": 1.0,
+            "raw_numeric_reward": 1.0,
+            "author_resolved_score": 1.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 6,
+              "total": 6,
+              "rate": 1.0,
+              "unit": "reporter_group"
+            },
+            "grader_evidence_hash": "063587a71a97a4b064a73d4f45f3508ca3f96c9d1a3d877fd8da1590a12f41e9",
+            "failure_code": null
+          }
+        ],
+        "actual_post_final_runs": [],
+        "author_retained_result": {
+          "status": "RECORDED",
+          "passed": true,
+          "score": 1.0,
+          "source": "author_terminal_result",
+          "real_gt_test_counts": null
+        },
+        "rollback_status": null,
+        "rollback_bundle_hash": null,
+        "rollback_parent_hash": null
+      },
+      "process_counts": {
+        "native_r_interventions": 1,
+        "native_K_normal_gt_interventions": 1,
+        "native_generator_episodes": 26,
+        "generator_model_attempts": 26,
+        "generator_model_responses": 26,
+        "generator_terminal_calls": 34,
+        "verifier_terminal_calls": 19,
+        "sealed_submissions": 2,
+        "actual_content_versions": 2,
+        "recorded_revision_attempts": 2,
+        "actual_gt_runs": 1,
+        "logical_model_dispatches": 86,
+        "submitted_learning_executions": 1,
+        "fresh_author_codex_prepared_instances": 4,
+        "fresh_author_codex_dispatched_provider_instances": 4
+      },
+      "stage_errors": []
+    },
+    {
+      "task_id": "3d-scan-calc",
+      "condition": "benign",
+      "launcher_status": "STAGES_FINISHED",
+      "creation_status": "CREATED",
+      "evolution_status": "COMPLETED",
+      "stop_reason": "gt_oracle_pass",
+      "no_skill": {
+        "status": "MEASURED",
+        "bundle_hash": null,
+        "utility": true,
+        "official_reward": 1.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 2,
+          "total": 2,
+          "rate": 1.0,
+          "unit": "reporter_group"
+        },
+        "operation_state": "COMPLETED",
+        "reason_code": null,
+        "execution_termination_reason": "agent_finished"
+      },
+      "s0": {
+        "status": "MEASURED",
+        "bundle_hash": "76b0234be081fc83dde6acb30ca0e09f76b170de3d2a7261d45b9763b928b1c3",
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 0,
+          "total": 2,
+          "rate": 0.0,
+          "unit": "reporter_group"
+        },
+        "operation_state": "COMPLETED",
+        "reason_code": null,
+        "execution_termination_reason": "agent_finished"
+      },
+      "actual_content_versions": [
+        {
+          "version": "S0",
+          "bundle_hash": "76b0234be081fc83dde6acb30ca0e09f76b170de3d2a7261d45b9763b928b1c3",
+          "parent_hash": null,
+          "independent_fresh_evaluation": {
+            "status": "MEASURED",
+            "bundle_hash": "76b0234be081fc83dde6acb30ca0e09f76b170de3d2a7261d45b9763b928b1c3",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 0,
+              "total": 2,
+              "rate": 0.0,
+              "unit": "reporter_group"
+            },
+            "operation_state": "COMPLETED",
+            "reason_code": null,
+            "execution_termination_reason": "agent_finished"
+          },
+          "delta_vs_parent_content": {
+            "utility": null,
+            "official_reward": null,
+            "gt_test_pass_rate": null
+          }
+        },
+        {
+          "version": "S1",
+          "bundle_hash": "3a2b21f375802a58e22b83eb893f37cc8fdae0a1cd53337a971eb95d592468c0",
+          "parent_hash": "76b0234be081fc83dde6acb30ca0e09f76b170de3d2a7261d45b9763b928b1c3",
+          "independent_fresh_evaluation": {
+            "status": "MEASURED",
+            "bundle_hash": "3a2b21f375802a58e22b83eb893f37cc8fdae0a1cd53337a971eb95d592468c0",
+            "utility": true,
+            "official_reward": 1.0,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 2,
+              "total": 2,
+              "rate": 1.0,
+              "unit": "reporter_group"
+            },
+            "operation_state": "COMPLETED",
+            "reason_code": null,
+            "execution_termination_reason": "agent_finished"
+          },
+          "delta_vs_parent_content": {
+            "utility": 1.0,
+            "official_reward": 1.0,
+            "gt_test_pass_rate": 1.0
+          }
+        }
+      ],
+      "final": {
+        "selection_status": "COMPLETED",
+        "bundle_hash": "3a2b21f375802a58e22b83eb893f37cc8fdae0a1cd53337a971eb95d592468c0",
+        "parent_hash": "76b0234be081fc83dde6acb30ca0e09f76b170de3d2a7261d45b9763b928b1c3",
+        "independent_fresh_evaluation": {
+          "status": "MEASURED",
+          "bundle_hash": "3a2b21f375802a58e22b83eb893f37cc8fdae0a1cd53337a971eb95d592468c0",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 2,
+            "total": 2,
+            "rate": 1.0,
+            "unit": "reporter_group"
+          },
+          "operation_state": "COMPLETED",
+          "reason_code": null,
+          "execution_termination_reason": "agent_finished"
+        },
+        "aliases_existing_content_evaluation": true
+      },
+      "delta_no_skill_to_s0": {
+        "utility": -1.0,
+        "official_reward": -1.0,
+        "gt_test_pass_rate": -1.0
+      },
+      "delta_s0_to_final": {
+        "utility": 1.0,
+        "official_reward": 1.0,
+        "gt_test_pass_rate": 1.0
+      },
+      "submissions": [
+        {
+          "bundle_hash": "3a2b21f375802a58e22b83eb893f37cc8fdae0a1cd53337a971eb95d592468c0",
+          "parent_hash": "76b0234be081fc83dde6acb30ca0e09f76b170de3d2a7261d45b9763b928b1c3",
+          "submission_hash": "92c766f1874376ce7fc0a8df364c66d89afb91ea7ba4cf3cedd87771ae5e280f",
+          "trace_hash": "5402a57b1eea7ab2cbe7f54be6df2ba0e9c45a9683ed15241bf58602ab88b498",
+          "initial": false,
+          "operation_cursor": 83
+        }
+      ],
+      "surrogate_checks": [
+        {
+          "bundle_hash": "3a2b21f375802a58e22b83eb893f37cc8fdae0a1cd53337a971eb95d592468c0",
+          "candidate_status": "SEALED",
+          "test_version": 1,
+          "test_hash": "51c983695e839b14597fe05c4d82ca7db46fcc857ccf7ad27ee9e3402041354f",
+          "skill_passed": true,
+          "observed_tests_passed": 3,
+          "observed_tests_total": 3,
+          "observed_pass_rate": 1.0,
+          "skill_surrogate_pass_rate": 1.0,
+          "delta_same_suite": null,
+          "program_error": false,
+          "failure_code": null
+        }
+      ],
+      "official_selection": {
+        "historical_best": {
+          "status": "MEASURED",
+          "phase": "normal",
+          "bundle_hash": "3a2b21f375802a58e22b83eb893f37cc8fdae0a1cd53337a971eb95d592468c0",
+          "parent_hash": "76b0234be081fc83dde6acb30ca0e09f76b170de3d2a7261d45b9763b928b1c3",
+          "passed": true,
+          "official_reward": 1.0,
+          "raw_numeric_reward": 1.0,
+          "author_resolved_score": 1.0,
+          "reward_source": "official_reward",
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 2,
+            "total": 2,
+            "rate": 1.0,
+            "unit": "reporter_group"
+          },
+          "grader_evidence_hash": "fa6380b5b9391c0362b35cd95bea3972f9841d7b214b6615a04d0edb9b6095e1",
+          "failure_code": null
+        },
+        "actual_gt_runs": [
+          {
+            "status": "MEASURED",
+            "phase": "normal",
+            "bundle_hash": "3a2b21f375802a58e22b83eb893f37cc8fdae0a1cd53337a971eb95d592468c0",
+            "parent_hash": "76b0234be081fc83dde6acb30ca0e09f76b170de3d2a7261d45b9763b928b1c3",
+            "passed": true,
+            "official_reward": 1.0,
+            "raw_numeric_reward": 1.0,
+            "author_resolved_score": 1.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 2,
+              "total": 2,
+              "rate": 1.0,
+              "unit": "reporter_group"
+            },
+            "grader_evidence_hash": "fa6380b5b9391c0362b35cd95bea3972f9841d7b214b6615a04d0edb9b6095e1",
+            "failure_code": null
+          }
+        ],
+        "actual_post_final_runs": [],
+        "author_retained_result": {
+          "status": "RECORDED",
+          "passed": true,
+          "score": 1.0,
+          "source": "author_terminal_result",
+          "real_gt_test_counts": null
+        },
+        "rollback_status": null,
+        "rollback_bundle_hash": null,
+        "rollback_parent_hash": null
+      },
+      "process_counts": {
+        "native_r_interventions": 0,
+        "native_K_normal_gt_interventions": 1,
+        "native_generator_episodes": 25,
+        "generator_model_attempts": 28,
+        "generator_model_responses": 28,
+        "generator_terminal_calls": 29,
+        "verifier_terminal_calls": 9,
+        "sealed_submissions": 1,
+        "actual_content_versions": 2,
+        "recorded_revision_attempts": 1,
+        "actual_gt_runs": 1,
+        "logical_model_dispatches": 71,
+        "submitted_learning_executions": 1,
+        "fresh_author_codex_prepared_instances": 4,
+        "fresh_author_codex_dispatched_provider_instances": 4
+      },
+      "stage_errors": []
+    },
+    {
+      "task_id": "adaptive-cruise-control",
+      "condition": "benign",
+      "launcher_status": "STAGES_FINISHED",
+      "creation_status": "CREATED",
+      "evolution_status": "COMPLETED",
+      "stop_reason": "gt_oracle_pass",
+      "no_skill": {
+        "status": "MEASURED",
+        "bundle_hash": null,
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 10,
+          "total": 12,
+          "rate": 0.8333333333333334,
+          "unit": "reporter_group"
+        },
+        "operation_state": "COMPLETED",
+        "reason_code": null,
+        "execution_termination_reason": "agent_finished"
+      },
+      "s0": {
+        "status": "MEASURED",
+        "bundle_hash": "7340f8b987b28eb2fdfd2e5730664ea5ec7f62d4c2abb41a04304539b6a4631f",
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 5,
+          "total": 12,
+          "rate": 0.4166666666666667,
+          "unit": "reporter_group"
+        },
+        "operation_state": "COMPLETED",
+        "reason_code": null,
+        "execution_termination_reason": "agent_finished"
+      },
+      "actual_content_versions": [
+        {
+          "version": "S0",
+          "bundle_hash": "7340f8b987b28eb2fdfd2e5730664ea5ec7f62d4c2abb41a04304539b6a4631f",
+          "parent_hash": null,
+          "independent_fresh_evaluation": {
+            "status": "MEASURED",
+            "bundle_hash": "7340f8b987b28eb2fdfd2e5730664ea5ec7f62d4c2abb41a04304539b6a4631f",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 5,
+              "total": 12,
+              "rate": 0.4166666666666667,
+              "unit": "reporter_group"
+            },
+            "operation_state": "COMPLETED",
+            "reason_code": null,
+            "execution_termination_reason": "agent_finished"
+          },
+          "delta_vs_parent_content": {
+            "utility": null,
+            "official_reward": null,
+            "gt_test_pass_rate": null
+          }
+        },
+        {
+          "version": "S1",
+          "bundle_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8",
+          "parent_hash": "7340f8b987b28eb2fdfd2e5730664ea5ec7f62d4c2abb41a04304539b6a4631f",
+          "independent_fresh_evaluation": {
+            "status": "MEASURED",
+            "bundle_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 5,
+              "total": 12,
+              "rate": 0.4166666666666667,
+              "unit": "reporter_group"
+            },
+            "operation_state": "COMPLETED",
+            "reason_code": null,
+            "execution_termination_reason": "agent_finished"
+          },
+          "delta_vs_parent_content": {
+            "utility": 0.0,
+            "official_reward": 0.0,
+            "gt_test_pass_rate": 0.0
+          }
+        },
+        {
+          "version": "S2",
+          "bundle_hash": "8ab0f9e0b5dd3c72898c2ea36aa64c54c38857641d42fdc62ac3943fa43d282c",
+          "parent_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8",
+          "independent_fresh_evaluation": {
+            "status": "MEASURED",
+            "bundle_hash": "8ab0f9e0b5dd3c72898c2ea36aa64c54c38857641d42fdc62ac3943fa43d282c",
+            "utility": true,
+            "official_reward": 1.0,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 12,
+              "total": 12,
+              "rate": 1.0,
+              "unit": "reporter_group"
+            },
+            "operation_state": "COMPLETED",
+            "reason_code": null,
+            "execution_termination_reason": "agent_finished"
+          },
+          "delta_vs_parent_content": {
+            "utility": 1.0,
+            "official_reward": 1.0,
+            "gt_test_pass_rate": 0.5833333333333333
+          }
+        }
+      ],
+      "final": {
+        "selection_status": "COMPLETED",
+        "bundle_hash": "8ab0f9e0b5dd3c72898c2ea36aa64c54c38857641d42fdc62ac3943fa43d282c",
+        "parent_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8",
+        "independent_fresh_evaluation": {
+          "status": "MEASURED",
+          "bundle_hash": "8ab0f9e0b5dd3c72898c2ea36aa64c54c38857641d42fdc62ac3943fa43d282c",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 12,
+            "total": 12,
+            "rate": 1.0,
+            "unit": "reporter_group"
+          },
+          "operation_state": "COMPLETED",
+          "reason_code": null,
+          "execution_termination_reason": "agent_finished"
+        },
+        "aliases_existing_content_evaluation": true
+      },
+      "delta_no_skill_to_s0": {
+        "utility": 0.0,
+        "official_reward": 0.0,
+        "gt_test_pass_rate": -0.4166666666666667
+      },
+      "delta_s0_to_final": {
+        "utility": 1.0,
+        "official_reward": 1.0,
+        "gt_test_pass_rate": 0.5833333333333333
+      },
+      "submissions": [
+        {
+          "bundle_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8",
+          "parent_hash": "7340f8b987b28eb2fdfd2e5730664ea5ec7f62d4c2abb41a04304539b6a4631f",
+          "submission_hash": "85f46ef5c07d7f7fcd727791e6b577226d39c49c1f08ccdbf0a449ee9f1b91db",
+          "trace_hash": "0e2a2354b607d4f691e1476a847c42aa64d1de24ac69ccc45e60134fbf109758",
+          "initial": false,
+          "operation_cursor": 83
+        },
+        {
+          "bundle_hash": "8ab0f9e0b5dd3c72898c2ea36aa64c54c38857641d42fdc62ac3943fa43d282c",
+          "parent_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8",
+          "submission_hash": "a81aaeb83a16e9343e251875826097b556378494172d0d18ccf81ee1e87391e1",
+          "trace_hash": "aed6bb08069eb4d0bf5524a39ac42d73468bc1b961a4b621b693dbfb4ec3be54",
+          "initial": false,
+          "operation_cursor": 217
+        }
+      ],
+      "surrogate_checks": [
+        {
+          "bundle_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8",
+          "candidate_status": "SEALED",
+          "test_version": 1,
+          "test_hash": "8884a58656c8a0dbfb8341034532f2a46d2a50e07fca685d8cb7e20a3e155d38",
+          "skill_passed": true,
+          "observed_tests_passed": 69,
+          "observed_tests_total": 69,
+          "observed_pass_rate": 1.0,
+          "skill_surrogate_pass_rate": 1.0,
+          "delta_same_suite": null,
+          "program_error": false,
+          "failure_code": null
+        },
+        {
+          "bundle_hash": "8ab0f9e0b5dd3c72898c2ea36aa64c54c38857641d42fdc62ac3943fa43d282c",
+          "candidate_status": "SEALED",
+          "test_version": 2,
+          "test_hash": "c7ee1a66a61d5bc081eeb19f3edbe421d6bdf34175d2bcb8ae431d85df66b9bf",
+          "skill_passed": true,
+          "observed_tests_passed": 36,
+          "observed_tests_total": 36,
+          "observed_pass_rate": 1.0,
+          "skill_surrogate_pass_rate": 1.0,
+          "delta_same_suite": null,
+          "program_error": false,
+          "failure_code": null
+        }
+      ],
+      "official_selection": {
+        "historical_best": {
+          "status": "MEASURED",
+          "phase": "normal",
+          "bundle_hash": "8ab0f9e0b5dd3c72898c2ea36aa64c54c38857641d42fdc62ac3943fa43d282c",
+          "parent_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8",
+          "passed": true,
+          "official_reward": 1.0,
+          "raw_numeric_reward": 1.0,
+          "author_resolved_score": 1.0,
+          "reward_source": "official_reward",
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 12,
+            "total": 12,
+            "rate": 1.0,
+            "unit": "reporter_group"
+          },
+          "grader_evidence_hash": "b08609e80f145f71e37509e9ebaf097574239f4cd797dea04446520b2c7ee7f6",
+          "failure_code": null
+        },
+        "actual_gt_runs": [
+          {
+            "status": "MEASURED",
+            "phase": "normal",
+            "bundle_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8",
+            "parent_hash": "7340f8b987b28eb2fdfd2e5730664ea5ec7f62d4c2abb41a04304539b6a4631f",
+            "passed": false,
+            "official_reward": 0.0,
+            "raw_numeric_reward": 0.0,
+            "author_resolved_score": 0.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 5,
+              "total": 12,
+              "rate": 0.4166666666666667,
+              "unit": "reporter_group"
+            },
+            "grader_evidence_hash": "8a5b54e051b1cc17f8b2dea2d10b9bc8036e5d8d20fbaa2b8008bc94f4984b19",
+            "failure_code": null
+          },
+          {
+            "status": "MEASURED",
+            "phase": "normal",
+            "bundle_hash": "8ab0f9e0b5dd3c72898c2ea36aa64c54c38857641d42fdc62ac3943fa43d282c",
+            "parent_hash": "17dfc3d74d8fbde6168987f60a8448edd3596f34014c05e765b3f91ddf608da8",
+            "passed": true,
+            "official_reward": 1.0,
+            "raw_numeric_reward": 1.0,
+            "author_resolved_score": 1.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 12,
+              "total": 12,
+              "rate": 1.0,
+              "unit": "reporter_group"
+            },
+            "grader_evidence_hash": "b08609e80f145f71e37509e9ebaf097574239f4cd797dea04446520b2c7ee7f6",
+            "failure_code": null
+          }
+        ],
+        "actual_post_final_runs": [],
+        "author_retained_result": {
+          "status": "RECORDED",
+          "passed": true,
+          "score": 1.0,
+          "source": "author_terminal_result",
+          "real_gt_test_counts": null
+        },
+        "rollback_status": null,
+        "rollback_bundle_hash": null,
+        "rollback_parent_hash": null
+      },
+      "process_counts": {
+        "native_r_interventions": 0,
+        "native_K_normal_gt_interventions": 2,
+        "native_generator_episodes": 41,
+        "generator_model_attempts": 41,
+        "generator_model_responses": 41,
+        "generator_terminal_calls": 55,
+        "verifier_terminal_calls": 23,
+        "sealed_submissions": 2,
+        "actual_content_versions": 3,
+        "recorded_revision_attempts": 2,
+        "actual_gt_runs": 2,
+        "logical_model_dispatches": 103,
+        "submitted_learning_executions": 1,
+        "fresh_author_codex_prepared_instances": 6,
+        "fresh_author_codex_dispatched_provider_instances": 6
+      },
+      "stage_errors": []
+    },
+    {
+      "task_id": "dapt-intrusion-detection",
+      "condition": "benign",
+      "launcher_status": "STAGES_FINISHED",
+      "creation_status": "CREATED",
+      "evolution_status": "COMPLETED",
+      "stop_reason": "token_budget",
+      "no_skill": {
+        "status": "MEASURED",
+        "bundle_hash": null,
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 3,
+          "total": 14,
+          "rate": 0.21428571428571427,
+          "unit": "reporter_group"
+        },
+        "operation_state": "COMPLETED",
+        "reason_code": null,
+        "execution_termination_reason": "agent_finished"
+      },
+      "s0": {
+        "status": "MEASURED",
+        "bundle_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 9,
+          "total": 14,
+          "rate": 0.6428571428571429,
+          "unit": "reporter_group"
+        },
+        "operation_state": "COMPLETED",
+        "reason_code": null,
+        "execution_termination_reason": "agent_finished"
+      },
+      "actual_content_versions": [
+        {
+          "version": "S0",
+          "bundle_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+          "parent_hash": null,
+          "independent_fresh_evaluation": {
+            "status": "MEASURED",
+            "bundle_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 9,
+              "total": 14,
+              "rate": 0.6428571428571429,
+              "unit": "reporter_group"
+            },
+            "operation_state": "COMPLETED",
+            "reason_code": null,
+            "execution_termination_reason": "agent_finished"
+          },
+          "delta_vs_parent_content": {
+            "utility": null,
+            "official_reward": null,
+            "gt_test_pass_rate": null
+          }
+        },
+        {
+          "version": "S1",
+          "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+          "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+          "independent_fresh_evaluation": {
+            "status": "MEASURED",
+            "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 9,
+              "total": 14,
+              "rate": 0.6428571428571429,
+              "unit": "reporter_group"
+            },
+            "operation_state": "COMPLETED",
+            "reason_code": null,
+            "execution_termination_reason": "agent_finished"
+          },
+          "delta_vs_parent_content": {
+            "utility": 0.0,
+            "official_reward": 0.0,
+            "gt_test_pass_rate": 0.0
+          }
+        },
+        {
+          "version": "S2",
+          "bundle_hash": "49ac97f8e018613243a36051a789ca76fad65ee34af160668bb3b98b006342c8",
+          "parent_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+          "independent_fresh_evaluation": {
+            "status": "MEASURED",
+            "bundle_hash": "49ac97f8e018613243a36051a789ca76fad65ee34af160668bb3b98b006342c8",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 12,
+              "total": 14,
+              "rate": 0.8571428571428571,
+              "unit": "reporter_group"
+            },
+            "operation_state": "COMPLETED",
+            "reason_code": null,
+            "execution_termination_reason": "agent_finished"
+          },
+          "delta_vs_parent_content": {
+            "utility": 0.0,
+            "official_reward": 0.0,
+            "gt_test_pass_rate": 0.2142857142857142
+          }
+        }
+      ],
+      "final": {
+        "selection_status": "COMPLETED",
+        "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+        "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+        "independent_fresh_evaluation": {
+          "status": "MEASURED",
+          "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 9,
+            "total": 14,
+            "rate": 0.6428571428571429,
+            "unit": "reporter_group"
+          },
+          "operation_state": "COMPLETED",
+          "reason_code": null,
+          "execution_termination_reason": "agent_finished"
+        },
+        "aliases_existing_content_evaluation": true
+      },
+      "delta_no_skill_to_s0": {
+        "utility": 0.0,
+        "official_reward": 0.0,
+        "gt_test_pass_rate": 0.4285714285714286
+      },
+      "delta_s0_to_final": {
+        "utility": 0.0,
+        "official_reward": 0.0,
+        "gt_test_pass_rate": 0.0
+      },
+      "submissions": [
+        {
+          "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+          "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+          "submission_hash": "d95dcbad6fad65ed058fe6f6b4416faf106c0965e65c0d31ad64c20bd879c458",
+          "trace_hash": "f0d2df62fca907619459cc72ab9609e6ec5387e2e8c5fe222b7284be459b291a",
+          "initial": false,
+          "operation_cursor": 150
+        },
+        {
+          "bundle_hash": "49ac97f8e018613243a36051a789ca76fad65ee34af160668bb3b98b006342c8",
+          "parent_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+          "submission_hash": "c8a821bb4321ba3e2ad3def7444460f1b434ad7138fce2d7f7dfd5ef310e4c06",
+          "trace_hash": "401f856e0ed94430541dad9b998f127a4896e29bb9ad24e30fb302cf8c88cb40",
+          "initial": false,
+          "operation_cursor": 227
+        }
+      ],
+      "surrogate_checks": [
+        {
+          "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+          "candidate_status": "SEALED",
+          "test_version": 1,
+          "test_hash": "9f6df6cea3083bcf42d1245bc80a06c7e3e4813a4f2316591d93745e7f1743ce",
+          "skill_passed": true,
+          "observed_tests_passed": 40,
+          "observed_tests_total": 40,
+          "observed_pass_rate": 1.0,
+          "skill_surrogate_pass_rate": 1.0,
+          "delta_same_suite": null,
+          "program_error": false,
+          "failure_code": null
+        },
+        {
+          "bundle_hash": "49ac97f8e018613243a36051a789ca76fad65ee34af160668bb3b98b006342c8",
+          "candidate_status": "SEALED",
+          "test_version": 2,
+          "test_hash": "9fa1d7c0811927ee57790634b96d57cecd8574d6680695b7251e52c05e803371",
+          "skill_passed": false,
+          "observed_tests_passed": 37,
+          "observed_tests_total": 39,
+          "observed_pass_rate": 0.9487179487179487,
+          "skill_surrogate_pass_rate": 0.9487179487179487,
+          "delta_same_suite": null,
+          "program_error": false,
+          "failure_code": null
+        }
+      ],
+      "official_selection": {
+        "historical_best": {
+          "status": "MEASURED",
+          "phase": "normal",
+          "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+          "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+          "passed": false,
+          "official_reward": 0.0,
+          "raw_numeric_reward": 0.0,
+          "author_resolved_score": 0.0,
+          "reward_source": "official_reward",
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 11,
+            "total": 14,
+            "rate": 0.7857142857142857,
+            "unit": "reporter_group"
+          },
+          "grader_evidence_hash": "b936bb8ce217b5a1d36e35d09b1ae0a098c6aa691c7ceebb2cc73d3cfd721461",
+          "failure_code": null
+        },
+        "actual_gt_runs": [
+          {
+            "status": "MEASURED",
+            "phase": "normal",
+            "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+            "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+            "passed": false,
+            "official_reward": 0.0,
+            "raw_numeric_reward": 0.0,
+            "author_resolved_score": 0.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 11,
+              "total": 14,
+              "rate": 0.7857142857142857,
+              "unit": "reporter_group"
+            },
+            "grader_evidence_hash": "b936bb8ce217b5a1d36e35d09b1ae0a098c6aa691c7ceebb2cc73d3cfd721461",
+            "failure_code": null
+          },
+          {
+            "status": "MEASURED",
+            "phase": "post_final",
+            "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+            "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+            "passed": false,
+            "official_reward": 0.0,
+            "raw_numeric_reward": 0.0,
+            "author_resolved_score": 0.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 11,
+              "total": 14,
+              "rate": 0.7857142857142857,
+              "unit": "reporter_group"
+            },
+            "grader_evidence_hash": "879b00e439a7b7d43870e40f7159635f4f3b253dbc48b89d32bbf2464157eee3",
+            "failure_code": null
+          }
+        ],
+        "actual_post_final_runs": [
+          {
+            "status": "MEASURED",
+            "phase": "post_final",
+            "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+            "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+            "passed": false,
+            "official_reward": 0.0,
+            "raw_numeric_reward": 0.0,
+            "author_resolved_score": 0.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 11,
+              "total": 14,
+              "rate": 0.7857142857142857,
+              "unit": "reporter_group"
+            },
+            "grader_evidence_hash": "879b00e439a7b7d43870e40f7159635f4f3b253dbc48b89d32bbf2464157eee3",
+            "failure_code": null
+          }
+        ],
+        "author_retained_result": {
+          "status": "RECORDED",
+          "passed": false,
+          "score": 0.0,
+          "source": "author_terminal_result",
+          "real_gt_test_counts": null
+        },
+        "rollback_status": "COMPLETED",
+        "rollback_bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+        "rollback_parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f"
+      },
+      "process_counts": {
+        "native_r_interventions": 1,
+        "native_K_normal_gt_interventions": 1,
+        "native_generator_episodes": 47,
+        "generator_model_attempts": 51,
+        "generator_model_responses": 50,
+        "generator_terminal_calls": 83,
+        "verifier_terminal_calls": 19,
+        "sealed_submissions": 2,
+        "actual_content_versions": 3,
+        "recorded_revision_attempts": 2,
+        "actual_gt_runs": 2,
+        "logical_model_dispatches": 105,
+        "submitted_learning_executions": 1,
+        "fresh_author_codex_prepared_instances": 6,
+        "fresh_author_codex_dispatched_provider_instances": 6
+      },
+      "stage_errors": [
+        {
+          "stage": "native_evolution",
+          "operation_hash": "2c0bb067088ca174ccd835a1291c7be8a6f1ca26221a34c3c3d4920d9544f08b",
+          "operation_state": "NOT_SENT",
+          "error_type": "InputTokenBudgetExceeded",
+          "error_code": "input_token_budget_exceeded"
+        }
+      ]
+    },
+    {
+      "task_id": "pddl-tpp-planning",
+      "condition": "benign",
+      "launcher_status": "STAGES_FINISHED",
+      "creation_status": "CREATED",
+      "evolution_status": "COMPLETED",
+      "stop_reason": "gt_oracle_pass",
+      "no_skill": {
+        "status": "MEASURED",
+        "bundle_hash": null,
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 1,
+          "total": 2,
+          "rate": 0.5,
+          "unit": "reporter_group"
+        },
+        "operation_state": "COMPLETED",
+        "reason_code": null,
+        "execution_termination_reason": "agent_finished"
+      },
+      "s0": {
+        "status": "MEASURED",
+        "bundle_hash": "083896fdd70c0c3107271020f46ff08aa4312022414ba5e8ddb12a5eaf525b73",
+        "utility": true,
+        "official_reward": 1.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 2,
+          "total": 2,
+          "rate": 1.0,
+          "unit": "reporter_group"
+        },
+        "operation_state": "COMPLETED",
+        "reason_code": null,
+        "execution_termination_reason": "agent_finished"
+      },
+      "actual_content_versions": [
+        {
+          "version": "S0",
+          "bundle_hash": "083896fdd70c0c3107271020f46ff08aa4312022414ba5e8ddb12a5eaf525b73",
+          "parent_hash": null,
+          "independent_fresh_evaluation": {
+            "status": "MEASURED",
+            "bundle_hash": "083896fdd70c0c3107271020f46ff08aa4312022414ba5e8ddb12a5eaf525b73",
+            "utility": true,
+            "official_reward": 1.0,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 2,
+              "total": 2,
+              "rate": 1.0,
+              "unit": "reporter_group"
+            },
+            "operation_state": "COMPLETED",
+            "reason_code": null,
+            "execution_termination_reason": "agent_finished"
+          },
+          "delta_vs_parent_content": {
+            "utility": null,
+            "official_reward": null,
+            "gt_test_pass_rate": null
+          }
+        },
+        {
+          "version": "S1",
+          "bundle_hash": "daffdcd276b8e7bb52165839cba65cdecbda9a4271db9db1853abc52582005d2",
+          "parent_hash": "083896fdd70c0c3107271020f46ff08aa4312022414ba5e8ddb12a5eaf525b73",
+          "independent_fresh_evaluation": {
+            "status": "MEASURED",
+            "bundle_hash": "daffdcd276b8e7bb52165839cba65cdecbda9a4271db9db1853abc52582005d2",
+            "utility": true,
+            "official_reward": 1.0,
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 2,
+              "total": 2,
+              "rate": 1.0,
+              "unit": "reporter_group"
+            },
+            "operation_state": "COMPLETED",
+            "reason_code": null,
+            "execution_termination_reason": "agent_finished"
+          },
+          "delta_vs_parent_content": {
+            "utility": 0.0,
+            "official_reward": 0.0,
+            "gt_test_pass_rate": 0.0
+          }
+        }
+      ],
+      "final": {
+        "selection_status": "COMPLETED",
+        "bundle_hash": "daffdcd276b8e7bb52165839cba65cdecbda9a4271db9db1853abc52582005d2",
+        "parent_hash": "083896fdd70c0c3107271020f46ff08aa4312022414ba5e8ddb12a5eaf525b73",
+        "independent_fresh_evaluation": {
+          "status": "MEASURED",
+          "bundle_hash": "daffdcd276b8e7bb52165839cba65cdecbda9a4271db9db1853abc52582005d2",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 2,
+            "total": 2,
+            "rate": 1.0,
+            "unit": "reporter_group"
+          },
+          "operation_state": "COMPLETED",
+          "reason_code": null,
+          "execution_termination_reason": "agent_finished"
+        },
+        "aliases_existing_content_evaluation": true
+      },
+      "delta_no_skill_to_s0": {
+        "utility": 1.0,
+        "official_reward": 1.0,
+        "gt_test_pass_rate": 0.5
+      },
+      "delta_s0_to_final": {
+        "utility": 0.0,
+        "official_reward": 0.0,
+        "gt_test_pass_rate": 0.0
+      },
+      "submissions": [
+        {
+          "bundle_hash": "daffdcd276b8e7bb52165839cba65cdecbda9a4271db9db1853abc52582005d2",
+          "parent_hash": "083896fdd70c0c3107271020f46ff08aa4312022414ba5e8ddb12a5eaf525b73",
+          "submission_hash": "8278affaab001ae2b755c175745a73793d66beee30d97f5b7daa861378723d73",
+          "trace_hash": "d4feb345f6fcb8b959ed7afed331c5cffa0b3f0ce38e1cfad9151dba80c91218",
+          "initial": false,
+          "operation_cursor": 82
+        }
+      ],
+      "surrogate_checks": [
+        {
+          "bundle_hash": "daffdcd276b8e7bb52165839cba65cdecbda9a4271db9db1853abc52582005d2",
+          "candidate_status": "SEALED",
+          "test_version": 1,
+          "test_hash": "1704d78aaec9fa76f084a94a3adedbf5e40b97355ace59955db7c723aa30cd94",
+          "skill_passed": true,
+          "observed_tests_passed": 11,
+          "observed_tests_total": 11,
+          "observed_pass_rate": 1.0,
+          "skill_surrogate_pass_rate": 1.0,
+          "delta_same_suite": null,
+          "program_error": false,
+          "failure_code": null
+        }
+      ],
+      "official_selection": {
+        "historical_best": {
+          "status": "MEASURED",
+          "phase": "normal",
+          "bundle_hash": "daffdcd276b8e7bb52165839cba65cdecbda9a4271db9db1853abc52582005d2",
+          "parent_hash": "083896fdd70c0c3107271020f46ff08aa4312022414ba5e8ddb12a5eaf525b73",
+          "passed": true,
+          "official_reward": 1.0,
+          "raw_numeric_reward": 1.0,
+          "author_resolved_score": 1.0,
+          "reward_source": "official_reward",
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 2,
+            "total": 2,
+            "rate": 1.0,
+            "unit": "reporter_group"
+          },
+          "grader_evidence_hash": "a9962925878d9cd8c1dbf465dad1703658cffab02fc9c30e07dee4a401d83d77",
+          "failure_code": null
+        },
+        "actual_gt_runs": [
+          {
+            "status": "MEASURED",
+            "phase": "normal",
+            "bundle_hash": "daffdcd276b8e7bb52165839cba65cdecbda9a4271db9db1853abc52582005d2",
+            "parent_hash": "083896fdd70c0c3107271020f46ff08aa4312022414ba5e8ddb12a5eaf525b73",
+            "passed": true,
+            "official_reward": 1.0,
+            "raw_numeric_reward": 1.0,
+            "author_resolved_score": 1.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 2,
+              "total": 2,
+              "rate": 1.0,
+              "unit": "reporter_group"
+            },
+            "grader_evidence_hash": "a9962925878d9cd8c1dbf465dad1703658cffab02fc9c30e07dee4a401d83d77",
+            "failure_code": null
+          }
+        ],
+        "actual_post_final_runs": [],
+        "author_retained_result": {
+          "status": "RECORDED",
+          "passed": true,
+          "score": 1.0,
+          "source": "author_terminal_result",
+          "real_gt_test_counts": null
+        },
+        "rollback_status": null,
+        "rollback_bundle_hash": null,
+        "rollback_parent_hash": null
+      },
+      "process_counts": {
+        "native_r_interventions": 0,
+        "native_K_normal_gt_interventions": 1,
+        "native_generator_episodes": 23,
+        "generator_model_attempts": 26,
+        "generator_model_responses": 26,
+        "generator_terminal_calls": 30,
+        "verifier_terminal_calls": 9,
+        "sealed_submissions": 1,
+        "actual_content_versions": 2,
+        "recorded_revision_attempts": 1,
+        "actual_gt_runs": 1,
+        "logical_model_dispatches": 70,
+        "submitted_learning_executions": 1,
+        "fresh_author_codex_prepared_instances": 4,
+        "fresh_author_codex_dispatched_provider_instances": 4
+      },
+      "stage_errors": []
+    }
+  ],
+  "aggregate": {
+    "NoSkill": {
+      "intended_task_denominator": 5,
+      "measured_tasks": 5,
+      "task_passes": 1,
+      "task_pass_rate": 0.2,
+      "confirmed_passes_over_intended_tasks": 0.2,
+      "mean_official_reward_on_measured_tasks": 0.3666
+    },
+    "S0": {
+      "intended_task_denominator": 5,
+      "measured_tasks": 5,
+      "task_passes": 2,
+      "task_pass_rate": 0.4,
+      "confirmed_passes_over_intended_tasks": 0.4,
+      "mean_official_reward_on_measured_tasks": 0.4
+    },
+    "Final": {
+      "intended_task_denominator": 5,
+      "measured_tasks": 5,
+      "task_passes": 4,
+      "task_pass_rate": 0.8,
+      "confirmed_passes_over_intended_tasks": 0.8,
+      "mean_official_reward_on_measured_tasks": 0.8
+    }
+  },
+  "usage": {
+    "status": "MEASURED",
+    "basis": "stable operation_key, fallback observed response_id; completed provider usage only",
+    "roles": {
+      "analyzer": {
+        "responses": 155,
+        "input_tokens": 3619136,
+        "output_tokens": 136670,
+        "cached_input_tokens": 499200
+      },
+      "generator": {
+        "responses": 176,
+        "input_tokens": 9711256,
+        "output_tokens": 238076,
+        "cached_input_tokens": 9001088
+      },
+      "verifier": {
+        "responses": 104,
+        "input_tokens": 3363408,
+        "output_tokens": 115622,
+        "cached_input_tokens": 2927488
+      },
+      "execution": {
+        "responses": 229,
+        "input_tokens": 5764064,
+        "output_tokens": 62913,
+        "cached_input_tokens": 4973056
+      }
+    },
+    "total": {
+      "responses": 664,
+      "input_tokens": 22457864,
+      "output_tokens": 553281,
+      "cached_input_tokens": 17400832
+    },
+    "deduplication_conflicts": 0,
+    "logical_model_request_states": {
+      "NOT_SENT": 1,
+      "RECEIVED_INVALID": 0,
+      "COMPLETED": 664,
+      "UNKNOWN": 0
+    },
+    "http_dispatches": {
+      "status": "NOT_OBSERVABLE",
+      "count": null
+    },
+    "subscription_cost": {
+      "status": "NOT_MEASURED",
+      "amount": null
+    },
+    "unresolved_model_operations_may_be_billed": 0
+  },
+  "limitations": [
+    "A partial snapshot is not a completed five-task result; missing stages remain null.",
+    "Only actual sealed content versions are listed; early-stopped later versions are not fabricated.",
+    "Surrogate deltas compare the same suite hash only; public checks do not prove official equivalence.",
+    "Author historical best, actual post-final GT, author retained result and independent evaluation are separate.",
+    "Author synthetic test counts are not published as real official GT checks.",
+    "S0 uses one observable Codex creation turn; internal HTTP requests and retries are not observable.",
+    "The subscription gpt-6.1-sol trial is not a GPT-5.4 or original-paper model comparison.",
+    "No diagnostic predecessor is merged into these scores."
+  ]
+}

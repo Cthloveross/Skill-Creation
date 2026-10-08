@@ -1,0 +1,71 @@
+{
+  "status": "IN_PROGRESS_FIRST_GT_POSTHOC_PUBLIC_PROJECTION",
+  "reviewed_at": "2026-10-08T10:29:49.675193+00:00",
+  "trial_id": "codex-author-fix-20261008-004",
+  "source_identity_hash": "0f39848aa3282daad7c3a4d0243fa03a378cb7896c00096552f39defcb4046f5",
+  "task": "dapt-intrusion-detection",
+  "phase": "normal",
+  "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+  "parent_hash": "cc4bf919bdfc201727f12d9154ca00bc8832b949d697bf7e73fe7c991d40926f",
+  "public_suite": {
+    "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+    "candidate_status": "SEALED",
+    "test_version": 1,
+    "test_hash": "9f6df6cea3083bcf42d1245bc80a06c7e3e4813a4f2316591d93745e7f1743ce",
+    "skill_passed": true,
+    "observed_tests_passed": 40,
+    "observed_tests_total": 40,
+    "observed_pass_rate": 1.0,
+    "skill_surrogate_pass_rate": 1.0,
+    "delta_same_suite": null,
+    "program_error": false,
+    "failure_code": null
+  },
+  "official_measurement": {
+    "status": "MEASURED",
+    "passed": false,
+    "official_reward": 0.0,
+    "raw_numeric_reward": 0.0,
+    "author_resolved_score": 0.0,
+    "reward_source": "official_reward",
+    "gt_checks": {
+      "status": "MEASURED",
+      "passed": 11,
+      "total": 14,
+      "rate": 0.7857142857142857,
+      "unit": "reporter_group"
+    },
+    "grader_evidence_hash": "b936bb8ce217b5a1d36e35d09b1ae0a098c6aa691c7ceebb2cc73d3cfd721461",
+    "failure_code": null
+  },
+  "fresh_execution": {
+    "metadata_sha256": "207ade97a8954d217bf1aba5ce478447293d2e00f921ad7ba9695086efeb032a",
+    "bundle_hash": "81fcf3e14c337c304de1521f486b0cd43971ce6cf198ff0a2889072ba16d993c",
+    "termination_reason": "agent_finished",
+    "observed_packaged_entrypoints": [
+      "pipeline.generate_stats",
+      "pipeline.validate_stats"
+    ],
+    "transport_error_observed": false
+  },
+  "artifact_binding": {
+    "learning_snapshot_sha256": "7ea0bea6357b03148a3e27f72e5fcf29fe9b8a3e4999caa6a1d3a2bf0c0a7f85",
+    "fresh_snapshot_sha256": "2f47cfac23760b284733473df46c7ea2f17417e217371f58e8e26da35ed5059d",
+    "required_deliverable": {
+      "public_path": "/root/network_stats.csv",
+      "learning_sha256": "75146aa79f28802d10942c269ecf2260439fbe7ffe70d2b5378df2401e59f436",
+      "fresh_sha256": "75146aa79f28802d10942c269ecf2260439fbe7ffe70d2b5378df2401e59f436",
+      "equal": true
+    },
+    "common_root_file_count": 46,
+    "identical_common_root_file_count": 46,
+    "different_common_root_file_count": 0,
+    "comparison_excludes_pyc": true
+  },
+  "interpretation": {
+    "confirmed": "The public suite accepted all 40 checks, while measured fresh GT accepted 11 of 14 official reporter groups. The required CSV output and all 46 common non-pyc public root files have identical hashes between the submitted learning output and fresh GT. The fresh executor called the sealed pipeline generate/validate entrypoints with the original public capture and a preserved original CSV template.",
+    "not_demonstrated": "This comparison exhibits no required-artifact mismatch or missing repair caused by fresh execution. It does not identify which particular official obligation differs from the public suite.",
+    "remaining_uncertainty": "Several public analysis-flag definitions are qualitative and require interpretation, but the evidence here does not establish that those flags caused the official failure. Exact official cause remains unassigned while learning is active. The author evolution loop continues.",
+    "privacy": "Only public metric projections, evidence/package hashes and concise observed behavior are included. No raw commands, private paths, reasoning, private diagnosis, official test names or assertions are included or sent to learning."
+  }
+}

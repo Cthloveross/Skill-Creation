@@ -1,0 +1,70 @@
+{
+  "scope": "native_author_component_real_MAIN_local_HTTP",
+  "paid_model_calls": 0,
+  "source_commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+  "container_name": "tau-sb-7d997909a2324e93b9ca7a2cf9526fc7",
+  "initial": {
+    "estimated_success": true,
+    "pass_rate": 1.0,
+    "failure_reasons": [],
+    "reasoning": "pytest: 2/2 passed (pass_rate=1.00, return_code=0)",
+    "source": "script",
+    "total_tests": 2,
+    "tests_passed": 2,
+    "tests_failed": 0,
+    "test_details": [
+      {
+        "name": "test_inherited_dependency_and_service",
+        "full_name": "verifier/test_outputs.py::test_inherited_dependency_and_service",
+        "status": "PASSED",
+        "message": ""
+      },
+      {
+        "name": "test_public_output",
+        "full_name": "verifier/test_outputs.py::test_public_output",
+        "status": "PASSED",
+        "message": ""
+      }
+    ],
+    "raw_output": "============================= test session starts ==============================\nplatform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /root\ncollecting ... collected 2 items\n\nverifier/test_outputs.py::test_inherited_dependency_and_service PASSED   [ 50%]\nverifier/test_outputs.py::test_public_output PASSED                      [100%]\n\n============================== 2 passed in 0.03s ===============================\n",
+    "error": null,
+    "diagnosis": ""
+  },
+  "changed": {
+    "estimated_success": false,
+    "pass_rate": 0.5,
+    "failure_reasons": [
+      "test_public_output: assert 'changed' == 'initial'"
+    ],
+    "reasoning": "pytest: 1/2 passed (pass_rate=0.50, return_code=1)",
+    "source": "script",
+    "total_tests": 2,
+    "tests_passed": 1,
+    "tests_failed": 1,
+    "test_details": [
+      {
+        "name": "test_inherited_dependency_and_service",
+        "full_name": "verifier/test_outputs.py::test_inherited_dependency_and_service",
+        "status": "PASSED",
+        "message": ""
+      },
+      {
+        "name": "test_public_output",
+        "full_name": "verifier/test_outputs.py::test_public_output",
+        "status": "FAILED",
+        "message": "assert 'changed' == 'initial'"
+      }
+    ],
+    "raw_output": "============================= test session starts ==============================\nplatform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /root\ncollecting ... collected 2 items\n\nverifier/test_outputs.py::test_inherited_dependency_and_service PASSED   [ 50%]\nverifier/test_outputs.py::test_public_output FAILED                      [100%]\n\n=================================== FAILURES ===================================\n______________________________ test_public_output ______________________________\nverifier/test_outputs.py:11: in test_public_output\n    assert Path('/root/author-fixture-output.txt').read_text() == 'initial'\nE   AssertionError: assert 'changed' == 'initial'\nE     \nE     - initial\nE     + changed\n=========================== short test summary info ============================\nFAILED verifier/test_outputs.py::test_public_output - AssertionError: assert ...\n========================= 1 failed, 1 passed in 0.04s ==========================\n",
+    "error": null,
+    "diagnosis": "Current public output differs from the initial value."
+  },
+  "inherited_dependency": true,
+  "inherited_background_service": true,
+  "sealed_script_restored": true,
+  "frozen_documents_read_only": true,
+  "role_source_not_in_model_requests": true,
+  "local_http_requests": 2,
+  "learning_survived_author": true,
+  "learning_cleaned_at_owner_exit": true
+}

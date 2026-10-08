@@ -1,0 +1,133 @@
+{
+  "status": "PASS_WITH_EXPLICIT_ADAPTATIONS",
+  "reviewer": "independent /root/codex_plan_preflight",
+  "reviewed_at": "2026-10-08T09:40:24.977447+00:00",
+  "identity_hash": "0f39848aa3282daad7c3a4d0243fa03a378cb7896c00096552f39defcb4046f5",
+  "review_scope": "Read-only independent all-path review of CodexPlan transport and original-author context-stop integration; source and test bytes unchanged by reviewer.",
+  "source_hashes": {
+    "codex_plan.py": "1d6ea2a130613d8764b038d6f13feb1c63aaa33aeb0d6cd06f8c192e2cd26f6b",
+    "author_verifier.py": "9b85d5446e12fa9620cc0592f7025359fe1a7bf9b1ec8e7371b07bf8bbe64021",
+    "author_controller.py": "87de67e6c4bea3c5d11a934f3f2ad74749ddab48a6cd05e0e1cfa0a2de40743f",
+    "skillsbench_evolution.py": "cffb48f2b20df7a5a92097af2efb97c21539578bd51cb63f19d2dbe11e4ab5d3",
+    "workflow.py": "29dc42409a6663a8a23c0585486452fd3a1b9c44b8ca494a918a9b1d9d21ef5d",
+    "codex_runtime.py": "5493c4035fa492d0f2bb00b430a6cc001f7b89ff1d45d9bd241f06669b981782"
+  },
+  "test_hashes": {
+    "test_codex_plan.py": "9dec707d17ea4d12a621c0a9a6b1dcecc534076a873884132813f2d782210e1d"
+  },
+  "author_original_resources": {
+    "commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+    "file_count": 44,
+    "all_hashes_match": true,
+    "manifest_sha256": "e3691bb73754019016621a9b618b8f5e38d3829a590dd3030379717a916f4932",
+    "controller_sha256": "f87e0a7fd760688a71269672a512db2c1e2a53aa71cd5d9b9908a61d794390f1"
+  },
+  "acceptance": {
+    "independent_transport_tests": {
+      "passed": 60,
+      "elapsed_seconds": 5.25
+    },
+    "shared_offline_regression": {
+      "elapsed_seconds": 387.52,
+      "passed": 1478,
+      "skipped": 57
+    },
+    "source_and_tests_unchanged": true,
+    "source_and_test_python_file_count": 124,
+    "ruff_format_compile_worktree_diff_exit_codes": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "unfiltered_staged_diff_exit_code": 2,
+    "maintained_staged_code_docs_diff_exit_code": 0,
+    "byte_preserved_exception_file_count": 7,
+    "skipped_opt_in_tests_are_not_claimed_measured": true
+  },
+  "reviewed_invariants": [
+    "Admission is before turn dispatch; known capacity rejection remains NOT_SENT. Completed response recovery bypasses admission and issues no new turn.",
+    "UNKNOWN, rejected native capabilities, context compaction, authentication and quota failures retain raw events and stop subsequent requests; no UNKNOWN redispatch.",
+    "Stable outer journal plus operation ID binds raw event evidence and usage operation_key. Different operations with the same prompt preserve distinct streams and independent initial threads.",
+    "Usage, final assistant item and completion belong to exactly the current thread and turn. Stale notifications remain in raw audit bytes without altering current output, occupancy or status.",
+    "Transport structured JSON errors and malformed last/cumulative usage use existing codex_plan_response_invalid. Cumulative tokens validate before arithmetic; booleans cannot become valid integer billing.",
+    "Pinned actual native capability enums are rejected after raw bytes are sealed; local model transport cannot dispatch host tools. Role and task clients remain separately scoped and locked.",
+    "Current provider input plus output plus reserved capacity drives context occupancy; cumulative token billing and current occupancy remain separate. The smallest observed window survives missing or larger reports.",
+    "A new independent verifier Chat resets old opaque occupancy and billing; strict prefix continuation preserves the Generator own history and opaque continuation.",
+    "Known Generator-only predispatch stop enters the unchanged author token_budget post-final branches. Completion only accepts the identical recorded exception after native final log confirmation; received-invalid and UNKNOWN cannot use this fallback.",
+    "Generator model attempts, received responses and effective episodes are distinct; denied request is not counted as a completed response.",
+    "Usage raw JSONL may retain repeated deterministic parse rows. Existing Workflow report deduplicates the stable operation_key and counts one logical request and its usage.",
+    "Published author code is byte-identical; r15/K5, checklist, terminal GT branches and best-result selection are not rewritten by these transport repairs."
+  ],
+  "real_execution_evidence": {
+    "model_source": "MODEL_SCRIPTED",
+    "paid_or_subscription_model_calls": 0,
+    "real_model_performance": "NOT_MEASURED",
+    "official_grader": "REAL_PINNED_TASK_GRADER",
+    "observed_budget_path": {
+      "generator_attempts": 2,
+      "generator_responses": 2,
+      "effective_episodes": 2,
+      "native_stop": "token_budget",
+      "fresh_post_final_GT_checks": [
+        6,
+        6
+      ],
+      "independent_fresh_checks": [
+        6,
+        6
+      ]
+    },
+    "known_predispatch_path": {
+      "generator_attempts": 2,
+      "generator_responses": 1,
+      "effective_episodes": 1,
+      "native_stop": "token_budget",
+      "original_interrupted_by_retained": true,
+      "dispatch": "NOT_SENT",
+      "fresh_post_final_GT_checks": [
+        6,
+        6
+      ],
+      "independent_fresh_checks": [
+        6,
+        6
+      ]
+    },
+    "containers": {
+      "per_fixture": 3,
+      "unique_owner_cleanup_each": 1,
+      "residuals": 0
+    },
+    "actual_pinned_app_server": {
+      "source_hash_matches": true,
+      "local_provider_requests": 4,
+      "completed_recovery_extra_requests": 0,
+      "UNKNOWN_recovery_extra_requests": 0,
+      "unknown_raw_event_mode": "0600",
+      "real_ChatGPT_auth_network_verified": false,
+      "fixture_provider_remap": "openai <-> offline_fixture"
+    }
+  },
+  "explicit_adaptations_and_limits": [
+    "Fixed B* retrieval and one S0 creation turn without self-test remain experimental adaptations. Underlying Codex HTTP dispatch/retry count is NOT_OBSERVABLE.",
+    "Host-private official scoring remains boolean to learning; independent fresh evaluation never selects or feeds back into learning.",
+    "The existing beta policy and 32768 output reserve remain capacity admission, not a new output-token or monetary quota.",
+    "Budget fallback is a transparent transport adaptation around the original post-final rethrow; it does not fabricate a model response, official reward or completed UNKNOWN operation.",
+    "A complete native-controller result can be read again; an interrupted whole native run still needs a new trial and must not be silently replayed.",
+    "Original author Verifier semantic mistakes and lexical boundary-audit false positives remain possible; shared MAIN is not physical verifier isolation.",
+    "MODEL_SCRIPTED official-grader passes validate mechanics only, not real-model success, evolution improvement, all-task environments, or subscription authentication.",
+    "57 skipped opt-in tests are not counted as real boundary checks. The two specific final Docker fixtures establish only their measured paths.",
+    "Full staged whitespace check retains exit2 for exactly five sealed raw logs and two pinned author files; maintained code/docs check is exit0. No bytes were modified to make the full check appear green."
+  ],
+  "evidence_sha256": {
+    "offline-static-final.json": "c957b75508faf021c4a3ba56b4b1b9a32be0d7b855ca333e74780fc6fed10a8b",
+    "byte-preserving-diff-check.json": "353b47ef2a46d04af8f5a857bca768fcdab3b96b764a1407176e7484b231a9b3",
+    "full-controller-context-observed-public.json": "9dd703047414578b1bcf5fa345be5107daa5209dc899875b775e92c0721570ef",
+    "full-controller-context-predispatch-public.json": "061a661122b97fe94175e249f18a5ca127905fc55b10700098956121ca40b65b",
+    "actual-app-server-local-provider.json": "cd6338c5ea460759925b768002265de1d4375f739e5dd607e2936b893a88fb69",
+    "codex-plan-all-path-counterexamples-public.json": "b9a9a56c45c4e251698c962f1f468969092a8e74cdb9aa37964828d9311a3ad1"
+  },
+  "new_source_live_model_smoke": "NOT_MEASURED",
+  "remaining_confirmed_blockers": []
+}
