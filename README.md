@@ -13,7 +13,8 @@ make check
 
 运行前按对应交接准备数据、embedding、Docker及本地凭据：
 
-- [研究问题、威胁模型、方法与实验参数](experiments/tau-knowledge/skill-evolution/PROTOCOL.md)
+- [通用方法论：问题、威胁模型、演化与跨数据集实验设计](docs/skill-evolution-method.md)
+- [当前实验规范：τ／SkillsBench 的具体合同与参数](experiments/tau-knowledge/skill-evolution/PROTOCOL.md)
 - [τ：97题 × 三条件交接](experiments/tau-knowledge/skill-evolution/runs/tau/HANDOFF.md)
 - [SkillsBench：GPT-5.6 Terra / Opus 4.8 两套85题交接](experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md)
 
