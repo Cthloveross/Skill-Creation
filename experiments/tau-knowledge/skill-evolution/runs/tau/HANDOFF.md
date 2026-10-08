@@ -25,8 +25,8 @@
 | 范围 | 本轮状态 |
 |---|---|
 | 固定数据、投毒清单与源代码 | 保留原路径与hash，进入新运行身份 |
-| 当前共享源码回归 | 全量1183 passed／54显式跳过（328.33秒）；lint、编译及diff检查通过。当前证据见 [acceptance.json](../readiness-skillsbench-full85-20261007-005/acceptance.json)；本轮另有SkillsBench真实Docker8项通过、5项未启用的workspace检查跳过。银行真实Docker历史验收仍见下文，不混称本轮重测或新模型成绩 |
-| 银行/helper直接执行边界 | 当前源码复验15 passed：helper真实Docker13项、银行driver真实Docker1项、pinned worker host/JSONL1项；均无付费模型调用，证据见当前验收目录 |
+| 当前共享源码回归 | 2026-10-08交叉复核的回归与源码身份见[当前复验](../readiness-skillsbench-crosscheck-20261008-005/final-status.json)。此前1183／54为[历史验收](../readiness-skillsbench-full85-20261007-005/acceptance.json)，1478／57为[后续历史验收](../readiness-skillsbench-native-controller-20261008-004/final-status.json)；不能混称本轮银行真实模型成绩 |
+| 银行/helper直接执行边界 | 15 passed为上述历史银行/helper复验：helper真实Docker13项、银行driver真实Docker1项、pinned worker host/JSONL1项，均无付费模型调用。本轮关闭失败门禁仅修改SkillsBench，不把SkillsBench容器复验算作银行Docker重测 |
 | 新 v4 `task_019` smoke | `NOT_MEASURED`；本轮未读取key、未调用付费模型 |
 | 全97题／291链 | 未启动；须当前机器preflight及受控smoke通过后运行 |
 

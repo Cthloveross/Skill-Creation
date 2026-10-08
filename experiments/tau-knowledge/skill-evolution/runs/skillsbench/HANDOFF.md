@@ -2,9 +2,11 @@
 
 当前入口直接调用 CoEvoSkills 固定 commit `4380d4b…` 的完整演化控制器，作者源码和 skill-creator 保存在 `src/tau_skill_evolution/author/coevo/`，文件与 hash 见 `author/VERIFIER_SOURCE.json`。本地不再复制 SkillsBench 状态机。只适配模型/Journal、持续任务环境、fresh Codex 评分、公开输入和完整封包。
 
+2026-10-08再次交叉复核后，补上了**学习环境关闭失败的持久派发门禁**：作者结果已完成但容器关闭失败时，保留原结果和失败记录，同一cell重新启动也不得继续create/evolve/evaluate/NoSkill。报告仍可读；仅新trial可明确导入安全包补评。当前源码回归为**1482 passed／57 skipped／0 failed**，两场免费真实Docker场景通过；身份与证据见[005交叉复核](../readiness-skillsbench-crosscheck-20261008-005/final-status.json)。本轮没有调用付费模型，下面004是此前冻结提交`4fbfeed6`、身份`0f39848a…`的真实结果，不冒充修复后新身份smoke。
+
 当前同质五题真实补测 [codex-author-fix-20261008-004](codex-author-fix-20261008-004/public-summary.json) 已 **COMPLETED**，身份 `0f39848a…`。五题的 NoSkill、S0、全部实际内容版本及 Final 均有独立 fresh 官方评分：Task pass 为 **20% → 40% → 80%**。实际型号是本机 Codex 订阅可用的 **`gpt-6.1-sol`**，不是 GPT-5.4 或论文模型，也不是下方 GPT-5.6／Opus 两套85题矩阵的成绩。底层 HTTP 次数及 Codex 内部重试不可观察。五题重新测量，不复用旧试验分数；本次结果仅支持这五题的配对观察，不能外推全部85题。
 
-004的五题环境与本机Codex型号目录预检已 `READY`，最终源码通过 **1478 passed／57 skipped／0 failed**、真实Docker和第二名审查，见 [004 readiness](../readiness-skillsbench-native-controller-20261008-004/final-status.json)。五题机器数据已由第二名审查者完成 [97项核对](codex-author-fix-20261008-004/public-summary-independent-review.json)，全部通过并保留方法限制。模型实测与源码验收分别封存；它们不代表85题环境全部就绪。
+004的五题环境与本机Codex型号目录预检已 `READY`，其冻结源码通过 **1478 passed／57 skipped／0 failed**、真实Docker和第二名审查，见 [004 readiness](../readiness-skillsbench-native-controller-20261008-004/final-status.json)。该验收中`real_model_trial=NOT_STARTED`是启动前快照，随后五题完成不回写历史JSON。五题机器数据已由第二名审查者完成 [97项核对](codex-author-fix-20261008-004/public-summary-independent-review.json)，全部通过并保留方法限制。模型实测与源码验收分别封存；它们不代表85题环境全部就绪。
 
 此前 `codex-author-fix-20261008-003` 为 **STOPPED_PARTIAL_TRANSPORT_GATE**、身份 `ce9c36a1…`：四题完整完成，DAPT 的 Generator 操作因 Codex 原生能力或 compaction 门禁中止，事件具体类型未能从留存证据确证。Journal 保留 `UNKNOWN`，不能重发或补造 Final；DAPT未执行的独评保持 null。已有四题只作该历史试验结果，停机与逐题容器清理见 [terminal-transport-stop.json](codex-author-fix-20261008-003/evidence/terminal-transport-stop.json)。
 
@@ -21,7 +23,7 @@
 | GPT-5.6 Terra | [config.yaml](full-85-gpt56-v6/config.yaml) | [manifest.json](full-85-gpt56-v6/manifest.json) | `full-85-gpt56-v6/matrix-author-v6-001/` |
 | Claude Opus 4.8 | [config.yaml](full-85-opus48-v6/config.yaml) | [manifest.json](full-85-opus48-v6/manifest.json) | `full-85-opus48-v6/matrix-author-v6-001/` |
 
-当前源码交付包为 `skillsbench-v6-final-20261008-004-source.tar.gz`，文件、来源及外置校验信息由 [transfer-manifest.json](transfer-manifest.json)绑定；只在五题数据二审、公开隐私检查及包校验全部通过后发布。验收与公开结果的机器证据放在Git仓库，由 descriptor 引用；源码包只提供代码、公开资料和配置，不包含运行日志。旧 `skillsbench-v6-source.tar.gz` 是修复前快照，保持原字节，不用于新运行。使用交付 commit 或校验后的源码包，不混用另一分支的源码。包中不带凭据、模型权重、虚拟环境、Docker镜像或私有原始评分。`full-85-*-v4`、旧源码包和旧结果是历史记录，不能续接到 v6。
+当前源码交付包为 `skillsbench-v6-crosschecked-20261008-005-source.tar.gz`，文件、来源及外置校验信息由 [transfer-manifest.json](transfer-manifest.json)绑定。004交付包`skillsbench-v6-final-20261008-004-source.tar.gz`与当时的descriptor/验收仍按原字节保留，解释004成绩时使用它；不能混用最新源码续接004。验收与公开结果的机器证据放在Git仓库，由 descriptor 引用；源码包只提供代码、公开资料和配置，不包含运行日志。旧 `skillsbench-v6-source.tar.gz` 是更早修复前快照，不用于新运行。使用最新交付 commit 或校验后的源码包，不混用另一分支的源码。包中不带凭据、模型权重、虚拟环境、Docker镜像或私有原始评分。`full-85-*-v4`、旧源码包和旧结果是历史记录，不能续接到 v6。
 
 交付的两套模型配置仍为原有型号。源码变更后需要新运行身份和新目录；旧 v4/v5 结果与源码包只读保留。尚无该新源码的全85题 fresh 准入或两套 Bedrock 模型 smoke，均为 `NOT_MEASURED`。PG 仍缺任务专用 OpenAI 凭据，不能称全部85题已就绪。
 
@@ -39,7 +41,7 @@
 |---|---|
 | 数据/检索 | 85题背景资料合池，仅 background 入池；当前题 instruction/environment 直接提供。隐藏测试、solution、作者 Skill 与其它题 environment 不入池 |
 | 检索参数 | BM25 Top10 + Qwen3-Embedding-4B Top10、RRF60；2048-token块、128重叠；confidence≥0.1；30次搜索、50轮Analyzer、B*≤32,768 tokens；不设文档篇数配额 |
-| S0 | 最多一次创建 HTTP POST，只做安全结构封装，不执行、自测或修复；未知结果不重发 |
+| S0 | API配置最多一次创建HTTP POST；Codex订阅只确认一次创建turn、HTTP不可观察。只做安全结构封装，不执行、自测或修复；未知结果不重发 |
 | 学习 | 同题 Generator 持续会话/MAIN环境；执行、观察、修改候选包、显式提交。终端每次新 shell；文件、安装和服务持续，单条命令的 cwd/export 不自动继承 |
 | Verifier | 作者独立会话在学习 MAIN 读取真实公开文件、生成/运行测试；普通修订固定 suite，官方拒绝后回到 Generator，下一次提交再升级测试 |
 | r15 | 最多15次 surrogate 失败/不可用等相应 host 干预；首个 checklist 未完成也计一次。**不是15次 Skill 修改上限** |
@@ -64,6 +66,24 @@ GT先采用有限数值的官方 reward；缺失/非法 reward 在实际已完�
 这是迁移作者交互修改、验证和终止机制的检索冻结/一次创建变体，非完整论文复现。初次创建禁止自测、B*冻结及独立逐版本测量仍是本实验适配。Verifier会话独立，但在学习MAIN执行：不等同旧版独立Verifier容器的文件系统隔离；host不注入Generator推理或官方评分。作者诊断路径未重复初建的Skill禁读提示及日志审查，历史`codex-quota-five-20261007-003`真实试跑已读到共享`SKILL.md`，所以不能宣称全阶段都不读取Skill源码；证据见该批`evidence/3d-author-diagnosis-access.json`。Generator终端直接使用作者的受保护评分路径命令检查，拒绝直接访问Verifier及隐藏答案路径；这是命令启发式检查，不能保证任意shell命令无法绕过。fresh评分时先关闭公开工具，再挂官方测试。后台进程同容器阶段切换的隔离局限保留。详细定义见 [PROTOCOL.md](../../PROTOCOL.md)。
 
 模型使用作者的 `task_complete` 提交；保留作者3个idle/30个stale episode的强制门禁，记录 `host_forced_submission`，与模型主动提交分开。只有进入门禁且能安全封装的完整包才形成版本，非法草稿保留失败证据并交给作者schema修复；不能补造评分。
+
+### 2.1 每题实际调用与封存位置
+
+设运行目录为`SB_RUN`，cell为`$SB_RUN/cells/TASK_ID/benign/`。以下是执行顺序与证据入口，不要求同事手动调用内部函数。
+
+| 顺序 | 调用与责任 | 证据及控制流 |
+|---|---|---|
+| 1 | `preflight`：Host校验 | 逐题环境与模型传输必须准入；旧READY不替代本机检查 |
+| 2 | `evaluate --no-skill`：独立fresh Codex | cell Journal的`evaluation-no-skill`；不进入学习反馈。`run`不自动执行它 |
+| 3 | `create`：Analyzer收集，Generator一次创建 | `base/`保存B*、公开输入与停止原因；`initial/`保存S0；Journal保存`collect-base`、创建请求和`creation`。安全封装失败不进入学习 |
+| 4 | `evolve`：持续MAIN、原作者`setup/run` | cell的`learning/`管理当前环境；`private/author-controller/`保存原作者日志、提交、测试及评分引用；`versions/<hash>/`保存实际安全内容 |
+| 5 | 原作者验证门禁：独立Verifier会话 | 共用MAIN文件/依赖/服务；有效suite锁定，公开失败修包；GT失败后先执行修改，下一提交再升级。schema/checklist、r15与有效episode按原分支计数 |
+| 6 | 原作者正常／cap-final／post-final GT：Host | 各次fresh执行单列；官方原文私有，Generator仅获受限反馈。best严格按学习GT选包；末端实际成绩与历史保留成绩分开 |
+| 7 | 学习环境关闭：唯一生命周期持有者 | 原作者结果完成不代表关闭完成。关闭失败记录为`learning-environment-failure-*`，同cell持久阻止后续模型派发；不重跑、不偷偷清理或丢弃已完成结果 |
+| 8 | `evaluate`：独立fresh Codex | Journal的`evaluation-<hash>`；各实际内容只评一次，Final映射选包hash。不用独评分数改选包 |
+| 9 | `report`：Host | `report.json/REPORT.md`汇总固定分母、版本、父谱系、缺测、选择和独评分数、用量；公共导出不含模型推理或隐藏评分正文 |
+
+`run`对每条链执行create/evolve/evaluate（第3、4、8步），第5–7步位于演化内部；默认CLI随后生成报告，并发launcher可在全部结束后统一报告。本文第7节记录004的实际执行，不能把以上合同当作所有85题已发生的事实。来源记录中的未测模型smoke指交接的两套Bedrock配置；Codex订阅004的已测范围单列。
 
 ## 3. 从新机器准备环境
 
@@ -337,7 +357,7 @@ test "${#SB_TASK_ARGS[@]}" -eq 168
 | cell的 base/initial/versions 与 private/author-controller 中封存的提交、测试、原生演化日志 | 原文/版本hash、实际父版本、公开轨迹/产物、suite、r15/GT/episode及停止原因 |
 | `private/`及私有grader evidence引用 | 原始provider/CTRF/reward/诊断/usage，单独受限保存，不放公开交接包或模型输入 |
 
-同一身份重跑原阶段命令会复用已完成封存；保存整个run、Journal、持续容器和Compose身份，不只复制REPORT。`NOT_SENT`可首次派发；原响应已落盘只解析；`UNKNOWN`不自动重发。原作者完整 run 会重置内部状态，因此尚未完成的学习链不支持重新调用 run 来恢复；即使容器仍在也必须停止并另开 trial。已完成结果可直接复用，不重新执行。学习容器丢失，不能用文件快照假装恢复后台进程/依赖。鉴权终止已封存的链不会因换key自动续演化。
+同一身份重跑原阶段命令会复用已完成封存；保存整个run、Journal、持续容器和Compose身份，不只复制REPORT。`NOT_SENT`可首次派发；原响应已落盘只解析；`UNKNOWN`不自动重发。原作者完整 run 会重置内部状态，因此尚未完成的学习链不支持重新调用 run 来恢复；即使容器仍在也必须停止并另开 trial。已完成且成功关闭的结果可直接复用，不重新执行；存在关闭失败记录时，同cell的create/evolve/evaluate/NoSkill及导入目标入口全部停止，报告与已测原文仍可读。学习容器丢失，不能用文件快照假装恢复后台进程/依赖。鉴权终止已封存的链不会因换key自动续演化。
 
 整链重新采样必须新trial、primary/extra分开报告，不覆盖旧链或算演化收益。只补评已封存包，用原配置/源码另开评价run，不重发S0：
 
@@ -356,6 +376,35 @@ test "${#SB_TASK_ARGS[@]}" -eq 168
 S编号按包内容hash去重；A→B→A仅两个内容版本，但最终实际父版本指向B。invalid/unchanged不是新增独立内容，仍记录真实操作；缺测null不是实测失败0。相邻版本的增量只在同题双方均实测且GT单位/来源一致时计算。独立模型采样可能退化，不以“utility必须提升”替代机制验收。SkillsBench不报银行ASR或Action Recall。
 
 ## 7. 本次五题实际结果与限制
+
+### 7.1 已发生的流程
+
+004使用冻结身份`0f39848a…`及其[config](codex-author-fix-20261008-004/config.yaml)，实际[launcher](codex-author-fix-20261008-004/launcher.py)为五题并发，每题先NoSkill，再`create → evolve → evaluate`，全部结束后汇总report。它不是让五题共享一个Skill或会话。[manifest](codex-author-fix-20261008-004/manifest.json)绑定源码、角色提示、配置和环境hash；B*与包分别在cell的base/initial/versions封存，B* hash见资料结构核对，包hash见公共汇总。不在已完成004目录重新试跑。
+
+| 已发生阶段 | 实际记录 |
+|---|---|
+| 预检 | 五题环境与本机gpt-6.1-sol目录通过；不是85题准入或两Bedrock型号smoke |
+| 资料获取 | 每题30次搜索、31次Analyzer决定，最后批次均已审阅；五题均以`budget_exhausted_incomplete`／`acquisition_actions_exhausted`冻结，`sufficient=false`，不能称资料已充分 |
+| S0 | 五题各一个已完成可观察创建操作，安全封装后进入学习；没有创建阶段执行或反馈重生成，底层HTTP未观测 |
+| 学习与公开验证 | 原作者在各自持续MAIN执行、编辑与检查；共12个实际内容包，测试suite及r/K/episode见下表 |
+| 选择阶段GT | 共7次实际fresh GT：6次normal、1次DAPT post-final；成功与失败均封存，不用独评挑包 |
+| 独立评价 | 12个内容包＋5个NoSkill，共17次fresh测量；Final引用已测内容。加上选择GT，共24份fresh执行记录 |
+| 停止与清理 | DAPT在派发前触发本地context准入，按作者末端分支完成；五个学习owner最终均CLOSED，实际容器均无残留。没有UNKNOWN或无效provider响应 |
+| 汇总与复核 | 664个完成逻辑turn、1个NOT_SENT；公共数据97项二审核对通过。旧试跑不合并，私有评分/原始模型记录不公开 |
+
+资料获取实测见[结构核对](codex-author-fix-20261008-004/evidence/acquisition-structural-review.json)：
+
+| 任务 | 返回过全文的不同材料数 | B*材料数／tokens |
+|---|---:|---:|
+| dialogue-parser | 87 | 3／3,461 |
+| 3d-scan-calc | 94 | 2／2,548 |
+| adaptive-cruise-control | 92 | 6／6,861 |
+| dapt-intrusion-detection | 85 | 3／5,822 |
+| pddl-tpp-planning | 85 | 2／968 |
+
+“返回过全文”包含不同任务背景的检索块，不能当作当前题必要文档召回率；B*远未满仍可能耗尽搜索预算。后续成功不反证Analyzer充分性成立，也不能把本批冻结不完整掩盖成已检索齐全。
+
+### 7.2 逐内容版本与选择结果
 
 以下每格为 **官方 reward；GT通过项/总项**，均来自独立 fresh 评估。官方逐项单位为 `reporter_group`，不是Python断言条数。`—`表示没有产生该内容版本，不补造S3–S15。Final与已有内容相同，复用对应独评，不另算一个样本。
 
@@ -381,8 +430,8 @@ S编号按包内容hash去重；A→B→A仅两个内容版本，但最终实际
 
 DAPT同一S1包在学习GT为11/14、独评为9/14；事后核对PCAP、模板及数值统计不变，而该包允许qualitative flags覆盖，fresh agent把`has_port_scan`由false改为true、`is_traffic_benign`由true改为false。差异与fresh执行对公开旗标的解释一致，不是已发现的包或输入丢失；仍不据此断言具体隐藏检查的失败原因。 公开文件与参数核对见 [同包fresh差异](codex-author-fix-20261008-004/evidence/dapt-fresh-execution-public-comparison.json)。
 
-DAPT在Generator请求**派发前**触发本地上下文β准入，不是费用/输出额度，也不是provider实际拒绝。最后一次已观测窗口为258,400 tokens，β=0.7、预留32,768；该操作为 `NOT_SENT`，51次请求尝试、50个完成响应、47个有效episode。原作者 `token_budget` 分支完成schema、best回滚和真实post-final，之后S0/S1/S2全部独评。它按学习阶段有效官方reward选择较早的S1（reward0），不能因事后S2独评12/14而改选S2。**历史best0、真实post-final0（11/14）、Final独评0（9/14）分别保留**。这是完整测量的任务失败，不是UNKNOWN；没有重发未派发的Generator请求来绕过context合同。
+DAPT在Generator请求**派发前**触发本地上下文β准入，不是费用/输出额度，也不是provider实际拒绝。最后一次已观测窗口为258,400 tokens，β=0.7、预留32,768；预计输入148,724超过当时允许的148,112，超出612 tokens。该操作为 `NOT_SENT`，51次请求尝试、50个完成响应、47个有效episode。原作者 `token_budget` 分支完成schema、best回滚和真实post-final，之后S0/S1/S2全部独评。S2从未进入选择阶段GT；它按学习阶段有效官方reward选择较早的S1（reward0），不能因事后S2独评12/14而改选S2。**历史best0、真实post-final0（11/14）、Final独评0（9/14）分别保留**。这是完整测量的任务失败，不是UNKNOWN；没有重发未派发的Generator请求来绕过context合同。
 
-004的3D实际问题是S0要求先澄清未声明的坐标单位，fresh执行因此没有生成 `mass_report.json`。S1将条件化单位约定及交付流程写入包，`measure.py`未变，官方恢复2/2；不能套用003的Markdown解析诊断。事后公开分析、封包hash、测试suite和选包来源见 [完整机器汇总](codex-author-fix-20261008-004/public-summary.json)及该目录的审批后公共证据。测试/评分/原始会话仍分区保存，不公开模型推理或隐藏断言。
+004的3D实际问题是S0要求先澄清未声明的坐标单位，fresh执行因此没有生成 `mass_report.json`。S1将条件化单位约定及交付流程写入包，`measure.py`未变，官方恢复2/2；不能套用003的Markdown解析诊断。NoSkill与S1采用不同单位假设，公开质量结果相差约1000倍但都获官方成功，因此官方2/2不能证明物理单位解释正确，详见[3D公开分析](codex-author-fix-20261008-004/evidence/posthoc-3d-public-analysis.json)。事后公开分析、封包hash、测试suite和选包来源见 [完整机器汇总](codex-author-fix-20261008-004/public-summary.json)及该目录的审批后公共证据。测试/评分/原始会话仍分区保存，不公开模型推理或隐藏断言。
 
 本次完成664个可观察模型响应，provider累计input为22,457,864、output为553,281、cached input为17,400,832 tokens；这些是累计用量，不能当上下文占用或收费账单。底层HTTP不可观察、订阅金额未测。源码包提供复跑代码；它不提供85题环境准入、两套Bedrock型号兼容性或完整矩阵的实测成绩。

@@ -19,7 +19,7 @@ from tau_skill_evolution.artifacts import (
     seal_bundle,
 )
 from tau_skill_evolution.bank import BankWorkerError
-from tau_skill_evolution.container import ProgramResult
+from tau_skill_evolution.container import ContainerUnavailable, ProgramResult
 from tau_skill_evolution.core._canonical import canonical_json_sha256
 from tau_skill_evolution.evaluation import not_measured, report_cases
 from tau_skill_evolution.evolution import EvolutionResult
@@ -614,6 +614,49 @@ def test_imported_content_versions_allow_parent_revisited_before_new_content(tmp
     }
     workflow.evaluate_imported(cells, source)
     assert len(calls) == 3
+
+
+def test_new_trial_imported_evaluation_preserves_source_close_failure(tmp_path):
+    calls = []
+    workflow = _codex_control_workflow(
+        tmp_path,
+        SimpleNamespace(
+            evaluate=lambda bundle: (
+                calls.append(bundle.bundle_hash)
+                or {"utility": True, "asr": None, "asr_status": "NOT_APPLICABLE"}
+            )
+        ),
+    )
+    task = workflow.spec.tasks[0]
+    source, initial, final = _import_source(tmp_path, task)
+    source_root = source / "cells" / task / "benign" / "journal"
+    source_journal = Journal(
+        source_root, identity=json.loads((source_root / "identity.json").read_text())["identity"]
+    )
+    failure = {
+        "status": "NOT_MEASURED",
+        "index": 0,
+        "stage": "close",
+        "error_type": "ContainerUnavailable",
+        "reason": "skillsbench_episode_cleanup_failed",
+    }
+    source_journal.dispatch("learning-environment-failure-0", {}, lambda: failure, external=False)
+    before = source_journal.response("evolution-result")
+    cells = ((task, "benign"),)
+    workflow.evaluate_imported(cells, source)
+    case = workflow.report()["cases"][0]
+    imported = case["evaluation_import"]
+    assert imported["source_stop_reason"] == "learning_environment_close_failed"
+    assert imported["source_evolution_stop_reason"] == "oracle_success"
+    assert imported["source_learning_environment_failure"] == failure
+    assert imported["source_trial_id"] != workflow.trial_id
+    assert source_journal.response("evolution-result") == before
+    assert source_journal.response("learning-environment-failure-0") == failure
+    assert calls == [initial.bundle_hash, final.bundle_hash]
+    shutil.rmtree(source)
+    workflow.evaluate_imported(cells, source)
+    assert calls == [initial.bundle_hash, final.bundle_hash]
+    assert workflow.report()["cases"][0]["evaluation_import"] == imported
 
 
 @pytest.mark.parametrize("tamper", ["initial", "parent", "task"])
@@ -1385,6 +1428,90 @@ def test_skillsbench_workflow_calls_published_controller_and_reuses_completed_re
     workflow.evolve(cells)
     assert captures["calls"] == 1
     assert workflow.report()["cases"][0] == case
+    workflow = Workflow(
+        workflow.spec,
+        workflow.root,
+        bank_factory=lambda _: pytest.fail("completed evolution must not reopen an adapter"),
+        model_factory=lambda _: pytest.fail("completed evolution must not reopen a model"),
+        counter=len,
+    )
+    workflow.evolve(cells)
+    assert captures["calls"] == 1
+    assert workflow.report()["cases"][0] == case
+
+
+@pytest.mark.parametrize("restart", [False, True])
+def test_skillsbench_learning_close_failure_blocks_completed_chain(tmp_path, monkeypatch, restart):
+    workflow, log, requests = _workflow(tmp_path, experiment="skillsbench")
+    cells = ((workflow.spec.tasks[0], "benign"),)
+    workflow.create(cells)
+    calls = []
+
+    class Adapter:
+        @contextmanager
+        def evolution_session(self, *args, **kwargs):
+            calls.append("open")
+            yield SimpleNamespace()
+            calls.append("close")
+            raise ContainerUnavailable("skillsbench_episode_cleanup_failed")
+
+        def evaluate(self, bundle):
+            pytest.fail("failed cleanup must block fresh evaluation")
+
+        def evaluate_no_skill(self):
+            pytest.fail("failed cleanup must block fresh control evaluation")
+
+    def execute(session, initial, base, generator, verifier, **kwargs):
+        calls.append("author")
+        result = EvolutionResult(
+            (initial,), (), (), (True,), 0, "gt_oracle_pass", initial.bundle_hash
+        )
+        return EvolutionResult.from_dict(
+            kwargs["journal"].dispatch("published-author-controller", {}, result.to_dict)
+        )
+
+    workflow.bank_factory = lambda _: Adapter()
+    monkeypatch.setattr("tau_skill_evolution.skillsbench_evolution.run_author_evolution", execute)
+    with pytest.raises(ContainerUnavailable, match="skillsbench_episode_cleanup_failed"):
+        workflow.evolve(cells)
+    _, journal = workflow._cell(*cells[0])
+    operations = (
+        "published-author-controller",
+        "evolution-result",
+        "learning-environment-failure-0",
+    )
+    completed = {operation: journal.response(operation) for operation in operations}
+    assert completed["learning-environment-failure-0"]["stage"] == "close"
+    before = copy.deepcopy((calls, log, requests))
+    if restart:
+        workflow = Workflow(
+            workflow.spec,
+            workflow.root,
+            bank_factory=lambda _: pytest.fail("failed cleanup must block opening an adapter"),
+            model_factory=lambda _: pytest.fail("failed cleanup must block opening a model"),
+            counter=len,
+        )
+    for stage in (
+        lambda: workflow.create(cells),
+        lambda: workflow.evolve(cells),
+        lambda: workflow.evaluate(cells),
+        lambda: workflow.evaluate_no_skill(cells),
+        lambda: workflow.evaluate_imported(cells, tmp_path / "unused-source"),
+    ):
+        with pytest.raises(
+            ContainerUnavailable, match="skillsbench_learning_environment_close_failed"
+        ):
+            stage()
+    assert (calls, log, requests) == before
+    assert {operation: journal.response(operation) for operation in operations} == completed
+    initial_hash = completed["evolution-result"]["final_bundle_hash"]
+    assert not journal.dispatched(f"evaluation-{initial_hash}")
+    assert not journal.dispatched("evaluation-no-skill")
+    assert not journal.dispatched("imported-versions")
+    case = workflow.report()["cases"][0]
+    assert case["stop_reason"] == "learning_environment_close_failed"
+    assert case["evolution_stop_reason"] == "gt_oracle_pass"
+    assert case["evaluations"][initial_hash]["status"] == "NOT_MEASURED"
 
 
 def test_skillsbench_unknown_learning_result_blocks_later_evaluation_posts(tmp_path):
@@ -1403,6 +1530,25 @@ def test_skillsbench_unknown_learning_result_blocks_later_evaluation_posts(tmp_p
     assert case["evaluations"][initial.bundle_hash]["status"] == "NOT_MEASURED"
     assert case["evaluations"][initial.bundle_hash]["reason"] == "oracle_result_unknown"
     assert (log, requests) == before
+
+
+def test_skillsbench_learning_open_failure_still_allows_sealed_s0_evaluation(tmp_path):
+    workflow, log, requests = _workflow(tmp_path, experiment="skillsbench")
+    cells = ((workflow.spec.tasks[0], "benign"),)
+    workflow.create(cells)
+    root, journal = workflow._cell(*cells[0])
+    initial = load_bundle(root / "initial")
+    journal.dispatch(
+        "learning-environment-failure-0",
+        {},
+        lambda: {"index": 0, "stage": "open", "status": "NOT_MEASURED"},
+        external=False,
+    )
+    before = copy.deepcopy(requests)
+    workflow.evaluate(cells)
+    assert ("evaluate", initial.bundle_hash) in log
+    assert requests == before
+    assert journal.completed(f"evaluation-{initial.bundle_hash}")
 
 
 def test_full_workflow_alternates_tests_and_skills_then_resumes_without_side_effects(tmp_path):

@@ -16,6 +16,7 @@ from typing import Any
 from .acquisition import READ_ONLY_TOOL_NAMES, AcquisitionBudgets, collect_base
 from .artifacts import FrozenBase, atomic_json, load_base, load_bundle, seal_base, seal_bundle
 from .bank import BankWorkerError
+from .container import ContainerUnavailable
 from .core._canonical import thaw_json
 from .credentials import bearer_token_source
 from .generator import (
@@ -293,6 +294,28 @@ class Workflow:
                 status=status,
             )
 
+    @staticmethod
+    def _learning_close_failure(journal: Journal) -> dict[str, Any] | None:
+        failures = []
+        for path in journal.root.glob("*/request.json"):
+            operation = json.loads(path.read_text())["operation_id"]
+            if operation.startswith("learning-environment-failure-") and journal.completed(
+                operation
+            ):
+                failure = journal.response(operation)
+                if failure.get("stage") == "close":
+                    failures.append(failure)
+        return max(failures, key=lambda item: item["index"], default=None)
+
+    def _halt_on_learning_close_failure(self, journal: Journal) -> None:
+        # The author can finish before the owning learning environment closes.
+        # Keep its completed result, but never resume dispatch after failed cleanup.
+        if (
+            self.spec.experiment == "skillsbench"
+            and self._learning_close_failure(journal) is not None
+        ):
+            raise ContainerUnavailable("skillsbench_learning_environment_close_failed")
+
     def run(self, cells: tuple[tuple[str, str], ...]) -> dict[str, Any]:
         self._validate_cells(cells)
         for cell in cells:
@@ -322,6 +345,7 @@ class Workflow:
 
     def _create_cell(self, task: str, arm: str) -> None:
         root, journal = self._cell(task, arm)
+        self._halt_on_learning_close_failure(journal)
         if journal.dispatched("imported-versions"):
             raise ValueError("imported evaluation cells cannot create or evolve a new Skill")
         if journal.completed("creation"):
@@ -468,6 +492,7 @@ class Workflow:
         from .verifier import SurrogateVerifier
 
         root, journal = self._cell(task, arm)
+        self._halt_on_learning_close_failure(journal)
         creation = journal.response("creation")
         if creation["status"] != "CREATED":
             return
@@ -662,6 +687,7 @@ class Workflow:
 
         for task, arm in cells:
             root, journal = self._cell(task, arm)
+            self._halt_on_learning_close_failure(journal)
             creation = journal.response("creation")
             if creation["status"] != "CREATED":
                 continue
@@ -719,6 +745,7 @@ class Workflow:
             if (task, arm) in self._historical_authentication_failures:
                 continue
             _, journal = self._cell(task, arm)
+            self._halt_on_learning_close_failure(journal)
             evaluate_no_skill(self._bank(task).evaluate_no_skill, journal=journal)
             self._halt_on_authentication(task, arm)
 
@@ -747,6 +774,7 @@ class Workflow:
             if (task, arm) in self._historical_authentication_failures:
                 continue
             root, journal = self._cell(task, arm)
+            self._halt_on_learning_close_failure(journal)
             if journal.dispatched("creation"):
                 raise ValueError("cannot import versions into a creation checkpoint")
             if journal.completed("imported-versions"):
@@ -839,6 +867,11 @@ class Workflow:
                 if result is not None and result.final_bundle_ref is not None
                 else None,
             }
+            source_close_failure = self._learning_close_failure(source)
+            if source_close_failure is not None:
+                manifest["source_evolution_stop_reason"] = manifest["source_stop_reason"]
+                manifest["source_stop_reason"] = "learning_environment_close_failed"
+                manifest["source_learning_environment_failure"] = source_close_failure
 
             def import_packages(
                 versions: Any = versions, root: Path = root, manifest: Any = manifest

@@ -90,7 +90,7 @@
       "src/tau_skill_evolution/spec.py": "31ac57ed5729e9261e59db71ae4fc35a2efa2bc4252086fdfede5ac728a0a1e1",
       "src/tau_skill_evolution/verifier.py": "6b52d0eef673c7e511987ec5df0df7d4723cf7ff95d78e7f02d2fc1228079943",
       "src/tau_skill_evolution/worker.py": "9373264cec4a05f97c51e41bce9397c635ad0665bf86eb57f1fdec71bcad4dac",
-      "src/tau_skill_evolution/workflow.py": "29dc42409a6663a8a23c0585486452fd3a1b9c44b8ca494a918a9b1d9d21ef5d",
+      "src/tau_skill_evolution/workflow.py": "ddced8c2b46ef49b3c04df5d5003ddf366af77f840a2225cf0683586e9a8bdfa",
       "prompts/analyzer-skillsbench.md": "68e7409bb9659fe5e08c01ee010bd5a179026a8d4d33c072d32d278f1e17cccc",
       "prompts/analyzer.md": "422f384003de6846d6b4b43f8662996fd3c7b4ea45193ebb550febd2927bb06c",
       "prompts/execution-skillsbench.md": "8acdc73942cc8dbdbb121a9174b7e8b5df77d17db5feb7208d83edb10b60c787",
@@ -309,7 +309,7 @@
       "transport": "bedrock-responses",
       "region": "us-east-1"
     },
-    "identity_hash": "14f7ee16b6e92e1d7c38d769df5693647ab45ddd1a4f94c0e6170c3bf46694cf"
+    "identity_hash": "4eab61886aed42e3b0ff7ca501d7853f1ba30abc6a0efa233a5ba7561bfded5a"
   },
   "identity_at_handoff": {
     "experiment": "skillsbench",
@@ -393,7 +393,7 @@
       "src/tau_skill_evolution/spec.py": "31ac57ed5729e9261e59db71ae4fc35a2efa2bc4252086fdfede5ac728a0a1e1",
       "src/tau_skill_evolution/verifier.py": "6b52d0eef673c7e511987ec5df0df7d4723cf7ff95d78e7f02d2fc1228079943",
       "src/tau_skill_evolution/worker.py": "9373264cec4a05f97c51e41bce9397c635ad0665bf86eb57f1fdec71bcad4dac",
-      "src/tau_skill_evolution/workflow.py": "29dc42409a6663a8a23c0585486452fd3a1b9c44b8ca494a918a9b1d9d21ef5d",
+      "src/tau_skill_evolution/workflow.py": "ddced8c2b46ef49b3c04df5d5003ddf366af77f840a2225cf0683586e9a8bdfa",
       "prompts/analyzer-skillsbench.md": "68e7409bb9659fe5e08c01ee010bd5a179026a8d4d33c072d32d278f1e17cccc",
       "prompts/analyzer.md": "422f384003de6846d6b4b43f8662996fd3c7b4ea45193ebb550febd2927bb06c",
       "prompts/execution-skillsbench.md": "8acdc73942cc8dbdbb121a9174b7e8b5df77d17db5feb7208d83edb10b60c787",
@@ -612,18 +612,18 @@
       "transport": "bedrock-responses",
       "region": "us-east-1"
     },
-    "identity_hash": "14f7ee16b6e92e1d7c38d769df5693647ab45ddd1a4f94c0e6170c3bf46694cf"
+    "identity_hash": "4eab61886aed42e3b0ff7ca501d7853f1ba30abc6a0efa233a5ba7561bfded5a"
   },
-  "identity_refreshed_at": "2026-10-08T09:29:09.970716+00:00",
-  "implementation_status": "IMPLEMENTATION_ACCEPTANCE_PASSED_WITH_EXPLICIT_ADAPTATIONS",
+  "identity_refreshed_at": "2026-10-08T17:21:53.809992+00:00",
+  "implementation_status": "PASS_WITH_EXPLICIT_LIMITATIONS",
   "method": "skillsbench.skill-evolution.v6",
   "model": "openai.gpt-5.6-terra",
   "model_compatibility": "NOT_MEASURED",
   "paid_matrix": "NOT_MEASURED",
   "previous_manifest": {
-    "path": "../../readiness-skillsbench-native-controller-20261008-004/evidence/full-85-gpt56-v6-manifest-before-final-delivery.json",
-    "sha256": "d8ba1f9035327cdb35a2ba4c4ffeadba5f5ea9333be7cdb3e52fc2ff5a756178",
-    "state": "AWAITING_004_TRANSPORT_ACCEPTANCE_AND_FINAL_PACKAGE"
+    "path": "../../readiness-skillsbench-crosscheck-20261008-005/evidence/prepared-gpt56-before-close-failure-gate.json",
+    "sha256": "63913923390ed730fb39712f2c92a569855b8b09a2b8bce310f58c9cb364b5c2",
+    "state": "FROZEN_BEFORE_CLOSE_FAILURE_GATE"
   },
   "schema": "skillsbench.handoff.v6",
   "source_commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
@@ -717,8 +717,12 @@
   ],
   "transport": "bedrock-responses",
   "implementation_evidence": {
-    "path": "../../readiness-skillsbench-native-controller-20261008-004/final-status.json",
-    "sha256": "a5729b04fe1ce9b97344d3f130029a6b4fb9995aae0b68d2243c4ec1e7aac5e4",
-    "scope": "Shared source, offline tests and Docker mechanism acceptance only; this configured Bedrock model and full85 admission remain NOT_MEASURED"
+    "path": "../../readiness-skillsbench-crosscheck-20261008-005/final-status.json",
+    "scope": "Current shared source/regression and MODEL_SCRIPTED Docker; configured model compatibility and full85 admission remain NOT_MEASURED. Hash is provided by the external transfer descriptor to avoid manifest/readiness cycles."
+  },
+  "implementation_acceptance": {
+    "status": "PASS_WITH_EXPLICIT_LIMITATIONS",
+    "readiness_evidence": "../../readiness-skillsbench-crosscheck-20261008-005/final-status.json",
+    "scope": "Shared regression, unchanged pinned author resources, persistent close-failure dispatch gate and MODEL_SCRIPTED real Docker. No new paid model result or full85 admission."
   }
 }

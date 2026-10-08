@@ -1,0 +1,42 @@
+{
+  "schema": "skillsbench.crosscheck-source-package.v1",
+  "status": "PASS",
+  "artifact": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/skillsbench-v6-crosschecked-20261008-005-source.tar.gz",
+  "artifact_sha256": "9999b1782464d5d3314f33567f0cbdd8112161e3168356712352adab311ed8c4",
+  "artifact_bytes": 2585178,
+  "member_count": 580,
+  "all_member_hashes_match_current_files": true,
+  "author_original_byte_hashes_verified": 44,
+  "variant_identities": {
+    "full-85-gpt56-v6": {
+      "identity_hash": "4eab61886aed42e3b0ff7ca501d7853f1ba30abc6a0efa233a5ba7561bfded5a",
+      "manifest_sha256": "0c38b6527eb5e2fd5a4edc3073e57020067db2cae3eddb3e286825c871db4e63",
+      "config_sha256": "820f89b296df8beb35b61fca3351ff0164249fc6d1a81d404c9fd9947736041d",
+      "model": "openai.gpt-5.6-terra",
+      "transport": "bedrock-responses"
+    },
+    "full-85-opus48-v6": {
+      "identity_hash": "9ced9ef1813f85e0ea16776b3044942a2d30cd92abc2a037c9320d7149f36988",
+      "manifest_sha256": "c22f0fd9455e914919963b23233758b34e07cb2fc6340a9b27041853ebd35e61",
+      "config_sha256": "4a3e6889d00cc64d8f8937ff37ad7a0d31ffd1ed8eea412c3bb4e18fc3f506e4",
+      "model": "anthropic.claude-opus-4-8",
+      "transport": "bedrock-messages"
+    }
+  },
+  "changed_files_since_previous_004_package": [
+    "experiments/tau-knowledge/skill-evolution/PROTOCOL.md",
+    "experiments/tau-knowledge/skill-evolution/README.md",
+    "experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md",
+    "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-gpt56-v6/manifest.json",
+    "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-opus48-v6/manifest.json",
+    "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/workflow.py",
+    "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_workflow.py"
+  ],
+  "readiness_sha256": "d7fdfbfacb41509fd9ab9dd4721eb302a49334f13257d18e3f8090ce3bc76a09",
+  "independent_code_doc_review_sha256": "38c630f89db9a92ddcff664677dccd2799ab21305983f58224c7deb3040312d4",
+  "transfer_manifest_sha256": "a3bd88c01c7a280454d161f56ef3c197cc0499c9848165c588603a4920b3aba3",
+  "previous_004_archive_sha256": "18cdab20296263ad853cae94c693537c19c824612d0787e74add044701dce486",
+  "previous_descriptor_sha256": "64d8500d4465fec99d3a46b7d2066df8a71dfd0d21752554c28160485c18a380",
+  "new_paid_results": "NOT_MEASURED",
+  "credential_pattern_scan": "PASS_SCOPE_LIMITED_NOT_PROOF_OF_ARBITRARY_SECRET_ABSENCE"
+}

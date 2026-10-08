@@ -72,7 +72,7 @@ S0 一次响应返回完整包，host 仅做安全结构校验：拒绝路径穿
 
 封包接受规范相对路径的 UTF-8 文件，宿主 `manifest.json` 保留名不可由模型提供；不能将目录名或脚本语言当作路径安全判断。银行脚本执行接口仍限 Python。候选采集排除运行产生的 pytest/字节码缓存，已封存包的校验仍拒绝额外文件。SkillsBench 补全作者导出遗漏的附件，使 oracle、best 与回滚使用同一完整包；未安全封存的草稿测试不能记为父包通过，封包接口故障中止而不消耗模型重试。
 
-**创建阶段不执行、自测、诊断或反馈重生成，最多一个模型 HTTP POST。** 空输出、非法封装及已派发结果未知均终止创建。脚本语法和内容质量留给演化。封存后才首跑 S0，首跑修改包不能冒充 S0。
+**创建阶段不执行、自测、诊断或反馈重生成。** API 主配置最多派发一个创建 HTTP POST；Codex 订阅传输只保证一次可观察创建 turn，底层 HTTP 与内部重试为 `NOT_OBSERVABLE`，二者不能合并成单 POST 实验。空输出、非法封装及已派发结果未知均终止创建。脚本语法和内容质量留给演化。封存后才开始学习执行；包已修改的首次提交不能冒充 S0 实测。
 
 τ 后续修改从完整父包开始，只有显式提交才形成版本；SkillsBench 使用作者的 task_complete 门禁与 idle/stale 强制门禁，分别标记模型提交和 host 强制检查。提交绑定包与实际父版本、execution ID、操作游标、公开快照 hash；提交期间暂停工具派发，拒绝包与旧快照错配。未进入作者检查门禁的中间编辑不展开为内容版本；末端 GT 实际检查的安全完整包另行封存。非 UTF-8 候选保留原字节和结构错误，允许在同一交互中修正；任务的二进制交付物不按 Skill 文本解析。
 
@@ -116,6 +116,23 @@ SkillsBench 在有效 episode 门禁把上述占用交给原作者的 `token_bud
 
 模型请求、终端、银行动作和提交分别使用稳定 operation ID，先记录派发，再保存原始响应和状态。已完成操作复用结果；`NOT_SENT` 可以首次派发；`UNKNOWN` 不自动重发，银行写入未知外层中止。τ 保存私有 JSON 数据库、模拟器与路由状态；SkillsBench 绑定实际 container/Compose 身份和启动代次。容器丢失或重启不能靠快照冒充进程恢复。新源码与方法身份不续接旧 checkpoint，重采样另开 trial。
 
+SkillsBench 的作者结果完成与学习环境成功关闭是两个条件。若结果已落盘但关闭失败，保留结果和失败证据；该 cell 的创建、演化及评价入口必须拒绝新的派发，包括 NoSkill。重新启动不能仅凭完成结果绕过关闭失败，也不能重跑作者控制器或假称容器已清理。报告仍可读取已经实测的成绩，未执行评价保持未测。
+
+### 3.7 一条链的阶段合同
+
+| 阶段 | 执行者与环境 | 封存结果与进入下一阶段的条件 |
+|---|---|---|
+| 准备 | Host | 校验固定数据、检索、模型传输及逐题环境；preflight 通过才启动模型阶段 |
+| 收集 | Analyzer 的独立会话 | 公开输入、全文、相关性与缺口；充分或预算停止后封存 B*，此后关闭共享池检索 |
+| 创建 | 新 Generator 会话 | 只返回完整包；安全封装成功得到 S0，失败/UNKNOWN 不补发、不执行 |
+| 学习 | Generator 持续会话与任务环境 | 执行、观察、修改父包；进入提交门禁后绑定包、实际父版本及公开快照，按 hash 展开内容版本 |
+| 验证 | 独立 Verifier 会话 | 检查当前执行结果，记录 suite 和实际用例；正常公开失败固定测试修包，官方拒绝后按域规则升级 |
+| 选择 | Host 与 fresh 评分 agent | 官方反馈仅按允许投影进入学习侧；SkillsBench 按作者 schema/checklist、r15/K5、末端 GT 与 best 分支选包，τ 按成功或最后安全包选包 |
+| 评价 | fresh agent 与 fresh 环境 | SkillsBench 的 NoSkill 单独请求；各实际内容 hash 独评一次，Final 复用所选 hash 的独评，评价信息不反馈、不选包 |
+| 报告 | Host | 固定分母、缺测、真实父谱系、选择成绩与独评分开；导出公开证据，私有模型/评分原文受限保存 |
+
+`run` 对每题依次调用创建、演化和独评；SkillsBench 的 NoSkill 需显式运行 `evaluate --no-skill`，不是 `run` 自动包含的阶段。SkillsBench 的常规路径是公开验证通过后 GT，但 r15 或执行结束仍可能进入作者末端 GT；不能把简图中的常规路径当作所有终止分支。SkillsBench 学习环境必须完成关闭门禁，才能在同一链继续独评。
+
 ## 4. 实验设计
 
 ### 4.1 固定数据与规模
@@ -139,7 +156,7 @@ SkillsBench 两套完整 benign 配置固定 Bedrock `openai.gpt-5.6-terra` 和 
 
 Codex 订阅诊断试跑单独封存。`codex-plan` 使用固定 CLI 的官方 app-server、已有 ChatGPT 登录及实际可访问的 `gpt-6.1-sol`，不读取 API key或将登录文件放入任务容器。角色会话独立，模型返回结构化决定，动作仍由现有控制器和任务内 Codex执行；仅任务产物的内联图片作为图像输入。此传输只能验证 S0 至多一次创建 turn，底层 HTTP 次数与内部重试记为 `NOT_OBSERVABLE`，不满足主实验的单 HTTP POST可观测合同。模型、传输和上下文包装均有差异，成绩不与 Bedrock矩阵合并；传输故障试跑明确排除，保留原始证据。app-server 的系统包装、重复表示和 opaque reasoning 不能由外部可见历史精确重建，故窗口与占用采用上述保守估算，实际 provider usage 单列。原生工具事件与 compaction 分开识别；两者均先私有封存已接收事件流、再停止为 `UNKNOWN`，不能自动重发。`codex-author-fix-20261008-003` 的具体事件类型不能由现有证据确证。该传输不采用请求seed，失败请求可能仍消耗订阅，恢复记账按turn ID去重。
 
-当前 `codex-author-fix-20261008-004` 已完成五题的NoSkill、S0、实际内容版本及Final独评；它是gpt-6.1-sol订阅传输的小样本实测，结果见SkillsBench HANDOFF，不作为上述两模型85题矩阵或论文复现成绩。
+`codex-author-fix-20261008-004` 在冻结提交`4fbfeed6`、身份`0f39848a…`下完成五题的NoSkill、S0、实际内容版本及Final独评；它是gpt-6.1-sol订阅传输的小样本实测，结果及实际流程见SkillsBench HANDOFF。随后关闭失败门禁的源码修复另行验收，不改004结果，不将其冒充新身份smoke、上述两模型85题矩阵或论文复现成绩。
 
 以任务为单位报告配对收益、救回数、退化数和覆盖率；只在身份一致且两端实测时比较。单次或预选小样本不足以支持总体显著提升或因果结论，需要预先声明的重复评估。
 
@@ -198,7 +215,7 @@ SkillsBench 另报 host 的 best/terminal/retained 结果和选包来源。**ret
 
 ## 7. 方法边界与复现
 
-SkillsBench v6 直接执行固定作者完整控制器的 Verifier 会话、同环境执行、测试生命周期、r15/清单/schema门禁和 best/终验选择；τ v4 保留独立容器与银行适配。仍有共同的实验差异：共享检索冻结、S0单次POST且禁止自测、显式提交、受限反馈、单POST journal、provider/上下文适配，以及附加独立评估。SkillsBench 保留作者 idle/stale 自动门禁，记录 `host_forced_submission`，不伪装成模型显式提交或免费 S0 执行。发布代码与论文诊断细节并不完全一致，来源及适配见[来源记录](meta/coevo-authoring/SOURCE.md)，不能标为完整论文复现。
+SkillsBench v6 直接执行固定作者完整控制器的 Verifier 会话、同环境执行、测试生命周期、r15/清单/schema门禁和 best/终验选择；τ v4 保留独立容器与银行适配。仍有共同的实验差异：共享检索冻结、一次创建且禁止自测、显式提交、受限反馈、请求 journal、provider/上下文适配，以及附加独立评估。API 单 POST 与订阅单 turn 的证据范围按3.3节分开。SkillsBench 保留作者 idle/stale 自动门禁，记录 `host_forced_submission`，不伪装成模型显式提交或免费 S0 执行。发布代码与论文诊断细节并不完全一致，来源及适配见[来源记录](meta/coevo-authoring/SOURCE.md)，不能标为完整论文复现。
 
 命名空间为 `tau.skill-evolution.v4` / `skillsbench.skill-evolution.v6`。身份绑定配置、源码、提示原字节、来源清单、资料与环境hash。模型原始响应、失败证据、测试和评分分别封存；完整审计信息不进入Generator。逻辑请求与真实HTTP派发次数分开，缺派发证据则未测；历史自动重发变体不混入单POST成绩。
 

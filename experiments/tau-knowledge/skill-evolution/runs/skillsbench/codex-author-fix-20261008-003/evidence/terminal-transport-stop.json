@@ -1,0 +1,167 @@
+{
+  "schema": "skillsbench.terminal-transport-stop.v1",
+  "status": "STOPPED_PARTIAL_TRANSPORT_GATE",
+  "captured_at": "2026-10-08T08:34:35.461532+00:00",
+  "stopped_at": "2026-10-08T08:27:03.523211+00:00",
+  "source_identity_hash": "ce9c36a137bdf1a6ae0cf1bb2d2a9548ed799934478f9aba7204ffcf761989ac",
+  "source_identity_file_hashes_match_at_stop": true,
+  "source_mismatch_count": 0,
+  "original_manifest_sha256": "b8e506bb47e45cbc3963c8354c61303653d7ab4a17821d6dedfa76e38fd485fd",
+  "original_manifest_snapshot": "evidence/manifest-before-transport-stop.json",
+  "frozen_manifest_sha256": "d504d44353242bd055be43103f0e773f6ff15cbd04984f8df74b420b5c80d65c",
+  "launcher_results_sha256": "c0c93173897df7b5b7055d1a6c386ad044a4949d40be3148e8e722e280df9b81",
+  "launcher_pid": 2759242,
+  "launcher_terminal": true,
+  "launcher_process_state": "ABSENT",
+  "task_statuses": [
+    {
+      "task_id": "3d-scan-calc",
+      "status": "STAGES_FINISHED",
+      "error_type": null
+    },
+    {
+      "task_id": "pddl-tpp-planning",
+      "status": "STAGES_FINISHED",
+      "error_type": null
+    },
+    {
+      "task_id": "dialogue-parser",
+      "status": "STAGES_FINISHED",
+      "error_type": null
+    },
+    {
+      "task_id": "adaptive-cruise-control",
+      "status": "STAGES_FINISHED",
+      "error_type": null
+    },
+    {
+      "task_id": "dapt-intrusion-detection",
+      "status": "FAILED",
+      "error_type": "UnknownOperation"
+    }
+  ],
+  "completion": {
+    "completed_task_stages": 4,
+    "unknown_task_chains": 1,
+    "selected_task_denominator": 5,
+    "fully_completed_five_task_trial": false,
+    "failed_task": "dapt-intrusion-detection",
+    "failure_type": "UnknownOperation",
+    "gate": "codex_plan_native_tool",
+    "event_type": "UNDER_INVESTIGATION_NATIVE_CAPABILITY_OR_COMPACTION",
+    "unknown_may_be_replayed": false,
+    "unmeasured_evaluations_remain_null": true,
+    "source_identity_unchanged": true
+  },
+  "learning_checkpoints": [
+    {
+      "task_id": "3d-scan-calc",
+      "path": "matrix/cells/3d-scan-calc/benign/learning/evolution-runtime.json",
+      "sha256": "e55e21514653c56badc819915533f5da4e88fd461071b65cf68c836fd86bfadf",
+      "status": "CLOSED"
+    },
+    {
+      "task_id": "adaptive-cruise-control",
+      "path": "matrix/cells/adaptive-cruise-control/benign/learning/evolution-runtime.json",
+      "sha256": "c5984366fd48063bf2362facb1d0ceb8c0fd673e4d2785699d9f4468e4ef9612",
+      "status": "CLOSED"
+    },
+    {
+      "task_id": "dapt-intrusion-detection",
+      "path": "matrix/cells/dapt-intrusion-detection/benign/learning/evolution-runtime.json",
+      "sha256": "9c09bf444b11f01286912c246e75e270edf012cb59862a45e2f2fa01f056124a",
+      "status": "CLOSED"
+    },
+    {
+      "task_id": "dialogue-parser",
+      "path": "matrix/cells/dialogue-parser/benign/learning/evolution-runtime.json",
+      "sha256": "f77bec000c0d389f103d4949af72bfc3b4ded436881b7591043a5cd36691fed0",
+      "status": "CLOSED"
+    },
+    {
+      "task_id": "pddl-tpp-planning",
+      "path": "matrix/cells/pddl-tpp-planning/benign/learning/evolution-runtime.json",
+      "sha256": "13549ef6dbff53b1175cd105bd11029ff39790840dc496449eeaa590dee2d712",
+      "status": "CLOSED"
+    }
+  ],
+  "exact_trial_container_checks": [
+    {
+      "task_id": "3d-scan-calc",
+      "container_id": "3853bf5046594ff2be182f8c2e5e2808db7b882bd65254f9907bee357d82ea85",
+      "name": "/tau-sb-b231b80392894d07a9a9162f89f82069",
+      "service": "main",
+      "present": false,
+      "inspection_status": "NO_SUCH_OBJECT"
+    },
+    {
+      "task_id": "adaptive-cruise-control",
+      "container_id": "b8fdc47551c3940e7b0cdd17c820b96d243aa2c9c4fcb25d9debd7da4c0162be",
+      "name": "/tau-sb-7bbb7b256e504e669abe54948d314cb0",
+      "service": "main",
+      "present": false,
+      "inspection_status": "NO_SUCH_OBJECT"
+    },
+    {
+      "task_id": "dapt-intrusion-detection",
+      "container_id": "2522a6db8d69b079d9099c1f38eefbc83c2f0148bddeb3eb7996b82d54e3ddd6",
+      "name": "/tau-sb-a46a235e29f6460c9106dc72a63d9906",
+      "service": "main",
+      "present": false,
+      "inspection_status": "NO_SUCH_OBJECT"
+    },
+    {
+      "task_id": "dialogue-parser",
+      "container_id": "84c4e0de77d45e83b9d0277536be5221086ccf22125dc1c8be8cbae3d91c6a42",
+      "name": "/tau-sb-3300aa3e300044c4b91f10cf423447e4",
+      "service": "main",
+      "present": false,
+      "inspection_status": "NO_SUCH_OBJECT"
+    },
+    {
+      "task_id": "pddl-tpp-planning",
+      "container_id": "58e579ab293bdde4996df7e00553394a0d7215f3383322e0cc498cfd0307bfb9",
+      "name": "/tau-sb-6ede22f1339f44b685e84faeb29f230c",
+      "service": "main",
+      "present": false,
+      "inspection_status": "NO_SUCH_OBJECT"
+    }
+  ],
+  "exact_trial_compose_project_checks": [
+    {
+      "task_id": "3d-scan-calc",
+      "compose_project": "tau-sb-b231b80392894d07a9a9162f89f82069",
+      "remaining_containers": 0
+    },
+    {
+      "task_id": "adaptive-cruise-control",
+      "compose_project": "tau-sb-7bbb7b256e504e669abe54948d314cb0",
+      "remaining_containers": 0
+    },
+    {
+      "task_id": "dapt-intrusion-detection",
+      "compose_project": "tau-sb-a46a235e29f6460c9106dc72a63d9906",
+      "remaining_containers": 0
+    },
+    {
+      "task_id": "dialogue-parser",
+      "compose_project": "tau-sb-3300aa3e300044c4b91f10cf423447e4",
+      "remaining_containers": 0
+    },
+    {
+      "task_id": "pddl-tpp-planning",
+      "compose_project": "tau-sb-6ede22f1339f44b685e84faeb29f230c",
+      "remaining_containers": 0
+    }
+  ],
+  "docker_scope": "System daemon; exact five saved container IDs and exact five Compose projects inspected only; no stop/rm/prune command issued",
+  "all_exact_trial_containers_absent": true,
+  "other_resources_modified": false,
+  "new_final_tar_created": false,
+  "actual_model_or_HTTP_operation_replayed": false,
+  "limitations": [
+    "The unsupported native capability or compaction event is still under investigation. No concrete subtype is inferred from this terminal state.",
+    "Four tasks completed; DAPT remains UNKNOWN and its unexecuted independent evaluations and Final are not invented.",
+    "Implementation fixture evidence is retained separately and does not establish a completed five-task live run."
+  ]
+}

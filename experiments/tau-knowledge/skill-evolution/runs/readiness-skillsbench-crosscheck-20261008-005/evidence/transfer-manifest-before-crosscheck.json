@@ -1,17 +1,17 @@
 {
   "schema": "skillsbench.source-transfer.v3",
-  "created_at": "2026-10-08T17:22:52.233303+00:00",
-  "artifact": "skillsbench-v6-crosschecked-20261008-005-source.tar.gz",
-  "artifact_sha256": "9999b1782464d5d3314f33567f0cbdd8112161e3168356712352adab311ed8c4",
-  "artifact_bytes": 2585178,
+  "created_at": "2026-10-08T11:08:28.471621+00:00",
+  "artifact": "skillsbench-v6-final-20261008-004-source.tar.gz",
+  "artifact_sha256": "18cdab20296263ad853cae94c693537c19c824612d0787e74add044701dce486",
+  "artifact_bytes": 2580300,
   "file_count": 580,
   "source": "Complete pinned native CoEvoSkills controller and minimum original-byte closure; public shared pipeline, tests, fixed corpus and v6 handoff configurations",
   "method": "skillsbench.skill-evolution.v6",
   "author_commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
   "author_original_resources": 44,
-  "source_manifest_sha256": "044f62d9bc8234d45ef478ee5f0fe84550b2e8bc35710add1050cec7412ff319",
+  "source_manifest_sha256": "bcc77625023fa7fe62ff5bf996c50a5a0ac8421936232fba001fd50c45afbbd0",
   "source_manifest_sha256_definition": "SHA256 of canonical JSON list of sorted {path,sha256,bytes} entries under experiment src/ and scripts/",
-  "public_file_manifest_sha256": "36bf670ae5f1c2813b87f5e0950c0a690eb0565a45e6a99f5e9e0effe354823c",
+  "public_file_manifest_sha256": "bb7227a9402989c829362e1fc97ae50ef5480f6f98f19b20a0b5b38871327097",
   "models": [
     "openai.gpt-5.6-terra",
     "anthropic.claude-opus-4-8"
@@ -36,15 +36,15 @@
   ],
   "variant_identities": {
     "full-85-gpt56-v6": {
-      "identity_hash": "4eab61886aed42e3b0ff7ca501d7853f1ba30abc6a0efa233a5ba7561bfded5a",
-      "manifest_sha256": "0c38b6527eb5e2fd5a4edc3073e57020067db2cae3eddb3e286825c871db4e63",
+      "identity_hash": "14f7ee16b6e92e1d7c38d769df5693647ab45ddd1a4f94c0e6170c3bf46694cf",
+      "manifest_sha256": "63913923390ed730fb39712f2c92a569855b8b09a2b8bce310f58c9cb364b5c2",
       "config_sha256": "820f89b296df8beb35b61fca3351ff0164249fc6d1a81d404c9fd9947736041d",
       "model": "openai.gpt-5.6-terra",
       "transport": "bedrock-responses"
     },
     "full-85-opus48-v6": {
-      "identity_hash": "9ced9ef1813f85e0ea16776b3044942a2d30cd92abc2a037c9320d7149f36988",
-      "manifest_sha256": "c22f0fd9455e914919963b23233758b34e07cb2fc6340a9b27041853ebd35e61",
+      "identity_hash": "aa83e9fe929758b865d3a567eb4806deb5f563a09d26b8334cc352780cf51555",
+      "manifest_sha256": "05d5baf02a561d417e9cb0ccb6f51506a380f1b41bc3a780e585d571c13fa1bf",
       "config_sha256": "4a3e6889d00cc64d8f8937ff37ad7a0d31ffd1ed8eea412c3bb4e18fc3f506e4",
       "model": "anthropic.claude-opus-4-8",
       "transport": "bedrock-messages"
@@ -52,13 +52,13 @@
   },
   "task_denominator_per_model": 85,
   "planned_chains": 170,
-  "status": "PASS_WITH_EXPLICIT_LIMITATIONS",
+  "status": "IMPLEMENTATION_ACCEPTANCE_PASSED_WITH_EXPLICIT_ADAPTATIONS",
   "real_model_compatibility": "NOT_MEASURED",
   "paid_smoke": "NOT_MEASURED",
   "paid_matrix": "NOT_MEASURED",
   "full85_v6_fresh_admission": "NOT_MEASURED",
-  "readiness_evidence": "../readiness-skillsbench-crosscheck-20261008-005/final-status.json",
-  "readiness_scope": "Close-failure Workflow gate and documentation crosscheck. No new paid smoke or full85 admission.",
+  "readiness_evidence": "../readiness-skillsbench-native-controller-20261008-004/final-status.json",
+  "readiness_scope": "Native-controller implementation evidence only; no v6 full-85 environment admission or paid model result",
   "current_public_corpus_chunks": 122,
   "original_public_backgrounds": 85,
   "contains_credentials": false,
@@ -108,9 +108,7 @@
     "author_original_byte_hashes_verified": 44,
     "variant_identity_file_hashes_verified": true,
     "old_v5_artifact_and_manifest_unchanged": true,
-    "deterministic_tar_and_gzip_metadata": true,
-    "previous_004_archive_and_descriptor_preserved": true,
-    "current_admission_and_trial_results_separated": true
+    "deterministic_tar_and_gzip_metadata": true
   },
   "files": [
     {
@@ -130,13 +128,13 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/PROTOCOL.md",
-      "sha256": "6cacd032848cf9af7ff99f2abe218a6507148aae0475ba8c940e02fcc7dd4abe",
-      "bytes": 31602
+      "sha256": "a18e9a275355d53b40a916a02fe76a0d0a30fbe004d4a58a872eca2ecbfc8f2d",
+      "bytes": 28947
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/README.md",
-      "sha256": "fb3e92a6bb148429078efca8ed5368a7efb62f26163dbd909cc333254ca66de0",
-      "bytes": 4526
+      "sha256": "c2a2f8dda44b46ea2d49c31c329c0c31513e32bf55c31e96547e35c180199330",
+      "bytes": 4214
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/configs/experiment.yaml",
@@ -1280,8 +1278,8 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md",
-      "sha256": "6ebf92faaac1d247265e1442374d49196e85b18a4e1a65c32bb3d25ca2c0fbe2",
-      "bytes": 42941
+      "sha256": "6820fdac25f5258a76fd21454b2ba943a9b546c156a3bf40aef51d6f27fa5583",
+      "bytes": 36541
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-gpt56-v6/config.yaml",
@@ -1290,8 +1288,8 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-gpt56-v6/manifest.json",
-      "sha256": "0c38b6527eb5e2fd5a4edc3073e57020067db2cae3eddb3e286825c871db4e63",
-      "bytes": 84959
+      "sha256": "63913923390ed730fb39712f2c92a569855b8b09a2b8bce310f58c9cb364b5c2",
+      "bytes": 84654
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-opus48-v6/config.yaml",
@@ -1300,8 +1298,8 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-opus48-v6/manifest.json",
-      "sha256": "c22f0fd9455e914919963b23233758b34e07cb2fc6340a9b27041853ebd35e61",
-      "bytes": 84972
+      "sha256": "05d5baf02a561d417e9cb0ccb6f51506a380f1b41bc3a780e585d571c13fa1bf",
+      "bytes": 84667
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/runtime/Dockerfile",
@@ -2765,8 +2763,8 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/workflow.py",
-      "sha256": "ddced8c2b46ef49b3c04df5d5003ddf366af77f840a2225cf0683586e9a8bdfa",
-      "bytes": 100223
+      "sha256": "29dc42409a6663a8a23c0585486452fd3a1b9c44b8ca494a918a9b1d9d21ef5d",
+      "bytes": 98446
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/__init__.py",
@@ -2960,8 +2958,8 @@
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_workflow.py",
-      "sha256": "875173dd3f320002fafccb9b77c0d70cb9e52e4aa5b708fec404ce20d925b011",
-      "bytes": 85051
+      "sha256": "301409f0101de88ee620fc6f8533be8c2ccc0d574ffc631cee690df714cbda17",
+      "bytes": 78791
     },
     {
       "path": "experiments/tau-knowledge/skill-evolution/tests/test_attack_payload.py",
@@ -3014,17 +3012,26 @@
       "bytes": 788055
     }
   ],
-  "readiness_evidence_sha256": "d7fdfbfacb41509fd9ab9dd4721eb302a49334f13257d18e3f8090ce3bc76a09",
+  "readiness_evidence_sha256": "a5729b04fe1ce9b97344d3f130029a6b4fb9995aae0b68d2243c4ec1e7aac5e4",
   "implementation_acceptance": {
-    "status": "PASS_WITH_EXPLICIT_LIMITATIONS",
+    "status": "IMPLEMENTATION_ACCEPTANCE_PASSED_WITH_EXPLICIT_ADAPTATIONS",
     "pytest": {
-      "passed": 1482,
-      "skipped": 57,
-      "failed": 0,
-      "seconds": 405.54
+      "elapsed_seconds": 387.52,
+      "passed": 1478,
+      "skipped": 57
     },
-    "second_review": "PASS_WITH_EXPLICIT_LIMITATIONS",
-    "real_Docker_scope": "Two localhost MODEL_SCRIPTED scenarios with real native CLI/official grader and six containers without residue. Workflow close-failure gate verified offline; not exercised in these Docker fixtures."
+    "second_review": "PASS_WITH_EXPLICIT_ADAPTATIONS",
+    "real_Docker_scope": "Package rollback fixtures use MOCK_ONLY rewards; actual native controller/Codex CLI/official grader end-to-end uses MODEL_SCRIPTED responses with real official grades, not model performance",
+    "limitations": [
+      "Scripted model fixtures validate execution mechanisms only; no real-model utility claim.",
+      "Verifier shares the learning container under author command/prompt boundaries; no separate-container independence claim.",
+      "Opaque continuation occupancy is estimated and checked against observed provider context; beta does not guarantee every semantic requirement.",
+      "One observed Codex S0 creation turn; underlying HTTP/retries are NOT_OBSERVABLE.",
+      "UNKNOWN is never replayed; interrupted native controller requires a separately identified new trial.",
+      "Author tests and lexical/schema checks can omit requirements or use wrong premises.",
+      "Seven exact byte-preserving Git whitespace exceptions are recorded; maintained code/tests/docs pass the scoped diff check.",
+      "Only these five environments were checked; full-85 receiving-machine admission and the two configured models remain NOT_MEASURED."
+    ]
   },
   "preserved_pre_fix_v6": {
     "artifact": "skillsbench-v6-source.tar.gz",
@@ -3043,7 +3050,7 @@
     "full_population_denominator": 85,
     "completed_predispatch_input_budget_stops": 1,
     "underlying_HTTP_count": "NOT_OBSERVABLE",
-    "scope": "Historical frozen 004 source 0f39848a/commit4fbfeed6. New gate source has no paid model result; never resume 004 with this archive.",
+    "scope": "Codex subscription trial; does not establish compatibility or matrix scores for either Bedrock configuration",
     "public_summary": {
       "path": "codex-author-fix-20261008-004/public-summary.json",
       "sha256": "e7ac342903f78ab1d8a298197e1f2b90da55af57c31710dfcc71b1b943586a97"
@@ -3078,21 +3085,5 @@
       "UNKNOWN_may_be_replayed": false,
       "may_merge_into_fixed_trial": false
     }
-  ],
-  "previous_delivery": {
-    "artifact": "skillsbench-v6-final-20261008-004-source.tar.gz",
-    "artifact_sha256": "18cdab20296263ad853cae94c693537c19c824612d0787e74add044701dce486",
-    "transfer_manifest": "../readiness-skillsbench-crosscheck-20261008-005/evidence/transfer-manifest-before-crosscheck.json",
-    "transfer_manifest_sha256": "64d8500d4465fec99d3a46b7d2066df8a71dfd0d21752554c28160485c18a380"
-  },
-  "changes_since_004_delivery": [
-    "experiments/tau-knowledge/skill-evolution/PROTOCOL.md",
-    "experiments/tau-knowledge/skill-evolution/README.md",
-    "experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md",
-    "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-gpt56-v6/manifest.json",
-    "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-opus48-v6/manifest.json",
-    "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/workflow.py",
-    "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_workflow.py"
-  ],
-  "measurements_predate_close_failure_gate": true
+  ]
 }

@@ -1,0 +1,113 @@
+{
+  "schema": "skillsbench.crosscheck-independent-review.v1",
+  "reviewed_at": "2026-10-08T17:19:12.846724+00:00",
+  "reviewer": "results_docs_crosscheck",
+  "status": "PASS_WITH_EXPLICIT_LIMITATIONS",
+  "scope": "Independent read-only source, offline regression and public documentation/evidence cross-check. Only this new review JSON is written; no model request, credential access, private model/grader review or frozen-004 mutation.",
+  "reviewed_file_sha256": {
+    "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/workflow.py": "ddced8c2b46ef49b3c04df5d5003ddf366af77f840a2225cf0683586e9a8bdfa",
+    "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_workflow.py": "875173dd3f320002fafccb9b77c0d70cb9e52e4aa5b708fec404ce20d925b011",
+    "experiments/tau-knowledge/skill-evolution/PROTOCOL.md": "6cacd032848cf9af7ff99f2abe218a6507148aae0475ba8c940e02fcc7dd4abe",
+    "experiments/tau-knowledge/skill-evolution/README.md": "fb3e92a6bb148429078efca8ed5368a7efb62f26163dbd909cc333254ca66de0",
+    "experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md": "6ebf92faaac1d247265e1442374d49196e85b18a4e1a65c32bb3d25ca2c0fbe2",
+    "experiments/tau-knowledge/skill-evolution/runs/tau/HANDOFF.md": "80ec630b4d17f5fcab9b5affac8741345bffb60ccae449a90d3344bafdd92ac3"
+  },
+  "author_original_resources": {
+    "manifest": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/VERIFIER_SOURCE.json",
+    "manifest_sha256": "e3691bb73754019016621a9b618b8f5e38d3829a590dd3030379717a916f4932",
+    "author_commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+    "declared": 44,
+    "verified": 44,
+    "mismatches": []
+  },
+  "preserved_source_record": {
+    "path": "experiments/tau-knowledge/skill-evolution/meta/coevo-authoring/SOURCE.md",
+    "sha256": "ef6a9222b2a87f930ca7676ee34d58344d5a0e2d6fef8093e694d3b2b4fd4146",
+    "original_bytes_preserved": true
+  },
+  "independent_offline_tests": {
+    "status": "PASS",
+    "passed": 8,
+    "failed": 0,
+    "model_calls": 0,
+    "commands": [
+      {
+        "command": ".venv/bin/python -m pytest experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_workflow.py -q -k 'learning_close_failure or published_controller_and_reuses_completed_result or learning_open_failure or imports_completed_packages_after_source_close_failure or unknown_learning_result or report_cli_needs_no_docker_upstream_or_model_calls'",
+        "passed": 6,
+        "deselected": 70,
+        "seconds": 10.19
+      },
+      {
+        "command": ".venv/bin/python -m pytest experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_workflow.py -q -k 'new_trial_imported_evaluation_preserves_source_close_failure or full_workflow_alternates_tests_and_skills_then_resumes_without_side_effects'",
+        "passed": 2,
+        "deselected": 74,
+        "seconds": 5.54
+      }
+    ],
+    "scoped_diff_check": "PASS"
+  },
+  "checked_contracts": {
+    "persistent_close_failure_gates": [
+      "create",
+      "evolve",
+      "evaluate",
+      "evaluate_no_skill",
+      "evaluate_imported_target"
+    ],
+    "same_object_and_restart_block_before_adapter_or_model_dispatch": true,
+    "completed_author_and_evolution_results_preserved": true,
+    "report_remains_readable_and_unexecuted_evaluations_remain_NOT_MEASURED": true,
+    "normal_completed_evolution_reuse_does_not_reopen_adapter_or_model": true,
+    "learning_open_failure_does_not_block_independent_sealed_S0_evaluation": true,
+    "new_trial_import_preserves_source_close_failure_and_does_not_mutate_source": true,
+    "gate_is_SkillsBench_only_and_tau_full_workflow_regression_passed": true,
+    "phase_contracts_and_actual_launcher_report_timing_match_source": true,
+    "Bstar_package_manifest_and_public_hash_locations_are_distinguished": true,
+    "API_single_POST_and_subscription_observable_creation_turn_are_distinguished": true,
+    "current_fix_and_frozen_004_model_results_are_distinguished": true
+  },
+  "frozen_004_public_evidence": {
+    "public_summary": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/codex-author-fix-20261008-004/public-summary.json",
+    "public_summary_sha256": "e7ac342903f78ab1d8a298197e1f2b90da55af57c31710dfcc71b1b943586a97",
+    "manifest_sha256": "699f49535d6d2dcfc2e34a7d524613d78bc0e3def0d1c9ceb883f0c81a2364ab",
+    "independent_review_sha256": "4a6ce523a0450fd74c15a1633b9a394dfe2ef14ddf40199887ee3ada60257c02",
+    "status": "COMPLETED",
+    "source_identity_hash": "0f39848aa3282daad7c3a4d0243fa03a378cb7896c00096552f39defcb4046f5",
+    "actual_model": "gpt-6.1-sol",
+    "transport": "codex-plan",
+    "casewise_versions_rewards_GT_and_r_K_episodes_match_Handoff": true,
+    "task_passes": {
+      "NoSkill": 1,
+      "S0": 2,
+      "Final": 4,
+      "selected_denominator": 5,
+      "full_population_denominator": 85
+    },
+    "completed_searches": 150,
+    "all_five_acquisition_stops": "budget_exhausted_incomplete",
+    "actual_content_packages": 12,
+    "independent_fresh_measurements": 17,
+    "selection_GT": {
+      "normal": 6,
+      "post_final": 1,
+      "total": 7
+    },
+    "fresh_execution_receipts": 24,
+    "observable_completed_logical_turns": 664,
+    "NOT_SENT": 1,
+    "UNKNOWN": 0,
+    "passed_data_review_checks": 97,
+    "DAPT_local_beta_excess_tokens": 612,
+    "DAPT_Final_is_historical_S1_not_unselected_S2": true,
+    "3D_official_success_does_not_resolve_factor_1000_unit_assumption_difference": true,
+    "historical_readiness_counts_not_relabeled_as_current_acceptance": true,
+    "two_Bedrock_full85_models_and_new_paid_smoke_remain_NOT_MEASURED": true
+  },
+  "limitations": [
+    "Incomplete native author learning cannot be resumed by repeating setup/run; it requires a separately identified trial.",
+    "Verifier uses an independent model session in shared MAIN; this is not separate-container physical isolation.",
+    "Public tests may omit requirements or use incorrect premises; their passing counts do not establish official equivalence or semantic correctness.",
+    "The latest close-failure fix has no new paid model smoke or full-85 model result.",
+    "This review independently ran offline gate/compatibility tests; current full regression and Docker fixture acceptance are recorded separately and are not claimed as independently rerun here."
+  ]
+}

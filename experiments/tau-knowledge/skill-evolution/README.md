@@ -1,6 +1,6 @@
 # Retrieval 与 Skill Evolution
 
-当前维护共享模型、封存与评估接口，以及银行、SkillsBench两个任务适配器：**检索 → 冻结 B* → 一次创建 S0 → Generator直接执行与修改 → 独立验证 → fresh oracle / 独立评估**。方法为 `tau.skill-evolution.v4`（M15/K5）和 `skillsbench.skill-evolution.v6`（直接作者控制器、r15/正常K5），默认 GPT-5.4、Docker；创建禁止执行、自测和重发。
+当前维护共享模型、封存与评估接口，以及银行、SkillsBench两个任务适配器：**检索 → 冻结 B* → 一次创建 S0 → Generator直接执行与修改 → 独立验证 → fresh oracle / 独立评估**。方法为 `tau.skill-evolution.v4`（M15/K5）和 `skillsbench.skill-evolution.v6`（直接作者控制器、r15/正常K5），默认 GPT-5.4、Docker；创建禁止执行、自测和重发。API创建最多一次HTTP POST；Codex订阅诊断只可确认一次创建turn，底层HTTP不可观察。
 
 | 实验 | 完整规模 | 当前配置 | 交接 |
 |---|---|---|---|
@@ -22,7 +22,7 @@ archive/                 旧运行、历史分析与归档索引
 
 主要文档只读 [PROTOCOL](PROTOCOL.md) 与两份 HANDOFF；[来源记录](meta/coevo-authoring/SOURCE.md)保留作者出处。旧实验由 [归档索引](archive/index.json)集中归档，保存原始内容和旧路径映射；[HISTORY](archive/HISTORY.md)收纳历史解释，不作为运行入口。内部审计留在本地，不作为对外交接。
 
-SkillsBench两份独立85题配置：[GPT-5.6 Terra](runs/skillsbench/full-85-gpt56-v6/config.yaml)与[Opus 4.8](runs/skillsbench/full-85-opus48-v6/config.yaml)。同一共享pipeline、同一native Codex执行器，分别使用Bedrock Responses与Messages；完整准备、smoke、NoSkill、逐版本评价和恢复步骤见SkillsBench HANDOFF。当前作者循环的Docker/模拟接口验收见 [readiness](runs/readiness-skillsbench-native-controller-20261008-004/final-status.json)。同一源码下的 [Codex订阅五题结果](runs/skillsbench/codex-author-fix-20261008-004/public-summary.json) 已完整测量：NoSkill/S0/Final Task pass为1/5、2/5、4/5，实际模型为gpt-6.1-sol，与准备的两套Bedrock模型分开。全85题新身份fresh准入及两模型成绩仍未测；PG缺任务专用凭据，HANDOFF给出只排PG的预定义84题命令，但84题准入也须真实通过，报告仍保留85分母。
+SkillsBench两份独立85题配置：[GPT-5.6 Terra](runs/skillsbench/full-85-gpt56-v6/config.yaml)与[Opus 4.8](runs/skillsbench/full-85-opus48-v6/config.yaml)。同一共享pipeline、同一native Codex执行器，分别使用Bedrock Responses与Messages；完整准备、smoke、NoSkill、逐版本评价和恢复步骤见SkillsBench HANDOFF。2026-10-08交叉复核补上学习环境关闭失败的持久派发门禁，当前代码复验见 [readiness](runs/readiness-skillsbench-crosscheck-20261008-005/final-status.json)。[Codex订阅五题结果](runs/skillsbench/codex-author-fix-20261008-004/public-summary.json) 是此前冻结提交`4fbfeed6`、身份`0f39848a…`的完整测量：NoSkill/S0/Final Task pass为1/5、2/5、4/5，实际模型为gpt-6.1-sol；本轮不重跑付费模型、不改旧结果。全85题新身份fresh准入及两模型成绩仍未测；PG缺任务专用凭据，HANDOFF给出只排PG的预定义84题命令，但84题准入也须真实通过，报告仍保留85分母。完整阶段合同见[Protocol 3.7](PROTOCOL.md#37-一条链的阶段合同)，五题实际流程集中在HANDOFF第7节。
 
 ```bash
 make setup
