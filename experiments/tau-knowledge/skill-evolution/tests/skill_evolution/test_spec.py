@@ -76,7 +76,7 @@ def test_skillsbench_configuration_has_the_fixed_matrix_and_only_benign_arm():
     assert spec.values["source"]["commit"] == SKILLSBENCH_COMMIT
     assert len(spec.tasks) == len(set(spec.tasks)) == len(spec.cells) == 85
     assert list(spec.tasks) == sorted(spec.tasks)
-    assert spec.experiment == "skillsbench" and spec.namespace == "skillsbench.skill-evolution.v4"
+    assert spec.experiment == "skillsbench" and spec.namespace == "skillsbench.skill-evolution.v5"
     assert spec.values["runtime"]["executor"] == "author-codex"
     assert spec.arms == ("benign",) and spec.targets("benign") == ()
     assert spec.profile(spec.tasks[0]) == "benign"
@@ -90,6 +90,94 @@ def test_skillsbench_configuration_has_the_fixed_matrix_and_only_benign_arm():
     )
     with pytest.raises(ValueError, match="arm"):
         spec.targets("poison-5")
+
+
+def test_skillsbench_author_budgets_do_not_keep_extra_revision_or_post_caps():
+    spec = load_spec(SKILLSBENCH_CONFIG)
+    assert spec.namespace == "skillsbench.skill-evolution.v5"
+    assert spec.values["evolution"] == {
+        "max_surrogate_retries": 15,
+        "max_oracles": 5,
+        "max_oracle_errors": 5,
+        "timeout_multiplier": 5,
+        "timeout_seconds": 7200,
+    }
+    generator, runtime = spec.values["roles"]["generator"], spec.values["runtime"]
+    assert generator["max_episodes"] == 120 and "max_turns" not in generator
+    assert runtime["max_turns"] is None and "episode_timeout_seconds" not in runtime
+    assert "evolution_timeout_seconds" not in runtime["codex"]
+    assert runtime["codex"]["evaluation_timeout_seconds"] == 7200
+    assert all(role["max_output_tokens"] is None for role in spec.values["roles"].values())
+    assert "prompt" not in spec.values["roles"]["verifier"]
+
+
+@pytest.mark.parametrize(
+    "folder,model",
+    [
+        ("full-85-gpt56-v5", "openai.gpt-5.6-terra"),
+        ("full-85-opus48-v5", "anthropic.claude-opus-4-8"),
+    ],
+)
+def test_new_author_handoff_configs_preserve_the_old_population_and_models(folder, model):
+    root = EXPERIMENT_ROOT / "runs/skillsbench"
+    old = load_spec(root / folder.replace("-v5", "-v4") / "config.yaml")
+    new = load_spec(root / folder / "config.yaml")
+    assert new.namespace == "skillsbench.skill-evolution.v5"
+    assert old.namespace == "skillsbench.skill-evolution.v4"
+    assert old.tasks == new.tasks and old.values["source"] == new.values["source"]
+    for name in ("provider", "retrieval", "embedding", "acquisition", "matrix_commitment"):
+        assert old.values[name] == new.values[name]
+    assert new.values["provider"]["model"] == model
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda v: v["evolution"].update(max_revisions=15),
+        lambda v: v["evolution"].update(revision_timeout_seconds=3600),
+        lambda v: v["evolution"].update(max_surrogate_retries=True),
+        lambda v: v["evolution"].update(max_surrogate_retries=16),
+        lambda v: v["evolution"].update(timeout_multiplier=True),
+        lambda v: v["evolution"].update(timeout_seconds=0),
+        lambda v: v["roles"]["generator"].update(max_turns=120),
+        lambda v: v["roles"]["generator"].update(max_episodes=121),
+        lambda v: v["runtime"].update(max_turns=100),
+        lambda v: v["runtime"].update(episode_timeout_seconds=3600),
+        lambda v: v["runtime"]["codex"].update(evolution_timeout_seconds=3000),
+        lambda v: v["roles"]["verifier"].update(prompt="verifier-skillsbench.md"),
+    ],
+)
+def test_skillsbench_v5_rejects_legacy_caps_and_invalid_author_limits(tmp_path, mutate):
+    with pytest.raises(ValueError):
+        load_spec(_copy_config(tmp_path, mutate, SKILLSBENCH_CONFIG))
+
+
+@pytest.mark.parametrize("name,number", [("max_turns", 29), ("diagnosis_turns", 7)])
+def test_v5_rejects_verifier_overrides_ignored_by_pinned_author(tmp_path, name, number):
+    with pytest.raises(ValueError, match="pinned author verifier"):
+        load_spec(
+            _copy_config(
+                tmp_path,
+                lambda value: value["roles"]["verifier"].update({name: number}),
+                SKILLSBENCH_CONFIG,
+            )
+        )
+
+
+@pytest.mark.parametrize(
+    "source",
+    [DEFAULT_CONFIG, EXPERIMENT_ROOT / "runs/skillsbench/full-85-gpt56-v4/config.yaml"],
+)
+def test_tau_and_v4_keep_their_configured_verifier_limits(tmp_path, source):
+    spec = load_spec(
+        _copy_config(
+            tmp_path,
+            lambda value: value["roles"]["verifier"].update(max_turns=29, diagnosis_turns=7),
+            source,
+        )
+    )
+    assert spec.values["roles"]["verifier"]["max_turns"] == 29
+    assert spec.values["roles"]["verifier"]["diagnosis_turns"] == 7
 
 
 @pytest.mark.parametrize(
@@ -190,7 +278,7 @@ def test_gpt54_trial_can_select_medium_generator_effort_with_the_same_budgets(tm
     spec = load_spec(_copy_config(tmp_path, configure, SKILLSBENCH_CONFIG))
     assert spec.values["roles"]["generator"]["reasoning_effort"] == "medium"
     assert spec.values["roles"]["generator"]["max_output_tokens"] is None
-    assert spec.values["evolution"]["max_revisions"] == 15
+    assert spec.values["evolution"]["max_surrogate_retries"] == 15
     assert spec.values["evolution"]["max_oracles"] == 5
 
 
@@ -209,8 +297,8 @@ def test_author_codex_trial_can_omit_output_limits_without_changing_input_admiss
     assert generator["reasoning_effort"] == "high"
     assert generator["max_output_tokens"] is None
     assert generator["max_input_tokens"] == 157632
-    assert generator["max_turns"] == 120
-    assert spec.values["evolution"]["max_revisions"] == 15
+    assert generator["max_episodes"] == 120
+    assert spec.values["evolution"]["max_surrogate_retries"] == 15
     assert spec.values["evolution"]["max_oracles"] == 5
 
 
@@ -315,6 +403,31 @@ def test_identity_binds_source_prompt_meta_manifest_lock_but_excludes_keys_and_r
     Journal(tmp_path / "journal", identity={"namespace": NAMESPACE})
     with pytest.raises(ValueError, match="identity differs"):
         Journal(tmp_path / "journal", identity=spec.identity)
+
+
+def test_v5_identity_binds_byte_preserved_verifier_sources_and_prompts(tmp_path, monkeypatch):
+    root = tmp_path / "resources"
+    root.mkdir()
+    author = root / "src/tau_skill_evolution/author"
+    prompt = (
+        author / "coevo/libs/terminus_agent/evolution/prompt_templates/independent_verifier.txt"
+    )
+    prompt.parent.mkdir(parents=True)
+    prompt.write_bytes(b"Author prompt\r\n")
+    manifest = author / "VERIFIER_SOURCE.json"
+    manifest.write_text('{"commit":"pinned"}\n')
+    monkeypatch.setattr(spec_module, "EXPERIMENT_ROOT", root)
+    spec = load_spec(_copy_config(tmp_path, source=SKILLSBENCH_CONFIG))
+    initial = spec.identity
+    prompt_key = str(prompt.relative_to(root))
+    manifest_key = str(manifest.relative_to(root))
+    assert initial["files"][prompt_key] == hashlib.sha256(prompt.read_bytes()).hexdigest()
+    assert initial["files"][manifest_key] == hashlib.sha256(manifest.read_bytes()).hexdigest()
+    prompt.write_bytes(b"Author prompt\n")
+    assert spec.identity["identity_hash"] != initial["identity_hash"]
+    after_prompt = spec.identity
+    manifest.write_text('{"commit":"different"}\n')
+    assert spec.identity["identity_hash"] != after_prompt["identity_hash"]
 
 
 def test_worker_config_has_separate_private_judge_model_and_public_runtime_paths():

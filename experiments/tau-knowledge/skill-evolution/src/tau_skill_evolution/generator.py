@@ -59,9 +59,32 @@ class RevisionConversation:
 
     messages: list[dict[str, Any]] = field(default_factory=list)
     turns: int = 0
+    episodes: int = 0
     fixed_inputs_hash: str | None = None
     feedback_cursor: int = 0
     feedback_prefix_hash: str | None = None
+
+
+def _effective_episode(calls: Sequence[Mapping[str, Any]]) -> int:
+    """One parsed command/submission response; pure skill tools do not count."""
+    for call in calls:
+        function = call.get("function", {})
+        arguments = function.get("arguments", {})
+        try:
+            arguments = json.loads(arguments) if isinstance(arguments, str) else arguments
+        except (ValueError, TypeError):
+            continue
+        if not isinstance(arguments, Mapping):
+            continue
+        if function.get("name") == "terminal" and (
+            set(arguments) == {"command"}
+            and isinstance(arguments["command"], str)
+            and arguments["command"].strip()
+        ):
+            return 1
+        if function.get("name") == "submit_revision" and not arguments:
+            return 1
+    return 0
 
 
 GENERATOR_SYSTEM = (EXPERIMENT_ROOT / "prompts" / "generator.md").read_text(encoding="utf-8")
@@ -170,6 +193,40 @@ def failure_categories(report: Any) -> list[str]:
     return categories
 
 
+def _revision_feedback(report: Any) -> dict[str, Any]:
+    value = report.to_dict() if hasattr(report, "to_dict") else report
+    if not isinstance(value, Mapping):
+        raise ValueError("invalid_public_verification_feedback")
+    passed = value.get("passed", False)
+    if not isinstance(passed, bool):
+        raise ValueError("invalid_public_verification_feedback")
+    feedback = {"passed": passed, "failure_categories": failure_categories(value)}
+    for name in ("public_schema_issues", "unchecked_phases"):
+        if name in value:
+            items = value[name]
+            if not isinstance(items, (list, tuple)) or any(
+                not isinstance(item, str) for item in items
+            ):
+                raise ValueError("invalid_public_process_feedback")
+            feedback[name] = list(items)
+    if "verification_unavailable" in value:
+        category = value["verification_unavailable"]
+        if category not in {
+            "no_script",
+            "script_error",
+            "verifier_generation_error",
+            "verifier_runtime_error",
+        }:
+            raise ValueError("unknown_verification_unavailable_category")
+        feedback["verification_unavailable"] = category
+    if "oracle_infrastructure_unavailable" in value:
+        unavailable = value["oracle_infrastructure_unavailable"]
+        if not isinstance(unavailable, bool):
+            raise ValueError("invalid_public_process_feedback")
+        feedback["oracle_infrastructure_unavailable"] = unavailable
+    return feedback
+
+
 def public_feedback_history(
     history: Sequence[Mapping[str, Any]], base_hash: str
 ) -> list[dict[str, Any]]:
@@ -187,7 +244,7 @@ def public_feedback_history(
         elif kind == "verification":
             if not isinstance(item.get("passed"), bool):
                 raise ValueError("invalid_public_verification_feedback")
-            event.update(passed=item["passed"], failure_categories=failure_categories(item))
+            event.update(_revision_feedback(item))
         else:
             raise ValueError("unknown_feedback_history_kind")
         events.append(event)
@@ -494,18 +551,34 @@ def _execute_learning(
     session: Any = None,
     initial: bool = False,
     conversation: RevisionConversation | None = None,
-    max_turns: int = 120,
-    timeout_seconds: float = 3600,
+    max_turns: int | None = 120,
+    max_episodes: int | None = None,
+    timeout_seconds: float | None = 3600,
+    deadline: float | None = None,
 ) -> EvolutionSubmission:
     """Execute and optionally edit a parent in its adapter-owned learning environment."""
     verify_base(frozen_base)
     verify_bundle(previous_bundle)
     if thaw_json(public_inputs) != thaw_json(frozen_base.public_inputs):
         raise ValueError("Generator public inputs differ from the frozen inputs")
-    if not isinstance(max_turns, int) or isinstance(max_turns, bool) or max_turns < 1:
-        raise ValueError("invalid_generator_turn_budget")
-    if not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
+    for name, limit in (("turn", max_turns), ("episode", max_episodes)):
+        if limit is not None and (
+            isinstance(limit, bool) or not isinstance(limit, int) or limit < 1
+        ):
+            raise ValueError(f"invalid_generator_{name}_budget")
+    if timeout_seconds is not None and (
+        isinstance(timeout_seconds, bool)
+        or not isinstance(timeout_seconds, (int, float))
+        or not math.isfinite(timeout_seconds)
+        or timeout_seconds <= 0
+    ):
         raise ValueError("invalid_generator_timeout")
+    if deadline is not None and (
+        isinstance(deadline, bool)
+        or not isinstance(deadline, (int, float))
+        or not math.isfinite(deadline)
+    ):
+        raise ValueError("invalid_generator_deadline")
     conversation = conversation if conversation is not None else RevisionConversation()
     fixed_hash = canonical_json_sha256(
         {
@@ -536,12 +609,7 @@ def _execute_learning(
         "frozen_base": frozen_base.to_dict(),
         "previous_bundle": previous_bundle.to_dict(),
         "tool_schemas": thaw_json(tool_schemas),
-        "verification_feedback": {
-            "passed": bool(getattr(report, "passed", False))
-            if not isinstance(report, Mapping)
-            else report.get("passed", False),
-            "failure_categories": failure_categories(report),
-        },
+        "verification_feedback": _revision_feedback(report),
         "feedback_history": history,
         "public_trace": thaw_json(public_trace or {}),
         "initial": initial,
@@ -551,7 +619,9 @@ def _execute_learning(
         "system_prompt": system_prompt,
         "seed": seed,
         "max_turns": max_turns,
+        "max_episodes": max_episodes,
         "timeout_seconds": timeout_seconds,
+        "deadline": deadline,
     }
     result_id = f"{operation_id}/submitted"
     ended_id = f"{operation_id}/ended"
@@ -568,6 +638,7 @@ def _execute_learning(
         ):
             raise ValueError("generator_feedback_history_changed")
         conversation.messages, conversation.turns = record["messages"], record["turns"]
+        conversation.episodes = record.get("episodes", 0)
         conversation.fixed_inputs_hash = fixed_hash
         conversation.feedback_cursor = cursor
         conversation.feedback_prefix_hash = record["feedback_prefix_hash"]
@@ -674,7 +745,17 @@ def _execute_learning(
         lambda: {
             "messages": messages,
             "turns": conversation.turns,
-            "deadline": time.time() + timeout_seconds,
+            "episodes": conversation.episodes,
+            "deadline": min(
+                value
+                for value in (
+                    deadline,
+                    time.time() + timeout_seconds if timeout_seconds is not None else None,
+                )
+                if value is not None
+            )
+            if deadline is not None or timeout_seconds is not None
+            else None,
             "snapshot": session.snapshot(),
             "learning_execution_state": execution_start.get("state", {}) if execution_start else {},
             "fixed_inputs_hash": fixed_hash,
@@ -685,6 +766,7 @@ def _execute_learning(
     )
     messages = start["messages"]
     turns = start["turns"]
+    episodes = start.get("episodes", 0)
     expected_snapshot = start["snapshot"]
     step = 0
 
@@ -697,6 +779,7 @@ def _execute_learning(
                 "dispatched": sent,
                 "messages": messages,
                 "turns": turns,
+                "episodes": episodes,
                 "fixed_inputs_hash": fixed_hash,
                 "feedback_cursor": start["feedback_cursor"],
                 "feedback_prefix_hash": start["feedback_prefix_hash"],
@@ -706,16 +789,18 @@ def _execute_learning(
         restore_conversation(ended)
         raise RevisionFailure(reason, dispatched=sent)
 
-    while turns < max_turns:
+    def expired() -> bool:
+        return start["deadline"] is not None and time.time() >= start["deadline"]
+
+    timeout_reason = "learning_timeout" if deadline is not None else "revision_timeout"
+    while (max_turns is None or turns < max_turns) and (
+        max_episodes is None or episodes < max_episodes
+    ):
         request_id = f"{operation_id}/model-{step}"
         if journal.status(request_id) == "UNKNOWN" and not journal.received(request_id):
             raise UnknownOperation("authoring model request has an unknown result")
-        if (
-            not journal.completed(request_id)
-            and not journal.received(request_id)
-            and time.time() >= start["deadline"]
-        ):
-            finish_failure("revision_timeout", sent=dispatched)
+        if not journal.completed(request_id) and not journal.received(request_id) and expired():
+            finish_failure(timeout_reason, sent=dispatched)
         if (
             not journal.completed(request_id)
             and not journal.received(request_id)
@@ -794,6 +879,14 @@ def _execute_learning(
         if raw.get("finish_reason") == "length":
             finish_failure("generator_output_budget_exhausted", sent=True)
         calls = raw.get("tool_calls") or ()
+        episode = journal.dispatch(
+            f"{request_id}/episode",
+            {"response_hash": canonical_json_sha256(raw), "episodes_before": episodes},
+            lambda calls=calls: {"increment": _effective_episode(calls)},
+            external=False,
+        )
+        episodes += episode["increment"]
+        conversation.episodes = episodes
         if not calls:
             messages.append(
                 {
@@ -820,8 +913,8 @@ def _execute_learning(
             }
             if journal.status(tool_id) == "UNKNOWN":
                 raise UnknownOperation("authoring tool operation has an unknown result")
-            if not journal.completed(tool_id) and time.time() >= start["deadline"]:
-                finish_failure("revision_timeout", sent=dispatched)
+            if not journal.completed(tool_id) and expired():
+                finish_failure(timeout_reason, sent=dispatched)
 
             def execute(
                 function: Any = function,
@@ -903,6 +996,7 @@ def _execute_learning(
                     "submission": sealed["submission"],
                     "messages": messages,
                     "turns": turns,
+                    "episodes": episodes,
                     "fixed_inputs_hash": fixed_hash,
                     "feedback_cursor": start["feedback_cursor"],
                     "feedback_prefix_hash": start["feedback_prefix_hash"],
@@ -915,7 +1009,12 @@ def _execute_learning(
                 if artifact_dir is not None and not initial:
                     seal_bundle(artifact_dir, submission.bundle)
                 return submission
-    finish_failure("generator_turn_budget_exhausted", sent=dispatched)
+    reason = (
+        "generator_episode_budget_exhausted"
+        if max_episodes is not None and episodes >= max_episodes
+        else "generator_turn_budget_exhausted"
+    )
+    finish_failure(reason, sent=dispatched)
 
 
 def execute_initial(

@@ -243,10 +243,11 @@ class ProviderGateway:
         journal: Journal,
         token_counter: Callable[[str], int],
         timeout_seconds: float,
-        max_requests: int,
+        max_requests: int | None,
         max_request_bytes: int,
         max_response_bytes: int,
         opener: Any = None,
+        request_deadline: float | None = None,
     ) -> None:
         self.base_url = f"http://127.0.0.1:{RELAY_PORT}/v1"
         self.socket_path = directory / "provider.sock"
@@ -254,6 +255,7 @@ class ProviderGateway:
         self.provider, self.controls, self.journal = dict(provider), controls, journal
         self.messages_transport = self.provider.get("transport") == "bedrock-messages"
         self.token_counter, self.timeout_seconds = token_counter, timeout_seconds
+        self.request_deadline = request_deadline
         self._opener = opener or urllib.request.urlopen
         self.max_requests = max_requests
         self.max_request_bytes, self.max_response_bytes = max_request_bytes, max_response_bytes
@@ -425,18 +427,27 @@ class ProviderGateway:
         if isinstance(error, InputTokenBudgetExceeded):
             self.statistics["context_admission"] = dict(error.details)
 
+    def _request_timeout(self) -> float:
+        remaining = self.timeout_seconds
+        if self.request_deadline is not None:
+            remaining = min(remaining, self.request_deadline - time.time())
+        if remaining <= 0:
+            raise ModelClientError("learning_timeout", "learning wall-clock deadline exhausted")
+        return remaining
+
     def _send(self, request: urllib.request.Request) -> tuple[int, bytes]:
+        timeout = self._request_timeout()
         started = time.monotonic()
         self.statistics["requests"] += 1
         try:
-            response = self._opener(request, timeout=self.timeout_seconds)
+            response = self._opener(request, timeout=timeout)
         except urllib.error.HTTPError as error:
             response = error
         with response:
             chunks: list[bytes] = []
             length = 0
             while True:
-                remaining = self.timeout_seconds - (time.monotonic() - started)
+                remaining = min(timeout - (time.monotonic() - started), self._request_timeout())
                 if remaining <= 0:
                     raise TimeoutError("provider response exceeded time limit")
                 # urllib's timeout bounds idle reads; this also bounds a slowly
@@ -543,9 +554,10 @@ class ProviderGateway:
                         "provider_transport": "bedrock-messages",
                         "provider_request": provider_payload,
                     }
-                if self.statistics["requests"] >= self.max_requests or (
-                    remaining is not None and remaining <= 0
-                ):
+                if (
+                    self.max_requests is not None
+                    and self.statistics["requests"] >= self.max_requests
+                ) or (remaining is not None and remaining <= 0):
                     raise ModelClientError(
                         "provider_completion_budget_exhausted", "provider budget exhausted"
                     )
@@ -560,6 +572,7 @@ class ProviderGateway:
                     raise InputTokenBudgetExceeded(estimate, self.controls.max_input_tokens)
 
                 def prepare() -> urllib.request.Request:
+                    self._request_timeout()
                     token = bearer_token_source(self.provider["api_key_env"])()
                     return urllib.request.Request(
                         # Codex continues to use Responses only at its local relay.
@@ -622,14 +635,25 @@ def open_provider(
     *,
     token_counter: Callable[[str], int],
     timeout_seconds: float,
-    max_requests: int = 100,
+    max_requests: int | None = 100,
     max_request_bytes: int = 8 * 1024 * 1024,
     max_response_bytes: int = 16 * 1024 * 1024,
     opener: Any = None,
+    request_deadline: float | None = None,
 ) -> Iterator[ProviderGateway]:
     if not callable(token_counter) or timeout_seconds <= 0:
         raise ValueError("pinned token counter and positive provider timeout are required")
-    for limit in (max_requests, max_request_bytes, max_response_bytes):
+    if request_deadline is not None and (
+        isinstance(request_deadline, bool)
+        or not isinstance(request_deadline, (int, float))
+        or not math.isfinite(request_deadline)
+    ):
+        raise ValueError("provider deadline must be finite or null")
+    if max_requests is not None and (
+        isinstance(max_requests, bool) or not isinstance(max_requests, int) or max_requests <= 0
+    ):
+        raise ValueError("provider request limit must be positive or null")
+    for limit in (max_request_bytes, max_response_bytes):
         if isinstance(limit, bool) or not isinstance(limit, int) or limit <= 0:
             raise ValueError("provider limits must be positive integers")
     directory = Path(directory)
@@ -650,6 +674,7 @@ def open_provider(
         max_request_bytes,
         max_response_bytes,
         opener,
+        request_deadline,
     )
 
     class Handler(http.server.BaseHTTPRequestHandler):

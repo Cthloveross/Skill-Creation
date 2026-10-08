@@ -1,0 +1,47 @@
+{
+  "checked_at": "2026-10-08T02:59:00.165454+00:00",
+  "cli_help_checked": [
+    "r2sp",
+    "prepare_skillsbench.py",
+    "launch_matrix.py"
+  ],
+  "credential_reads": 0,
+  "docker_operations": 0,
+  "final_acceptance": {
+    "file": "final-status.json",
+    "scope": "Implementation acceptance only; full85 v5 admission and paid model/matrix still NOT_MEASURED",
+    "sha256": "b8f5355ee434f4ed62ac5c71821ecad01bef5cbf12ed82fd26fe85f3a05bb7ff",
+    "status": "IMPLEMENTATION_ACCEPTANCE_PASSED"
+  },
+  "handoff_sha256": "af6e0d69459945b29e7cd7b8975701ba972932fb62a5af09b5f7793caad86520",
+  "live_model_calls": 0,
+  "scope": "Handoff shell syntax, local CLI option existence, exact configs and manifest source/data binding; no terminal setup/model/preflight dispatched",
+  "shell_blocks_parsed": 13,
+  "status": "PASS",
+  "variants": {
+    "full-85-gpt56-v5": {
+      "benign_cells": 85,
+      "fresh_v5_environment_admission": "NOT_MEASURED",
+      "historical_ready_tasks": 84,
+      "identity_hash": "672fda96612060422a53d3ecf470fa0477ff255edc3cd4870a232266c55516a2",
+      "live_smoke": "NOT_MEASURED",
+      "manifest": "runs/skillsbench/full-85-gpt56-v5/manifest.json",
+      "matrix": "NOT_MEASURED",
+      "sha256": "a23313c9ef5bf1e3c95111830b1b9e55c6ae62f78f2fc8166d879aef65b7570a",
+      "source_data_recipe_lock_binding": "PASS",
+      "tasks": 85
+    },
+    "full-85-opus48-v5": {
+      "benign_cells": 85,
+      "fresh_v5_environment_admission": "NOT_MEASURED",
+      "historical_ready_tasks": 84,
+      "identity_hash": "82c5ce5274da07378754d1e1bbc73df6f3f208f0e7437898516d32f7ebb270b3",
+      "live_smoke": "NOT_MEASURED",
+      "manifest": "runs/skillsbench/full-85-opus48-v5/manifest.json",
+      "matrix": "NOT_MEASURED",
+      "sha256": "2d31bafe467364b4d07c11d093e279883c9db30837e4cf2045f3f52c2fb56fd6",
+      "source_data_recipe_lock_binding": "PASS",
+      "tasks": 85
+    }
+  }
+}

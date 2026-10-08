@@ -1,0 +1,73 @@
+{
+  "repository": "https://github.com/Zhang-Henry/CoEvoSkills",
+  "commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+  "license": "Apache-2.0",
+  "files": {
+    "coevo/libs/terminus_agent/evolution/independent_verifier.py": {
+      "source_path": "libs/terminus_agent/evolution/independent_verifier.py",
+      "sha256": "a56cd184b3264bd61fab3df7648cb9f1f04009a3274eaebf2a8fb14ecd54869d"
+    },
+    "coevo/libs/terminus_agent/evolution/self_verifier.py": {
+      "source_path": "libs/terminus_agent/evolution/self_verifier.py",
+      "sha256": "a86b783f32f94ebfa7494910cbf4d44c80bfeaea74b37d4be19fcb3f8b7b011e"
+    },
+    "coevo/libs/terminus_agent/evolution/models.py": {
+      "source_path": "libs/terminus_agent/evolution/models.py",
+      "sha256": "9ef99bc6b87acb9da87c9cfe8eee66c2260b0b733f6b2849070cb2fd0170e336"
+    },
+    "coevo/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_skills.py": {
+      "source_path": "libs/terminus_agent/agents/terminus_2/harbor_terminus_2_skills.py",
+      "sha256": "b24101024f5e9ef5a1b6d2d9ebe9b3c92a54b3dbf5a8235b9d998830ee20d7f1"
+    },
+    "coevo/libs/terminus_agent/agents/terminus_2/skill_docs.py": {
+      "source_path": "libs/terminus_agent/agents/terminus_2/skill_docs.py",
+      "sha256": "14b3a989e529d6a9051edda69d593e1f4a755e24aeb9000298cc6273b049f308"
+    },
+    "coevo/libs/terminus_agent/agents/terminus_2/terminus_json_plain_parser.py": {
+      "source_path": "libs/terminus_agent/agents/terminus_2/terminus_json_plain_parser.py",
+      "sha256": "1e46a62be91a6e0457824dfea78516bd0661add148f58b7be21b9687707dd55f"
+    },
+    "coevo/libs/terminus_agent/agents/terminus_2/terminus_xml_plain_parser.py": {
+      "source_path": "libs/terminus_agent/agents/terminus_2/terminus_xml_plain_parser.py",
+      "sha256": "6a86f960903a763166b5d0e3c84565f76b147e3702f10c2f8465c25c951e9a85"
+    },
+    "coevo/libs/terminus_agent/agents/terminus_2/conversation_renderer.py": {
+      "source_path": "libs/terminus_agent/agents/terminus_2/conversation_renderer.py",
+      "sha256": "0b2cda6a008084e6220dff507c7f14f259d864f8b4f57f71e6aacb900085f331"
+    },
+    "coevo/libs/terminus_agent/llms/base_llm.py": {
+      "source_path": "libs/terminus_agent/llms/base_llm.py",
+      "sha256": "a2e90ba1209eae0067d4098d23d182d66cd129914d0bc87a56e168a3ca148815"
+    },
+    "coevo/libs/terminus_agent/llms/chat.py": {
+      "source_path": "libs/terminus_agent/llms/chat.py",
+      "sha256": "a21441d0ea194470836580922ad85c288f70d47f4bcba5d38288c3f2ac73c4a1"
+    },
+    "coevo/libs/terminus_agent/llms/lite_llm.py": {
+      "source_path": "libs/terminus_agent/llms/lite_llm.py",
+      "sha256": "31fbe596dd05f5abac204e9e34ee557ffe0627839832ab1b0759001c44e21019"
+    },
+    "coevo/libs/terminus_agent/utils/anthropic_caching.py": {
+      "source_path": "libs/terminus_agent/utils/anthropic_caching.py",
+      "sha256": "269b4428c20ddb6cd03c1811e8ba9a3c771f40901ce7f4479f783c736e80d22a"
+    },
+    "coevo/libs/terminus_agent/utils/logger.py": {
+      "source_path": "libs/terminus_agent/utils/logger.py",
+      "sha256": "7469fb9db0164020138a9d1b357d568353005bb685d585e0b135c0f66a4724f0"
+    },
+    "coevo/libs/terminus_agent/evolution/prompt_templates/independent_verifier.txt": {
+      "source_path": "libs/terminus_agent/evolution/prompt_templates/independent_verifier.txt",
+      "sha256": "8f31ad07fc4d9b619938a7bac81f137a4d999e2617ca5679c26b8dd276dcd9b2"
+    },
+    "coevo/libs/terminus_agent/evolution/prompt_templates/diagnosis_only.txt": {
+      "source_path": "libs/terminus_agent/evolution/prompt_templates/diagnosis_only.txt",
+      "sha256": "831d9eeb0b2ffc3a7c8cc4517a678f1dd742f514b4512e3a9ce2c59dfa4ff461"
+    },
+    "skill_schema.py": {
+      "source_path": "libs/terminus_agent/evolution/skill_schema.py",
+      "sha256": "dbe631995322a073bdb0a959fe82443bbcb4083331feb397c6411f5d32b49a37"
+    }
+  },
+  "packaging": "Namespace packages omit eager upstream aggregator initializers; implementation and prompt bytes are unmodified.",
+  "provider_adaptation": "The agent LiteLLM factory is registered once to a run-bound ContextVar bridge; author Chat, parser and agent lifecycle are unchanged. The accepted experiment transport omits an output token quota and uses host single-POST journaling, role input admission and the shared learning deadline instead of the author LiteLLM HTTP retry policy."
+}

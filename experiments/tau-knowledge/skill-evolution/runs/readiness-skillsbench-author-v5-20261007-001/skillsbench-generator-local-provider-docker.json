@@ -1,0 +1,14 @@
+{
+  "provider": "local HTTP fixture through explicit opener redirect",
+  "external_model_calls": 0,
+  "local_http_posts": 4,
+  "synthetic_usage": true,
+  "official_grader_calls_in_test": 0,
+  "initial_hash": "45e28f2dfb36d0e7b019ce2b57c4a099e211b7929891b2afb45f92096196cb62",
+  "revised_hash": "ce6a899868bbcfc1075afbd198ec6da7477ab4d367f9d36e609f1fa44c08a51e",
+  "execution_id": "e5e8eae81dbf464585cef5de0c232b8b",
+  "operation_cursor": 2,
+  "initial_submission": "bb4d720ab8eda983f524fdee772c2899dddbe145177118ad3b7659bf18eee82d",
+  "revision_submission": "464c905ac7ce703510d7d81bff0b697b12f817f8be845d5be4aa71635360fe51",
+  "completed_replay_posts": 0
+}

@@ -1,0 +1,53 @@
+FEEEEEE                                                                  [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_real_task_credentials_use_scoped_values_and_do_not_inherit_provider_key _
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py:93: in prepared
+    assert checks["ready"], (
+E   AssertionError: explicit Docker integration requires the current prepared episode runtime
+E   assert False
+_ ERROR at setup of test_real_direct_generator_persists_task_state_and_fresh_execution_is_clean _
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py:93: in prepared
+    assert checks["ready"], (
+E   AssertionError: explicit Docker integration requires the current prepared episode runtime
+E   assert False
+_ ERROR at setup of test_real_direct_generator_reconnects_surviving_container __
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py:93: in prepared
+    assert checks["ready"], (
+E   AssertionError: explicit Docker integration requires the current prepared episode runtime
+E   assert False
+_ ERROR at setup of test_real_direct_generator_loop_with_local_responses_provider _
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py:93: in prepared
+    assert checks["ready"], (
+E   AssertionError: explicit Docker integration requires the current prepared episode runtime
+E   assert False
+_ ERROR at setup of test_real_fresh_shell_persistent_background_service_and_fresh_episode _
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py:93: in prepared
+    assert checks["ready"], (
+E   AssertionError: explicit Docker integration requires the current prepared episode runtime
+E   assert False
+_ ERROR at setup of test_real_official_grade_uses_closed_same_episode_and_process_environment _
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py:93: in prepared
+    assert checks["ready"], (
+E   AssertionError: explicit Docker integration requires the current prepared episode runtime
+E   assert False
+=================================== FAILURES ===================================
+_____ test_real_author_main_dependency_service_restore_and_role_isolation ______
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_author_verifier_docker.py:164: in test_real_author_main_dependency_service_restore_and_role_isolation
+    with runner.learning_episode(
+/usr/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/skillsbench_runtime.py:2128: in learning_episode
+    self._start_episode(episode)
+experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/skillsbench_runtime.py:1607: in _start_episode
+    raise ContainerUnavailable("skillsbench_task_services_not_ready")
+E   tau_skill_evolution.container.ContainerUnavailable: skillsbench_task_services_not_ready
+=========================== short test summary info ============================
+ERROR experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py::test_real_task_credentials_use_scoped_values_and_do_not_inherit_provider_key
+ERROR experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py::test_real_direct_generator_persists_task_state_and_fresh_execution_is_clean
+ERROR experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py::test_real_direct_generator_reconnects_surviving_container
+ERROR experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py::test_real_direct_generator_loop_with_local_responses_provider
+ERROR experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py::test_real_fresh_shell_persistent_background_service_and_fresh_episode
+ERROR experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py::test_real_official_grade_uses_closed_same_episode_and_process_environment
+FAILED experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_author_verifier_docker.py::test_real_author_main_dependency_service_restore_and_role_isolation
+1 failed, 8 deselected, 6 errors in 2.51s

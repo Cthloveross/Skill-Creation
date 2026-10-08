@@ -1,0 +1,78 @@
+{
+  "scope": "Generator effective episodes and deadline; SkillsBench v5 config and byte-preserved author identity; native provider nullable POST cap and deadline",
+  "tests": [
+    {
+      "log": "generator-config-provider-final.log",
+      "passed": 173,
+      "failed": 0,
+      "duration_seconds": 82.1,
+      "scope": [
+        "test_generator.py",
+        "test_spec.py",
+        "test_codex_provider.py"
+      ],
+      "before_additional_provider_deadline_tests": true
+    },
+    {
+      "log": "native-provider-deadline-tests.log",
+      "passed": 44,
+      "failed": 0,
+      "duration_seconds": 39.72,
+      "scope": [
+        "test_codex_provider.py"
+      ],
+      "final_provider_source": true
+    },
+    {
+      "log": "pinned-verifier-config-tests.log",
+      "passed": 74,
+      "failed": 0,
+      "duration_seconds": 1.87,
+      "scope": [
+        "test_spec.py"
+      ],
+      "final_spec_source": true
+    }
+  ],
+  "fixture_note": {
+    "log": "native-provider-deadline-fixture.log",
+    "passed": 43,
+    "failed": 1,
+    "cause": "New fake response overrode read while transport correctly preferred read1; final fixture also expects Journal UnknownOperation wrapping the learning deadline after dispatch."
+  },
+  "lint": "ruff passed",
+  "compile": "compileall passed",
+  "real_model": "NOT_MEASURED",
+  "real_docker": "NOT_MEASURED_in_this_subtask",
+  "credential_file_read": false,
+  "file_hashes": {
+    "src/tau_skill_evolution/generator.py": "16011c41d9e2356a73e131ca0a960c3c3661f7e9a680d6ae8952b9e2dca8d7c6",
+    "src/tau_skill_evolution/spec.py": "6620ab6fed8ddcede90f0e8488a6beb6786819b87904a5c3aa7ddb27b6734463",
+    "src/tau_skill_evolution/codex_provider.py": "33fd5f2f8e819ddcb61ee2eb57a519a2471b430524fc2ec441879ed7891c1792",
+    "tests/skill_evolution/test_generator.py": "133bb8924de1c31c7d8081bea62b09330937b02a28e6021443eb834e82533ecc",
+    "tests/skill_evolution/test_spec.py": "9e67163431695c81a567476cc3eb040a62b9768a826395ab18e842cfc6cd741e",
+    "tests/skill_evolution/test_codex_provider.py": "cad746750d5a852d6ca8a23252e8975214e109ef28bbe8e0883ecb977c3a1483",
+    "PROTOCOL.md": "ebbb3f0d08c0be86041d79fe8610944eb1f5c7852be3cfbe4a6d9c51f9e63ce2",
+    "meta/coevo-authoring/SOURCE.md": "86706ba7e65f827a9031709d3ddff1827f29c25ca6eef718fd37185d26a40055",
+    "configs/skillsbench.yaml": "3db39c74733a8bc91764affad025c2027e453ff727a3833a1758189128125078",
+    "runs/skillsbench/full-85-gpt56-v5/config.yaml": "a76b742ae351163ec69c36b66802a395dead4d13a5d36a5201e6929dde58eae6",
+    "runs/skillsbench/full-85-opus48-v5/config.yaml": "5b19327fc05b84d7ed22fc0a85065043ca840e01536ced0f5a50d7be34f1a513"
+  },
+  "log_hashes": {
+    "generator-config-provider-final.log": "ea1eccd6ec27622e9a68901dfd1437e5c2e37f0c9363549074492472f8c8d286",
+    "native-provider-deadline-tests.log": "29e6cbe602adf316fb07d4d8426e99e008d68e77f7be28635f10f1e8b2098259",
+    "native-provider-deadline-fixture.log": "55455f74b2d3e0c7dddcbc775c677abaff0aae25dd7ab9a7a4fff57d4be9e15c",
+    "pinned-verifier-config-tests.log": "a582a820c2c631408b0101f41f261e1bee0e4f15c2b824660bf8c27618e99e51"
+  },
+  "cross_review": {
+    "skillsbench_adapter": "PASS_read_only",
+    "engine": "PASS_after_unlocked_generation_optional_diagnosis_and_author_pass_rate_fixes",
+    "final_global_acceptance": "owned_by_root"
+  },
+  "preimplementation_counterexamples": {
+    "ignored_verifier_overrides": {
+      "failed": 2,
+      "description": "V5 accepted max_turns29 and diagnosis_turns7 although author implementation fixes30/8; reproduced before validation change."
+    }
+  }
+}

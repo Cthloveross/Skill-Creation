@@ -1,4 +1,4 @@
-schema_version: skillsbench.skill-evolution.v4
+schema_version: skillsbench.skill-evolution.v5
 seed: 20260904
 matrix_commitment: ba9697db76b872fc5153044ac2cb6b5db993214974d6beb4e12344d8078d72e7
 source:
@@ -147,11 +147,10 @@ roles:
     max_input_tokens: 157632
     context_window: 272000
     context_beta: 0.7
-    max_turns: 120
+    max_episodes: 120
   verifier:
     reasoning_effort: medium
     max_output_tokens: null
-    prompt: verifier-skillsbench.md
     max_turns: 30
     diagnosis_turns: 8
     max_input_tokens: 114688
@@ -163,21 +162,20 @@ acquisition:
   base_token_limit: 32768
   max_steps: 50
 evolution:
-  max_revisions: 15
+  max_surrogate_retries: 15
   max_oracles: 5
   max_oracle_errors: 5
-  revision_timeout_seconds: 3600
+  timeout_multiplier: 5
+  timeout_seconds: 7200
 runtime:
   executor: author-codex
   codex:
     binary: codex
     version: 0.160.1
     binary_sha256: f34a4d2301892ae96c90097786bfe5dc269f187b6f69faf42a7b357b8c081e35
-    evolution_timeout_seconds: 3000
     evaluation_timeout_seconds: 7200
   request_timeout_seconds: 900
-  episode_timeout_seconds: 3600
-  max_turns: 100
+  max_turns: null
   max_task_tool_calls: 800
   controls:
     agent:

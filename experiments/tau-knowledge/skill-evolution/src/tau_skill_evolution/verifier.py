@@ -111,6 +111,7 @@ class VerificationReport:
     program_error: bool = False
     test_runs: tuple[Mapping[str, Any], ...] = ()
     stage_failures: tuple[Mapping[str, Any], ...] = ()
+    author_result: Mapping[str, Any] | None = None
 
     @property
     def test_version(self) -> int:
@@ -130,6 +131,7 @@ class VerificationReport:
             "test_hash": self.suite.test_hash,
             "test_runs": thaw_json(self.test_runs),
             "stage_failures": thaw_json(self.stage_failures),
+            "author_result": thaw_json(self.author_result),
         }
 
     @classmethod
@@ -145,6 +147,7 @@ class VerificationReport:
             program_error=value.get("program_error", False),
             test_runs=tuple(value.get("test_runs", ())),
             stage_failures=tuple(value.get("stage_failures", ())),
+            author_result=value.get("author_result"),
         )
 
 

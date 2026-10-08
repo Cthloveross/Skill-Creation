@@ -314,10 +314,10 @@ def test_real_direct_generator_persists_task_state_and_fresh_execution_is_clean(
             " try: urllib.request.urlopen('http://127.0.0.1:8765',timeout=1); break\n"
             " except OSError: time.sleep(.1)\n"
             "else: raise AssertionError('background service unavailable')\n"
-            "print(json.dumps({'state':os.environ['TAU_EVOLUTION_STATE'],'dependency':tau_evolution_fixture.VALUE,'cwd':os.getcwd()}))\n"
+            "print(json.dumps({'state':os.environ.get('TAU_EVOLUTION_STATE'),'dependency':tau_evolution_fixture.VALUE,'cwd':os.getcwd()}))\n"
         )
         assert terminal_json(session, python_command(probe)) == {
-            "state": "retained",
+            "state": None,
             "dependency": 73,
             "cwd": "/root",
         }
@@ -349,10 +349,11 @@ def test_real_direct_generator_persists_task_state_and_fresh_execution_is_clean(
             }
         assert session.runner.container_name == original_container
         session.begin_attempt(revised.bundle, False, operation_id="revision-2")
-        session.runner.timeout = 0.2
+        agent_timeout = session.runner.config["agent"]["timeout_sec"]
+        session.runner.config["agent"]["timeout_sec"] = 0.04  # ×5 gives a 0.2s fixture limit.
         timeout = session.terminal("sleep 5")
         assert timeout.failure == "timeout"
-        session.runner.timeout = 60
+        session.runner.config["agent"]["timeout_sec"] = agent_timeout
         assert terminal_json(session, python_command(probe))["dependency"] == 73
         evidence = {
             "model_calls": 0,
@@ -363,7 +364,8 @@ def test_real_direct_generator_persists_task_state_and_fresh_execution_is_clean(
             "same_container": True,
             "dependency_state": True,
             "background_service": True,
-            "shell_state": True,
+            "shell_state_inherited": False,
+            "fresh_shell_per_command": True,
             "fresh_execution_clean": True,
             "remote_timeout": timeout.failure,
             "submission_hash": revised.submission_hash,
@@ -920,7 +922,7 @@ def test_real_workspace_public_solution_private_grade_and_fresh_environment(tmp_
     )
 
 
-def test_real_persistent_shell_background_service_and_fresh_episode(prepared):
+def test_real_fresh_shell_persistent_background_service_and_fresh_episode(prepared):
     runner, _adapter, _transport = prepared
     server = """from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from functools import partial
@@ -960,8 +962,8 @@ print(json.dumps({{'cwd':os.getcwd(),'export':os.environ.get('TAU_INTEGRATION_PE
                   'body':body,'private_tests':Path('/tests/test.sh').exists()}}))
 """
         assert episode_json(runner, episode, python_command(inspect)) == {
-            "cwd": PUBLIC_ROOT,
-            "export": "public-fixture",
+            "cwd": runner.workspace_directory,
+            "export": None,
             "body": "live integration fixture",
             "private_tests": False,
         }

@@ -1157,6 +1157,266 @@ def test_generator_turn_budget_is_shared_across_revisions(tmp_path):
     assert restored_conversation.turns == 3
 
 
+def test_effective_episodes_exclude_prose_parse_errors_and_skill_only_tools(tmp_path):
+    class EpisodeModel(EditingModel):
+        def complete(self, messages, **kwargs):
+            self.requests.append(copy.deepcopy(messages))
+            responses = [
+                {"role": "assistant", "content": "still planning"},
+                {
+                    "role": "assistant",
+                    "tool_calls": [
+                        {"id": "bad", "function": {"name": "terminal", "arguments": "{"}}
+                    ],
+                },
+                {
+                    "role": "assistant",
+                    "tool_calls": [
+                        {"id": "skill", "function": {"name": "public_task_tool", "arguments": "{}"}}
+                    ],
+                },
+                {
+                    "role": "assistant",
+                    "tool_calls": [
+                        {
+                            "id": "command",
+                            "function": {
+                                "name": "terminal",
+                                "arguments": json.dumps(
+                                    {"command": json.dumps(["write", "SKILL.md", "updated"])}
+                                ),
+                            },
+                        }
+                    ],
+                },
+                {
+                    "role": "assistant",
+                    "tool_calls": [
+                        {"id": "submit", "function": {"name": "submit_revision", "arguments": "{}"}}
+                    ],
+                },
+            ]
+            return responses[len(self.requests) - 1]
+
+    base, parent, model = _base(), parse_bundle_response(_raw()), EpisodeModel()
+    conversation, journal, runner = RevisionConversation(), Journal(tmp_path), EditingSession()
+    result = revise(
+        model,
+        parent,
+        base.public_inputs,
+        base,
+        {},
+        journal=journal,
+        session=runner,
+        conversation=conversation,
+        max_turns=None,
+        max_episodes=2,
+        timeout_seconds=None,
+    )
+    assert result.bundle.files["SKILL.md"] == "updated"
+    assert conversation.turns == 5 and conversation.episodes == 2
+    assert len(model.requests) == 5 and len(runner.commands) == 1
+    assert len(runner.tool_calls) == 1
+    assert [
+        journal.response(f"revise/model-{index}/episode")["increment"] for index in range(5)
+    ] == [0, 0, 0, 1, 1]
+
+
+def test_effective_episode_budget_survives_revision_and_recovery(tmp_path):
+    base, parent = _base(), parse_bundle_response(_raw())
+    conversation, journal, runner = RevisionConversation(), Journal(tmp_path), EditingSession()
+    options = dict(
+        journal=journal,
+        session=runner,
+        conversation=conversation,
+        max_turns=None,
+        max_episodes=2,
+        timeout_seconds=None,
+    )
+    first = revise(
+        EditingModel("first"), parent, base.public_inputs, base, {}, operation_id="first", **options
+    )
+    assert conversation.turns == conversation.episodes == 2
+    model = EditingModel("draft")
+    with pytest.raises(RevisionFailure, match="generator_episode_budget_exhausted") as failure:
+        revise(model, first.bundle, base.public_inputs, base, {}, operation_id="second", **options)
+    assert not failure.value.dispatched and not model.requests
+    restored = RevisionConversation()
+    with pytest.raises(RevisionFailure, match="generator_episode_budget_exhausted"):
+        revise(
+            model,
+            first.bundle,
+            base.public_inputs,
+            base,
+            {},
+            operation_id="second",
+            **{**options, "conversation": restored},
+        )
+    assert restored.turns == restored.episodes == 2 and not model.requests
+
+
+def test_batched_commands_and_submit_are_one_effective_episode(tmp_path):
+    class BatchedModel(EditingModel):
+        def complete(self, messages, **kwargs):
+            self.requests.append(copy.deepcopy(messages))
+            return {
+                "role": "assistant",
+                "tool_calls": [
+                    {
+                        "id": "command",
+                        "function": {
+                            "name": "terminal",
+                            "arguments": json.dumps(
+                                {"command": json.dumps(["write", "SKILL.md", "batched"])}
+                            ),
+                        },
+                    },
+                    {"id": "submit", "function": {"name": "submit_revision", "arguments": "{}"}},
+                ],
+            }
+
+    base, parent, model = _base(), parse_bundle_response(_raw()), BatchedModel()
+    conversation, journal, runner = RevisionConversation(), Journal(tmp_path), EditingSession()
+    result = revise(
+        model,
+        parent,
+        base.public_inputs,
+        base,
+        {},
+        journal=journal,
+        session=runner,
+        conversation=conversation,
+        max_turns=None,
+        max_episodes=1,
+        timeout_seconds=None,
+    )
+    assert result.bundle.files["SKILL.md"] == "batched"
+    assert conversation.turns == conversation.episodes == len(model.requests) == 1
+
+
+def test_episode_increment_is_replayed_once_after_interruption(tmp_path):
+    class InterruptedJournal(Journal):
+        interrupted = False
+
+        def dispatch(self, operation_id, *args, **kwargs):
+            if operation_id == "revise/model-0/tool-0" and not self.interrupted:
+                self.interrupted = True
+                raise KeyboardInterrupt()
+            return super().dispatch(operation_id, *args, **kwargs)
+
+    base, parent = _base(), parse_bundle_response(_raw())
+    conversation, journal, runner = (
+        RevisionConversation(),
+        InterruptedJournal(tmp_path),
+        EditingSession(),
+    )
+    model = EditingModel("updated")
+    options = dict(
+        journal=journal,
+        session=runner,
+        conversation=conversation,
+        max_turns=None,
+        max_episodes=2,
+        timeout_seconds=None,
+    )
+    with pytest.raises(KeyboardInterrupt):
+        revise(model, parent, base.public_inputs, base, {}, **options)
+    assert journal.completed("revise/model-0/episode") and not runner.commands
+    result = revise(
+        model,
+        parent,
+        base.public_inputs,
+        base,
+        {},
+        **{**options, "conversation": RevisionConversation()},
+    )
+    assert result.bundle.files["SKILL.md"] == "updated" and len(model.requests) == 2
+    packet = journal.response("revise/submitted")
+    assert packet["episodes"] == packet["turns"] == 2
+
+
+def test_global_learning_deadline_bounds_parse_error_loops(tmp_path, monkeypatch):
+    class ProseModel(EditingModel):
+        def complete(self, messages, **kwargs):
+            self.requests.append(copy.deepcopy(messages))
+            monkeypatch.setattr("tau_skill_evolution.generator.time.time", lambda: 2)
+            return {"role": "assistant", "content": "no valid command"}
+
+    monkeypatch.setattr("tau_skill_evolution.generator.time.time", lambda: 0)
+    base, parent, model = _base(), parse_bundle_response(_raw()), ProseModel()
+    conversation = RevisionConversation()
+    with pytest.raises(RevisionFailure, match="learning_timeout"):
+        revise(
+            model,
+            parent,
+            base.public_inputs,
+            base,
+            {},
+            journal=Journal(tmp_path),
+            session=EditingSession(),
+            conversation=conversation,
+            max_turns=None,
+            max_episodes=120,
+            timeout_seconds=None,
+            deadline=1,
+        )
+    assert len(model.requests) == conversation.turns == 1 and conversation.episodes == 0
+
+
+def test_public_schema_and_process_feedback_does_not_expose_verifier_evidence(tmp_path):
+    base, parent, model = _base(), parse_bundle_response(_raw()), EditingModel()
+    report = {
+        "passed": False,
+        "public_schema_issues": ["SKILL.md name must match the current package directory"],
+        "unchecked_phases": ["P3"],
+        "verification_unavailable": "script_error",
+        "oracle_infrastructure_unavailable": True,
+        "diagnosis": "PRIVATE_ASSERTION_VALUE",
+        "tests": "PRIVATE_SUITE_SOURCE",
+        "reward": 0.125,
+    }
+    history = [
+        {
+            "kind": "verification",
+            "base_hash": base.base_hash,
+            "bundle_hash": parent.bundle_hash,
+            **report,
+        }
+    ]
+    revise(
+        model,
+        parent,
+        base.public_inputs,
+        base,
+        report,
+        journal=Journal(tmp_path),
+        session=EditingSession(),
+        feedback_history=history,
+    )
+    payload = json.loads(model.requests[0][-1]["content"])
+    expected = {
+        key: value for key, value in report.items() if key not in {"diagnosis", "tests", "reward"}
+    }
+    assert payload["verification_feedback"] == {**expected, "failure_categories": []}
+    assert payload["feedback_history"][0]["public_schema_issues"] == report["public_schema_issues"]
+    assert "PRIVATE_" not in json.dumps(model.requests)
+    assert "reward" not in payload["verification_feedback"]
+
+
+def test_unavailable_feedback_requires_a_fixed_category(tmp_path):
+    base, parent = _base(), parse_bundle_response(_raw())
+    with pytest.raises(ValueError, match="unknown_verification_unavailable_category"):
+        revise(
+            EditingModel(),
+            parent,
+            base.public_inputs,
+            base,
+            {"verification_unavailable": "Traceback private assertion"},
+            journal=Journal(tmp_path),
+            session=EditingSession(),
+        )
+
+
 @pytest.mark.parametrize("initial", [False, True])
 def test_known_output_budget_stop_retains_response_and_never_continues_or_resends(
     tmp_path, initial

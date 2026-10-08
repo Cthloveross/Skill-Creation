@@ -1,0 +1,190 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+____ test_real_native_codex_and_unix_relay_with_fake_model[messages-bridge] ____
+
+tmp_path = PosixPath('/tmp/pytest-of-tc442/pytest-882/test_real_native_codex_and_uni0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7d43272fb650>
+with_skill = True, force_compaction = False, force_incomplete = False
+messages_transport = True, gpt56_profile = False
+
+    @pytest.mark.skipif(
+        os.environ.get("TAU_RUN_CODEX_DOCKER_INTEGRATION") != "1",
+        reason="real prepared Docker and native Codex integration requires explicit opt-in",
+    )
+    @pytest.mark.parametrize(
+        ("with_skill", "force_compaction", "force_incomplete", "messages_transport", "gpt56_profile"),
+        [
+            (False, False, False, False, False),
+            (True, False, False, False, False),
+            (False, True, False, False, False),
+            (False, False, True, False, False),
+            (True, False, False, True, False),
+            (True, False, False, False, True),
+        ],
+        ids=[
+            "no-skill",
+            "author-skill-only",
+            "no-skill-compaction",
+            "native-output-budget",
+            "messages-bridge",
+            "gpt56-profile",
+        ],
+    )
+    def test_real_native_codex_and_unix_relay_with_fake_model(
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        with_skill: bool,
+        force_compaction: bool,
+        force_incomplete: bool,
+        messages_transport: bool,
+        gpt56_profile: bool,
+    ) -> None:
+        """Real Docker/CLI/tools, fake model responses; this measures no task utility."""
+        from tau_skill_evolution.artifacts import SkillBundle
+        from tau_skill_evolution.codex_provider import OUTPUT_TOKEN_BUDGET_STOP, open_provider
+        from tau_skill_evolution.constants import EXPERIMENT_ROOT
+        from tau_skill_evolution.skillsbench_runtime import SkillsBenchRunner
+    
+        root = Path(os.environ.get("TAU_SKILLSBENCH_ROOT", str(EXPERIMENT_ROOT))).resolve()
+        new_profile = messages_transport or gpt56_profile
+        task_id = "3d-scan-calc" if new_profile else "dialogue-parser"
+        model_id = (
+            "anthropic.claude-opus-4-8"
+            if messages_transport
+            else "openai.gpt-5.6-terra"
+            if gpt56_profile
+            else "openai.gpt-5.5"
+        )
+        selected = os.environ.get("TAU_CODEX_DOCKER_LOCK")
+        lock = (
+            Path(selected)
+            if selected
+            else (
+                root
+                / "runtime"
+                / (
+                    "skillsbench-docker-3d-scan-calc-v4-lock.json"
+                    if new_profile
+                    else "skillsbench-docker-dialogue-parser-v2-20261006-lock.json"
+                )
+            )
+        )
+        runner = SkillsBenchRunner(root, task_id, demo=False, runtime_lock_path=lock)
+        assert runner.preflight()["ready"], "prepared pinned episode image and daemon required"
+>       cli_identity = module.codex_identity({"binary": "codex", "version": "0.160.1"})
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_codex_runtime.py:429: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+binary = {'binary': 'codex', 'version': '0.160.1'}
+
+    def codex_identity(binary: Path | Mapping[str, Any] | None = None) -> dict[str, Any]:
+        """Check local installation without contacting a provider."""
+        source = _author_source()
+        settings = binary if isinstance(binary, Mapping) else {}
+        configured = settings.get("binary", "codex") if settings else binary
+        if isinstance(configured, str):
+            configured = Path(shutil.which(configured) or configured)
+        candidate = configured or Path(shutil.which("codex") or "")
+        if not candidate.is_file():
+>           raise ContainerUnavailable("codex_cli_not_installed")
+E           tau_skill_evolution.container.ContainerUnavailable: codex_cli_not_installed
+
+experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/codex_runtime.py:88: ContainerUnavailable
+_____ test_real_native_codex_and_unix_relay_with_fake_model[gpt56-profile] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-tc442/pytest-882/test_real_native_codex_and_uni1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7d43262071a0>
+with_skill = True, force_compaction = False, force_incomplete = False
+messages_transport = False, gpt56_profile = True
+
+    @pytest.mark.skipif(
+        os.environ.get("TAU_RUN_CODEX_DOCKER_INTEGRATION") != "1",
+        reason="real prepared Docker and native Codex integration requires explicit opt-in",
+    )
+    @pytest.mark.parametrize(
+        ("with_skill", "force_compaction", "force_incomplete", "messages_transport", "gpt56_profile"),
+        [
+            (False, False, False, False, False),
+            (True, False, False, False, False),
+            (False, True, False, False, False),
+            (False, False, True, False, False),
+            (True, False, False, True, False),
+            (True, False, False, False, True),
+        ],
+        ids=[
+            "no-skill",
+            "author-skill-only",
+            "no-skill-compaction",
+            "native-output-budget",
+            "messages-bridge",
+            "gpt56-profile",
+        ],
+    )
+    def test_real_native_codex_and_unix_relay_with_fake_model(
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        with_skill: bool,
+        force_compaction: bool,
+        force_incomplete: bool,
+        messages_transport: bool,
+        gpt56_profile: bool,
+    ) -> None:
+        """Real Docker/CLI/tools, fake model responses; this measures no task utility."""
+        from tau_skill_evolution.artifacts import SkillBundle
+        from tau_skill_evolution.codex_provider import OUTPUT_TOKEN_BUDGET_STOP, open_provider
+        from tau_skill_evolution.constants import EXPERIMENT_ROOT
+        from tau_skill_evolution.skillsbench_runtime import SkillsBenchRunner
+    
+        root = Path(os.environ.get("TAU_SKILLSBENCH_ROOT", str(EXPERIMENT_ROOT))).resolve()
+        new_profile = messages_transport or gpt56_profile
+        task_id = "3d-scan-calc" if new_profile else "dialogue-parser"
+        model_id = (
+            "anthropic.claude-opus-4-8"
+            if messages_transport
+            else "openai.gpt-5.6-terra"
+            if gpt56_profile
+            else "openai.gpt-5.5"
+        )
+        selected = os.environ.get("TAU_CODEX_DOCKER_LOCK")
+        lock = (
+            Path(selected)
+            if selected
+            else (
+                root
+                / "runtime"
+                / (
+                    "skillsbench-docker-3d-scan-calc-v4-lock.json"
+                    if new_profile
+                    else "skillsbench-docker-dialogue-parser-v2-20261006-lock.json"
+                )
+            )
+        )
+        runner = SkillsBenchRunner(root, task_id, demo=False, runtime_lock_path=lock)
+        assert runner.preflight()["ready"], "prepared pinned episode image and daemon required"
+>       cli_identity = module.codex_identity({"binary": "codex", "version": "0.160.1"})
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_codex_runtime.py:429: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+binary = {'binary': 'codex', 'version': '0.160.1'}
+
+    def codex_identity(binary: Path | Mapping[str, Any] | None = None) -> dict[str, Any]:
+        """Check local installation without contacting a provider."""
+        source = _author_source()
+        settings = binary if isinstance(binary, Mapping) else {}
+        configured = settings.get("binary", "codex") if settings else binary
+        if isinstance(configured, str):
+            configured = Path(shutil.which(configured) or configured)
+        candidate = configured or Path(shutil.which("codex") or "")
+        if not candidate.is_file():
+>           raise ContainerUnavailable("codex_cli_not_installed")
+E           tau_skill_evolution.container.ContainerUnavailable: codex_cli_not_installed
+
+experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/codex_runtime.py:88: ContainerUnavailable
+=========================== short test summary info ============================
+FAILED experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_codex_runtime.py::test_real_native_codex_and_unix_relay_with_fake_model[messages-bridge]
+FAILED experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_codex_runtime.py::test_real_native_codex_and_unix_relay_with_fake_model[gpt56-profile]
+2 failed, 25 deselected in 35.17s

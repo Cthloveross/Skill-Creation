@@ -833,6 +833,7 @@ def _validate_grader_warmup(
     error_output: str | None = None,
     candidate_modules: Sequence[str] = (),
     candidate_roots: Sequence[str] = (),
+    allow_finite_reward: bool = False,
 ) -> None:
     """Accept an actual negative grade, never missing dependencies or a missing result.
 
@@ -851,7 +852,7 @@ def _validate_grader_warmup(
         value = float(reward.strip())
     except ValueError as exc:
         raise fail("skillsbench_warmup_reward_invalid") from exc
-    if not math.isfinite(value) or not 0 <= value <= 1:
+    if not math.isfinite(value) or (not allow_finite_reward and not 0 <= value <= 1):
         raise fail("skillsbench_warmup_reward_invalid")
     if exit_code not in {0, 1}:
         raise fail("skillsbench_warmup_execution_failed")
@@ -1201,6 +1202,9 @@ class SkillsBenchRunner:
         self.learning_checkpoint: Path | None = None
         self.learning_state: dict[str, Any] | None = None
         self.learning_scratch: Path | None = None
+        self.learning_deadline: float | None = None
+        self.execution_deadline: float | None = None
+        self.timeout_multiplier: float = 5
 
     def _lock(self) -> SkillsBenchRuntimeLock:
         return SkillsBenchRuntimeLock.from_file(self.runtime_lock_path)
@@ -1508,6 +1512,7 @@ class SkillsBenchRunner:
         ]
         if self.learning_workspace is not None:
             session = self.learning_workspace
+            self._prepare_frozen_documents(json.loads((session.package / "base.json").read_text()))
             main["volumes"] = [
                 {
                     "type": "bind",
@@ -1530,6 +1535,12 @@ class SkillsBenchRunner:
                     "source": str(self.learning_scratch),
                     "target": "/work/scratch",
                     "read_only": False,
+                },
+                {
+                    "type": "bind",
+                    "source": str(session.work.parent / "frozen-documents"),
+                    "target": "/app/environment/doc",
+                    "read_only": True,
                 },
             ]
         elif self.execution_framework == "author-codex":
@@ -1584,7 +1595,11 @@ class SkillsBenchRunner:
         result = self.transport.run(
             self._compose_command("up", "--detach", "--wait", "--no-build"),
             stdin=b"",
-            timeout=resources["build_timeout_sec"],
+            timeout=(
+                min(resources["build_timeout_sec"], self.phase_remaining())
+                if self.learning_deadline is not None or self.execution_deadline is not None
+                else resources["build_timeout_sec"]
+            ),
             output_limit=self.output_limit,
             env=_host_environment(resolved),
         )
@@ -1604,12 +1619,49 @@ class SkillsBenchRunner:
             [
                 "/bin/bash",
                 "-c",
-                "test ! -e /tests/test.sh && test ! -e /app/environment/doc && " + skill_boundary,
+                "test ! -e /tests/test.sh && "
+                + (
+                    "test -d /app/environment/doc"
+                    if self.learning_workspace is not None
+                    else "test ! -e /app/environment/doc"
+                )
+                + " && "
+                + skill_boundary,
             ],
             public=True,
         )
         if boundary.returncode or boundary.failure:
             raise ContainerUnavailable("skillsbench_public_environment_contains_private_files")
+        if self.learning_workspace is not None:
+            self.stage_frozen_documents(
+                json.loads((self.learning_workspace.package / "base.json").read_text())
+            )
+
+    def _prepare_frozen_documents(self, base: Mapping[str, Any]) -> None:
+        directory = self.learning_workspace.work.parent / "frozen-documents"
+        if directory.exists():
+            self.stage_frozen_documents(base)
+            return
+        directory.mkdir(mode=0o755)
+        for document in base.get("documents", ()):
+            name = hashlib.sha256(document["document_id"].encode()).hexdigest() + ".md"
+            path = directory / name
+            path.write_text(document["content"], encoding="utf-8")
+            path.chmod(0o444)
+
+    def stage_frozen_documents(self, base: Mapping[str, Any]) -> None:
+        """Check the frozen host bytes mounted at the author's public doc path."""
+        from .container import _tree_manifest
+
+        directory = self.learning_workspace.work.parent / "frozen-documents"
+        expected = {
+            hashlib.sha256(document["document_id"].encode()).hexdigest() + ".md": hashlib.sha256(
+                document["content"].encode()
+            ).hexdigest()
+            for document in base.get("documents", ())
+        }
+        if directory.is_symlink() or _tree_manifest(directory) != expected:
+            raise ContainerUnavailable("skillsbench_frozen_documents_changed")
 
     def _guard_public_episode(self, episode: SkillEpisode) -> None:
         # Both SkillEpisode helpers and terminal capability close before private grading.
@@ -1675,10 +1727,16 @@ class SkillsBenchRunner:
                 prefix = ["docker", "exec", "--user", "root", self.container_name]
 
                 def run(command: Sequence[str]) -> ProcessResult:
+                    remaining = self.phase_remaining()
+                    bound = (
+                        self.learning_deadline is not None or self.execution_deadline is not None
+                    )
+                    if bound and remaining <= 0:
+                        raise TimeoutError("learning_timeout")
                     return self.transport.run(
                         command,
                         stdin=b"",
-                        timeout=60,
+                        timeout=min(60, remaining) if bound else 60,
                         output_limit=self.output_limit,
                         env=_host_environment(),
                     )
@@ -1758,6 +1816,34 @@ class SkillsBenchRunner:
                 roots[destination] = target
             yield roots
 
+    def public_environment_manifest(self) -> dict[str, str]:
+        """Host audit of public bytes, excluding author tests and private role files."""
+        manifest = {}
+        with self.snapshot_workspace() as roots:
+            for mount, directory in roots.items():
+                for path in sorted(directory.rglob("*")):
+                    relative = path.relative_to(directory)
+                    public_path = mount.rstrip("/") + "/" + relative.as_posix()
+                    if any(
+                        part
+                        in {
+                            "skills",
+                            "candidate",
+                            ".skills",
+                            ".claude",
+                            ".codex",
+                            ".evolution",
+                            ".venv",
+                        }
+                        for part in relative.parts
+                    ) or public_path.startswith(("/root/verifier", "/logs/verifier")):
+                        continue
+                    if path.is_symlink():
+                        manifest[public_path] = "symlink:" + os.readlink(path)
+                    elif path.is_file():
+                        manifest[public_path] = _hash(path)
+        return manifest
+
     def _exec(
         self,
         args: Sequence[str],
@@ -1787,8 +1873,16 @@ class SkillsBenchRunner:
             self.container_name,
             *(self.public_python if args[0] == "python" else args[0], *args[1:]),
         ]
+        remaining = self.phase_remaining()
+        deadline_bound = self.learning_deadline is not None or self.execution_deadline is not None
+        if deadline_bound and remaining <= 0:
+            raise TimeoutError("learning_timeout")
         timeout = (
-            self.timeout
+            min(
+                900.0,
+                self.config["agent"]["timeout_sec"] * self.timeout_multiplier,
+                self.phase_remaining(),
+            )
             if self.learning_workspace is not None
             else (
                 max(
@@ -1800,6 +1894,8 @@ class SkillsBenchRunner:
                 else self.config["verifier"]["timeout_sec"]
             )
         )
+        if deadline_bound:
+            timeout = min(timeout, remaining)
         if self.learning_workspace is not None:
             # Bound the process inside the persistent container, not just docker exec.
             command = command[: -len(args)] + [
@@ -1812,7 +1908,13 @@ class SkillsBenchRunner:
         result = self.transport.run(
             command,
             stdin=stdin,
-            timeout=timeout + 10 if self.learning_workspace is not None else timeout,
+            timeout=(
+                min(timeout + 10, remaining)
+                if self.learning_workspace is not None and deadline_bound
+                else timeout + 10
+                if self.learning_workspace is not None
+                else timeout
+            ),
             output_limit=self.output_limit if public else _GRADER_OUTPUT_LIMIT,
             env=_host_environment(environment),
         )
@@ -1897,20 +1999,9 @@ class SkillsBenchRunner:
             raise ValueError("terminal_command_must_be_nonempty")
         if not self.public_open:
             raise PermissionError("skillsbench_public_episode_closed")
-        # Persist ordinary shell exports and cwd as well as the container's processes/files.
-        state = (
-            'state=/tmp/tau-public-shell; test ! -f "$state" || source "$state"; '
-            'trap \'status=$?; export -p >"$state"; '
-            'printf "\\ncd -- %q\\n" "$PWD" >>"$state"; exit "$status"\' EXIT; '
-            "source /dev/stdin"
-        )
-        if self.runtime == "workspace":
-            state = "mkdir -p /root/.evolution; " + state.replace(
-                "/tmp/tau-public-shell", "/root/.evolution/shell-state"
-            )
-        result = self._raw(
-            episode.package, episode.work, ["/bin/bash", "-c", state], command.encode()
-        )
+        # The pinned author's environment.exec creates a fresh interactive shell
+        # for each command. Container files, installs and services still persist.
+        result = self._raw(episode.package, episode.work, ["/bin/bash", "-ic", command])
         return ProgramResult(
             result.returncode,
             result.stdout.decode("utf-8", "replace"),
@@ -1918,9 +2009,67 @@ class SkillsBenchRunner:
             result.failure,
         )
 
+    def phase_remaining(self) -> float:
+        deadline = (
+            self.learning_deadline
+            if self.learning_deadline is not None
+            else self.execution_deadline
+        )
+        return (
+            max(0.0, deadline - time.time())
+            if deadline is not None
+            else float(self.config["agent"]["timeout_sec"] * self.timeout_multiplier)
+        )
+
+    def author_exec(
+        self,
+        command: str,
+        *,
+        cwd: str | None = None,
+        env: Mapping[str, str] | None = None,
+        timeout_sec: float | None = None,
+    ) -> ProcessResult:
+        """Author BaseEnvironment.exec semantics in the active learning MAIN."""
+        if self.learning_workspace is None or not self.public_open or self.container_name is None:
+            raise ContainerUnavailable("author_verifier_requires_live_learning_main")
+        remaining = self.phase_remaining()
+        if remaining <= 0:
+            raise TimeoutError("learning_timeout")
+        timeout = min(float(timeout_sec or 900), 900.0, remaining)
+        arguments = ["docker", "exec", "--interactive"]
+        if cwd is not None:
+            arguments += ["--workdir", cwd]
+        for name, value in (env or {}).items():
+            arguments += ["--env", f"{name}={value}"]
+        arguments += [
+            self.container_name,
+            "timeout",
+            "--signal=TERM",
+            "--kill-after=5",
+            str(timeout),
+            "/bin/bash",
+            "-ic",
+            command,
+        ]
+        result = self.transport.run(
+            arguments,
+            stdin=b"",
+            timeout=min(timeout + 10, remaining),
+            output_limit=self.output_limit,
+            env=_host_environment(),
+        )
+        if result.returncode in (124, 137):
+            return ProcessResult(result.returncode, result.stdout, result.stderr, "timeout")
+        return result
+
     @contextmanager
     def learning_episode(
-        self, session: Any, *, checkpoint: Path, identity: Mapping[str, Any]
+        self,
+        session: Any,
+        *,
+        checkpoint: Path,
+        identity: Mapping[str, Any],
+        deadline: float | None = None,
     ) -> Iterator[tuple[SkillEpisode, dict[str, Any]]]:
         """Own one task environment; reconnect only to the exact surviving containers."""
         if self.use_bwrap:
@@ -1954,9 +2103,15 @@ class SkillsBenchRunner:
                 "status": "STARTING",
                 "operation_cursor": 0,
                 "events": [],
+                "learning_deadline": deadline if deadline is not None else time.time() + 7200,
             }
             atomic_json(checkpoint, state)
         self.learning_workspace = session
+        self.learning_deadline = state.get("learning_deadline")
+        if not isinstance(self.learning_deadline, (int, float)):
+            raise ContainerUnavailable("skillsbench_learning_deadline_missing")
+        if deadline is not None and deadline != self.learning_deadline:
+            raise ContainerUnavailable("skillsbench_learning_deadline_changed")
         self.learning_checkpoint, self.learning_state = checkpoint, state
         self.learning_scratch = session.work.parent / "task-scratch"
         if self.learning_scratch.is_symlink():
@@ -1995,6 +2150,7 @@ class SkillsBenchRunner:
                 self.learning_workspace = None
                 self.learning_checkpoint = self.learning_state = None
                 self.learning_scratch = None
+                self.learning_deadline = None
                 self.workspace_roots = ()
 
     def _learning_containers(self) -> list[dict[str, Any]]:

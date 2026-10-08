@@ -1294,6 +1294,49 @@ def evolution_adapter(docker_runner, tmp_path, monkeypatch):
     return adapter, docker, journal, tmp_path / "learning"
 
 
+@pytest.mark.parametrize(
+    "command",
+    [
+        "cat /root/verifier/test_outputs.py",
+        "python /app/verifier/check_output.py",
+        "cat /tests/test.sh",
+        "cat test_outputs.py",
+        "ls /root/reference_solutions",
+        "cat ground_truth/answer.json",
+        "cat golden_answers/result.txt",
+    ],
+)
+def test_author_generator_gate_rejects_evaluator_access_without_dispatch(
+    evolution_adapter, command
+):
+    adapter, docker, journal, workspace = evolution_adapter
+    adapter.spec.namespace = "skillsbench.skill-evolution.v5"
+    parent = SkillBundle({"SKILL.md": "sealed S0"})
+    with adapter.evolution_session(
+        parent, adapter.public_inputs, {}, journal=journal, workspace=workspace
+    ) as session:
+        session.begin_attempt(parent, True, operation_id="initial-execution")
+        before = len(docker.calls)
+        result = session.terminal(command)
+        assert "COMMAND REJECTED" in result.output
+        assert len(docker.calls) == before
+        assert session.state["operation_cursor"] == 1
+
+
+def test_author_generator_gate_allows_progress_and_public_inputs(evolution_adapter):
+    adapter, docker, journal, workspace = evolution_adapter
+    adapter.spec.namespace = "skillsbench.skill-evolution.v5"
+    parent = SkillBundle({"SKILL.md": "sealed S0"})
+    with adapter.evolution_session(
+        parent, adapter.public_inputs, {}, journal=journal, workspace=workspace
+    ) as session:
+        session.begin_attempt(parent, True, operation_id="initial-execution")
+        before = len(docker.calls)
+        result = session.terminal("cat /root/progress.md; ls /root /app/environment/doc")
+        assert "COMMAND REJECTED" not in result.output
+        assert len(docker.calls) > before
+
+
 def test_direct_generator_submits_actual_same_environment_and_keeps_parent(evolution_adapter):
     import yaml
 
@@ -1878,11 +1921,408 @@ def test_adapter_binds_grade_evidence_to_private_execution_episode(docker_runner
         "evaluation": phase == "evaluate",
     }
     assert record["official_items"] == docker.report["results"]["tests"]
-    assert "hidden_official_check" not in json.dumps(result)
+    if phase == "oracle":
+        assert result["phase"] == "normal"
+        assert result["test_details"] == docker.report["results"]["tests"]
+        assert (
+            result["grader_evidence_hash"]
+            == hashlib.sha256((evidence[0] / "evidence.json").read_bytes()).hexdigest()
+        )
+    else:
+        assert "hidden_official_check" not in json.dumps(result)
     assert all(
         "hidden_official_check" not in path.read_text()
         for path in (tmp_path / "artifacts").rglob("*.json")
     )
+
+
+# Exact function AST source from CoEvoSkills 4380d4b, controller lines 2761-2782.
+# Full source SHA256: f87e0a7fd760688a71269672a512db2c1e2a53aa71cd5d9b9908a61d794390f1
+_AUTHOR_GT_SCORE_SOURCE = (
+    "def _gt_full_score_and_reward(gt_result: dict[str, Any]) -> tuple[bool, float]:\n"
+    '''        """Resolve strict success from canonical reward, then parsed test counts.
+
+        A finite numeric ``reward`` is authoritative. Missing or malformed
+        reward data falls back to parsed tests so ordinary pytest-only tasks
+        retain their established behavior.
+        """
+
+        reported_reward = gt_result.get("reward")
+        if reported_reward is not None:
+            try:
+                numeric_reward = float(reported_reward)
+            except (TypeError, ValueError):
+                numeric_reward = float("nan")
+            if math.isfinite(numeric_reward):
+                return numeric_reward == 1.0, numeric_reward
+
+        total = gt_result.get("total_tests", 0)
+        passed = gt_result.get("tests_passed", 0)
+        return (
+            total > 0 and passed == total,
+            passed / total if total > 0 else 0.0,
+        )'''
+)
+
+
+@pytest.mark.parametrize(
+    "metrics",
+    [
+        {"reward": 0.4, "tests_passed": 5, "total_tests": 5},
+        {"reward": "1", "tests_passed": 0, "total_tests": 5},
+        {"reward": None, "tests_passed": 3, "total_tests": 5},
+        {"reward": "bad", "tests_passed": 3, "total_tests": 5},
+        {"reward": "nan", "tests_passed": 3, "total_tests": 5},
+        {"reward": 2, "tests_passed": 5, "total_tests": 5},
+        {"reward": -0.1, "tests_passed": 5, "total_tests": 5},
+        {"reward": None, "tests_passed": 0, "total_tests": 0},
+        {"reward": "bad", "tests_passed": 0, "total_tests": 0},
+    ],
+)
+def test_official_reward_resolution_matches_pinned_author_ast(metrics):
+    import ast
+    import math
+
+    from tau_skill_evolution.skillsbench import _oracle_score
+
+    assert hashlib.sha256(_AUTHOR_GT_SCORE_SOURCE.encode()).hexdigest() == (
+        "e9d7dc3d8bdbf014d91ee7bc61a83da56bd36e350aeb761e3a5a256cf63b347e"
+    )
+    module = ast.parse(_AUTHOR_GT_SCORE_SOURCE)
+    assert len(module.body) == 1 and isinstance(module.body[0], ast.FunctionDef)
+    scope = {"math": math, "Any": object}
+    exec(compile(module, "pinned-author-gt-score", "exec"), scope)
+    expected_pass, expected_reward = scope["_gt_full_score_and_reward"](metrics)
+    actual = _oracle_score(metrics)
+    assert actual["status"] == "MEASURED"
+    assert (actual["passed"], actual["resolved_reward"]) == (expected_pass, expected_reward)
+
+
+@pytest.mark.parametrize(
+    "reward,passed,total,expected,source",
+    [
+        (0.4, 5, 5, 0.4, "official_reward"),
+        ("1", 0, 5, 1.0, "official_reward"),
+        (None, 3, 5, 0.6, "parsed_official_counts"),
+        ("bad", 3, 5, 0.6, "parsed_official_counts"),
+        ("nan", 3, 5, 0.6, "parsed_official_counts"),
+    ],
+)
+def test_author_oracle_reward_resolution_preserves_source(reward, passed, total, expected, source):
+    from tau_skill_evolution.skillsbench import _oracle_score
+
+    result = _oracle_score({"reward": reward, "tests_passed": passed, "total_tests": total})
+    assert result["resolved_reward"] == expected
+    assert result["passed"] == (expected == 1)
+    assert result["reward_source"] == source
+    assert result["canonical_reward"] == (expected if source == "official_reward" else None)
+
+
+@pytest.mark.parametrize("metrics", [{}, {"tests_passed": 0}, {"total_tests": 0}])
+def test_oracle_without_actual_scoring_evidence_is_not_a_measured_zero(metrics):
+    from tau_skill_evolution.skillsbench import _oracle_score
+
+    result = _oracle_score(metrics)
+    assert result["status"] == "NOT_MEASURED"
+    assert result["resolved_reward"] is None and result["passed"] is None
+
+
+def test_author_schema_runs_only_on_submitted_learning_bundle_and_uses_real_name(evolution_adapter):
+    adapter, _, journal, workspace = evolution_adapter
+    parent = SkillBundle({"SKILL.md": "created safely without frontmatter"})
+    with adapter.evolution_session(
+        parent, adapter.public_inputs, {}, journal=journal, workspace=workspace
+    ) as session:
+        session.begin_attempt(parent, True, operation_id="initial")
+        with pytest.raises(ValueError, match="schema_requires_submitted_bundle"):
+            session.schema_issues(parent)
+        session.submit(parent, initial=True, operation_id="initial/submit")
+        assert "frontmatter_not_at_byte_zero" in session.schema_issues(parent)[0]
+        valid = SkillBundle(
+            {"SKILL.md": "---\nname: current\ndescription: A reusable skill\n---\nRun scripts."}
+        )
+        session.begin_attempt(parent, False, operation_id="revision")
+        (session.public.target / "SKILL.md").write_text(valid.files["SKILL.md"])
+        submitted = session.submit(parent, operation_id="revision/submit")
+        assert session.schema_issues(submitted.bundle) == []
+
+
+def test_host_rollback_updates_candidate_without_mutating_sealed_parent(evolution_adapter):
+    adapter, _, journal, workspace = evolution_adapter
+    parent = SkillBundle({"SKILL.md": "original"})
+    with adapter.evolution_session(
+        parent, adapter.public_inputs, {}, journal=journal, workspace=workspace
+    ) as session:
+        session.begin_attempt(parent, True, operation_id="initial")
+        session.submit(parent, initial=True, operation_id="initial/submit")
+        session.begin_attempt(parent, False, operation_id="revision")
+        (session.public.target / "SKILL.md").write_text("regression")
+        changed = session.submit(parent, operation_id="revision/submit")
+        before = parent.to_dict()
+        result = session.rollback_bundle(parent, operation_id="final-rollback")
+        assert result["bundle_hash"] == parent.bundle_hash and result["parent_hash"] is None
+        assert session.files() == dict(parent.files)
+        assert parent.to_dict() == before and changed.bundle.parent_hash == parent.bundle_hash
+        assert session.rollback_bundle(parent, operation_id="final-rollback") == result
+        with pytest.raises(ValueError, match="rollback_identity_differs"):
+            session.rollback_bundle(changed.bundle, operation_id="final-rollback")
+
+
+def test_rollback_unknown_is_not_repeated_and_unsubmitted_bundle_is_rejected(evolution_adapter):
+    from tau_skill_evolution.journal import UnknownOperation
+
+    adapter, _, journal, workspace = evolution_adapter
+    parent = SkillBundle({"SKILL.md": "sealed original"})
+    with adapter.evolution_session(
+        parent, adapter.public_inputs, {}, journal=journal, workspace=workspace
+    ) as session:
+        session.begin_attempt(parent, True, operation_id="initial")
+        session.submit(parent, initial=True, operation_id="initial/submit")
+        original_files = session.files()
+        session.state["rollback"] = {
+            "operation_id": "rollback",
+            "bundle_hash": parent.bundle_hash,
+            "parent_hash": None,
+            "status": "PREPARING",
+        }
+        with pytest.raises(UnknownOperation, match="rollback_result_unknown"):
+            session.rollback_bundle(parent, operation_id="rollback")
+        assert session.files() == original_files
+        with pytest.raises(ValueError, match="rollback_requires_submitted_bundle"):
+            session.rollback_bundle(SkillBundle({"SKILL.md": "unsubmitted"}), operation_id="other")
+
+
+def test_schema_accepts_earlier_submitted_best_without_rewriting_lineage(evolution_adapter):
+    adapter, _, journal, workspace = evolution_adapter
+    parent = SkillBundle(
+        {"SKILL.md": "---\nname: current\ndescription: Reusable task skill\n---\nUse scripts."}
+    )
+    with adapter.evolution_session(
+        parent, adapter.public_inputs, {}, journal=journal, workspace=workspace
+    ) as session:
+        session.begin_attempt(parent, True, operation_id="initial")
+        session.submit(parent, initial=True, operation_id="initial/submit")
+        session.begin_attempt(parent, False, operation_id="revision")
+        (session.public.target / "SKILL.md").write_text("invalid later schema")
+        latest = session.submit(parent, operation_id="revision/submit")
+        assert session.schema_issues(parent) == []
+        assert session.schema_issues(latest.bundle)
+        assert latest.bundle.parent_hash == parent.bundle_hash and parent.parent_hash is None
+
+
+def test_best_snapshot_loss_is_separate_from_recorded_score_and_package(evolution_adapter):
+    import shutil
+
+    adapter, _, journal, workspace = evolution_adapter
+    parent = SkillBundle({"SKILL.md": "first package"})
+    with adapter.evolution_session(
+        parent, adapter.public_inputs, {}, journal=journal, workspace=workspace
+    ) as session:
+        with pytest.raises(ValueError, match="best_snapshot_requires_submitted_bundle"):
+            session.save_best_bundle(parent, operation_id="unsubmitted")
+        session.begin_attempt(parent, True, operation_id="initial")
+        session.submit(parent, initial=True, operation_id="initial/submit")
+        reference = session.save_best_bundle(parent, operation_id="gt-normal-0")
+        assert session.load_best_bundle(reference).to_dict() == parent.to_dict()
+        assert session.save_best_bundle(parent, operation_id="gt-normal-0") == reference
+        recorded_score = {"reward": 0.75, "snapshot_ref": reference}
+        shutil.rmtree(reference["directory"])
+        assert session.load_best_bundle(reference) is None
+        assert recorded_score["reward"] == 0.75 and parent.files["SKILL.md"] == "first package"
+
+
+def test_best_snapshot_preserves_actual_parent_and_rejects_tampered_manifest(evolution_adapter):
+    adapter, _, journal, workspace = evolution_adapter
+    first = SkillBundle({"SKILL.md": "original"})
+    with adapter.evolution_session(
+        first, adapter.public_inputs, {}, journal=journal, workspace=workspace
+    ) as session:
+        session.begin_attempt(first, True, operation_id="initial")
+        session.submit(first, initial=True, operation_id="initial/submit")
+        original_ref = session.save_best_bundle(first, operation_id="best-initial")
+        session.begin_attempt(first, False, operation_id="unchanged")
+        unchanged = session.submit(first, operation_id="unchanged/submit")
+        revised_ref = session.save_best_bundle(unchanged.bundle, operation_id="best-unchanged")
+        assert original_ref["directory"] != revised_ref["directory"]
+        assert session.load_best_bundle(original_ref).parent_hash is None
+        assert session.load_best_bundle(revised_ref).parent_hash == first.bundle_hash
+        with pytest.raises(ValueError, match="best_snapshot_identity_differs"):
+            session.load_best_bundle({**original_ref, "directory": revised_ref["directory"]})
+        (Path(revised_ref["directory"]) / "manifest.json").write_text("{}")
+        with pytest.raises(ValueError, match="best_snapshot_manifest_changed"):
+            session.load_best_bundle(revised_ref)
+
+
+@pytest.mark.parametrize("phase", ["normal", "cap_final", "post_final"])
+def test_oracle_phases_keep_partial_reward_private_and_bind_parent(docker_runner, tmp_path, phase):
+    runner, docker, _ = docker_runner
+    docker.reward = "0.75"
+    docker.report = {
+        "results": {
+            "summary": {"tests": 4, "passed": 3, "failed": 1},
+            "tests": [
+                {"name": "hidden_requirement", "status": "failed", "message": "private value"}
+            ],
+        }
+    }
+    adapter = SkillsBenchAdapter(
+        SimpleNamespace(root=tmp_path),
+        "travel-planning",
+        demo=False,
+        artifact_root=tmp_path / "artifacts",
+        model_journal_dir=tmp_path / "private-models",
+    )
+    adapter.runner = runner
+    adapter._execute = lambda *_: {}
+    parent = SkillBundle({"SKILL.md": "parent"})
+    bundle = SkillBundle({"SKILL.md": "modified"}, parent_hash=parent.bundle_hash)
+    result = adapter.oracle(bundle, phase=phase)
+    assert result["phase"] == phase and result["parent_hash"] == parent.bundle_hash
+    assert result["canonical_reward"] == result["resolved_reward"] == 0.75
+    assert result["passed"] is False
+    assert result["tests_passed"] == 3 and result["total_tests"] == 4
+    assert result["test_details"] == docker.report["results"]["tests"]
+    assert runner.agent_timeout_seconds == runner.config["agent"]["timeout_sec"] * 5
+    assert not any(
+        "hidden_requirement" in file.read_text()
+        for file in (tmp_path / "artifacts").rglob("*.json")
+    )
+
+
+@pytest.mark.parametrize("reward", [None, "bad", "nan"])
+def test_oracle_can_resolve_valid_official_counts_when_reward_missing(
+    docker_runner, tmp_path, reward
+):
+    runner, docker, _ = docker_runner
+    docker.reward = reward
+    docker.report = {
+        "results": {
+            "summary": {"tests": 4, "passed": 3, "failed": 1},
+            "tests": [{"name": "actual_official_check", "status": "failed"}],
+        }
+    }
+    adapter = SkillsBenchAdapter(SimpleNamespace(root=tmp_path), "travel-planning", demo=False)
+    adapter.runner = runner
+    adapter._execute = lambda *_: {}
+    result = adapter.oracle(SkillBundle({"SKILL.md": "candidate"}))
+    assert result["status"] == "MEASURED"
+    assert result["canonical_reward"] is None and result["resolved_reward"] == 0.75
+    assert result["reward_source"] == "parsed_official_counts"
+    assert result["official_checks"]["rate"] == 0.75
+
+
+@pytest.mark.parametrize("reward", [2, -0.1])
+@pytest.mark.parametrize("with_checks", [True, False])
+def test_v5_oracle_keeps_any_finite_author_reward_without_relaxing_evaluation(
+    docker_runner, tmp_path, reward, with_checks
+):
+    runner, docker, _ = docker_runner
+    docker.reward = str(reward)
+    docker.report = (
+        {"results": {"summary": {"tests": 1, "passed": 1}, "tests": []}} if with_checks else None
+    )
+    adapter = SkillsBenchAdapter(
+        SimpleNamespace(root=tmp_path, namespace="skillsbench.skill-evolution.v5"),
+        "travel-planning",
+        demo=False,
+    )
+    adapter.runner = runner
+    adapter._execute = lambda *_: {}
+    candidate = SkillBundle({"SKILL.md": "candidate"})
+    oracle = adapter.oracle(candidate)
+    assert oracle["status"] == "MEASURED" and oracle["passed"] is False
+    assert oracle["canonical_reward"] == oracle["resolved_reward"] == reward
+    assert oracle["reward_source"] == "official_reward"
+    assert oracle["total_tests"] == (1 if with_checks else None)
+    evaluated = adapter.evaluate(candidate)
+    assert evaluated["status"] == "NOT_MEASURED" and evaluated["reward"] is None
+
+
+def test_finite_oracle_reward_does_not_bypass_bad_report_or_legacy_admission(
+    docker_runner, tmp_path
+):
+    runner, docker, _ = docker_runner
+    docker.reward = "2"
+    adapter = SkillsBenchAdapter(
+        SimpleNamespace(root=tmp_path, namespace="skillsbench.skill-evolution.v5"),
+        "travel-planning",
+        demo=False,
+    )
+    adapter.runner = runner
+    adapter._execute = lambda *_: {}
+    candidate = SkillBundle({"SKILL.md": "candidate"})
+    docker.report = ["invalid CTRF"]
+    assert adapter.oracle(candidate)["status"] == "NOT_MEASURED"
+    docker.report = None
+    adapter.spec.namespace = "skillsbench.skill-evolution.v4"
+    assert adapter.oracle(candidate)["status"] == "NOT_MEASURED"
+
+
+def test_oracle_infrastructure_failure_is_never_a_score_zero(docker_runner, tmp_path):
+    runner, docker, _ = docker_runner
+    docker.reward = "0"
+    docker.grader_failure = "timeout"
+    adapter = SkillsBenchAdapter(SimpleNamespace(root=tmp_path), "travel-planning", demo=False)
+    adapter.runner = runner
+    adapter._execute = lambda *_: {}
+    result = adapter.oracle(SkillBundle({"SKILL.md": "candidate"}))
+    assert result["status"] == "NOT_MEASURED" and result["failure"] == "timeout"
+    assert result["resolved_reward"] is None and result["passed"] is None
+
+
+def test_expired_global_deadline_prevents_fresh_oracle_launch(docker_runner, tmp_path):
+    runner, docker, _ = docker_runner
+    adapter = SkillsBenchAdapter(SimpleNamespace(root=tmp_path), "travel-planning", demo=False)
+    adapter.runner, adapter.deadline = runner, 0
+    adapter._execute = lambda *_: pytest.fail("expired oracle cannot execute")
+    before = len(docker.calls)
+    with pytest.raises(TimeoutError, match="learning_deadline_exhausted"):
+        adapter.oracle(SkillBundle({"SKILL.md": "candidate"}))
+    assert len(docker.calls) == before
+
+
+def test_active_learning_session_keeps_absolute_deadline(evolution_adapter):
+    import time
+
+    adapter, _, journal, workspace = evolution_adapter
+    parent = SkillBundle({"SKILL.md": "candidate"})
+    deadline = time.time() + 60
+    with adapter.evolution_session(
+        parent, adapter.public_inputs, {}, journal=journal, workspace=workspace, deadline=deadline
+    ) as session:
+        assert session.runner.learning_deadline == deadline
+        assert session.state["learning_deadline"] == deadline
+        assert 0 < session.phase_remaining() <= 60
+        assert json.loads(session.checkpoint.read_text())["learning_deadline"] == deadline
+
+
+def test_progress_reset_and_read_use_author_checklist_and_propagate_failure(evolution_adapter):
+    adapter, _, journal, workspace = evolution_adapter
+    parent = SkillBundle({"SKILL.md": "parent"})
+    with adapter.evolution_session(
+        parent, adapter.public_inputs, {}, journal=journal, workspace=workspace
+    ) as session:
+        stored = {}
+
+        def execute(args, stdin=b"", *, public):
+            assert public and "/root/progress.md" in args[-1]
+            if stdin:
+                stored["text"] = stdin
+                return ProcessResult(0)
+            return ProcessResult(0, stdout=stored["text"])
+
+        session.runner._exec = execute
+        reset = session.reset_progress()
+        assert len(reset["unchecked"]) == 5
+        assert "P1: Discover environment" not in " ".join(reset["unchecked"])
+        assert session.read_progress()["sha256"] == reset["sha256"]
+        stored["text"] = b"  - [ ] arbitrary phase\n- [x] completed\n"
+        assert session.read_progress()["unchecked"] == ["arbitrary phase"]
+        session.runner._exec = lambda *_args, **_kwargs: ProcessResult(1, failure="timeout")
+        with pytest.raises(RuntimeError, match="progress_read_failed"):
+            session.read_progress()
+        with pytest.raises(RuntimeError, match="progress_reset_failed"):
+            session.reset_progress()
 
 
 @pytest.mark.parametrize(
@@ -2068,28 +2508,30 @@ def test_docker_episode_reuses_container_and_closes_all_public_tools_before_grad
     assert "down" in docker.calls[-1][0]
 
 
-def test_terminal_retains_cwd_exports_with_no_host_environment(docker_runner, tmp_path):
+def test_terminal_uses_fresh_shell_but_keeps_files_without_host_environment(
+    docker_runner, tmp_path
+):
     import subprocess
 
     runner, docker, _lock = docker_runner
     with runner.episode(SkillBundle({"SKILL.md": "Shell-state probe"})) as episode:
         runner.terminal(episode, "echo probe")
         command, _kwargs = docker.calls[-1]
-        wrapper = command[-1].replace("/tmp/tau-public-shell", str(tmp_path / "shell-state"))
+        assert command[-3:] == ["/bin/bash", "-ic", "echo probe"]
         child = tmp_path / "subdir"
         child.mkdir()
         for script in (
-            f"cd {child}; export PROBE_VARIABLE=42",
-            'printf "%s:%s" "$PWD" "$PROBE_VARIABLE"',
+            f"cd {child}; export PROBE_VARIABLE=42; touch persistent-file",
+            'printf "%s:%s" "$PWD" "${PROBE_VARIABLE-unset}"; test -f subdir/persistent-file',
         ):
             result = subprocess.run(
-                ["/bin/bash", "-c", wrapper],
-                input=script.encode(),
+                ["/bin/bash", "-ic", script],
+                cwd=tmp_path,
                 capture_output=True,
                 env={"PATH": "/usr/bin:/bin"},
             )
         assert result.returncode == 0
-        assert result.stdout.decode() == f"{child}:42"
+        assert result.stdout.decode() == f"{tmp_path}:unset"
 
 
 def test_live_snapshot_copy_does_not_change_candidate_permissions(docker_runner, tmp_path):
@@ -3139,7 +3581,9 @@ def test_adapter_seals_public_state_then_permanently_closes_tools_before_grade(
     adapter._snapshot, runner.close_public, runner.grade = snapshot, close, grade
     result = getattr(adapter, phase)(SkillBundle({"SKILL.md": "Only current candidate"}))
     assert events == ["execute", "snapshot", "close", "grade"]
-    assert result is False if phase == "oracle" else result["status"] == "MEASURED"
+    assert result["status"] == "MEASURED"
+    if phase == "oracle":
+        assert result["passed"] is False and result["resolved_reward"] == 0.0
 
 
 def test_workspace_preparation_does_not_relabel_unmigrated_tasks(public_source):

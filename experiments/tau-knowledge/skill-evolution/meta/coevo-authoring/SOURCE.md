@@ -1,138 +1,146 @@
-# Authoring guidance provenance
+# CoEvoSkills sources and migration contract
 
-The active Generator and SkillsBench Verifier prompts adapt public instructions from
-CoEvoSkills commit `4380d4bff673dd6e1d58e5babeb2aaa0fe527119`:
+All author references in this experiment are fixed to CoEvoSkills commit
+`4380d4bff673dd6e1d58e5babeb2aaa0fe527119`; Harbor is fixed to
+`3f28e5ce2acbff36d8b5df431e35e050ac13bef6`. This record distinguishes reused
+implementation from local adapters. The active method is specified in
+[PROTOCOL](../../PROTOCOL.md), with τ v4 and SkillsBench v5 contracts kept separate.
 
-- [Generator terminal prompt](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/agents/prompt-templates/terminus-evolution-json.txt)
-- [Skill creator meta-skill](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/meta_skills/skill-creator/SKILL.md)
-- [Independent Verifier](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/evolution/prompt_templates/independent_verifier.txt)
-- [Diagnosis prompt](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/evolution/prompt_templates/diagnosis_only.txt)
+## Reused implementation
 
-The active authoring guidance is embedded in `prompts/generator.md`, which is loaded
-and hashed by the experiment. This source note is documentation, not an additional
-model input or an instruction to execute the upstream meta-skill.
+SkillsBench v5 executes the author's
+[IndependentVerifier](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/evolution/independent_verifier.py),
+[SelfVerifier](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/evolution/self_verifier.py),
+their agent, parser and conversation dependencies, and the original
+[independent-verifier](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/evolution/prompt_templates/independent_verifier.txt)
+and [diagnosis](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/evolution/prompt_templates/diagnosis_only.txt)
+prompts. The code and prompt bytes are preserved under
+`src/tau_skill_evolution/author/coevo/`; the author's Skill schema validator is
+`author/skill_schema.py`. `author/VERIFIER_SOURCE.json` records each original path
+and SHA256. Namespace package layout omits eager upstream aggregate initializers;
+it does not rewrite implementation or prompt bodies. Runtime validates those hashes.
+Run identity binds the manifest, all vendored Python and all author `.txt` prompts.
+V5 config no longer selects the retired local `verifier-skillsbench.md` prompt.
 
-S0 remains one response with structural packaging only, without execution or
-regeneration. In v4 evolution, the Generator directly operates the persistent task
-environment, modifies its complete parent package, and explicitly submits the package
-and actual public observation together. SkillsBench provides the official persistent
-terminal; the bank adapter provides public banking tools and explicit user replies.
-The independent Verifier receives only the submitted public snapshot. Fixed retrieval,
-one-shot creation, restricted feedback and final safe-package selection remain explicit
-experimental adaptations, described in [PROTOCOL](../../PROTOCOL.md).
+`author_verifier.py` adapts the existing official task Runner to the author's
+`BaseEnvironment` interface and bridges its LLM factory to the run-bound provider
+client. The original agent has a fresh model context and terminal access in the
+**same persistent task container** as Generator. Frozen documents are staged as
+public background. Model and terminal operations use the existing Journal, and
+raw results are archived before parsing. Known diagnosis errors are recorded without
+replacing a measured surrogate failure; fatal authentication, UNKNOWN and cleanup
+conditions stop the chain. No private grader or hidden result is exposed to this agent.
 
-Fresh SkillsBench oracle and independent evaluation import the author's unchanged
-[CodexSkillOnly](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/agents/codex_skill_only.py).
-The original module, Apache-2.0 license and source hash are vendored under
-`src/tau_skill_evolution/author/`. Its actual base class is supplied by
-Harbor commit `3f28e5ce2acbff36d8b5df431e35e050ac13bef6`, verified from installed
-package provenance and module hashes. We do not emulate Harbor or replace Codex
-with a local model/tool loop.
+Fresh oracle and independent evaluation execute the unchanged
+[CodexSkillOnly](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/agents/codex_skill_only.py)
+with its actual pinned Harbor Codex base and native Codex CLI. The source, license
+and hash are recorded in `author/SOURCE.json`; CLI and companion binaries are pinned
+by configuration. NoSkill uses the same Codex base without the task Skill. The
+upstream Apache-2.0 license is retained under `licenses/` and `author/`.
 
-`codex_runtime.py` adapts installation, provider configuration and environment exec
-to the existing fresh Docker episode. It invokes the author's Skill staging,
-read-only checks and before/after digest guard, then the actual Codex CLI. NoSkill
-uses the same Harbor Codex base with no Skill instruction or mount. The CLI model alias maps explicitly to the configured Bedrock model; current configs
-select `openai.gpt-5.4`.
-CLI version/hash and common execution budgets are bound to each new run.
+## Generator guidance and feedback
 
-The package is mounted read-only at both `/bundle` and the author's Skill path.
-The original installer cannot chmod a read-only mount. Only its exact chmod
-failure is handled by separately attesting both kernel mount options, all file
-hashes, a nonempty manifest containing `SKILL.md`, and absence of symlinks.
-Writable mounts and every other setup failure are rejected. The author module,
-barrier, staging and pre/post execution digest guard remain unmodified; the
-adaptation and original setup failure are recorded in private execution evidence.
+`prompts/generator.md` adapts the author's
+[terminal evolution prompt](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/agents/prompt-templates/terminus-evolution-json.txt)
+and [skill-creator](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/meta_skills/skill-creator/SKILL.md)
+guidance: reusable functions, complete execution entry points, parameter derivation,
+file organization, self-reflection and writing reusable fixes into the package.
+This prompt is locally adapted; it is not the original controller or an invocation
+of a separate meta-skill. Creation instructions prohibit self-testing and repeated S0
+creation, while evolution explicitly permits completing the task and observing results.
 
-`codex_provider.py` buffers and journals provider responses before delivering SSE
-to Codex. The task receives only a credential-free Unix socket relay, preserving
-network-disabled task environments. Native response/tool payloads are preserved;
-the host pins model, reasoning and output caps, disables POST retries, and closes
-model access before official grading. These are explicit transport adaptations,
-not byte-for-byte reuse of the entire author's launcher. The offline Docker/CLI
-integration uses simulated model responses and is never reported as a real model
-completion rate. Real Bedrock compatibility requires a valid-key smoke.
+The released controller's
+[`_build_surrogate_feedback`](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_evolution.py#L2013)
+projects failures to coarse categories and withholds full diagnosis. Generator receives
+that restricted feedback, oracle pass/fail, its own public schema errors and progress
+checklist, and its own terminal observations. Test code, names, exact assertions,
+tracebacks, complete diagnoses and official scores remain on the audit/host side.
+The release also derives broad GT failure dimensions and implicated public schema
+fields; this experiment retains a boolean oracle and does not forward those GT-derived
+fields. Public candidate schema and checklist feedback do not come from hidden grading.
+The [paper section 3.3](https://arxiv.org/html/2604.01687#S3.SS3) describes more detailed
+feedback, so this is the fixed release contract rather than a claim that paper prose
+and published code are identical. Bank-domain category usefulness remains a limitation.
 
-The pinned CLI uses ordinary Responses summarization for custom-provider automatic
-context compaction, rather than `/responses/compact`. Its trigger is set to 85%
-of the executor input admission budget, with the full native request still
-journaled. A real CLI/Docker check with simulated Responses exercised the summary
-request and matched CLI/provider usage; it does not establish real Bedrock
-reasoning-item compatibility. Upstream implementation:
-[provider capability](https://github.com/openai/codex/blob/rust-v0.160.1/codex-rs/model-provider/src/provider.rs#L462),
-[turn dispatch](https://github.com/openai/codex/blob/rust-v0.160.1/codex-rs/core/src/session/turn.rs#L1494).
+## SkillsBench v5 controller alignment
 
-The seven coarse failure categories are ported from the author's
-[`_safe_gt_failure_categories` controller](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_evolution.py).
-Test source, names, assertion values and full diagnoses stay on the audit side.
-The upstream Apache-2.0 license is retained in [licenses](../../licenses/CoEvoSkills-LICENSE).
+The shared engine ports the relevant branches of the author's
+[evolution controller](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_evolution.py).
+It does not import the entire Harbor orchestration runtime.
 
-## Historical adapter notes (v3)
+- A valid surrogate suite is locked on ordinary task failure. Diagnosis preserves
+  its bytes. Failed initial generation stays unlocked; an invalid suite cannot be
+  silently treated as a permanent valid lock. Valid GT failure causes Generator
+  editing/execution followed by a new adversarial verifier generation.
+- r15 is a cumulative count of surrogate and Verifier interventions, including the
+  first incomplete checklist. It is not a fifteen-revision limit. Missing/invalid
+  Skill schema has two repair opportunities and a third-failure stop outside r15.
+  A second incomplete checklist is advisory and may proceed to GT, as in the release.
+- The active skills agent defaults to 120 effective episodes. Parsed executable
+  terminal/submission responses count once; pure Skill tools and parse errors do not.
+  Raw model responses, actual POSTs, commands, submissions and revision attempts are
+  separately reported. Invalid drafts never become a version without safe submission.
+- K5 limits normal GT interventions. Infrastructure failures refund that intervention;
+  the consecutive infrastructure counter resets after a valid GT result. Cap-final and
+  post-final GT calls remain separately recorded. The source has reachable six-call
+  terminal paths, so K5 is not advertised as a strict total-call cap.
+- The author's launch script sets `timeout_multiplier=5` and `run_exp --timeout 7200`.
+  `run_exp` applies the latter as a hard subprocess wall deadline, not as an agent
+  timeout to be multiplied. V5 starts a persistent absolute learning deadline before
+  creating the task episode, including Generator, Verifier and learning GT; retrieval,
+  single-response S0 and additional independent evaluations are separate stages.
+  Commands use task-agent timeout times five, capped at 900 seconds; Verifier generation
+  and diagnosis retain their default 900-second limits. Every operation also observes
+  remaining learning time. Fresh GT agent time scales by the task-agent timeout;
+  independent evaluation's 7200 seconds is an additional experimental measurement budget.
+- Best selection uses only packages actually scored by GT: finite canonical reward
+  takes precedence, otherwise valid official pass/total counts can supply the score.
+  Strictly greater scores replace best; ties retain the earlier package. Independent
+  all-version scores do not select a package. Source final-schema failure precedes
+  best reuse; normal-K exhaustion and terminal recheck/rollback paths are distinct.
+  Recorded best, actual terminal outcome, retained historical score and selected package
+  are separate fields, never relabeled as one fresh measurement.
 
-The following provenance describes the retired observation/debug adapter, not the v4
-learning interface or runnable checkpoints. Historical evidence remains in its original
-paths; current behavior is specified by PROTOCOL.
+The persistent environment keeps files, services and installed dependencies. Each
+command starts the author's new shell; shell cwd and exported variables do not persist
+implicitly. Verifier retains the original command/log review. Generator's local terminal
+ports the controller's exact `_HIDDEN_EVALUATOR_ACCESS_RE` and rejection message to
+block direct inspection of evaluator paths before dispatch. This is a heuristic command
+boundary, not a filesystem sandbox. Same-container access restores execution evidence but
+provides weaker physical isolation than the retired separate-container verifier.
 
-Coarse feedback is not the author's only source of evidence. The pinned
-[Generator terminal prompt](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/agents/prompt-templates/terminus-evolution-json.txt)
-allows supplied inputs, public project metadata and ordinary runtime diagnostics;
-it requires running the Skill, writing fixes back into the package and rerunning it.
-Our earlier private-workspace restriction omitted preceding public traces and outputs.
-It should not be described as denying every actual SkillsBench input: the Docker helper
-image derives from the original task image, so inputs baked into that image may remain
-readable even though no separate input mount is added. What was absent was the preceding
-execution evidence and direct control of the formal task environment.
+The source's pytest result parser and audit are retained. They can miss semantic errors,
+incorrect public premises and certain skipped-test patterns; the bank-specific obligation
+checker, AST novelty guard and one-program-repair quota are **not** imposed on the v5
+Verifier. A valid but wrong locked suite can still block GT. Reusing the author code is
+not proof of surrogate correctness or arbitrary-code security.
 
-The corrected adapter exposes the preceding trace at `/bundle/trace.json` and debug
-observations at `/work/observations/<hash>/trace.json` with copied public artifacts.
-Verifier categories remain restricted; public observations do not include hidden tests,
-gold, grader diagnostics, private bank state or other roles' private conversations.
-Repeated editing, local checks and debug runs are one revision attempt, within the same
-120-turn Generator budget and revision timeout. Only explicit submission seals a package;
-debug runs are not official scores or extra content versions. M15/K5 and the S0 creation
-ban on execution/self-tests remain unchanged. Each debug run also consumes its executor
-episode budget and API usage; unchanged budget parameters do not imply equal total compute.
-Delegating debug execution to a fresh agent
-still differs from the author's direct, persistent task-environment interaction; this
-change restores public evidence without asserting equivalent outcomes. Offline regression
-passed (944 tests; 54 optional checks skipped), and two real Docker observation checks
-passed. [Acceptance evidence](../../archive/runs/readiness-evolution-observation-20261006-001/acceptance.json)
-records the scope, hashes and independent review. Paid-model compatibility and utility
-gain remain `NOT_MEASURED`; historical results do not establish the new behavior.
+## Deliberate experiment adapters
 
-The paper and pinned release differ on feedback detail. The currently published
-[paper, section 3.3](https://arxiv.org/html/2604.01687#S3.SS3) describes surrogate
-feedback containing failed checks, root causes and actionable suggestions. The pinned
-release's [`_build_surrogate_feedback`](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_evolution.py#L2013)
-explicitly withholds the full diagnosis and projects failed test names into seven
-coarse labels. Our feedback follows this release contract, not the paper's detailed
-diagnostic formulation. Empty or inappropriate labels observed in the banking
-adaptation remain a real limitation; authorship of the mapping does not validate it
-for new task domains.
+Both domains retain pooled retrieval and frozen B*, a one-POST S0 with no creation
+execution/self-repair, explicit submission, restricted oracle feedback, and separate
+all-content-version evaluation. Fixed Generator inputs are sent once, its own continuation
+persists, and tool responses are bounded previews with raw evidence references. The local
+context admission uses a 272K window, β0.7 and a 32K reserve; this is not the author's exact
+LiteLLM tokenizer metadata rule. Output token and fee quotas remain disabled as requested.
+The author's idle/stale automatic completion does not seal an unsubmitted local draft.
 
-The pinned controller also locks a valid surrogate suite and its
-[diagnosis worker](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/evolution/independent_verifier.py#L569)
-backs up and restores tests after a read-only diagnosis. A recognized semantic false
-negative has no direct unlock route in that path; oracle failure triggers escalation.
-Thus the false-negative deadlock observed locally is not, by itself, evidence that
-we omitted an upstream semantic-repair capability. Adding evidence-based semantic
-correction would be an explicit method extension. Our host harness, program-error
-repair limit, obligation checks and AST novelty guard are additional local rules;
-the author's Verifier uses a fresh model session in the task container, while ours
-uses a separate container with public snapshots.
+Transport uses a single-POST host Journal instead of upstream HTTP retries. A received
+provider response is saved before normalization; UNKNOWN is not retried. Native Codex
+receives a credential-free Unix relay. GPT/Opus protocol conversion and the pinned CLI
+are transport adaptations, not a claim of byte-for-byte launcher reuse. The author Skill
+mount is read-only: only the exact installer chmod failure is handled by attesting kernel
+mount options, full file hashes and absence of links; all other setup failures are rejected.
+Source installation and pre/post digest guards remain unmodified.
 
-Two further differences affect budget and result comparisons. The pinned release's
-[r15 counter](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_evolution.py#L802)
-counts surrogate failures and Verifier/checklist interventions, while local M15
-counts Skill revision attempts and additionally imposes 120 Generator turns. Both
-use a context proportion cap, not cumulative billed tokens, but local admission
-reserves output and estimates the complete request. The author
-[saves the highest official reward snapshot](https://github.com/Zhang-Henry/CoEvoSkills/blob/4380d4bff673dd6e1d58e5babeb2aaa0fe527119/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_evolution.py#L2124)
-and may roll back to it or retain its known score at termination; we select the
-successful package or last safe package and report its independent fresh evaluation.
-This does not establish that the author's true success probability cannot regress,
-nor does it explain away a local mismatched task obligation.
+Native Codex automatic compaction uses ordinary Responses summaries for a custom provider,
+with complete requests still journaled. Offline simulated-provider checks exercise transport
+and container behavior, not true model compatibility or task success. Real model smoke and
+full matrices remain `NOT_MEASURED` until actual evidence is archived.
 
-No task-specific gold answers, upstream canonical tests, released Skills, or hidden oracle
-diagnostics are included in Generator input. Its own editing conversation persists
-within the same task and frozen-base identity; no other role's conversation is inherited.
+τ remains v4: an external Generator drives bank tools and the user simulator, Verifier runs
+in an isolated public container, M15 counts revision attempts and K5 effective judgments,
+and unsuccessful chains select their last safely submitted package. SkillsBench v5 uses
+r15 and author best/terminal selection. Historical v3/v4 results and retired verifier notes
+remain archived and cannot serve as v5 checkpoints. These domain adapters and the additional
+independent evaluation prevent labeling the whole project as a full paper reproduction.

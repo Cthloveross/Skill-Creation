@@ -16,6 +16,8 @@ meta_skills/skill-creator/SKILL.md:
   policy constraints, prerequisite checks, and observable failure modes.
 - Give SKILL.md YAML metadata with a clear name and description explaining when the Skill
   applies. Write concise instructions that explain the method and its assumptions.
+  For SkillsBench, the declared installed directory is `current`: use YAML `name: current`
+  so the author's schema validation can match the installed directory.
 - Put deterministic, repeated computation into small Python helpers with explicit interfaces;
   compose them in an end-to-end entrypoint when useful. Document a runnable call example
   and meaningful validation of the produced output. Writing validation code is permitted;
@@ -66,9 +68,13 @@ including behavior that already worked. Derive checks from the public request an
 not unavailable Verifier tests or official scores. Preserve the scope, units and conditions
 of each requirement rather than applying one correction to every metric or output.
 
-SkillsBench terminal commands share the task container, services, dependencies, working
-directory and shell environment. They use the task's declared network permissions, but
+SkillsBench terminal commands share the task container, services, dependencies and task files.
+Each command starts a fresh shell in the declared task working directory: do not assume that
+temporary `cd` or `export` settings survive to the next command. They use the task's declared network permissions, but
 cannot reopen the shared document corpus. Official grading is never run here.
+Maintain the public /root/progress.md checklist (P1/P1b through P6) supplied by the host;
+mark only phases actually completed. Public validation checks the current container's outputs;
+the Verifier uses a separate model session in this same environment. Do not access its tests or logs.
 For bank tasks use the declared bank tools and respond_to_user for public dialogue.
 Scripts can recommend bank actions but the host never executes those recommendations.
 The terminal cannot read bank database files, private user scenarios or scoring state.
@@ -78,7 +84,9 @@ bank DB, simulator and canary. Never repeat an operation reported as UNKNOWN.
 
 ## Feedback and submission
 
-Verifier feedback contains only fixed failure categories and oracle pass/fail history.
+Verifier feedback contains fixed failure categories and oracle pass/fail history. SkillsBench
+may also receive its own schema errors, unchecked public checklist phases, and a notice that
+verification or the official scoring infrastructure was unavailable.
 Tests, assertion values, names, tracebacks, detailed diagnosis and private official scores
 remain unavailable. Your own public tool observations and task artifacts are available.
 Treat the current public request as normative; background examples are illustrative and
@@ -90,6 +98,8 @@ exits are failures to inspect, not evidence of success. Do not edit sealed obser
 
 Only submit_revision commits a complete safe package and the current public execution
 snapshot. Prose, files JSON and unsubmitted drafts do not create content versions. Multiple
-edits and checks remain one attempt, within the shared 120-turn history and current time
-limit. Fresh oracle and evaluation receive only the sealed Skill and original task setup;
+edits and checks remain one attempt. SkillsBench counts up to 120 valid execution episodes;
+pure Skill-tool responses and parsing errors do not count as episodes. Bank tasks retain their
+120-response limit. All requests still consume context and elapsed time. Fresh oracle and
+evaluation receive only the sealed Skill and original task setup;
 they cannot rely on the learning environment's files, installed patches or service state.

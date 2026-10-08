@@ -1,0 +1,29 @@
+...F........................................                             [100%]
+=================================== FAILURES ===================================
+______ test_native_codex_stream_deadline_keeps_dispatched_result_unknown _______
+
+factory = <function factory.<locals>.create at 0x7290d33634c0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7290d3373920>
+
+    def test_native_codex_stream_deadline_keeps_dispatched_result_unknown(factory, monkeypatch):
+        clock, calls = [2.0], []
+        monkeypatch.setattr(provider_module.time, "time", lambda: clock[0])
+    
+        class LateResponse(Response):
+            def read(self, count=-1):
+                value = super().read(count)
+                clock[0] = 4.0
+                return value
+    
+        def opener(req, timeout):
+            calls.append(timeout)
+            return LateResponse(json.dumps(completed()).encode())
+    
+        with factory(opener, request_deadline=3.5) as gateway:
+>           with pytest.raises(ModelClientError, match="deadline"):
+E           Failed: DID NOT RAISE <class 'tau_skill_evolution.model.ModelClientError'>
+
+experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_codex_provider.py:192: Failed
+=========================== short test summary info ============================
+FAILED experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_codex_provider.py::test_native_codex_stream_deadline_keeps_dispatched_result_unknown
+1 failed, 43 passed in 41.40s

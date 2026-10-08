@@ -13,6 +13,7 @@ import sys
 import urllib.error
 
 import pytest
+from tau_skill_evolution import codex_provider as provider_module
 from tau_skill_evolution.codex_provider import (
     OUTPUT_TOKEN_BUDGET_STOP,
     _completed_response,
@@ -129,6 +130,84 @@ def factory(tmp_path, monkeypatch):
         )
 
     return create
+
+
+def test_null_request_limit_does_not_reintroduce_a_post_budget(factory):
+    calls = []
+
+    def opener(req, **kwargs):
+        calls.append(req)
+        return Response(json.dumps(completed()).encode())
+
+    with factory(opener, controls=UNBOUNDED_CONTROLS, max_requests=None) as gateway:
+        for index in range(101):
+            assert request(gateway, payload(f"request-{index}"))[0] == 200
+        assert gateway.statistics["requests"] == len(calls) == 101
+
+
+def test_expired_learning_deadline_does_not_dispatch_a_native_codex_post(factory, monkeypatch):
+    calls = []
+    monkeypatch.setattr(provider_module.time, "time", lambda: 10.0)
+
+    def opener(req, **kwargs):
+        calls.append(req)
+        return Response(json.dumps(completed()).encode())
+
+    with factory(opener, request_deadline=9.0) as gateway:
+        with pytest.raises(ModelClientError, match="deadline") as caught:
+            gateway.respond(json.dumps(payload()).encode())
+        assert caught.value.code == "learning_timeout"
+        assert calls == [] and gateway.statistics["requests"] == 0
+        assert gateway.journal.status(canonical_json_sha256(payload())) == "NOT_SENT"
+
+
+def test_native_codex_post_timeout_observes_remaining_learning_time(factory, monkeypatch):
+    timeouts = []
+    monkeypatch.setattr(provider_module.time, "time", lambda: 2.0)
+
+    def opener(req, timeout):
+        timeouts.append(timeout)
+        return Response(json.dumps(completed()).encode())
+
+    with factory(opener, request_deadline=3.5) as gateway:
+        assert request(gateway, payload())[0] == 200
+        assert timeouts == [1.5]
+
+
+def test_native_codex_stream_deadline_keeps_dispatched_result_unknown(factory, monkeypatch):
+    clock, calls = [2.0], []
+    monkeypatch.setattr(provider_module.time, "time", lambda: clock[0])
+
+    class LateResponse(Response):
+        def read(self, count=-1):
+            value = super().read(count)
+            clock[0] = 4.0
+            return value
+
+        read1 = read
+
+    def opener(req, timeout):
+        calls.append(timeout)
+        return LateResponse(json.dumps(completed()).encode())
+
+    with factory(opener, request_deadline=3.5) as gateway:
+        with pytest.raises(UnknownOperation) as caught:
+            gateway.respond(json.dumps(payload()).encode())
+        assert caught.value.__cause__.code == "learning_timeout"
+        assert gateway.statistics["unknown_operation"] is True
+        assert gateway.journal.status(canonical_json_sha256(payload())) == "UNKNOWN"
+        with pytest.raises(ModelClientError, match="halted"):
+            gateway.respond(json.dumps(payload()).encode())
+        assert calls == [1.5]
+
+
+@pytest.mark.parametrize("deadline", [True, float("nan"), float("inf"), "tomorrow"])
+def test_native_codex_rejects_invalid_learning_deadline(factory, deadline):
+    with (
+        pytest.raises(ValueError, match="deadline"),
+        factory(lambda *args, **kwargs: None, request_deadline=deadline),
+    ):
+        pass
 
 
 @pytest.mark.parametrize("streaming", [False, True])

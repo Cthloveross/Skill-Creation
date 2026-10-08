@@ -1,0 +1,242 @@
+Building wheel...
+running egg_info
+writing experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info/PKG-INFO
+writing dependency_links to experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info/dependency_links.txt
+writing entry points to experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info/entry_points.txt
+writing requirements to experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info/requires.txt
+writing top-level names to experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info/top_level.txt
+reading manifest file 'experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info/SOURCES.txt'
+writing manifest file 'experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info/SOURCES.txt'
+running bdist_wheel
+running build
+running build_py
+creating build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/materialize.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/bubblewrap.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/__init__.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/runtime_controls.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/worker.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/acquisition.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author_verifier.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/bank.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/codex_provider.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/workflow.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/skillsbench.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/evolution.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/journal.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/dense.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/data.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/evaluation.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/preflight.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/sidecar.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/retrieval.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/dense_worker.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/official_runtime.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/model.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/codex_runtime.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/spec.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/verifier.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/skillsbench_runtime.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/cli.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/generator.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/constants.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/container.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/credentials.py -> build/lib/tau_skill_evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/artifacts.py -> build/lib/tau_skill_evolution
+creating build/lib/tau_skill_evolution/core
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/core/__init__.py -> build/lib/tau_skill_evolution/core
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/core/fingerprint.py -> build/lib/tau_skill_evolution/core
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/core/full_doc_retrieval.py -> build/lib/tau_skill_evolution/core
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/core/retrieval.py -> build/lib/tau_skill_evolution/core
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/core/attack_payload.py -> build/lib/tau_skill_evolution/core
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/core/_canonical.py -> build/lib/tau_skill_evolution/core
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/core/protocol.py -> build/lib/tau_skill_evolution/core
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/core/isolation.py -> build/lib/tau_skill_evolution/core
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/core/status.py -> build/lib/tau_skill_evolution/core
+creating build/lib/tau_skill_evolution/author
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/__init__.py -> build/lib/tau_skill_evolution/author
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/skill_schema.py -> build/lib/tau_skill_evolution/author
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/codex_skill_only.py -> build/lib/tau_skill_evolution/author
+creating build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/models.py -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/self_verifier.py -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/independent_verifier.py -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution
+creating build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/utils
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/utils/anthropic_caching.py -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/utils
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/utils/logger.py -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/utils
+creating build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/llms
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/llms/base_llm.py -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/llms
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/llms/chat.py -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/llms
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/llms/lite_llm.py -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/llms
+creating build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/conversation_renderer.py -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_skills.py -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/terminus_json_plain_parser.py -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/skill_docs.py -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/terminus_xml_plain_parser.py -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2
+running egg_info
+writing experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info/PKG-INFO
+writing dependency_links to experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info/dependency_links.txt
+writing entry points to experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info/entry_points.txt
+writing requirements to experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info/requires.txt
+writing top-level names to experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info/top_level.txt
+reading manifest file 'experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info/SOURCES.txt'
+writing manifest file 'experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info/SOURCES.txt'
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/LICENSE -> build/lib/tau_skill_evolution/author
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/SOURCE.json -> build/lib/tau_skill_evolution/author
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/VERIFIER_SOURCE.json -> build/lib/tau_skill_evolution/author
+creating build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/prompt_templates
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/prompt_templates/independent_verifier.txt -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/prompt_templates
+copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/prompt_templates/diagnosis_only.txt -> build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/prompt_templates
+installing to build/bdist.linux-x86_64/wheel
+running install
+running install_lib
+creating build/bdist.linux-x86_64/wheel
+creating build/bdist.linux-x86_64/wheel/tau_skill_evolution
+copying build/lib/tau_skill_evolution/materialize.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/bubblewrap.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/__init__.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/runtime_controls.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/worker.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/acquisition.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/author_verifier.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/bank.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/codex_provider.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/workflow.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+creating build/bdist.linux-x86_64/wheel/tau_skill_evolution/core
+copying build/lib/tau_skill_evolution/core/__init__.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/core
+copying build/lib/tau_skill_evolution/core/fingerprint.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/core
+copying build/lib/tau_skill_evolution/core/full_doc_retrieval.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/core
+copying build/lib/tau_skill_evolution/core/retrieval.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/core
+copying build/lib/tau_skill_evolution/core/attack_payload.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/core
+copying build/lib/tau_skill_evolution/core/_canonical.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/core
+copying build/lib/tau_skill_evolution/core/protocol.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/core
+copying build/lib/tau_skill_evolution/core/isolation.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/core
+copying build/lib/tau_skill_evolution/core/status.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/core
+copying build/lib/tau_skill_evolution/skillsbench.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/evolution.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/journal.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+creating build/bdist.linux-x86_64/wheel/tau_skill_evolution/author
+copying build/lib/tau_skill_evolution/author/__init__.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author
+copying build/lib/tau_skill_evolution/author/SOURCE.json -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author
+copying build/lib/tau_skill_evolution/author/skill_schema.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author
+copying build/lib/tau_skill_evolution/author/LICENSE -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author
+copying build/lib/tau_skill_evolution/author/codex_skill_only.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author
+creating build/bdist.linux-x86_64/wheel/tau_skill_evolution/author/coevo
+creating build/bdist.linux-x86_64/wheel/tau_skill_evolution/author/coevo/libs
+creating build/bdist.linux-x86_64/wheel/tau_skill_evolution/author/coevo/libs/terminus_agent
+creating build/bdist.linux-x86_64/wheel/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/models.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/evolution
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/self_verifier.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/evolution
+creating build/bdist.linux-x86_64/wheel/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/prompt_templates
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/prompt_templates/independent_verifier.txt -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/prompt_templates
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/prompt_templates/diagnosis_only.txt -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/prompt_templates
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/independent_verifier.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/evolution
+creating build/bdist.linux-x86_64/wheel/tau_skill_evolution/author/coevo/libs/terminus_agent/utils
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/utils/anthropic_caching.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/utils
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/utils/logger.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/utils
+creating build/bdist.linux-x86_64/wheel/tau_skill_evolution/author/coevo/libs/terminus_agent/llms
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/llms/base_llm.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/llms
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/llms/chat.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/llms
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/llms/lite_llm.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/llms
+creating build/bdist.linux-x86_64/wheel/tau_skill_evolution/author/coevo/libs/terminus_agent/agents
+creating build/bdist.linux-x86_64/wheel/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/conversation_renderer.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_skills.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/terminus_json_plain_parser.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/skill_docs.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2
+copying build/lib/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/terminus_xml_plain_parser.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2
+copying build/lib/tau_skill_evolution/author/VERIFIER_SOURCE.json -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution/author
+copying build/lib/tau_skill_evolution/dense.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/data.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/evaluation.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/preflight.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/sidecar.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/retrieval.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/dense_worker.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/official_runtime.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/model.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/codex_runtime.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/spec.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/verifier.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/skillsbench_runtime.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/cli.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/generator.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/constants.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/container.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/credentials.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+copying build/lib/tau_skill_evolution/artifacts.py -> build/bdist.linux-x86_64/wheel/./tau_skill_evolution
+running install_egg_info
+Copying experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution.egg-info to build/bdist.linux-x86_64/wheel/./tau_skill_evolution-0.1.0-py3.12.egg-info
+running install_scripts
+creating build/bdist.linux-x86_64/wheel/tau_skill_evolution-0.1.0.dist-info/WHEEL
+creating '/tmp/skillsbench-v5-wheel/.tmp-1xfrozzk/tau_skill_evolution-0.1.0-py3-none-any.whl' and adding 'build/bdist.linux-x86_64/wheel' to it
+adding 'tau_skill_evolution/__init__.py'
+adding 'tau_skill_evolution/acquisition.py'
+adding 'tau_skill_evolution/artifacts.py'
+adding 'tau_skill_evolution/author_verifier.py'
+adding 'tau_skill_evolution/bank.py'
+adding 'tau_skill_evolution/bubblewrap.py'
+adding 'tau_skill_evolution/cli.py'
+adding 'tau_skill_evolution/codex_provider.py'
+adding 'tau_skill_evolution/codex_runtime.py'
+adding 'tau_skill_evolution/constants.py'
+adding 'tau_skill_evolution/container.py'
+adding 'tau_skill_evolution/credentials.py'
+adding 'tau_skill_evolution/data.py'
+adding 'tau_skill_evolution/dense.py'
+adding 'tau_skill_evolution/dense_worker.py'
+adding 'tau_skill_evolution/evaluation.py'
+adding 'tau_skill_evolution/evolution.py'
+adding 'tau_skill_evolution/generator.py'
+adding 'tau_skill_evolution/journal.py'
+adding 'tau_skill_evolution/materialize.py'
+adding 'tau_skill_evolution/model.py'
+adding 'tau_skill_evolution/official_runtime.py'
+adding 'tau_skill_evolution/preflight.py'
+adding 'tau_skill_evolution/retrieval.py'
+adding 'tau_skill_evolution/runtime_controls.py'
+adding 'tau_skill_evolution/sidecar.py'
+adding 'tau_skill_evolution/skillsbench.py'
+adding 'tau_skill_evolution/skillsbench_runtime.py'
+adding 'tau_skill_evolution/spec.py'
+adding 'tau_skill_evolution/verifier.py'
+adding 'tau_skill_evolution/worker.py'
+adding 'tau_skill_evolution/workflow.py'
+adding 'tau_skill_evolution/author/LICENSE'
+adding 'tau_skill_evolution/author/SOURCE.json'
+adding 'tau_skill_evolution/author/VERIFIER_SOURCE.json'
+adding 'tau_skill_evolution/author/__init__.py'
+adding 'tau_skill_evolution/author/codex_skill_only.py'
+adding 'tau_skill_evolution/author/skill_schema.py'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/conversation_renderer.py'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_skills.py'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/skill_docs.py'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/terminus_json_plain_parser.py'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/terminus_xml_plain_parser.py'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/independent_verifier.py'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/models.py'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/self_verifier.py'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/prompt_templates/diagnosis_only.txt'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/prompt_templates/independent_verifier.txt'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/llms/base_llm.py'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/llms/chat.py'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/llms/lite_llm.py'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/utils/anthropic_caching.py'
+adding 'tau_skill_evolution/author/coevo/libs/terminus_agent/utils/logger.py'
+adding 'tau_skill_evolution/core/__init__.py'
+adding 'tau_skill_evolution/core/_canonical.py'
+adding 'tau_skill_evolution/core/attack_payload.py'
+adding 'tau_skill_evolution/core/fingerprint.py'
+adding 'tau_skill_evolution/core/full_doc_retrieval.py'
+adding 'tau_skill_evolution/core/isolation.py'
+adding 'tau_skill_evolution/core/protocol.py'
+adding 'tau_skill_evolution/core/retrieval.py'
+adding 'tau_skill_evolution/core/status.py'
+adding 'tau_skill_evolution-0.1.0.dist-info/METADATA'
+adding 'tau_skill_evolution-0.1.0.dist-info/WHEEL'
+adding 'tau_skill_evolution-0.1.0.dist-info/entry_points.txt'
+adding 'tau_skill_evolution-0.1.0.dist-info/top_level.txt'
+adding 'tau_skill_evolution-0.1.0.dist-info/RECORD'
+removing build/bdist.linux-x86_64/wheel
+Successfully built /tmp/skillsbench-v5-wheel/tau_skill_evolution-0.1.0-py3-none-any.whl

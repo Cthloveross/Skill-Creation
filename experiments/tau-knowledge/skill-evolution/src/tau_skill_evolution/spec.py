@@ -25,7 +25,7 @@ from .constants import (
 # Historical wire-format tests and sealed artifacts still use v1. New method
 # namespaces are deliberately different and cannot resume those checkpoints.
 NAMESPACE = "tau.skill-evolution.v1"
-NAMESPACES = {"tau": "tau.skill-evolution.v4", "skillsbench": "skillsbench.skill-evolution.v4"}
+NAMESPACES = {"tau": "tau.skill-evolution.v4", "skillsbench": "skillsbench.skill-evolution.v5"}
 DEFAULT_CONFIG = EXPERIMENT_ROOT / "configs" / "experiment.yaml"
 SKILLSBENCH_CONFIG = EXPERIMENT_ROOT / "configs" / "skillsbench.yaml"
 ARMS = ("benign", "poison-5", "poison-10")
@@ -174,11 +174,18 @@ class ExperimentSpec:
                 self.root / "data" / "skillsbench" / name
                 for name in ("source-tree.json", "source-manifest.json", "corpus/manifest.json")
             )
-            if self.namespace == "skillsbench.skill-evolution.v4":
+            if self.namespace in {
+                "skillsbench.skill-evolution.v4",
+                "skillsbench.skill-evolution.v5",
+            }:
                 files.extend(
                     self.root / "src/tau_skill_evolution/author" / name
                     for name in ("SOURCE.json", "LICENSE")
                 )
+            if self.namespace == "skillsbench.skill-evolution.v5":
+                author = self.root / "src/tau_skill_evolution/author"
+                files.append(author / "VERIFIER_SOURCE.json")
+                files.extend(sorted(author.rglob("*.txt")))
         source = self.values["source"]
         files.append(self.root / source["corpus_manifest"])
         selected_lock = source["runtime_lock"]
@@ -231,7 +238,7 @@ class ExperimentSpec:
             "tokenizer_model": embedding["model"],
             "token_counter_basis": "embedding_responses_input_estimate_with_reasoning_reserve",
             "request_timeout_seconds": settings["request_timeout_seconds"],
-            "episode_timeout_seconds": settings["episode_timeout_seconds"],
+            "episode_timeout_seconds": settings.get("episode_timeout_seconds"),
             "max_turns": settings["max_turns"],
             "max_task_tool_calls": settings["max_task_tool_calls"],
             "seed": self.values["seed"],
@@ -273,7 +280,7 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
     namespaces = {NAMESPACES[experiment]}
     if experiment == "skillsbench":
         # Historical config snapshots remain readable, with their own frozen identity.
-        namespaces.add("skillsbench.skill-evolution.v2")
+        namespaces.update({"skillsbench.skill-evolution.v2", "skillsbench.skill-evolution.v4"})
     if value.get("schema_version") not in namespaces:
         raise ValueError("configuration namespace does not match the current experiment method")
     source, tasks = value["source"], value["tasks"]["selected"]
@@ -404,19 +411,22 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
         or any(controls[role]["max_output_tokens"] is None for role in ("agent", "user"))
     ):
         raise ValueError("null runtime output limits require the author Codex execution agent")
-    if executor == "author-codex" and value["schema_version"] != "skillsbench.skill-evolution.v4":
-        raise ValueError("author Codex requires the SkillsBench v4 namespace")
-    if value["schema_version"] == "skillsbench.skill-evolution.v4":
+    author_namespaces = {"skillsbench.skill-evolution.v4", "skillsbench.skill-evolution.v5"}
+    author_v5 = value["schema_version"] == "skillsbench.skill-evolution.v5"
+    if executor == "author-codex" and value["schema_version"] not in author_namespaces:
+        raise ValueError("author Codex requires the SkillsBench v4 or v5 namespace")
+    if value["schema_version"] in author_namespaces:
         if executor != "author-codex":
-            raise ValueError("SkillsBench v4 requires the author Codex execution agent")
+            raise ValueError("SkillsBench v4/v5 requires the author Codex execution agent")
         codex = value["runtime"].get("codex", {})
         required_codex = {
             "binary",
             "version",
             "binary_sha256",
-            "evolution_timeout_seconds",
             "evaluation_timeout_seconds",
         }
+        if not author_v5:
+            required_codex.add("evolution_timeout_seconds")
         companion_fields = {"code_mode_host_binary", "code_mode_host_sha256"}
         if not (
             required_codex <= set(codex) <= required_codex | companion_fields
@@ -446,7 +456,7 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
                 or any(character not in "0123456789abcdef" for character in host_hash)
             ):
                 raise ValueError("Codex code-mode companion hash must be pinned")
-        for name in ("evolution_timeout_seconds", "evaluation_timeout_seconds"):
+        for name in required_codex & {"evolution_timeout_seconds", "evaluation_timeout_seconds"}:
             number = codex[name]
             if isinstance(number, bool) or not isinstance(number, int) or number <= 0:
                 raise ValueError("Codex episode budgets must be positive integers")
@@ -472,6 +482,34 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
             "revision_timeout_seconds": 3600,
         },
     }
+    if author_v5:
+        expected_evolution = {
+            "max_surrogate_retries",
+            "max_oracles",
+            "max_oracle_errors",
+            "timeout_multiplier",
+            "timeout_seconds",
+        }
+        if set(value["evolution"]) != expected_evolution:
+            raise ValueError("SkillsBench v5 requires author intervention and task time budgets")
+        limits["evolution"] = {
+            "max_surrogate_retries": 15,
+            "max_oracles": 5,
+            "max_oracle_errors": 5,
+            "timeout_seconds": 7200,
+        }
+        multiplier = value["evolution"]["timeout_multiplier"]
+        if (
+            isinstance(multiplier, bool)
+            or not isinstance(multiplier, (int, float))
+            or not math.isfinite(multiplier)
+            or multiplier <= 0
+        ):
+            raise ValueError("SkillsBench timeout multiplier must be finite and positive")
+        if value["runtime"].get("max_turns", 100) is not None or (
+            "episode_timeout_seconds" in value["runtime"]
+        ):
+            raise ValueError("SkillsBench v5 cannot add a POST or fixed episode cap")
     for group, caps in limits.items():
         for name, maximum in caps.items():
             number = value[group][name]
@@ -483,15 +521,21 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
             ):
                 raise ValueError(f"{group}.{name} must be between {minimum} and {maximum}")
     generator = value["roles"]["generator"]
-    for name, maximum in (("max_turns", 120),):
+    if author_v5 and "max_turns" in generator:
+        raise ValueError("SkillsBench v5 counts effective episodes, not all model turns")
+    for name, maximum in (("max_episodes" if author_v5 else "max_turns", 120),):
         number = generator[name]
         if isinstance(number, bool) or not isinstance(number, int) or not 1 <= number <= maximum:
             raise ValueError(f"generator.{name} must be between 1 and {maximum}")
     verifier = value["roles"]["verifier"]
+    if author_v5 and "prompt" in verifier:
+        raise ValueError("SkillsBench v5 uses the pinned author Verifier prompts")
     for name, maximum in (("max_turns", 30), ("diagnosis_turns", 8)):
         number = verifier[name]
         if isinstance(number, bool) or not isinstance(number, int) or not 1 <= number <= maximum:
             raise ValueError(f"verifier.{name} must be between 1 and {maximum}")
+        if author_v5 and number != maximum:
+            raise ValueError(f"pinned author verifier requires {name}={maximum}")
     if generator["reasoning_effort"] not in ("medium", "high"):
         raise ValueError("Generator reasoning effort must be medium or high")
     for role in value["roles"].values():

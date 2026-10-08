@@ -5,6 +5,7 @@ from __future__ import annotations
 import fnmatch
 import hashlib
 import json
+import math
 import os
 import posixpath
 import re
@@ -29,7 +30,74 @@ import tomllib
 from .artifacts import atomic_json
 from .container import _safe_path
 
-_EVOLUTION_PRIVATE_ROOTS = ("/bundle", "/work/candidate", "/work/scratch", "/work/observations")
+_EVOLUTION_PRIVATE_ROOTS = (
+    "/bundle",
+    "/work/candidate",
+    "/work/scratch",
+    "/work/observations",
+    "/root/progress.md",
+    "/root/evolution_summary.md",
+)
+
+# CoEvoSkills 4380d4b, harbor_terminus_2_evolution.py:129-136.
+# This is the author's command gate, not filesystem isolation.
+_HIDDEN_EVALUATOR_ACCESS_RE = re.compile(
+    r"(?ix)(?:"
+    r"/(?:root|app)/verifier(?:/|\b)|"
+    r"(?<![A-Za-z0-9_./-])/tests(?:/|\b)|"
+    r"(?:^|[/\s'\"=])test_outputs\.py(?:\b|$)|"
+    r"(?:^|[/\s'\"=])(?:reference_solution|ground_truth|golden_answer)"
+    r"(?:s)?(?:/|\b)"
+    r")"
+)
+
+_AUTHOR_PROGRESS = (
+    "# Progress\n"
+    "- [x] P1: Discover environment files (ls /app/environment/, /root/)\n"
+    "- [x] P1b: Discover installed tools and libraries\n"
+    "- [ ] P2: Create/update task skill with utility function scripts\n"
+    "- [ ] P3: Self-reflect (re-read FULL instruction, verify skill covers ALL requirements)\n"
+    "- [ ] P4: Execute task (run skill scripts, produce ALL output files)\n"
+    "- [ ] P5: Fix any failures from host verifier feedback, re-run until stable\n"
+    "- [ ] P6: Write /root/evolution_summary.md\n"
+)
+
+
+def _oracle_score(metrics: Mapping[str, Any]) -> dict[str, Any]:
+    """Resolve the author's reward precedence from actual host scoring evidence."""
+    raw = metrics.get("reward")
+    try:
+        canonical = float(raw) if raw is not None else None
+    except (ValueError, TypeError):
+        canonical = None
+    if canonical is not None and not math.isfinite(canonical):
+        canonical = None
+    checks = metrics.get("official_checks") or {}
+    if not isinstance(checks, Mapping):
+        checks = {}
+    passed = metrics.get("tests_passed", checks.get("passed"))
+    total = metrics.get("total_tests", checks.get("total"))
+    actual_counts = type(passed) is int and type(total) is int and 0 <= passed <= total
+    resolved = (
+        canonical
+        if canonical is not None
+        else (passed / total if total > 0 else 0.0)
+        if actual_counts
+        else None
+    )
+    return {
+        "status": "MEASURED" if resolved is not None else "NOT_MEASURED",
+        "canonical_reward": canonical,
+        "raw_reward": raw,
+        "resolved_reward": resolved,
+        "reward_source": "official_reward"
+        if canonical is not None
+        else ("parsed_official_counts" if actual_counts else None),
+        "passed": resolved == 1.0 if resolved is not None else None,
+        "tests_passed": passed if actual_counts else None,
+        "total_tests": total if actual_counts else None,
+    }
+
 
 COMMIT = "4380d4bff673dd6e1d58e5babeb2aaa0fe527119"
 REPOSITORY = "Zhang-Henry/CoEvoSkills"
@@ -645,7 +713,7 @@ def prepare_corpus(spec: Any) -> Any:
             ],
             check=True,
             capture_output=True,
-            timeout=spec.values["runtime"]["episode_timeout_seconds"],
+            timeout=3600,
         )
     dense = DenseIndex.load_cache(cache, pages, client=client)
     return FullDocumentHybridSession(
@@ -925,9 +993,6 @@ class SkillsBenchAdapter:
             public_inputs=self.public_inputs, tool_schemas=[], clarify=reject, read=reject
         )
 
-    def verifier_runner(self) -> Any:
-        return self.runner
-
     @contextmanager
     def evolution_session(
         self,
@@ -937,6 +1002,7 @@ class SkillsBenchAdapter:
         *,
         journal: Any,
         workspace: Path,
+        deadline: float | None = None,
     ) -> Any:
         from .container import _public_workspace
         from .core._canonical import thaw_json
@@ -949,6 +1015,9 @@ class SkillsBenchAdapter:
             runtime="docker",
             runtime_lock_path=self.runner.runtime_lock_path,
             transport=self.runner.transport,
+        )
+        learning.timeout_multiplier = (
+            getattr(self.spec, "values", {}).get("evolution", {}).get("timeout_multiplier", 5)
         )
         workspace = Path(workspace)
         identity = {
@@ -969,7 +1038,9 @@ class SkillsBenchAdapter:
             terminal_callback=learning._public_terminal,
         ) as public:
             checkpoint = workspace / "evolution-runtime.json"
-            with learning.learning_episode(public, checkpoint=checkpoint, identity=identity) as (
+            with learning.learning_episode(
+                public, checkpoint=checkpoint, identity=identity, deadline=deadline
+            ) as (
                 episode,
                 state,
             ):
@@ -1163,7 +1234,30 @@ class SkillsBenchAdapter:
         }
 
     @contextmanager
-    def _execution_episode(self, bundle: Any, *, evaluation: bool = False) -> Any:
+    def _execution_episode(
+        self, bundle: Any, *, evaluation: bool = False, oracle_phase: str | None = None
+    ) -> Any:
+        values = getattr(self.spec, "values", {})
+        self.runner.timeout_multiplier = values.get("evolution", {}).get("timeout_multiplier", 5)
+        task_timeout = self.runner.config["agent"]["timeout_sec"] * values.get("evolution", {}).get(
+            "timeout_multiplier", 5
+        )
+        self.runner.execution_deadline = (
+            getattr(self, "deadline", None)
+            if oracle_phase is not None
+            else time.time() + 7200
+            if evaluation
+            else None
+        )
+        if oracle_phase is not None:
+            remaining = self.runner.phase_remaining()
+            if remaining <= 0:
+                raise TimeoutError("skillsbench_learning_deadline_exhausted")
+            self.runner.agent_timeout_seconds = (
+                min(task_timeout, remaining)
+                if self.runner.execution_deadline is not None
+                else task_timeout
+            )
         if self.executor != "author-codex":
             if bundle is None:
                 raise ValueError("no_skill_requires_author_codex")
@@ -1189,9 +1283,11 @@ class SkillsBenchAdapter:
         companion = installed.pop("code_mode_host_binary", None)
         self._codex_code_mode_host = Path(companion) if companion is not None else None
         self.runner.codex_skill_mode = bundle is not None
-        self.runner.agent_timeout_seconds = settings["codex"][
-            "evaluation_timeout_seconds" if evaluation else "evolution_timeout_seconds"
-        ]
+        if oracle_phase is None:
+            self.runner.agent_timeout_seconds = settings["codex"].get(
+                "evaluation_timeout_seconds" if evaluation else "evolution_timeout_seconds",
+                task_timeout,
+            )
         self._executor_identity = {
             **installed,
             "model": self.spec.provider_settings["model"],
@@ -1219,6 +1315,7 @@ class SkillsBenchAdapter:
                 },
                 token_counter=self.counter or text_counter(self.spec),
                 timeout_seconds=settings["request_timeout_seconds"],
+                request_deadline=self.runner.execution_deadline,
                 max_requests=settings["max_turns"],
             ) as gateway:
                 self._codex_gateway = gateway
@@ -1430,17 +1527,102 @@ class SkillsBenchAdapter:
             trace = self._execute(bundle, episode)
             return {**trace, **self._snapshot(episode)}
 
-    def oracle(self, bundle: Any) -> bool:
-        with self._execution_episode(bundle) as episode:
+    def oracle(self, bundle: Any, *, phase: str = "normal") -> dict[str, Any]:
+        """Private official outcome; only the controller's boolean projection reaches models."""
+        if phase not in {"normal", "cap_final", "post_final"}:
+            raise ValueError("invalid_oracle_phase")
+        with self._execution_episode(bundle, oracle_phase=phase) as episode:
             self._execute(bundle, episode)
             self._snapshot(episode)
             self.runner.close_public(episode)
             result = self.runner.grade(episode)
-        if result["status"] != "MEASURED":
-            from .evolution import OracleUnavailable
+            evidence_path = Path(episode.grader_evidence_dir) / "evidence.json"
+            evidence = json.loads(evidence_path.read_text())
+            evidence_hash = _hash(evidence_path)
+            metrics = dict(result)
+            details = evidence.get("official_items", [])
+            reward_path = evidence_path.parent / "reward.txt"
+            if reward_path.is_file() and not reward_path.is_symlink():
+                metrics["reward"] = reward_path.read_text().strip()
+            report_path = evidence_path.parent / self.runner._official_report_name()
+            if (
+                result["status"] == "MEASURED"
+                and report_path.is_file()
+                and not report_path.is_symlink()
+            ):
+                data = json.loads(report_path.read_text())
+                details = data.get("results", {}).get("tests", [])
+            if (
+                result["status"] != "MEASURED"
+                and result.get("failure") in {"official_reward_missing", "official_reward_invalid"}
+                and not evidence.get("process_failure")
+            ):
+                from .skillsbench_runtime import _validate_grader_warmup
 
-            raise OracleUnavailable("skillsbench_oracle_not_measured")
-        return result["utility"] is True
+                try:
+                    data = (
+                        json.loads(report_path.read_text())
+                        if report_path.is_file() and not report_path.is_symlink()
+                        else None
+                    )
+                    if data is not None:
+                        summary = data.get("results", {}).get("summary", {})
+                        metrics.update(
+                            tests_passed=summary.get("passed"), total_tests=summary.get("tests")
+                        )
+                    score = _oracle_score(metrics)
+                    if score["status"] == "MEASURED":
+                        stderr = (evidence_path.parent / "stderr.bin").read_text(errors="replace")
+                        _validate_grader_warmup(
+                            evidence["grader_exit_code"],
+                            str(score["resolved_reward"]),
+                            data,
+                            (evidence_path.parent / "stdout.bin").read_text(errors="replace")
+                            + stderr,
+                            error_output=stderr,
+                            allow_finite_reward=getattr(self.spec, "namespace", None)
+                            == "skillsbench.skill-evolution.v5",
+                        )
+                        metrics["status"] = "MEASURED"
+                        details = data.get("results", {}).get("tests", []) if data else []
+                        if score["total_tests"]:
+                            metrics["official_checks"] = {
+                                "status": "MEASURED",
+                                "source": "pytest-json-ctrf.summary",
+                                "unit": "reporter_group",
+                                "passed": score["tests_passed"],
+                                "total": score["total_tests"],
+                                "rate": score["tests_passed"] / score["total_tests"],
+                            }
+                except (RuntimeError, ValueError, TypeError, AttributeError):
+                    metrics.pop("tests_passed", None)
+                    metrics.pop("total_tests", None)
+            score = (
+                _oracle_score(metrics)
+                if metrics["status"] == "MEASURED"
+                else {
+                    "status": "NOT_MEASURED",
+                    "passed": None,
+                    "canonical_reward": None,
+                    "raw_reward": metrics.get("reward"),
+                    "resolved_reward": None,
+                    "reward_source": None,
+                    "tests_passed": None,
+                    "total_tests": None,
+                }
+            )
+        return {
+            **score,
+            "phase": phase,
+            "bundle_hash": bundle.bundle_hash,
+            "parent_hash": bundle.parent_hash,
+            "execution_id": episode.model_episode_id,
+            "official_checks": metrics.get("official_checks"),
+            "test_details": details,
+            "grader_evidence_ref": str(evidence_path),
+            "grader_evidence_hash": evidence_hash,
+            "failure": result.get("failure") if score["status"] != "MEASURED" else None,
+        }
 
     def evaluate(self, bundle: Any) -> dict[str, Any]:
         return self._evaluate(bundle)
@@ -1495,6 +1677,178 @@ class SkillsBenchEvolutionSession:
     def files(self) -> dict[str, str]:
         return self.public.files()
 
+    def phase_remaining(self) -> float:
+        return self.runner.phase_remaining()
+
+    def read_progress(self) -> dict[str, Any]:
+        result = self.runner._exec(
+            [
+                "python",
+                "-I",
+                "-c",
+                (
+                    "from pathlib import Path; p=Path('/root/progress.md'); "
+                    "print(p.read_text() if p.exists() else '', end='')"
+                ),
+            ],
+            public=True,
+        )
+        if result.returncode or result.failure:
+            raise RuntimeError("skillsbench_progress_read_failed")
+        text = result.stdout.decode("utf-8")
+        return {
+            "text": text,
+            "unchecked": [
+                line.strip()[6:].strip()
+                for line in text.splitlines()
+                if line.strip().startswith("- [ ]")
+            ],
+            "sha256": hashlib.sha256(result.stdout).hexdigest(),
+        }
+
+    def reset_progress(self) -> dict[str, Any]:
+        result = self.runner._exec(
+            [
+                "python",
+                "-I",
+                "-c",
+                (
+                    "import sys; from pathlib import Path; "
+                    "Path('/root/progress.md').write_bytes(sys.stdin.buffer.read())"
+                ),
+            ],
+            _AUTHOR_PROGRESS.encode(),
+            public=True,
+        )
+        if result.returncode or result.failure:
+            raise RuntimeError("skillsbench_progress_reset_failed")
+        return {
+            "text": _AUTHOR_PROGRESS,
+            "unchecked": [
+                line[6:].strip()
+                for line in _AUTHOR_PROGRESS.splitlines()
+                if line.startswith("- [ ]")
+            ],
+            "sha256": hashlib.sha256(_AUTHOR_PROGRESS.encode()).hexdigest(),
+            "feedback": (
+                "Progress checklist reset: P1/P1b remain checked; P2-P6 are unchecked. "
+                "Update /root/progress.md after repairing and re-executing the Skill, "
+                "then submit the completed package and task output."
+            ),
+        }
+
+    def _require_submitted(self, bundle: Any, reason: str) -> None:
+        from .artifacts import EvolutionSubmission, verify_bundle
+
+        verify_bundle(bundle)
+        if not any(
+            EvolutionSubmission.from_dict(item["value"]).bundle.to_dict() == bundle.to_dict()
+            for item in self.state.get("submission_history", [self.state.get("submission")])
+            if item
+        ):
+            raise ValueError(reason)
+
+    def schema_issues(self, bundle: Any) -> list[str]:
+        from .author.skill_schema import validate_skill_directory
+
+        self._require_submitted(bundle, "schema_requires_submitted_bundle")
+        with tempfile.TemporaryDirectory(prefix="skillsbench-schema-") as staging:
+            directory = Path(staging) / "current"
+            directory.mkdir()
+            (directory / "SKILL.md").write_text(bundle.files["SKILL.md"], encoding="utf-8")
+            return [
+                f"/app/environment/skills/current/SKILL.md [{issue.code}]: {issue.message}"
+                for issue in validate_skill_directory(directory)
+            ]
+
+    def save_best_bundle(self, bundle: Any, *, operation_id: str) -> dict[str, Any]:
+        from .artifacts import seal_bundle
+
+        self._require_submitted(bundle, "best_snapshot_requires_submitted_bundle")
+        identity = {"bundle_hash": bundle.bundle_hash, "parent_hash": bundle.parent_hash}
+        directory = (self.checkpoint.parent / "best-snapshots" / _json_hash(identity)).absolute()
+        if directory.parent.is_symlink() or directory.is_symlink():
+            raise ValueError("unsafe_best_snapshot_path")
+        seal_bundle(directory, bundle)
+        return {
+            **identity,
+            "operation_id": operation_id,
+            "directory": str(directory),
+            "manifest_hash": _hash(directory / "manifest.json"),
+        }
+
+    def load_best_bundle(
+        self, reference: Mapping[str, Any], *, operation_id: str | None = None
+    ) -> Any:
+        from .artifacts import load_bundle
+
+        del operation_id  # The controller journals this deterministic host read.
+        identity = {key: reference[key] for key in ("bundle_hash", "parent_hash")}
+        directory = (self.checkpoint.parent / "best-snapshots" / _json_hash(identity)).absolute()
+        if reference["directory"] != str(directory):
+            raise ValueError("best_snapshot_identity_differs")
+        if directory.parent.is_symlink() or directory.is_symlink():
+            raise ValueError("unsafe_best_snapshot_path")
+        if not directory.exists():
+            return None
+        if _hash(directory / "manifest.json") != reference["manifest_hash"]:
+            raise ValueError("best_snapshot_manifest_changed")
+        bundle = load_bundle(directory)
+        if any(getattr(bundle, key) != value for key, value in identity.items()):
+            raise ValueError("best_snapshot_bundle_differs")
+        return bundle
+
+    def _replace_candidate(self, bundle: Any) -> None:
+        from .artifacts import verify_bundle
+
+        verify_bundle(bundle)
+        if self.public.target.is_symlink() or not self.public.target.is_dir():
+            raise ValueError("unsafe_evolution_candidate_path")
+        reset = self.runner._exec(
+            ["/bin/sh", "-c", "find /work/candidate -mindepth 1 -depth -delete"], public=True
+        )
+        if reset.returncode or reset.failure:
+            raise RuntimeError("skillsbench_evolution_candidate_reset_failed")
+        for relative, content in bundle.files.items():
+            path = self.public.target / _safe_path(relative)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content, encoding="utf-8")
+            path.chmod(0o666)
+            for directory in path.parents:
+                if directory == self.public.work:
+                    break
+                directory.chmod(0o777)
+
+    def rollback_bundle(self, bundle: Any, *, operation_id: str) -> dict[str, Any]:
+        previous = self.state.get("rollback")
+        identity = {
+            "operation_id": operation_id,
+            "bundle_hash": bundle.bundle_hash,
+            "parent_hash": bundle.parent_hash,
+        }
+        if previous is not None and previous["operation_id"] == operation_id:
+            if any(previous.get(key) != value for key, value in identity.items()):
+                raise ValueError("skillsbench_rollback_identity_differs")
+            if previous["status"] != "COMPLETED":
+                from .journal import UnknownOperation
+
+                raise UnknownOperation("skillsbench_rollback_result_unknown")
+            if self.files() != dict(bundle.files):
+                raise ValueError("skillsbench_rollback_snapshot_changed")
+            return previous["result"]
+        self._require_submitted(bundle, "rollback_requires_submitted_bundle")
+        self.state["rollback"] = {**identity, "status": "PREPARING"}
+        self._save()
+        self._replace_candidate(bundle)
+        snapshot = self.snapshot()
+        if snapshot["files"] != dict(bundle.files):
+            raise ValueError("skillsbench_rollback_candidate_mismatch")
+        result = {**identity, "status": "COMPLETED", "workspace_hash": snapshot["workspace_hash"]}
+        self.state["rollback"] = {**identity, "status": "COMPLETED", "result": result}
+        self.state["attempt"]["status"] = "ROLLED_BACK"
+        self._save()
+        return result
+
     def snapshot(self) -> dict[str, Any]:
         from .container import _tree_manifest
         from .core._canonical import canonical_json_sha256
@@ -1542,20 +1896,7 @@ class SkillsBenchEvolutionSession:
             }
         self.state["attempt"] = {**attempt, "status": "PREPARING"}
         self._save()
-        reset = self.runner._exec(
-            ["/bin/sh", "-c", "find /work/candidate -mindepth 1 -depth -delete"], public=True
-        )
-        if reset.returncode or reset.failure:
-            raise RuntimeError("skillsbench_evolution_candidate_reset_failed")
-        for relative, content in parent.files.items():
-            path = self.public.target / _safe_path(relative)
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(content)
-            path.chmod(0o666)
-            for directory in path.parents:
-                if directory == self.public.work:
-                    break
-                directory.chmod(0o777)
+        self._replace_candidate(parent)
         self.state["attempt"] = {**attempt, "status": "READY"}
         self._save()
         return {
@@ -1569,7 +1910,20 @@ class SkillsBenchEvolutionSession:
     def terminal(self, command: str) -> Any:
         if self.state.get("attempt", {}).get("status") != "READY":
             raise PermissionError("skillsbench_evolution_attempt_not_open")
-        result = self.runner.terminal(self.episode, command)
+        if getattr(
+            self.adapter.spec, "namespace", None
+        ) == "skillsbench.skill-evolution.v5" and _HIDDEN_EVALUATOR_ACCESS_RE.search(command):
+            from .container import ProgramResult
+
+            result = ProgramResult(
+                0,
+                "COMMAND REJECTED BY EVALUATOR INFORMATION-BOUNDARY GATE: "
+                "attempted to inspect or execute protected evaluator artifacts. "
+                "Work only from the unchanged task instruction, public background document, "
+                "supplied inputs, current implementation, and ordinary runtime diagnostics.",
+            )
+        else:
+            result = self.runner.terminal(self.episode, command)
         self.state["operation_cursor"] += 1
         self.state["events"].append(
             {
@@ -1658,6 +2012,7 @@ class SkillsBenchEvolutionSession:
             "initial": initial,
             "value": submission.to_dict(),
         }
+        self.state.setdefault("submission_history", []).append(self.state["submission"])
         self.state["attempt"]["status"] = "SUBMITTED"
         self._save()
         return submission

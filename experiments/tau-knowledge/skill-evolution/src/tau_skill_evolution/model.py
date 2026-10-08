@@ -974,6 +974,7 @@ class OpenAICompatibleClient:
         self.timeout_seconds = float(timeout_seconds)
         self._opener = opener or urllib.request.urlopen
         self._token_counter = token_counter
+        self.request_deadline: float | None = None
         self._usage_history: list[dict[str, Any]] = []
         self._usage_path, self._usage_role = usage_path, usage_role
 
@@ -1001,6 +1002,8 @@ class OpenAICompatibleClient:
         tools: Sequence[Mapping[str, Any]] | None,
         max_output_tokens: int | None,
     ) -> urllib.request.Request:
+        if self.request_deadline is not None and time.time() >= self.request_deadline:
+            raise ModelClientError("learning_timeout", "learning wall-clock deadline exhausted")
         token = self.api_key() if callable(self.api_key) else self.api_key
         normalized = _response_input(messages)
         limit = self.config.max_output_tokens if max_output_tokens is None else max_output_tokens
@@ -1045,15 +1048,38 @@ class OpenAICompatibleClient:
         )
 
     def _send(self, request: urllib.request.Request) -> tuple[int, bytes]:
+        timeout = self.timeout_seconds
+        if self.request_deadline is not None:
+            timeout = min(timeout, self.request_deadline - time.time())
+            if timeout <= 0:
+                raise ModelClientError("learning_timeout", "learning wall-clock deadline exhausted")
         try:
-            with self._opener(request, timeout=self.timeout_seconds) as response:
-                return getattr(response, "status", 200), response.read()
+            with self._opener(request, timeout=timeout) as response:
+                return getattr(response, "status", 200), self._response_body(response)
         except urllib.error.HTTPError as exc:
-            return exc.code, exc.read()
+            with exc:
+                return exc.code, self._response_body(exc)
         except (OSError, urllib.error.URLError) as exc:
             raise ModelClientError(
                 "transport_error", "model request returned no complete response"
             ) from exc
+
+    def _response_body(self, response: Any) -> bytes:
+        if self.request_deadline is None:
+            return response.read()
+        chunks = []
+        reader = getattr(response, "read1", response.read)
+        while True:
+            remaining = self.request_deadline - time.time()
+            if remaining <= 0:
+                raise ModelClientError("learning_timeout", "learning wall-clock deadline exhausted")
+            socket = getattr(getattr(getattr(response, "fp", None), "raw", None), "_sock", None)
+            if socket is not None:
+                socket.settimeout(min(self.timeout_seconds, remaining))
+            chunk = reader(65536)
+            if not chunk:
+                return b"".join(chunks)
+            chunks.append(chunk)
 
     def _normalize(
         self,

@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "method": "skillsbench.skill-evolution.v5",
+  "artifact": "skillsbench-v5-source.tar.gz",
+  "sha256": "2b7d27b3609b4f6fbcc3336f0da972d3d6d6af8cecc13dac4a5c54d39cf41059",
+  "bytes": 2735700,
+  "members": 754,
+  "all_members_regular": true,
+  "member_sha256_verified": true,
+  "source_hashes_unchanged_during_export": true,
+  "manifest_sha256": "9c97dcfe3b69b653e0e3a9e1863918a5f44e99c25b0a011072a8971eafea5b78",
+  "credential_or_private_audit_included": false,
+  "staged_credential_pattern_scan": "PASS",
+  "preserved_user_files_not_staged": [
+    "docs/dymalskill-static-review.md",
+    "key.env",
+    "internal audit"
+  ],
+  "diff_check_scope": "PASS for source and docs; byte-exact raw test logs preserve pytest whitespace"
+}

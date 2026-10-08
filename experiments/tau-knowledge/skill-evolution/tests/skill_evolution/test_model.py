@@ -99,6 +99,63 @@ def test_null_output_limit_is_omitted_from_live_and_journaled_requests(tmp_path)
     assert journal.completed("generate_initial")
 
 
+def test_learning_deadline_prevents_post_before_dispatch_and_clamps_transport(
+    tmp_path, monkeypatch
+):
+    from tau_skill_evolution.journal import Journal
+
+    observed = []
+    client = OpenAICompatibleClient(
+        ENDPOINT,
+        timeout_seconds=900,
+        opener=lambda request, **kwargs: (
+            observed.append(kwargs["timeout"]) or io.BytesIO(json.dumps(_response()).encode())
+        ),
+    )
+    client.request_deadline = 100
+    monkeypatch.setattr(model_module.time, "time", lambda: 80)
+    client.complete([{"role": "user", "content": "fixture"}])
+    assert observed == [20]
+    monkeypatch.setattr(model_module.time, "time", lambda: 101)
+    journal = Journal(tmp_path / "journal")
+    with pytest.raises(ModelClientError, match="deadline exhausted"):
+        client.complete_journaled(journal, "expired", {}, [{"role": "user", "content": "fixture"}])
+    assert journal.status("expired") == "NOT_SENT"
+    assert observed == [20]
+
+
+@pytest.mark.parametrize("http_error", [False, True])
+def test_learning_deadline_during_response_is_unknown_and_never_resends(
+    tmp_path, monkeypatch, http_error
+):
+    import urllib.error
+
+    from tau_skill_evolution.journal import Journal, UnknownOperation
+
+    now = [80]
+    calls = []
+
+    class DripResponse(io.BytesIO):
+        def read1(self, size):
+            now[0] = 101
+            return b"partial provider response"
+
+    def opener(*args, **kwargs):
+        calls.append(1)
+        if http_error:
+            raise urllib.error.HTTPError(ENDPOINT, 403, "Forbidden", {}, DripResponse())
+        return DripResponse()
+
+    client = OpenAICompatibleClient(ENDPOINT, opener=opener)
+    client.request_deadline = 100
+    monkeypatch.setattr(model_module.time, "time", lambda: now[0])
+    journal = Journal(tmp_path / "journal")
+    for _ in range(2):
+        with pytest.raises(UnknownOperation):
+            client.complete_journaled(journal, "drip", {}, [{"role": "user", "content": "fixture"}])
+    assert calls == [1] and journal.status("drip") == "UNKNOWN"
+
+
 MESSAGES_ENDPOINT = "https://bedrock-mantle.us-east-1.api.aws/anthropic/v1"
 OPUS = "anthropic.claude-opus-4-8"
 

@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 import re
+import time
 import uuid
 from collections import defaultdict
 from pathlib import Path
@@ -441,8 +442,22 @@ class Workflow:
             from .generator import RevisionConversation
 
             conversation = RevisionConversation()
+            author = self.spec.experiment == "skillsbench"
+            deadline = None
+            if author:
+                timeout = self.spec.values["evolution"]["timeout_seconds"]
+                timing = journal.dispatch(
+                    "evolution-wall-clock",
+                    {"timeout_seconds": timeout},
+                    lambda: {"started_at": (started := time.time()), "deadline": started + timeout},
+                    external=False,
+                )
+                deadline = timing["deadline"]
+                bank.deadline = deadline
             settings = self.spec.values["roles"]["generator"]
             generator = self._model("generator", phase="revise")
+            if author and isinstance(generator, OpenAICompatibleClient):
+                generator.request_deadline = deadline
             options = {
                 "journal": journal,
                 "tool_schemas": bank.tool_schemas,
@@ -456,10 +471,12 @@ class Workflow:
                 )
                 - settings["max_input_tokens"],
                 "conversation": conversation,
-                "max_turns": settings.get("max_turns", 120),
-                "timeout_seconds": self.spec.values["evolution"].get(
-                    "revision_timeout_seconds", 3600
-                ),
+                "max_turns": None if author else settings.get("max_turns", 120),
+                "max_episodes": settings["max_episodes"] if author else None,
+                "timeout_seconds": None
+                if author
+                else self.spec.values["evolution"].get("revision_timeout_seconds", 3600),
+                "deadline": deadline,
             }
             session_opened = False
             result = None
@@ -470,8 +487,42 @@ class Workflow:
                     base,
                     journal=journal,
                     workspace=root / "learning",
+                    **({"deadline": deadline} if author else {}),
                 ) as session:
                     session_opened = True
+                    if author:
+                        from .author_verifier import AuthorSkillsBenchVerifier
+
+                        verifier_model = self._model("verifier")
+                        if isinstance(verifier_model, OpenAICompatibleClient):
+                            verifier_model.request_deadline = deadline
+                        verifier = AuthorSkillsBenchVerifier(
+                            verifier_model,
+                            session.runner,
+                            journal=journal,
+                            token_counter=self.counter,
+                            max_input_tokens=self.spec.values["roles"]["verifier"][
+                                "max_input_tokens"
+                            ],
+                            seed=self.spec.values["seed"],
+                            logs_dir=root / "private" / "author-verifier",
+                        )
+                        session.generator_conversation = conversation
+                    else:
+                        verifier = SurrogateVerifier(
+                            self._model("verifier"),
+                            self._runner(),
+                            journal=journal,
+                            system_prompt=self._prompt("verifier"),
+                            max_output_tokens=self.spec.values["roles"]["verifier"][
+                                "max_output_tokens"
+                            ],
+                            seed=self.spec.values["seed"],
+                            max_episodes=self.spec.values["roles"]["verifier"]["max_turns"],
+                            diagnosis_episodes=self.spec.values["roles"]["verifier"][
+                                "diagnosis_turns"
+                            ],
+                        )
 
                     def initial_execution(
                         bundle: Any, inputs: Any, frozen: Any, **kwargs: Any
@@ -511,25 +562,16 @@ class Workflow:
                     engine = EvolutionEngine(
                         execute_initial=initial_execution,
                         oracle=bank.oracle,
-                        verifier=SurrogateVerifier(
-                            self._model("verifier"),
-                            bank.verifier_runner()
-                            if self.spec.experiment == "skillsbench" and self.runner is None
-                            else self._runner(),
-                            journal=journal,
-                            system_prompt=self._prompt("verifier"),
-                            max_output_tokens=self.spec.values["roles"]["verifier"][
-                                "max_output_tokens"
-                            ],
-                            seed=self.spec.values["seed"],
-                            max_episodes=self.spec.values["roles"]["verifier"]["max_turns"],
-                            diagnosis_episodes=self.spec.values["roles"]["verifier"][
-                                "diagnosis_turns"
-                            ],
-                        ),
+                        verifier=verifier,
                         revise=revision,
                         journal=journal,
-                        max_revisions=self.spec.values["evolution"]["max_revisions"],
+                        max_revisions=None
+                        if author
+                        else self.spec.values["evolution"]["max_revisions"],
+                        skillsbench_session=session if author else None,
+                        max_surrogate_retries=self.spec.values["evolution"].get(
+                            "max_surrogate_retries", 15
+                        ),
                         max_oracles=self.spec.values["evolution"]["max_oracles"],
                         max_oracle_errors=self.spec.values["evolution"].get("max_oracle_errors", 5),
                     )
@@ -573,10 +615,39 @@ class Workflow:
             if creation["status"] != "CREATED":
                 continue
             _, initial = self._created(root, journal)
+            learning_stop = None
             if journal.completed("evolution-result"):
-                versions = EvolutionResult.from_dict(journal.response("evolution-result")).versions
+                evolution = EvolutionResult.from_dict(journal.response("evolution-result"))
+                versions = evolution.versions
+                learning_stop = evolution.stop_reason
             else:
                 versions = (initial,)
+            if (
+                self.spec.experiment == "skillsbench"
+                and learning_stop
+                and (
+                    learning_stop.endswith("result_unknown")
+                    or learning_stop in {"authentication_failed", "cleanup_failed"}
+                )
+            ):
+                from .evaluation import not_measured
+
+                for bundle in versions:
+                    operation = f"evaluation-{bundle.bundle_hash}"
+                    if not journal.dispatched(operation):
+                        missing = journal.dispatch(
+                            operation,
+                            {
+                                "bundle_hash": bundle.bundle_hash,
+                                "blocked_by_learning": learning_stop,
+                            },
+                            lambda bundle=bundle, reason=learning_stop: not_measured(
+                                bundle.bundle_hash, reason
+                            ),
+                            external=False,
+                        )
+                        journal.record_result(operation, missing)
+                continue
             bank = self._bank(task)
             for bundle in versions:
                 sealed = (
@@ -817,6 +888,13 @@ class Workflow:
                                 oracle_failures=list(result.oracle_failures),
                                 attempts=list(result.attempts),
                                 stage_failures=thaw_json(result.stage_failures),
+                                author_counters=thaw_json(result.author_counters),
+                                oracle_history=thaw_json(result.oracle_history),
+                                best_oracle_ref=thaw_json(result.best_oracle_ref),
+                                author_terminal_result=thaw_json(result.author_terminal_result),
+                                selection_reason=result.selection_reason,
+                                interventions=thaw_json(result.interventions),
+                                best_snapshot=thaw_json(result.best_snapshot),
                                 verifications=[
                                     {
                                         **{
@@ -848,7 +926,11 @@ class Workflow:
                                         },
                                         **{
                                             key: check[key]
-                                            for key in ("test_runs", "stage_failures")
+                                            for key in (
+                                                "test_runs",
+                                                "stage_failures",
+                                                "author_result",
+                                            )
                                             if key in check
                                         },
                                     }
@@ -929,6 +1011,9 @@ class Workflow:
                         case["learning_execution_count"] = evidence["learning_execution_count"]
                         case["terminal_calls"] = len(evidence["terminal_operations"])
                         case["submission_count"] = len(evidence["submissions"])
+                        case["model_post_dispatches"] = sum(
+                            item["status"] != "NOT_SENT" for item in evidence["model_requests"]
+                        )
                         case["learning_operations_unknown"] = sum(
                             item["status"] == "UNKNOWN"
                             for item in (
@@ -989,6 +1074,7 @@ class Workflow:
         from .artifacts import EvolutionSubmission
 
         submissions, terminal_operations, bank_actions, verifier_operations = [], [], [], []
+        model_requests = []
         execution_ids: set[str] = set()
         execution_count = 0
         for request in sorted(journal.root.glob("*/request.json")):
@@ -996,6 +1082,34 @@ class Workflow:
             operation = envelope["operation_id"]
             payload = envelope["payload"]
             name = payload.get("name")
+            if payload.get("delivery_policy") == "single_post":
+                model_requests.append(
+                    {
+                        "operation_id": operation,
+                        "role": (payload.get("inputs") or {}).get("role"),
+                        "status": journal.status(operation),
+                    }
+                )
+            if re.fullmatch(
+                r"evolution-turn-\d+-(?:suite|escalate|verify)-author-(?:generation|verification)-exec-\d+",
+                operation,
+            ):
+                item = {
+                    "operation_id": operation,
+                    "status": journal.status(operation),
+                    "command": payload["command"],
+                    "role": "author_verifier",
+                }
+                if journal.completed(operation):
+                    response = journal.response(operation)
+                    item.update(
+                        return_code=response["return_code"],
+                        failure=response["failure"],
+                        stdout_hash=digest(response["stdout"]),
+                        stderr_hash=digest(response["stderr"]),
+                    )
+                verifier_operations.append(item)
+                continue
             if name is not None and re.fullmatch(
                 r"evolution-turn-\d+-(?:suite|escalate|verify-(?:diagnosis|repair))"
                 r"-turn-\d+-tool-\d+",
@@ -1097,6 +1211,7 @@ class Workflow:
                 "terminal_operations": terminal_operations,
                 "bank_actions": bank_actions,
                 "verifier_operations": verifier_operations,
+                "model_requests": model_requests,
                 "verifications": checks,
                 "stage_failures": stage_failures,
             },
@@ -1421,6 +1536,59 @@ class Workflow:
             ),
         )
         if self.spec.experiment == "skillsbench":
+            author_cases = [case for case in report["cases"] if case.get("author_counters")]
+            if author_cases:
+                table(
+                    "Author selection and actual remeasurement",
+                    (
+                        "Task",
+                        "r interventions",
+                        "Normal K",
+                        "Effective episodes",
+                        "GT executions",
+                        "Historical best",
+                        "Actual post-final",
+                        "Author retained result",
+                        "Result source",
+                        "Independent final reward",
+                    ),
+                    (
+                        (
+                            case["task_id"],
+                            case["author_counters"]["surrogate_retries"],
+                            case["author_counters"]["normal_oracle_interventions"],
+                            case["author_counters"].get("generator_episodes"),
+                            case.get("oracle_attempts"),
+                            next(
+                                (
+                                    item.get("resolved_reward")
+                                    for item in case["oracle_history"]
+                                    if case.get("best_oracle_ref")
+                                    and item["operation_id"]
+                                    == case["best_oracle_ref"]["operation_id"]
+                                ),
+                                None,
+                            ),
+                            next(
+                                (
+                                    item.get("resolved_reward")
+                                    for item in reversed(case["oracle_history"])
+                                    if item["phase"] == "post_final"
+                                ),
+                                None,
+                            ),
+                            (case.get("author_terminal_result") or {}).get("resolved_reward"),
+                            (case.get("author_terminal_result") or {}).get("source"),
+                            (
+                                (case["evaluations"].get(case.get("final_bundle_hash")) or {}).get(
+                                    "metrics"
+                                )
+                                or {}
+                            ).get("reward"),
+                        )
+                        for case in author_cases
+                    ),
+                )
             baseline_cases = [case for case in report["cases"] if "no_skill_evaluation" in case]
             if baseline_cases:
                 lines.extend(

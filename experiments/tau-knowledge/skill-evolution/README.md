@@ -1,6 +1,6 @@
 # Retrieval 与 Skill Evolution
 
-当前只维护共享状态机与银行、SkillsBench两个薄适配器：**检索 → 冻结 B* → 一次创建 S0 → Generator直接执行与修改 → 独立验证 → fresh oracle / 独立评估**。方法为 `tau.skill-evolution.v4` 和 `skillsbench.skill-evolution.v4`，默认 GPT-5.4、M15/K5、Docker；创建禁止执行、自测和重发。
+当前只维护共享状态机与银行、SkillsBench两个薄适配器：**检索 → 冻结 B* → 一次创建 S0 → Generator直接执行与修改 → 独立验证 → fresh oracle / 独立评估**。方法为 `tau.skill-evolution.v4`（M15/K5）和 `skillsbench.skill-evolution.v5`（作者r15/正常K5），默认 GPT-5.4、Docker；创建禁止执行、自测和重发。
 
 | 实验 | 完整规模 | 当前配置 | 交接 |
 |---|---|---|---|
@@ -16,13 +16,13 @@ prompts/、meta/、licenses/ 实际提示与作者出处
 runtime/                 依赖、镜像与逐题环境锁
 scripts/、tests/          准备、运行、回归和显式集成检查
 data/                    本地官方输入、私有grader、索引与环境；仅公开背景/清单分发
-runs/                    两份当前交接与 v4 验收
+runs/                    两份当前交接与各版本验收
 archive/                 旧运行、历史分析与归档索引
 ```
 
 主要文档只读 [PROTOCOL](PROTOCOL.md) 与两份 HANDOFF；[来源记录](meta/coevo-authoring/SOURCE.md)保留作者出处。旧实验由 [归档索引](archive/index.json)集中归档，保存原始内容和旧路径映射；[HISTORY](archive/HISTORY.md)收纳历史解释，不作为运行入口。内部审计留在本地，不作为对外交接。
 
-SkillsBench新增两份独立85题配置：[GPT-5.6 Terra](runs/skillsbench/full-85-gpt56-v4/config.yaml)与[Opus 4.8](runs/skillsbench/full-85-opus48-v4/config.yaml)。同一共享pipeline、同一native Codex执行器，分别使用Bedrock Responses与Messages；完整准备、smoke、NoSkill、逐版本评价和恢复步骤见SkillsBench HANDOFF。逐题真实Docker准备及本地模拟接口证据在 [当前 readiness](runs/readiness-skillsbench-full85-20261007-001/acceptance.json)，新模型成绩未测。
+SkillsBench新增两份独立85题配置：[GPT-5.6 Terra](runs/skillsbench/full-85-gpt56-v5/config.yaml)与[Opus 4.8](runs/skillsbench/full-85-opus48-v5/config.yaml)。同一共享pipeline、同一native Codex执行器，分别使用Bedrock Responses与Messages；完整准备、smoke、NoSkill、逐版本评价和恢复步骤见SkillsBench HANDOFF。逐题真实Docker准备及本地模拟接口证据在 [当前 readiness](runs/readiness-skillsbench-author-v5-20261007-001/final-status.json)，新模型成绩未测。
 
 ```bash
 make setup

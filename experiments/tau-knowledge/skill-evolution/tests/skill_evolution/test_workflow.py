@@ -1257,6 +1257,100 @@ def test_formal_report_requires_independent_measurement(tmp_path):
     assert report["execution"]["formal_matrix_result"]
 
 
+def test_skillsbench_v5_workflow_uses_learning_runner_author_budget_and_private_scores(
+    tmp_path, monkeypatch
+):
+    from contextlib import contextmanager
+
+    from tau_skill_evolution.artifacts import EvolutionSubmission
+    from tau_skill_evolution.verifier import TestSuite, VerificationReport
+
+    workflow, _, _ = _workflow(tmp_path, experiment="skillsbench")
+    cells = ((workflow.spec.tasks[0], "benign"),)
+    workflow.create(cells)
+    captures = {}
+    session = SimpleNamespace(
+        runner=object(),
+        phase_remaining=lambda: 1000,
+        schema_issues=lambda bundle: [],
+        read_progress=lambda: {"unchecked": []},
+    )
+
+    class Adapter:
+        tool_schemas = ()
+
+        @contextmanager
+        def evolution_session(self, initial, inputs, base, **kwargs):
+            captures["deadline"] = kwargs["deadline"]
+            yield session
+
+        def oracle(self, bundle, *, phase):
+            assert self.deadline == captures["deadline"]
+            return {
+                "status": "MEASURED",
+                "phase": phase,
+                "passed": True,
+                "resolved_reward": 1.0,
+                "reward_source": "reward",
+                "bundle_hash": bundle.bundle_hash,
+                "parent_hash": bundle.parent_hash,
+            }
+
+    class AuthorVerifier:
+        def __init__(self, model, runner, **kwargs):
+            assert runner is session.runner
+            captures["verifier_journal"] = kwargs["journal"]
+
+        def create_suite(self, *args, **kwargs):
+            return TestSuite({"tests/test_outputs.py": "def test_public(): assert True"})
+
+        def verify(self, inputs, base, trace, suite, **kwargs):
+            return VerificationReport(suite, True, 1.0)
+
+    def execute(model, bundle, inputs, base, **kwargs):
+        captures["options"] = kwargs
+        kwargs["conversation"].episodes = 1
+        return EvolutionSubmission(bundle, {"events": []}, "learning", 0, True)
+
+    workflow.bank_factory = lambda _: Adapter()
+    monkeypatch.setattr(
+        "tau_skill_evolution.author_verifier.AuthorSkillsBenchVerifier", AuthorVerifier
+    )
+    monkeypatch.setattr("tau_skill_evolution.workflow.execute_initial", execute)
+    workflow.evolve(cells)
+    report = workflow.report()
+    case = report["cases"][0]
+    options = captures["options"]
+    assert options["max_turns"] is None and options["max_episodes"] == 120
+    assert options["timeout_seconds"] is None and options["deadline"] == captures["deadline"]
+    assert case["author_counters"]["generator_episodes"] == 1
+    assert case["author_counters"]["normal_oracle_interventions"] == 1
+    assert case["oracle_history"][0]["resolved_reward"] == 1.0
+    assert case["evaluations"][case["final_bundle_hash"]]["status"] == "NOT_MEASURED"
+    assert "Author selection and actual remeasurement" in (workflow.root / "REPORT.md").read_text()
+    before = copy.deepcopy(case)
+    workflow.evolve(cells)
+    assert workflow.report()["cases"][0] == before
+
+
+def test_skillsbench_unknown_learning_result_blocks_later_evaluation_posts(tmp_path):
+    workflow, log, requests = _workflow(tmp_path, experiment="skillsbench")
+    cells = ((workflow.spec.tasks[0], "benign"),)
+    workflow.create(cells)
+    root, journal = workflow._cell(*cells[0])
+    initial = load_bundle(root / "initial")
+    stopped = EvolutionResult(
+        (initial,), (), (), (), 0, "oracle_result_unknown", initial.bundle_hash
+    )
+    journal.dispatch("evolution-result", {}, stopped.to_dict, external=False)
+    before = copy.deepcopy((log, requests))
+    workflow.evaluate(cells)
+    case = workflow.report()["cases"][0]
+    assert case["evaluations"][initial.bundle_hash]["status"] == "NOT_MEASURED"
+    assert case["evaluations"][initial.bundle_hash]["reason"] == "oracle_result_unknown"
+    assert (log, requests) == before
+
+
 def test_full_workflow_alternates_tests_and_skills_then_resumes_without_side_effects(tmp_path):
     generated = []
 

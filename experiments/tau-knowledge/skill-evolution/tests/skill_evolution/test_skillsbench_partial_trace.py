@@ -1,5 +1,6 @@
 """Known pre-dispatch limits preserve public work without masking unknown POSTs."""
 
+import hashlib
 import json
 from contextlib import contextmanager
 from pathlib import Path
@@ -75,7 +76,42 @@ def partial_executor(tmp_path):
     def grade(_episode):
         assert phases[-1] == "closed"
         phases.append("graded")
-        return {"status": "MEASURED", "utility": False, "reward": 0.0}
+        report = {
+            "results": {
+                "summary": {"tests": 1, "passed": 0, "failed": 1},
+                "tests": [{"name": "PRIVATE_GRADER_CHECK", "status": "failed"}],
+            }
+        }
+        evidence = Path(_episode.grader_evidence_dir)
+        evidence.mkdir(parents=True)
+        contents = {
+            "reward.txt": b"0",
+            "ctrf.json": json.dumps(report).encode(),
+            "stdout.bin": b"private grader output",
+            "stderr.bin": b"",
+        }
+        for name, content in contents.items():
+            (evidence / name).write_bytes(content)
+        (evidence / "evidence.json").write_text(
+            json.dumps(
+                {
+                    "grader_exit_code": 1,
+                    "process_failure": None,
+                    "identity": _episode.grader_identity,
+                    "files": {
+                        name: {"sha256": hashlib.sha256(content).hexdigest(), "bytes": len(content)}
+                        for name, content in contents.items()
+                    },
+                    "official_items": report["results"]["tests"],
+                }
+            )
+        )
+        return {
+            "status": "MEASURED",
+            "utility": False,
+            "reward": 0.0,
+            "official_checks": {"status": "MEASURED", "passed": 0, "total": 1, "rate": 0.0},
+        }
 
     adapter = SkillsBenchAdapter.__new__(SkillsBenchAdapter)
     adapter.executor = "local-tools"
@@ -102,6 +138,8 @@ def partial_executor(tmp_path):
         episode=fresh_episode,
         close_public=close_public,
         grade=grade,
+        phase_remaining=lambda: 300,
+        _official_report_name=lambda: "ctrf.json",
     )
     adapter.artifact_root = tmp_path / "artifacts"
     adapter.model_journal_dir = tmp_path / "private-models"
@@ -168,10 +206,19 @@ def test_input_limit_keeps_official_grading_of_known_partial_work(partial_execut
     assert setup.phases == ["episode", "closed", "graded", "cleaned"]
     assert len(setup.posts) == 1
     if phase == "oracle":
-        assert result is False
+        assert result["status"] == "MEASURED" and result["passed"] is False
+        assert result["canonical_reward"] == result["resolved_reward"] == 0
+        assert result["tests_passed"] == 0 and result["total_tests"] == 1
+        assert result["bundle_hash"] == setup.bundle.bundle_hash and result["parent_hash"] is None
+        evidence = Path(result["grader_evidence_ref"])
+        assert result["grader_evidence_hash"] == hashlib.sha256(evidence.read_bytes()).hexdigest()
+        assert result["test_details"] == [{"name": "PRIVATE_GRADER_CHECK", "status": "failed"}]
     else:
         assert result["status"] == "MEASURED" and result["reward"] == 0.0
         assert result["execution_termination_reason"] == "input_token_budget_exhausted"
+    for path in setup.adapter.artifact_root.rglob("*.json"):
+        public = path.read_text()
+        assert "PRIVATE_GRADER_CHECK" not in public and "PRIVATE_EXECUTION_OUTPUT" not in public
 
 
 @pytest.mark.parametrize("failure", ["transport", "budget_during_send", "auth", "invalid"])

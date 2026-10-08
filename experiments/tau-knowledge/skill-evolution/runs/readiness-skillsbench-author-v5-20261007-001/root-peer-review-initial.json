@@ -1,0 +1,60 @@
+{
+  "reviewer": "colleague_method_review",
+  "status": "REQUEST_CHANGES",
+  "method": "Read-only source review against fixed CoEvoSkills 4380d4b controller; no model, credential read or environment operation",
+  "scope": [
+    "best save/load/hash corruption/missing snapshot/-1 sentinel/strict ties",
+    "schema and locked/unlocked suite transitions",
+    "UNKNOWN/auth/cleanup stop and independent-evaluation gating",
+    "Workflow author budgets and absolute deadline routing",
+    "raw outcome versus retained reward versus independent report",
+    "normal and HTTPError body deadline behavior",
+    "Generator access to shared-container Verifier files"
+  ],
+  "blocking_findings": [
+    {
+      "id": "generator_verifier_access_guard_missing",
+      "local_path": "src/tau_skill_evolution/skillsbench.py",
+      "local_method": "SkillsBenchEvolutionSession.terminal -> SkillsBenchRunner.terminal",
+      "evidence": "Commands dispatch directly to shared MAIN without author hidden-evaluator path gate. Generator can directly cat /root/verifier/test_outputs.py, which now exists in that same container.",
+      "author_source": "libs/terminus_agent/agents/terminus_2/harbor_terminus_2_evolution.py:136-143,198-237",
+      "required_change": "Port the exact author protected evaluator command rejection to the SkillsBench learning terminal, allow progress/summary, archive known rejected command result, retain disclosure that the gate is heuristic."
+    }
+  ],
+  "resolved_findings": [
+    {
+      "id": "http_error_deadline_bypass",
+      "resolution": "Both normal response and HTTPError now use _response_body with read1 and remaining deadline; defaultNone retains old reader."
+    }
+  ],
+  "nonblocking_findings": [
+    {
+      "id": "verifier_config_overrides_ignored",
+      "evidence": "V5 spec permits lower verifier max_turns/diagnosis_turns, while pinned IndependentVerifier creates max_episodes30/8 regardless. All prepared configs use correct30/8.",
+      "suggestion": "Reject nondefault values in v5 validation or remove these decorative fields without modifying vendored source."
+    }
+  ],
+  "verified_semantics": [
+    "best only physically oracle-scored sealed content; strict greater from author -1 sentinel; no independent-eval selection",
+    "save failure and missing snapshots retain score separately; corrupted manifest/content stops rather than evaluates altered snapshot",
+    "final schema branch precedes best rollback; normalK refund and consecutiveinfra reset; r15 does not reset",
+    "knownfatal result blocks new independent evaluation POST; raw oracle_history preserved independently of author_terminal_result",
+    "Generator fixed input/session and feedback projection do not receive official test_details or reward"
+  ],
+  "limits": [
+    "Same-container command/log filtering is not a physical role sandbox and cannot prove arbitrary Python semantic safety.",
+    "The fixed one-POST S0, explicit submission, boolean oracle, context admission and extra independent evaluation remain declared adapters.",
+    "This review runs no additional tests; final global regression and real Docker evidence are owned by root."
+  ],
+  "file_hashes": {
+    "src/tau_skill_evolution/evolution.py": "ec1c7345d6bd81d99bc51133439a5a31757d3b3bfbcadb36bbbd20bae50723bb",
+    "src/tau_skill_evolution/workflow.py": "b6049ab5e9a893bc978437833a16ccc50c21a716b5251ba77ebd933c8af04e81",
+    "src/tau_skill_evolution/model.py": "ee488c1c95ba6bd15f3b401e5af37640344b54581d1b6dde04c62d72e69dcd12",
+    "src/tau_skill_evolution/skillsbench.py": "e0b3addd8ab3837c593e14944c1504155aed8b2203724e3676327d8c0cff3f24",
+    "src/tau_skill_evolution/skillsbench_runtime.py": "e04e075e5310dce77925d57bea4260745285e5a4170a76c37a13934d9898a67d",
+    "src/tau_skill_evolution/author_verifier.py": "5c8949482ae13bcad7fdf199eba029e766f9786ca11afc87517379b9438dd452",
+    "src/tau_skill_evolution/generator.py": "16011c41d9e2356a73e131ca0a960c3c3661f7e9a680d6ae8952b9e2dca8d7c6",
+    "src/tau_skill_evolution/spec.py": "808d60c2fcdae500c2347ddd480c54277694386e687571b78539f4f87ec9a63f",
+    "src/tau_skill_evolution/codex_provider.py": "33fd5f2f8e819ddcb61ee2eb57a519a2471b430524fc2ec441879ed7891c1792"
+  }
+}

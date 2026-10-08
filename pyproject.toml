@@ -33,18 +33,19 @@ package-dir = {"" = "experiments/tau-knowledge/skill-evolution/src"}
 where = ["experiments/tau-knowledge/skill-evolution/src"]
 
 [tool.setuptools.package-data]
-"tau_skill_evolution.author" = ["LICENSE", "SOURCE.json"]
+"tau_skill_evolution.author" = ["LICENSE", "SOURCE.json", "VERIFIER_SOURCE.json", "coevo/**/*.py", "coevo/**/*.txt"]
 
 [tool.ruff]
 target-version = "py310"
 line-length = 100
+extend-exclude = ["**/author/codex_skill_only.py", "**/author/skill_schema.py", "**/author/coevo/**"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.ruff.format]
 # Keep the vendored author implementation byte-identical to its pinned source.
-exclude = ["**/author/codex_skill_only.py"]
+exclude = ["**/author/codex_skill_only.py", "**/author/skill_schema.py", "**/author/coevo/**"]
 
 [tool.pytest.ini_options]
 testpaths = ["experiments/tau-knowledge/skill-evolution/tests"]

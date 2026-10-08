@@ -1,0 +1,25 @@
+{
+  "scope": "skillsbench_author_v5_adapter",
+  "command": ".venv/bin/python -m pytest -q experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench.py",
+  "result": {
+    "passed": 256,
+    "skipped": 5,
+    "failed": 0,
+    "duration_seconds": 19.94
+  },
+  "captured_from": "completed local tool execution; shared acceptance log is authoritative after final freeze",
+  "additional_review": {
+    "author_evolution_tests_passed": 18,
+    "earlier_author_generator_provider_tests_passed": 115
+  },
+  "lint": "PASS",
+  "compile": "PASS",
+  "diff_check": "PASS",
+  "source_snapshot": {
+    "src/tau_skill_evolution/skillsbench.py": "e0b3addd8ab3837c593e14944c1504155aed8b2203724e3676327d8c0cff3f24",
+    "tests/skill_evolution/test_skillsbench.py": "6fa9117e5bfdc5ee43ee838e790a1733f9b6a1ad545289f4186425885c7216e4"
+  },
+  "model_measurement": "NOT_MEASURED",
+  "paid_model_calls": 0,
+  "docker_validation": "NOT_RUN_BY_THIS_AGENT"
+}
