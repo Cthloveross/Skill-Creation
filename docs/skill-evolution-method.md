@@ -54,16 +54,16 @@ Generator 一次创建并提交完整 `S0`。控制器只校验包能否安全�
 
 ```mermaid
 flowchart TD
-    A[公开任务与背景资料池] --> B[多轮资料获取与冻结 B*]
-    B --> C[一次创建并封存 S0]
-    C --> D[Generator 执行任务并提交包与结果]
-    D --> V[独立 Verifier 公开检查]
-    V -->|未通过：保持有效测试，修改父包| D
-    V -->|通过| O[Fresh 官方 oracle]
-    O -->|失败：修改并升级公开检查| D
-    O -->|成功或满足停止条件| F[按预定规则选择最终包]
-    D -->|预算或其他停止条件：按域内规则收尾| F
-    F --> G[各封存版本独立 fresh 评估]
+    A["Task Specification and Background Corpus"] --> B["Retrieve Evidence and Freeze B*"]
+    B --> C["Generate the Initial Skill (S0)"]
+    C --> D["Execute the Task and Submit the Skill"]
+    D --> V["Independent Verification"]
+    V -->|"Checks fail: revise the skill, keep tests fixed"| D
+    V -->|"Checks pass"| O["Official Evaluation in a Fresh Environment"]
+    O -->|"Task fails: refine the skill and update tests"| D
+    O -->|"Task passes"| F["Select the Final Skill"]
+    D -->|"Stopping criterion reached"| F
+    F --> G["Independent Evaluation of Skill Versions<br/>in Fresh Environments"]
 ```
 
 Generator 在持续学习环境中执行、观察和修改，所有后续修改沿用同一 `B*`，提交时绑定完整包与对应的实际轨迹或产物。任何标为 `S0` 的测量必须对应原始包 hash；已修改的首次提交按后续内容版本记录。未提交草稿和环境补丁不作为已验证的 Skill 版本。
