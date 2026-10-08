@@ -22,17 +22,17 @@ Skill 是执行说明及必要脚本、参考资料等组成的完整包。学�
 
 ## 3. 方法
 
-### 3.1 角色与信息流
+### 3.1 LLM Roles and Information Flow
 
-| 角色 | 职责与可见信息 |
-|---|---|
-| Analyzer | 根据公开任务分解需求、组织查询、判断证据缺口并选择资料；不创建或执行 Skill |
-| Generator | 根据固定资料创建包，随后直接执行任务、观察结果、修改父包并提交 |
-| Verifier | 在独立模型会话中依据公开要求和执行结果构建、运行及诊断公开测试 |
+| Role | Receives | Does |
+|---|---|---|
+| **LLM Analyzer** | Public task inputs, available retrieval and observation tools, retrieved documents, relevance scores, and unresolved evidence gaps. | Plan queries, assess relevance and coverage, discard unrelated material, and select the frozen evidence base `B*`. Search further when evidence is insufficient. |
+| **Skill Generator** | **Creation:** public inputs, frozen `B*`, and tool instructions. **Evolution:** the same fixed inputs, the complete parent skill, its own execution observations and history, skill format and progress checks, coarse failure categories, and oracle pass/fail. | Create `S0` once without self-testing. Then execute the task, inspect results, revise the parent skill, and submit the complete package with reusable fixes. |
+| **Surrogate Verifier** | Public inputs, frozen `B*`, submitted execution traces and artifacts or live task state, its own tests and results, and an oracle-failure signal when tests need upgrading. | Inspect actual outputs, build and run checks, and diagnose failures. Keep valid tests fixed during skill revision; refine them after oracle failure. |
 
-角色的消息历史保持独立。Verifier 不接收 Generator 的推理或私有 grader；是否共用任务环境，以及对 Skill 文件的访问边界，由实验明确规定。独立模型会话与物理隔离是不同属性。
+Each role has a separate conversation. The Generator is not given the Analyzer's reasoning or unselected retrieval history, nor the Verifier's test code or detailed diagnostics. The Verifier is not given the Generator's reasoning; task-environment sharing and access to Skill files depend on the adapter. Separate conversations do not imply filesystem isolation.
 
-学习侧获得公开观察、允许的失败类别和 oracle 通过／失败。详细官方分数可由 host 按预先声明的规则选包，不反馈给学习角色。独立评估结果始终不用于继续学习或选包。
+Hidden answers and official grader details are excluded from all three roles. Official scores remain with the host for the declared selection rule. Independent evaluation results feed neither learning nor skill selection.
 
 ### 3.2 资料获取与冻结
 
