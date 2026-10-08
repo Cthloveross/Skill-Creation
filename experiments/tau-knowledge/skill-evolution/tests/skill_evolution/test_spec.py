@@ -87,11 +87,11 @@ def test_skillsbench_configuration_has_the_fixed_matrix_and_only_benign_arm():
     assert spec.values["source"]["commit"] == SKILLSBENCH_COMMIT
     assert len(spec.tasks) == len(set(spec.tasks)) == len(spec.cells) == 85
     assert list(spec.tasks) == sorted(spec.tasks)
-    assert spec.experiment == "skillsbench" and spec.namespace == "skillsbench.skill-evolution.v6"
+    assert spec.experiment == "skillsbench" and spec.namespace == "skillsbench.skill-evolution.v7"
     assert spec.values["runtime"]["executor"] == "author-codex"
     assert spec.arms == ("benign",) and spec.targets("benign") == ()
     assert spec.profile(spec.tasks[0]) == "benign"
-    assert spec.values["acquisition"]["max_reads"] == 0
+    assert spec.values["acquisition"]["max_reads"] == 10
     assert spec.values["acquisition"]["max_clarifications"] == 0
     assert spec.values["roles"]["analyzer"]["prompt"] == "analyzer-skillsbench.md"
     assert spec.values["embedding"]["chunk_tokens"] == 2048
@@ -105,7 +105,7 @@ def test_skillsbench_configuration_has_the_fixed_matrix_and_only_benign_arm():
 
 def test_skillsbench_author_budgets_do_not_keep_extra_revision_or_post_caps():
     spec = load_spec(SKILLSBENCH_CONFIG)
-    assert spec.namespace == "skillsbench.skill-evolution.v6"
+    assert spec.namespace == "skillsbench.skill-evolution.v7"
     assert spec.values["evolution"] == {
         "max_surrogate_retries": 15,
         "max_oracles": 5,
@@ -216,11 +216,15 @@ def test_skillsbench_rejects_unsupported_runtime_lock_templates(tmp_path, path):
 
 
 def test_author_codex_cannot_use_a_historical_namespace(tmp_path):
-    with pytest.raises(ValueError, match="Codex requires.*v4"):
+    def configure(values):
+        values.update(schema_version="skillsbench.skill-evolution.v2")
+        values["acquisition"].update(max_reads=0)
+
+    with pytest.raises(ValueError, match="Codex requires.*namespace"):
         load_spec(
             _copy_config(
                 tmp_path,
-                lambda value: value.update(schema_version="skillsbench.skill-evolution.v2"),
+                configure,
                 SKILLSBENCH_CONFIG,
             )
         )
@@ -362,12 +366,23 @@ def test_spec_rejects_changed_commitments_or_invalid_controls(tmp_path, mutate):
         load_spec(_copy_config(tmp_path, mutate))
 
 
-@pytest.mark.parametrize("name", ["max_reads", "max_clarifications"])
-def test_skillsbench_rejects_enabling_bank_acquisition_actions(tmp_path, name):
+def test_skillsbench_rejects_enabling_simulator_clarification(tmp_path):
     with pytest.raises(ValueError, match="cannot clarify"):
         load_spec(
-            _copy_config(tmp_path, lambda v: v["acquisition"].update({name: 1}), SKILLSBENCH_CONFIG)
+            _copy_config(
+                tmp_path,
+                lambda v: v["acquisition"].update(max_clarifications=1),
+                SKILLSBENCH_CONFIG,
+            )
         )
+
+
+def test_skillsbench_discovery_budget_is_configurable_without_bank_permissions(tmp_path):
+    spec = load_spec(
+        _copy_config(tmp_path, lambda v: v["acquisition"].update(max_reads=1), SKILLSBENCH_CONFIG)
+    )
+    assert spec.values["acquisition"]["max_reads"] == 1
+    assert spec.values["acquisition"]["max_clarifications"] == 0
 
 
 def test_snapshot_configuration_uses_current_experiment_root(tmp_path):
@@ -540,7 +555,10 @@ def test_codex_plan_is_an_explicit_credential_free_skillsbench_trial(tmp_path, m
         lambda v: v["provider"].update(version="0.162.0"),
         lambda v: v["provider"].update(binary_sha256="0" * 64),
         lambda v: v["provider"].update(api_key_env="AWS_BEARER_TOKEN_BEDROCK"),
-        lambda v: v.update(schema_version="skillsbench.skill-evolution.v4"),
+        lambda v: (
+            v.update(schema_version="skillsbench.skill-evolution.v4"),
+            v["acquisition"].update(max_reads=0),
+        ),
     ],
 )
 def test_codex_plan_rejects_silent_model_or_pin_changes(tmp_path, mutate):
@@ -562,7 +580,7 @@ def test_tau_does_not_accept_codex_plan_transport(tmp_path):
             "binary_sha256": "0" * 64,
         }
 
-    with pytest.raises(ValueError, match="SkillsBench v6"):
+    with pytest.raises(ValueError, match="SkillsBench author release"):
         load_spec(_copy_config(tmp_path, configure))
 
 
@@ -573,8 +591,10 @@ def test_role_prompts_match_domain_capabilities_and_omit_quotes_by_default():
     assert "Omit quote by default" in analyzer
     assert all(field in analyzer for field in ("policies", "tools", "parameters", "preconditions"))
     sb = (spec.root / "prompts/analyzer-skillsbench.md").read_text()
-    assert '{"kind":"read_only"' not in sb and '{"kind":"clarify"' not in sb
-    assert "budgets are zero" in sb
+    assert '{"kind":"read_only"' in sb and '{"kind":"clarify"' not in sb
+    assert "list_input_directory" in sb and "read_input_file" in sb
+    assert "no user simulator or clarification" in sb.lower()
+    assert "No file inventory or container-build metadata" in sb
     verifier = (spec.root / "prompts/verifier.md").read_text()
     assert "/bundle/public_inputs.json" in verifier and "terminal" in verifier
 

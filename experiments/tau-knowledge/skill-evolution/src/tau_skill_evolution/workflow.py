@@ -382,7 +382,9 @@ class Workflow:
                             else prepare_corpus(self.spec, task, arm)
                         )
                         allowed_reads = (
-                            () if self.spec.experiment == "skillsbench" else READ_ONLY_TOOL_NAMES
+                            session.allowed_read_only_tool_names
+                            if self.spec.experiment == "skillsbench"
+                            else READ_ONLY_TOOL_NAMES
                         )
                         reads = {
                             name: (lambda name=name, **arguments: session.read(name, arguments))

@@ -102,7 +102,6 @@ matrix:
   - benign
   retries: 0
 retrieval:
-  # Only background_docs is searched; instruction and environment are provided task inputs.
   bm25_top_k: 10
   dense_top_k: 10
   rrf_k: 60
@@ -170,10 +169,12 @@ evolution:
 runtime:
   executor: author-codex
   codex:
-    binary: codex
+    binary: /home/tc442/.local/skillsbench-codex-0.160.1/codex
     version: 0.160.1
     binary_sha256: f34a4d2301892ae96c90097786bfe5dc269f187b6f69faf42a7b357b8c081e35
     evaluation_timeout_seconds: 7200
+    code_mode_host_binary: /home/tc442/.local/skillsbench-codex-0.160.1/codex-code-mode-host
+    code_mode_host_sha256: b33e8a5283f3c65c2a0aca6d43a59cfe850f624d8fa16992e3cad4fcc27c14e1
   request_timeout_seconds: 900
   max_turns: null
   max_task_tool_calls: 800

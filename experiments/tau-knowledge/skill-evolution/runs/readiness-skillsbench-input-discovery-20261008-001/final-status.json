@@ -1,0 +1,137 @@
+{
+  "schema": "skillsbench-input-discovery-readiness.v1",
+  "snapshot_at": "2026-10-08T21:08:24.551511+00:00",
+  "status": "PASS_WITH_EXPLICIT_LIMITATIONS",
+  "namespace": "skillsbench.skill-evolution.v7",
+  "source_identity_hash": "f03d8156342ac18c482be6ad02540e470ed9884bbdd5af62d3da473834b64229",
+  "real_model_trial": {
+    "directory": "../skillsbench/input-discovery-five-gpt54-20261008-003",
+    "status": "COMPLETED",
+    "tasks": 5,
+    "model": "openai.gpt-5.4",
+    "transport": "bedrock-responses",
+    "content_versions_evaluated": 22,
+    "independent_measurements": 27,
+    "public_results": "../skillsbench/input-discovery-five-gpt54-20261008-003/public-summary.json",
+    "independent_results_review": "../skillsbench/input-discovery-five-gpt54-20261008-003/public-summary-independent-review.json",
+    "task_pass_rates": {
+      "NoSkill": 0.2,
+      "S0": 0.6,
+      "Final": 0.6
+    },
+    "unknown_model_operations": 0
+  },
+  "checks": {
+    "full_regression": {
+      "passed": 1522,
+      "skipped": 57,
+      "failed": 0,
+      "seconds": 405.0,
+      "log": "full-regression.log"
+    },
+    "real_docker": {
+      "passed": 1,
+      "scope": "author Verifier persistent task environment with local scripted provider; no paid model",
+      "log": "real-docker.log"
+    },
+    "independent_discovery_review": {
+      "evidence": "independent-review.json"
+    },
+    "phase_projection_review": {
+      "evidence": "phase-projection-review.json",
+      "use": "current_contract_review; historical strict phase rejection review superseded"
+    },
+    "independent_results_review": {
+      "status": "PASS_WITH_EXPLICIT_LIMITATIONS",
+      "first_review_checks": 127,
+      "second_review_checks": 1842,
+      "mismatch_count": 0
+    },
+    "learning_cleanup": {
+      "status": "PASS",
+      "closed_learning_environments": 5,
+      "owned_container_ids_remaining": 0,
+      "evidence": "learning-cleanup-review.json"
+    },
+    "static_checks": {
+      "status": "PASS",
+      "evidence": "static-checks.json"
+    },
+    "publication_review": {
+      "status": "PASS",
+      "evidence": "publication-review.json"
+    }
+  },
+  "limitations": [
+    "Docker scripted-provider fixture validates mechanisms, not real-model utility or full85 environment readiness.",
+    "Primary003 completed on five selected tasks: one Dialogue rescue and one ACC degradation; no net Task pass improvement from S0 to Final.",
+    "ACC and DAPT stopped at the declared context guard; preserved author terminal oracle branches completed.",
+    "Analyzer sufficient is operational judgment and public Verifier semantics can be incomplete or mistaken; concrete limits remain in public audits.",
+    "Historical001/002 diagnostic results and usage are excluded from primary003 metrics.",
+    "GT counts are official reporter groups, not individual Python assertions.",
+    "Fees and full85 v7/two-model readiness remain NOT_MEASURED."
+  ],
+  "evidence": {
+    "full-regression.log": {
+      "sha256": "8dd0b25f976c9ff890bec36ff07cba5a8d76e99a786f0b1630fb8bcd41af08b4",
+      "bytes": 8675
+    },
+    "real-docker.log": {
+      "sha256": "1bedc790f020a67e208233aa1264a81464db267490886570c782b10c3101bb4c",
+      "bytes": 99
+    },
+    "independent-review.json": {
+      "sha256": "10f43de0fc4f15f6167220a8b8b9c7cd06441e6302e25bc6c4379cfe3d574749",
+      "bytes": 8832
+    },
+    "phase-projection-review.json": {
+      "sha256": "a77a8e3e5e7b3dc9623481622eb01fc05a45714b1cdc2a8f6edbe8d49cf8456b",
+      "bytes": 8581
+    },
+    "historical-strict-phase-model-regression.log": {
+      "sha256": "a1da0f74edfebb307a5e74e22c1f21ff33fbbe4ecfaad2e5a4b11ad0c685a368",
+      "bytes": 179
+    },
+    "learning-cleanup-review.json": {
+      "sha256": "54e09d1bfb1822d9befd66a363c1b14d1da7632290a89b7980a0e45b99383249",
+      "bytes": 2446
+    },
+    "static-checks.json": {
+      "sha256": "aee8edb4a274b6d61c8872d9eb3da70cefdafe8669820519e112b10979396baf",
+      "bytes": 555
+    },
+    "publication-review.json": {
+      "sha256": "c9e2e7b4883bd1f2065b7ab1dda76365197c1ad7ce2ecd2ec8c7408ddf70332c",
+      "bytes": 16669
+    }
+  },
+  "historical_evidence": {
+    "historical-strict-phase-model-regression.log": "93-test run of superseded strict phase projection; not current source acceptance"
+  },
+  "public_result_evidence": {
+    "public-summary.json": {
+      "sha256": "c229d461200137b738b873878d942ddf1d3267a469fdd05e70f4a20350ac1f42",
+      "bytes": 66003
+    },
+    "public-summary-independent-review.json": {
+      "sha256": "8c15afee522268f244b290e654f11b040f449539feb98f2fca889764c4fdaa5a",
+      "bytes": 76685
+    },
+    "public-acquisition-review.json": {
+      "sha256": "354c1566462144d998f5f516ffb0d2fe61215a69712490c4948deb19cc5d1f2b",
+      "bytes": 141566
+    },
+    "public-verification-review.json": {
+      "sha256": "a5be65afac34f78ea4d2b6643635a2448e7a1600894c6dda3c2780a9267bd977",
+      "bytes": 119651
+    },
+    "source-identity.json": {
+      "sha256": "bdf44c0312615dc7f04e58245933c016bc6b4d24083f00bfd8b9d5aeafbcbfb5",
+      "bytes": 39700
+    },
+    "preflight/admission.json": {
+      "sha256": "7765172552d2a9d64a624472a1c83b5c8a919425e979862b5648303fceeb4353",
+      "bytes": 13202
+    }
+  }
+}

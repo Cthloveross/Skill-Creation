@@ -1,0 +1,190 @@
+{
+  "schema": "skillsbench.phase-projection-independent-review.v1",
+  "status": "PASS_WITH_EXPLICIT_LIMITATIONS",
+  "created_at": "2026-10-08T19:23:08.489896+00:00",
+  "reviewer": "input_discovery_docs_review",
+  "source_sha256": {
+    "src/tau_skill_evolution/model.py": "122281a5c86ea9772b2992bb125f1aa0de62414aeb370449fe284fb2c0f5c8a8",
+    "tests/skill_evolution/test_model.py": "c12e3af7946f3adab72c5b006a3d45eec6d8ba3d4b263bbcb266b1167ce03ddb"
+  },
+  "offline_reprojection": [
+    {
+      "task_id": "3d-scan-calc",
+      "operation_id": "acquisition/analyzer/0",
+      "original_provider_receipt_sha256": "70dd4e8d1a7a8c2571f95c5ecabc714c9f47b581a78c4d32f9e5fc2543da654c",
+      "raw_journal_file_sha256": "e642e73af224624663d1dd8c1f50eb9f29fe313e12ee879c3ed446ff4dd66507",
+      "normalized_historical_file_sha256": "34197a479807b969d8b28f72e9c77a6d82bca35b471a78b5c501ed0cce5febb7",
+      "new_projection_sha256": "e00e283a241c00eb26c08f7cd00bd35b333abe1c7f6d14ce3aa8dbbfa61d4190",
+      "projection_equals_only_final_answer": true,
+      "native_continuation_unchanged": true,
+      "usage_response_id_tool_calls_unchanged": true,
+      "raw_and_historical_normalized_files_unchanged": true,
+      "final_json_fields": [
+        "action",
+        "conflicts",
+        "coverage",
+        "document_scores",
+        "evidence",
+        "gaps",
+        "sufficient"
+      ],
+      "host_state_validation": "score IDs must be unique documents returned in full",
+      "requests_sent": 0
+    },
+    {
+      "task_id": "dialogue-parser",
+      "operation_id": "acquisition/analyzer/0",
+      "original_provider_receipt_sha256": "e8723c1004a5b363a1c8a7e781720044e921d6a4455ef9950fbf412e89d974fd",
+      "raw_journal_file_sha256": "bb29cb39571eafdc89dc1adba1907df77231a59cfd8b0e8f9b977838e4b1fcb3",
+      "normalized_historical_file_sha256": "26400dd58cd3975349ef7d42a0cb86fbc537d155bc9081e157320551f121c8fb",
+      "new_projection_sha256": "ca8ca32b3bc78144af559457e1fda4e3625d1187677d05ea493af92d011fa9a9",
+      "projection_equals_only_final_answer": true,
+      "native_continuation_unchanged": true,
+      "usage_response_id_tool_calls_unchanged": true,
+      "raw_and_historical_normalized_files_unchanged": true,
+      "final_json_fields": [
+        "action",
+        "conflicts",
+        "coverage",
+        "document_scores",
+        "evidence",
+        "gaps",
+        "sufficient"
+      ],
+      "host_state_validation": "valid read-only action; offline validation only, not dispatched",
+      "requests_sent": 0
+    }
+  ],
+  "code_review": {
+    "explicit_final_answer_takes_priority": "PASS",
+    "commentary_never_treated_as_final_answer": "PASS",
+    "unphased_provider_legacy_text_preserved": "PASS",
+    "native_output_and_opaque_continuation_preserved": "PASS",
+    "ordinary_tool_calls_and_usage_unchanged": "PASS",
+    "unknown_phase_rejected": "PASS",
+    "multiple_final_answers_not_silently_cherry_picked": "PASS",
+    "no_journal_rewrite_retry_or_model_request": "PASS"
+  },
+  "limitations": [
+    "JSON projection is not task or evidence validation. The old 3D response still contains unsupported document scores and is rejected against the empty initial inventory.",
+    "This changes normalized role text, not provider receipt bytes, continuation history, usage or experiment data and budgets.",
+    "The stopped diagnostic trial remains stopped. This offline inspection is not a resumed trial or a new live model result."
+  ],
+  "credentials_accessed": false,
+  "thinking_items_inspected": false,
+  "model_requests": 0,
+  "independent_offline_tests": {
+    "scope": "test_model.py: phase or commentary or final_answer",
+    "passed": 14,
+    "failed": 0,
+    "deselected": 79
+  },
+  "previous_review_scope": "The existing top-level source/code_review/offline_reprojection fields describe the strict-final projection reviewed before trial 002; that contract rejected commentary-only actions. Its current replacement is in current_contract_review. Original historical model receipts and checkpoints remain unchanged.",
+  "previous_review_sha256": "da83f2f494a6f79bfc03de2710e348afe06a36a3ff4fafe88245cf45a527b397",
+  "active_review_key": "current_contract_review",
+  "current_contract_review": {
+    "status": "PASS_WITH_EXPLICIT_LIMITATIONS",
+    "reviewed_at": "2026-10-08T19:32:08.293791+00:00",
+    "reviewer": "input_discovery_docs_review",
+    "contract": "Prefer explicit final_answer text; otherwise preserve all assistant output_text in original order. Preserve native output phases and continuation. Existing role JSON/schema/permissions/references still apply, without model-layer JSON coupling.",
+    "source_sha256": {
+      "src/tau_skill_evolution/model.py": "b718ef48a844dcef07dd761106dbca06a6e636b19d5dca8e1eb25c78ff78435d",
+      "tests/skill_evolution/test_model.py": "e1605e713d8920c9dab7e20a2f8fb9cffa237d7c8453557854891feb712e25b5"
+    },
+    "production_delta_from_prior_strict_review_reconstructed_exactly": true,
+    "commentary_action_reprojection": [
+      {
+        "task_id": "dialogue-parser",
+        "operation_id": "acquisition/analyzer/0",
+        "raw_response_sha256": "0f6cb8af3585004be1cb4faeb1088ac64d01cd2f756e205d43f34783d3d668b8",
+        "http_status": 200,
+        "provider_status": "completed",
+        "message_phases": [
+          "commentary"
+        ],
+        "normalized_content_is_exact_assistant_text": true,
+        "native_output_preserves_original_phases": true,
+        "usage_unchanged_except_existing_aliases": true,
+        "role_schema_valid": true,
+        "host_document_selection_valid": true,
+        "sufficient": false,
+        "action_kind": "read_only",
+        "tool": "list_input_directory",
+        "raw_bytes_unchanged": true,
+        "dispatch_performed": false
+      },
+      {
+        "task_id": "3d-scan-calc",
+        "operation_id": "acquisition/analyzer/1",
+        "raw_response_sha256": "d36a5ac9c1b135013c768a61e5218dd6381214c0d0cc0716c617afdd560caf81",
+        "http_status": 200,
+        "provider_status": "completed",
+        "message_phases": [
+          "commentary"
+        ],
+        "normalized_content_is_exact_assistant_text": true,
+        "native_output_preserves_original_phases": true,
+        "usage_unchanged_except_existing_aliases": true,
+        "role_schema_valid": true,
+        "host_document_selection_valid": true,
+        "sufficient": false,
+        "action_kind": "read_only",
+        "tool": "read_input_file",
+        "raw_bytes_unchanged": true,
+        "dispatch_performed": false
+      },
+      {
+        "task_id": "adaptive-cruise-control",
+        "operation_id": "acquisition/analyzer/0",
+        "raw_response_sha256": "8306a5782e8cf8ead610fac219e0fae591b5891b8546553411f1bdbbcd22c02c",
+        "http_status": 200,
+        "provider_status": "completed",
+        "message_phases": [
+          "commentary"
+        ],
+        "normalized_content_is_exact_assistant_text": true,
+        "native_output_preserves_original_phases": true,
+        "usage_unchanged_except_existing_aliases": true,
+        "role_schema_valid": true,
+        "host_document_selection_valid": true,
+        "sufficient": false,
+        "action_kind": "read_only",
+        "tool": "list_input_directory",
+        "raw_bytes_unchanged": true,
+        "dispatch_performed": false
+      }
+    ],
+    "old_final_answer_reprojection": [
+      {
+        "task_id": "dialogue-parser",
+        "explicit_final_preferred": true,
+        "native_output_preserved": true,
+        "raw_bytes_unchanged": true,
+        "dispatch_performed": false
+      },
+      {
+        "task_id": "3d-scan-calc",
+        "explicit_final_preferred": true,
+        "native_output_preserved": true,
+        "raw_bytes_unchanged": true,
+        "dispatch_performed": false
+      }
+    ],
+    "multiple_commentary_actions_rejected_by_role_parser": true,
+    "independent_offline_tests": {
+      "scope": "test_model.py: phase or commentary or final_answer or without_final_answer",
+      "passed": 15,
+      "failed": 0,
+      "deselected": 79
+    },
+    "model_requests": 0,
+    "dispatch_performed": false,
+    "credentials_accessed": false,
+    "thinking_items_inspected": false,
+    "limitations": [
+      "This is provider text projection compatibility, not evidence of task success or semantic sufficiency.",
+      "Old failed requests remain diagnostic trial history; offline replay does not dispatch actions or revive S0.",
+      "Multiple final-answer objects or mixed commentary remain complete text and can fail the existing role parser; no last-object extraction."
+    ]
+  }
+}

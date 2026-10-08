@@ -1,0 +1,1947 @@
+{
+  "schema": "skillsbench-five-task-public-results.v1",
+  "trial_id": "input-discovery-five-gpt54-20261008-003",
+  "snapshot_at": "2026-10-08T20:57:02.228207+00:00",
+  "status": "COMPLETED",
+  "primary_eligible": true,
+  "method": "skillsbench.skill-evolution.v7",
+  "model": "openai.gpt-5.4",
+  "transport": "bedrock-responses",
+  "region": "us-east-1",
+  "source_identity_hash": "f03d8156342ac18c482be6ad02540e470ed9884bbdd5af62d3da473834b64229",
+  "source_identity_file_sha256": "bdf44c0312615dc7f04e58245933c016bc6b4d24083f00bfd8b9d5aeafbcbfb5",
+  "report_sha256": "f686e868b899b6d9a91a1db16883fbbb30b33dfc88fca9b007701333a25c2fa2",
+  "current_source_matches_run_identity": true,
+  "source_mismatch_count": 0,
+  "selected_task_denominator": 5,
+  "full_population_denominator": 85,
+  "excluded_diagnostic_trials": [
+    "input-discovery-five-gpt54-20261008-001",
+    "input-discovery-five-gpt54-20261008-002"
+  ],
+  "tasks": [
+    {
+      "task_id": "dialogue-parser",
+      "condition": "benign",
+      "pipeline_status": "COMPLETED",
+      "creation_status": {
+        "base_hash": "a0f783fc5c8b5295a720ef8f963ac725b26df39effe327c93c14854ad29bf40a",
+        "initial_bundle_hash": "6f05387fc4e264c434cc204febdaa43d4045670172577575187459def91566e7",
+        "status": "CREATED"
+      },
+      "stop_reason": "gt_oracle_pass",
+      "acquisition": {
+        "base_hash": "a0f783fc5c8b5295a720ef8f963ac725b26df39effe327c93c14854ad29bf40a",
+        "base_tokens": 280,
+        "counters": {
+          "clarify": 0,
+          "read_only": 4,
+          "search": 30
+        },
+        "selected_documents": 1,
+        "stop_detail": "supported_public_requirements",
+        "stop_reason": "sufficient",
+        "unreviewable_document_ids": [],
+        "unreviewed_document_ids": []
+      },
+      "no_skill": {
+        "label": "NoSkill",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": null,
+        "utility": false,
+        "official_reward": 0.833,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 5,
+          "total": 6,
+          "rate": 0.8333333333333334,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "s0": {
+        "label": "S0",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": "6f05387fc4e264c434cc204febdaa43d4045670172577575187459def91566e7",
+        "utility": false,
+        "official_reward": 0.833,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 5,
+          "total": 6,
+          "rate": 0.8333333333333334,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "actual_content_versions": [
+        {
+          "label": "S0",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "6f05387fc4e264c434cc204febdaa43d4045670172577575187459def91566e7",
+          "utility": false,
+          "official_reward": 0.833,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 5,
+            "total": 6,
+            "rate": 0.8333333333333334,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S1",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "6bcde51a37625e3574b926105658beafe0a8cdd5d2e61c58b89bcc77033b3191",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 6,
+            "total": 6,
+            "rate": 1.0,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        }
+      ],
+      "final": {
+        "label": "Final",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": "6bcde51a37625e3574b926105658beafe0a8cdd5d2e61c58b89bcc77033b3191",
+        "utility": true,
+        "official_reward": 1.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 6,
+          "total": 6,
+          "rate": 1.0,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "final_bundle_ref": {
+        "bundle_hash": "6bcde51a37625e3574b926105658beafe0a8cdd5d2e61c58b89bcc77033b3191",
+        "parent_hash": "6f05387fc4e264c434cc204febdaa43d4045670172577575187459def91566e7"
+      },
+      "delta_no_skill_to_s0": {
+        "status": "MEASURED",
+        "utility": 0,
+        "reward": 0.0,
+        "gt_rate": 0.0
+      },
+      "delta_s0_to_final": {
+        "status": "MEASURED",
+        "utility": 1,
+        "reward": 0.16700000000000004,
+        "gt_rate": 0.16666666666666663
+      },
+      "adjacent_content_deltas": [
+        {
+          "from": "S0",
+          "to": "S1",
+          "status": "MEASURED",
+          "utility": 1,
+          "reward": 0.16700000000000004,
+          "gt_rate": 0.16666666666666663
+        }
+      ],
+      "submissions": [
+        {
+          "attempt": 1,
+          "status": "changed",
+          "bundle_hash": "6bcde51a37625e3574b926105658beafe0a8cdd5d2e61c58b89bcc77033b3191",
+          "parent_hash": "6f05387fc4e264c434cc204febdaa43d4045670172577575187459def91566e7"
+        }
+      ],
+      "surrogate_checks": [
+        {
+          "bundle_hash": "6bcde51a37625e3574b926105658beafe0a8cdd5d2e61c58b89bcc77033b3191",
+          "test_version": 1,
+          "test_hash": "1cac4ee63ab13d29aa00c4788cc316c760588bc0d4059fef7872596555286ba3",
+          "status": "MEASURED",
+          "passed": 17,
+          "total": 17,
+          "rate": 1.0,
+          "program_error": false,
+          "same_suite_delta": null
+        }
+      ],
+      "official_selection": {
+        "historical_best": {
+          "status": "MEASURED",
+          "phase": "normal",
+          "bundle_hash": "6bcde51a37625e3574b926105658beafe0a8cdd5d2e61c58b89bcc77033b3191",
+          "parent_hash": "6f05387fc4e264c434cc204febdaa43d4045670172577575187459def91566e7",
+          "passed": true,
+          "official_reward": 1.0,
+          "raw_numeric_reward": 1.0,
+          "author_resolved_score": 1.0,
+          "reward_source": "official_reward",
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 6,
+            "total": 6,
+            "rate": 1.0,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          },
+          "grader_evidence_hash": "11c4db686c1a30363508a789a2954c59cd76ae7a84ae8a475b184b974a3a3190",
+          "failure_code": null
+        },
+        "actual_gt_runs": [
+          {
+            "status": "MEASURED",
+            "phase": "normal",
+            "bundle_hash": "6bcde51a37625e3574b926105658beafe0a8cdd5d2e61c58b89bcc77033b3191",
+            "parent_hash": "6f05387fc4e264c434cc204febdaa43d4045670172577575187459def91566e7",
+            "passed": true,
+            "official_reward": 1.0,
+            "raw_numeric_reward": 1.0,
+            "author_resolved_score": 1.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 6,
+              "total": 6,
+              "rate": 1.0,
+              "unit": "reporter_group",
+              "source": "pytest-json-ctrf.summary",
+              "reason": null
+            },
+            "grader_evidence_hash": "11c4db686c1a30363508a789a2954c59cd76ae7a84ae8a475b184b974a3a3190",
+            "failure_code": null
+          }
+        ],
+        "actual_post_final_runs": [],
+        "author_retained_result": {
+          "passed": true,
+          "reward": 1.0,
+          "resolved_reward": 1.0,
+          "source": null
+        },
+        "rollback_status": null,
+        "rollback_bundle_hash": null,
+        "rollback_parent_hash": null,
+        "selection_reason": "published_controller"
+      },
+      "process_counts": {
+        "native_r_interventions": 0,
+        "native_K_normal_gt_interventions": 1,
+        "native_generator_episodes": 8,
+        "generator_model_attempts": 8,
+        "generator_model_responses": 8,
+        "generator_terminal_calls": 28,
+        "verifier_terminal_calls": 7,
+        "sealed_submissions": 1,
+        "actual_content_versions": 2,
+        "recorded_revision_attempts": 1,
+        "actual_gt_runs": 1,
+        "submitted_learning_executions": 1,
+        "s0_actual_http_posts": 1,
+        "s0_http_evidence_sha256": "3387ef81f85f1c69bf91c57be1094d3402e0f708bc185a0559772c6b746ee1b5"
+      },
+      "stage_failure_count": 0
+    },
+    {
+      "task_id": "3d-scan-calc",
+      "condition": "benign",
+      "pipeline_status": "COMPLETED",
+      "creation_status": {
+        "base_hash": "66591663a09ba0ef1e6f13f54cc287b5dfb5218df7ed0af93b8ded72fa4fb816",
+        "initial_bundle_hash": "bacb52136b25891ad79e3bda22b2fd12f59e00025c759b0f76537da96eb6a333",
+        "status": "CREATED"
+      },
+      "stop_reason": "gt_oracle_pass",
+      "acquisition": {
+        "base_hash": "66591663a09ba0ef1e6f13f54cc287b5dfb5218df7ed0af93b8ded72fa4fb816",
+        "base_tokens": 293,
+        "counters": {
+          "clarify": 0,
+          "read_only": 10,
+          "search": 30
+        },
+        "selected_documents": 1,
+        "stop_detail": "acquisition_actions_exhausted",
+        "stop_reason": "budget_exhausted_incomplete",
+        "unreviewable_document_ids": [],
+        "unreviewed_document_ids": []
+      },
+      "no_skill": {
+        "label": "NoSkill",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": null,
+        "utility": true,
+        "official_reward": 1.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 2,
+          "total": 2,
+          "rate": 1.0,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "s0": {
+        "label": "S0",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": "bacb52136b25891ad79e3bda22b2fd12f59e00025c759b0f76537da96eb6a333",
+        "utility": true,
+        "official_reward": 1.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 2,
+          "total": 2,
+          "rate": 1.0,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "actual_content_versions": [
+        {
+          "label": "S0",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "bacb52136b25891ad79e3bda22b2fd12f59e00025c759b0f76537da96eb6a333",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 2,
+            "total": 2,
+            "rate": 1.0,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S1",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "f5ed6e0f81598431f42d5aacd48e2e47ce0347b1acc84ff47f91bd9282a227b3",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 2,
+            "total": 2,
+            "rate": 1.0,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        }
+      ],
+      "final": {
+        "label": "Final",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": "f5ed6e0f81598431f42d5aacd48e2e47ce0347b1acc84ff47f91bd9282a227b3",
+        "utility": true,
+        "official_reward": 1.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 2,
+          "total": 2,
+          "rate": 1.0,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "final_bundle_ref": {
+        "bundle_hash": "f5ed6e0f81598431f42d5aacd48e2e47ce0347b1acc84ff47f91bd9282a227b3",
+        "parent_hash": "bacb52136b25891ad79e3bda22b2fd12f59e00025c759b0f76537da96eb6a333"
+      },
+      "delta_no_skill_to_s0": {
+        "status": "MEASURED",
+        "utility": 0,
+        "reward": 0.0,
+        "gt_rate": 0.0
+      },
+      "delta_s0_to_final": {
+        "status": "MEASURED",
+        "utility": 0,
+        "reward": 0.0,
+        "gt_rate": 0.0
+      },
+      "adjacent_content_deltas": [
+        {
+          "from": "S0",
+          "to": "S1",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": 0.0
+        }
+      ],
+      "submissions": [
+        {
+          "attempt": 1,
+          "status": "changed",
+          "bundle_hash": "f5ed6e0f81598431f42d5aacd48e2e47ce0347b1acc84ff47f91bd9282a227b3",
+          "parent_hash": "bacb52136b25891ad79e3bda22b2fd12f59e00025c759b0f76537da96eb6a333"
+        }
+      ],
+      "surrogate_checks": [
+        {
+          "bundle_hash": "f5ed6e0f81598431f42d5aacd48e2e47ce0347b1acc84ff47f91bd9282a227b3",
+          "test_version": 1,
+          "test_hash": "8b549a5a4aaa3e62b79426344e173483b5f7d16aa88eda0679ddeb2654a125b8",
+          "status": "MEASURED",
+          "passed": 5,
+          "total": 5,
+          "rate": 1.0,
+          "program_error": false,
+          "same_suite_delta": null
+        }
+      ],
+      "official_selection": {
+        "historical_best": {
+          "status": "MEASURED",
+          "phase": "normal",
+          "bundle_hash": "f5ed6e0f81598431f42d5aacd48e2e47ce0347b1acc84ff47f91bd9282a227b3",
+          "parent_hash": "bacb52136b25891ad79e3bda22b2fd12f59e00025c759b0f76537da96eb6a333",
+          "passed": true,
+          "official_reward": 1.0,
+          "raw_numeric_reward": 1.0,
+          "author_resolved_score": 1.0,
+          "reward_source": "official_reward",
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 2,
+            "total": 2,
+            "rate": 1.0,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          },
+          "grader_evidence_hash": "5be9d4ab7babfc7f67079f903c3d18bd9f7a08c220d10916554cf18df98ff59f",
+          "failure_code": null
+        },
+        "actual_gt_runs": [
+          {
+            "status": "MEASURED",
+            "phase": "normal",
+            "bundle_hash": "f5ed6e0f81598431f42d5aacd48e2e47ce0347b1acc84ff47f91bd9282a227b3",
+            "parent_hash": "bacb52136b25891ad79e3bda22b2fd12f59e00025c759b0f76537da96eb6a333",
+            "passed": true,
+            "official_reward": 1.0,
+            "raw_numeric_reward": 1.0,
+            "author_resolved_score": 1.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 2,
+              "total": 2,
+              "rate": 1.0,
+              "unit": "reporter_group",
+              "source": "pytest-json-ctrf.summary",
+              "reason": null
+            },
+            "grader_evidence_hash": "5be9d4ab7babfc7f67079f903c3d18bd9f7a08c220d10916554cf18df98ff59f",
+            "failure_code": null
+          }
+        ],
+        "actual_post_final_runs": [],
+        "author_retained_result": {
+          "passed": true,
+          "reward": 1.0,
+          "resolved_reward": 1.0,
+          "source": null
+        },
+        "rollback_status": null,
+        "rollback_bundle_hash": null,
+        "rollback_parent_hash": null,
+        "selection_reason": "published_controller"
+      },
+      "process_counts": {
+        "native_r_interventions": 0,
+        "native_K_normal_gt_interventions": 1,
+        "native_generator_episodes": 10,
+        "generator_model_attempts": 10,
+        "generator_model_responses": 10,
+        "generator_terminal_calls": 22,
+        "verifier_terminal_calls": 10,
+        "sealed_submissions": 1,
+        "actual_content_versions": 2,
+        "recorded_revision_attempts": 1,
+        "actual_gt_runs": 1,
+        "submitted_learning_executions": 1,
+        "s0_actual_http_posts": 1,
+        "s0_http_evidence_sha256": "803bca1461ab674850d80f75c7f5036a44aab794dbd475510debf5d7f871f5fe"
+      },
+      "stage_failure_count": 0
+    },
+    {
+      "task_id": "adaptive-cruise-control",
+      "condition": "benign",
+      "pipeline_status": "COMPLETED",
+      "creation_status": {
+        "base_hash": "9b1221e3a79aee3fefb3abd73a59c95b4ea22a4cccf4c2faae2b5710e657bd27",
+        "initial_bundle_hash": "b48e3d3a930d285c4aa94099d8303f08953a8c6ea9c3d14fb0cc12e4db70e8b3",
+        "status": "CREATED"
+      },
+      "stop_reason": "token_budget",
+      "acquisition": {
+        "base_hash": "9b1221e3a79aee3fefb3abd73a59c95b4ea22a4cccf4c2faae2b5710e657bd27",
+        "base_tokens": 3720,
+        "counters": {
+          "clarify": 0,
+          "read_only": 3,
+          "search": 1
+        },
+        "selected_documents": 2,
+        "stop_detail": "supported_public_requirements",
+        "stop_reason": "sufficient",
+        "unreviewable_document_ids": [],
+        "unreviewed_document_ids": []
+      },
+      "no_skill": {
+        "label": "NoSkill",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": null,
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 10,
+          "total": 12,
+          "rate": 0.8333333333333334,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "s0": {
+        "label": "S0",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": "b48e3d3a930d285c4aa94099d8303f08953a8c6ea9c3d14fb0cc12e4db70e8b3",
+        "utility": true,
+        "official_reward": 1.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 12,
+          "total": 12,
+          "rate": 1.0,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "actual_content_versions": [
+        {
+          "label": "S0",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "b48e3d3a930d285c4aa94099d8303f08953a8c6ea9c3d14fb0cc12e4db70e8b3",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 12,
+            "total": 12,
+            "rate": 1.0,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S1",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "75354b402c592183d11b046b7acd61047531dffb7af046c94f82e569f5eba7db",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 10,
+            "total": 12,
+            "rate": 0.8333333333333334,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S2",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "bf70d88c3fe5a25d45ea6f0943a53efd07af47fc279580c4b0745d693926ac81",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 11,
+            "total": 12,
+            "rate": 0.9166666666666666,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S3",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 11,
+            "total": 12,
+            "rate": 0.9166666666666666,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S4",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 11,
+            "total": 12,
+            "rate": 0.9166666666666666,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S5",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "95d9791c462d1ff4b1f0b3475ba118933aef1725a9a515e80eef32d422098021",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 11,
+            "total": 12,
+            "rate": 0.9166666666666666,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S6",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "2d1cc80c148b32709f7e0023bf6753c938b23954778543026e46cc84f5445d2e",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 11,
+            "total": 12,
+            "rate": 0.9166666666666666,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S7",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "30edc592c3862f228c434e32c46771a3fecd8ed5f6df786710b6c0a217162678",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 11,
+            "total": 12,
+            "rate": 0.9166666666666666,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S8",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 11,
+            "total": 12,
+            "rate": 0.9166666666666666,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        }
+      ],
+      "final": {
+        "label": "Final",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": "a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5",
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 11,
+          "total": 12,
+          "rate": 0.9166666666666666,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "final_bundle_ref": {
+        "bundle_hash": "a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5",
+        "parent_hash": "30edc592c3862f228c434e32c46771a3fecd8ed5f6df786710b6c0a217162678"
+      },
+      "delta_no_skill_to_s0": {
+        "status": "MEASURED",
+        "utility": 1,
+        "reward": 1.0,
+        "gt_rate": 0.16666666666666663
+      },
+      "delta_s0_to_final": {
+        "status": "MEASURED",
+        "utility": -1,
+        "reward": -1.0,
+        "gt_rate": -0.08333333333333337
+      },
+      "adjacent_content_deltas": [
+        {
+          "from": "S0",
+          "to": "S1",
+          "status": "MEASURED",
+          "utility": -1,
+          "reward": -1.0,
+          "gt_rate": -0.16666666666666663
+        },
+        {
+          "from": "S1",
+          "to": "S2",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": 0.08333333333333326
+        },
+        {
+          "from": "S2",
+          "to": "S3",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": 0.0
+        },
+        {
+          "from": "S3",
+          "to": "S4",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": 0.0
+        },
+        {
+          "from": "S4",
+          "to": "S5",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": 0.0
+        },
+        {
+          "from": "S5",
+          "to": "S6",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": 0.0
+        },
+        {
+          "from": "S6",
+          "to": "S7",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": 0.0
+        },
+        {
+          "from": "S7",
+          "to": "S8",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": 0.0
+        }
+      ],
+      "submissions": [
+        {
+          "attempt": 1,
+          "status": "changed",
+          "bundle_hash": "75354b402c592183d11b046b7acd61047531dffb7af046c94f82e569f5eba7db",
+          "parent_hash": "b48e3d3a930d285c4aa94099d8303f08953a8c6ea9c3d14fb0cc12e4db70e8b3"
+        },
+        {
+          "attempt": 2,
+          "status": "changed",
+          "bundle_hash": "bf70d88c3fe5a25d45ea6f0943a53efd07af47fc279580c4b0745d693926ac81",
+          "parent_hash": "75354b402c592183d11b046b7acd61047531dffb7af046c94f82e569f5eba7db"
+        },
+        {
+          "attempt": 3,
+          "status": "changed",
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "parent_hash": "bf70d88c3fe5a25d45ea6f0943a53efd07af47fc279580c4b0745d693926ac81"
+        },
+        {
+          "attempt": 4,
+          "status": "unchanged",
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "parent_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507"
+        },
+        {
+          "attempt": 5,
+          "status": "unchanged",
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "parent_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507"
+        },
+        {
+          "attempt": 6,
+          "status": "changed",
+          "bundle_hash": "e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204",
+          "parent_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507"
+        },
+        {
+          "attempt": 7,
+          "status": "changed",
+          "bundle_hash": "95d9791c462d1ff4b1f0b3475ba118933aef1725a9a515e80eef32d422098021",
+          "parent_hash": "e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204"
+        },
+        {
+          "attempt": 8,
+          "status": "changed",
+          "bundle_hash": "2d1cc80c148b32709f7e0023bf6753c938b23954778543026e46cc84f5445d2e",
+          "parent_hash": "95d9791c462d1ff4b1f0b3475ba118933aef1725a9a515e80eef32d422098021"
+        },
+        {
+          "attempt": 9,
+          "status": "changed",
+          "bundle_hash": "30edc592c3862f228c434e32c46771a3fecd8ed5f6df786710b6c0a217162678",
+          "parent_hash": "2d1cc80c148b32709f7e0023bf6753c938b23954778543026e46cc84f5445d2e"
+        },
+        {
+          "attempt": 10,
+          "status": "changed",
+          "bundle_hash": "a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5",
+          "parent_hash": "30edc592c3862f228c434e32c46771a3fecd8ed5f6df786710b6c0a217162678"
+        }
+      ],
+      "surrogate_checks": [
+        {
+          "bundle_hash": "75354b402c592183d11b046b7acd61047531dffb7af046c94f82e569f5eba7db",
+          "test_version": 1,
+          "test_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "status": "MEASURED",
+          "passed": 13,
+          "total": 16,
+          "rate": 0.8125,
+          "program_error": false,
+          "same_suite_delta": null
+        },
+        {
+          "bundle_hash": "bf70d88c3fe5a25d45ea6f0943a53efd07af47fc279580c4b0745d693926ac81",
+          "test_version": 1,
+          "test_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "status": "MEASURED",
+          "passed": 14,
+          "total": 16,
+          "rate": 0.875,
+          "program_error": false,
+          "same_suite_delta": 0.0625
+        },
+        {
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "test_version": 1,
+          "test_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "status": "MEASURED",
+          "passed": 14,
+          "total": 16,
+          "rate": 0.875,
+          "program_error": false,
+          "same_suite_delta": 0.0
+        },
+        {
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "test_version": 1,
+          "test_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "status": "MEASURED",
+          "passed": 14,
+          "total": 16,
+          "rate": 0.875,
+          "program_error": false,
+          "same_suite_delta": 0.0
+        },
+        {
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "test_version": 1,
+          "test_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "status": "MEASURED",
+          "passed": 14,
+          "total": 16,
+          "rate": 0.875,
+          "program_error": false,
+          "same_suite_delta": 0.0
+        },
+        {
+          "bundle_hash": "e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204",
+          "test_version": 1,
+          "test_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "status": "MEASURED",
+          "passed": 14,
+          "total": 16,
+          "rate": 0.875,
+          "program_error": false,
+          "same_suite_delta": 0.0
+        },
+        {
+          "bundle_hash": "95d9791c462d1ff4b1f0b3475ba118933aef1725a9a515e80eef32d422098021",
+          "test_version": 1,
+          "test_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "status": "MEASURED",
+          "passed": 14,
+          "total": 16,
+          "rate": 0.875,
+          "program_error": false,
+          "same_suite_delta": 0.0
+        },
+        {
+          "bundle_hash": "2d1cc80c148b32709f7e0023bf6753c938b23954778543026e46cc84f5445d2e",
+          "test_version": 1,
+          "test_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "status": "MEASURED",
+          "passed": 14,
+          "total": 16,
+          "rate": 0.875,
+          "program_error": false,
+          "same_suite_delta": 0.0
+        },
+        {
+          "bundle_hash": "30edc592c3862f228c434e32c46771a3fecd8ed5f6df786710b6c0a217162678",
+          "test_version": 1,
+          "test_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "status": "MEASURED",
+          "passed": 14,
+          "total": 16,
+          "rate": 0.875,
+          "program_error": false,
+          "same_suite_delta": 0.0
+        },
+        {
+          "bundle_hash": "a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5",
+          "test_version": 1,
+          "test_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "status": "MEASURED",
+          "passed": 14,
+          "total": 16,
+          "rate": 0.875,
+          "program_error": false,
+          "same_suite_delta": 0.0
+        }
+      ],
+      "official_selection": {
+        "historical_best": null,
+        "actual_gt_runs": [
+          {
+            "status": "MEASURED",
+            "phase": "post_final",
+            "bundle_hash": "a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5",
+            "parent_hash": "30edc592c3862f228c434e32c46771a3fecd8ed5f6df786710b6c0a217162678",
+            "passed": false,
+            "official_reward": 0.0,
+            "raw_numeric_reward": 0.0,
+            "author_resolved_score": 0.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 11,
+              "total": 12,
+              "rate": 0.9166666666666666,
+              "unit": "reporter_group",
+              "source": "pytest-json-ctrf.summary",
+              "reason": null
+            },
+            "grader_evidence_hash": "1c310ef2df0d58031980679b59eed84d9ac1bc4cf623856d195b47578186cc98",
+            "failure_code": null
+          }
+        ],
+        "actual_post_final_runs": [
+          {
+            "status": "MEASURED",
+            "phase": "post_final",
+            "bundle_hash": "a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5",
+            "parent_hash": "30edc592c3862f228c434e32c46771a3fecd8ed5f6df786710b6c0a217162678",
+            "passed": false,
+            "official_reward": 0.0,
+            "raw_numeric_reward": 0.0,
+            "author_resolved_score": 0.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 11,
+              "total": 12,
+              "rate": 0.9166666666666666,
+              "unit": "reporter_group",
+              "source": "pytest-json-ctrf.summary",
+              "reason": null
+            },
+            "grader_evidence_hash": "1c310ef2df0d58031980679b59eed84d9ac1bc4cf623856d195b47578186cc98",
+            "failure_code": null
+          }
+        ],
+        "author_retained_result": {
+          "passed": false,
+          "reward": 0.0,
+          "resolved_reward": 0.0,
+          "source": null
+        },
+        "rollback_status": null,
+        "rollback_bundle_hash": null,
+        "rollback_parent_hash": null,
+        "selection_reason": "published_controller"
+      },
+      "process_counts": {
+        "native_r_interventions": 10,
+        "native_K_normal_gt_interventions": 0,
+        "native_generator_episodes": 42,
+        "generator_model_attempts": 42,
+        "generator_model_responses": 42,
+        "generator_terminal_calls": 101,
+        "verifier_terminal_calls": 140,
+        "sealed_submissions": 10,
+        "actual_content_versions": 9,
+        "recorded_revision_attempts": 10,
+        "actual_gt_runs": 1,
+        "submitted_learning_executions": 1,
+        "s0_actual_http_posts": 1,
+        "s0_http_evidence_sha256": "a55d571bec0abcde00b33c454f9b1a98462fe90fbf2dff99b2f4f5b0b1bf68bb"
+      },
+      "stage_failure_count": 0
+    },
+    {
+      "task_id": "dapt-intrusion-detection",
+      "condition": "benign",
+      "pipeline_status": "COMPLETED",
+      "creation_status": {
+        "base_hash": "9dd0fd0af17947089b85aa9c20f267800db6fd3e9f25f3542c777e1a8ca8c1ce",
+        "initial_bundle_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+        "status": "CREATED"
+      },
+      "stop_reason": "token_budget",
+      "acquisition": {
+        "base_hash": "9dd0fd0af17947089b85aa9c20f267800db6fd3e9f25f3542c777e1a8ca8c1ce",
+        "base_tokens": 3632,
+        "counters": {
+          "clarify": 0,
+          "read_only": 2,
+          "search": 30
+        },
+        "selected_documents": 2,
+        "stop_detail": "supported_public_requirements",
+        "stop_reason": "sufficient",
+        "unreviewable_document_ids": [],
+        "unreviewed_document_ids": []
+      },
+      "no_skill": {
+        "label": "NoSkill",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": null,
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 7,
+          "total": 14,
+          "rate": 0.5,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "s0": {
+        "label": "S0",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 11,
+          "total": 14,
+          "rate": 0.7857142857142857,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "actual_content_versions": [
+        {
+          "label": "S0",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 11,
+            "total": 14,
+            "rate": 0.7857142857142857,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S1",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 11,
+            "total": 14,
+            "rate": 0.7857142857142857,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S2",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 13,
+            "total": 14,
+            "rate": 0.9285714285714286,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S3",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 12,
+            "total": 14,
+            "rate": 0.8571428571428571,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S4",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 10,
+            "total": 14,
+            "rate": 0.7142857142857143,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S5",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "07b104a9cbc820d350e77e53ace9c3294288578b0d3bf54ac16ea4ef9c1e3c9a",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 9,
+            "total": 14,
+            "rate": 0.6428571428571429,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S6",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "225f6242c0f64c398164d23a12a734a93c305f3377412ee1809fdd2633eccfa0",
+          "utility": false,
+          "official_reward": 0.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 10,
+            "total": 14,
+            "rate": 0.7142857142857143,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        }
+      ],
+      "final": {
+        "label": "Final",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 11,
+          "total": 14,
+          "rate": 0.7857142857142857,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "final_bundle_ref": {
+        "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+        "parent_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1"
+      },
+      "delta_no_skill_to_s0": {
+        "status": "MEASURED",
+        "utility": 0,
+        "reward": 0.0,
+        "gt_rate": 0.2857142857142857
+      },
+      "delta_s0_to_final": {
+        "status": "MEASURED",
+        "utility": 0,
+        "reward": 0.0,
+        "gt_rate": 0.0
+      },
+      "adjacent_content_deltas": [
+        {
+          "from": "S0",
+          "to": "S1",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": 0.0
+        },
+        {
+          "from": "S1",
+          "to": "S2",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": 0.1428571428571429
+        },
+        {
+          "from": "S2",
+          "to": "S3",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": -0.07142857142857151
+        },
+        {
+          "from": "S3",
+          "to": "S4",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": -0.1428571428571428
+        },
+        {
+          "from": "S4",
+          "to": "S5",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": -0.0714285714285714
+        },
+        {
+          "from": "S5",
+          "to": "S6",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": 0.0714285714285714
+        }
+      ],
+      "submissions": [
+        {
+          "attempt": 1,
+          "status": "changed",
+          "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+          "parent_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1"
+        },
+        {
+          "attempt": 2,
+          "status": "changed",
+          "bundle_hash": "8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a",
+          "parent_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2"
+        },
+        {
+          "attempt": 3,
+          "status": "changed",
+          "bundle_hash": "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02",
+          "parent_hash": "8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a"
+        },
+        {
+          "attempt": 4,
+          "status": "unchanged",
+          "bundle_hash": "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02",
+          "parent_hash": "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02"
+        },
+        {
+          "attempt": 5,
+          "status": "changed",
+          "bundle_hash": "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284",
+          "parent_hash": "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02"
+        },
+        {
+          "attempt": 6,
+          "status": "unchanged",
+          "bundle_hash": "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284",
+          "parent_hash": "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284"
+        },
+        {
+          "attempt": 7,
+          "status": "changed",
+          "bundle_hash": "07b104a9cbc820d350e77e53ace9c3294288578b0d3bf54ac16ea4ef9c1e3c9a",
+          "parent_hash": "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284"
+        },
+        {
+          "attempt": 8,
+          "status": "changed",
+          "bundle_hash": "225f6242c0f64c398164d23a12a734a93c305f3377412ee1809fdd2633eccfa0",
+          "parent_hash": "07b104a9cbc820d350e77e53ace9c3294288578b0d3bf54ac16ea4ef9c1e3c9a"
+        }
+      ],
+      "surrogate_checks": [
+        {
+          "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+          "test_version": 1,
+          "test_hash": "fe33e3ec2a157ba7f61b348a4e93d3bcb6ac20639fee9196deba617acc8661fb",
+          "status": "MEASURED",
+          "passed": 13,
+          "total": 13,
+          "rate": 1.0,
+          "program_error": false,
+          "same_suite_delta": null
+        },
+        {
+          "bundle_hash": "8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a",
+          "test_version": 2,
+          "test_hash": "0aa66ece1270598bd03be31d5f19e7158a8df75afd3ab1d830c10f44c00c07af",
+          "status": "MEASURED",
+          "passed": 43,
+          "total": 43,
+          "rate": 1.0,
+          "program_error": false,
+          "same_suite_delta": null
+        },
+        {
+          "bundle_hash": "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02",
+          "test_version": 3,
+          "test_hash": "2ff1fe8bc041cef3d9a2089ff6b41bddedff11aa846d7f777c8a83890c2810fc",
+          "status": "MEASURED",
+          "passed": 39,
+          "total": 44,
+          "rate": 0.8863636363636364,
+          "program_error": false,
+          "same_suite_delta": null
+        },
+        {
+          "bundle_hash": "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02",
+          "test_version": 3,
+          "test_hash": "2ff1fe8bc041cef3d9a2089ff6b41bddedff11aa846d7f777c8a83890c2810fc",
+          "status": "MEASURED",
+          "passed": 39,
+          "total": 44,
+          "rate": 0.8863636363636364,
+          "program_error": false,
+          "same_suite_delta": 0.0
+        },
+        {
+          "bundle_hash": "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284",
+          "test_version": 3,
+          "test_hash": "2ff1fe8bc041cef3d9a2089ff6b41bddedff11aa846d7f777c8a83890c2810fc",
+          "status": "MEASURED",
+          "passed": 38,
+          "total": 44,
+          "rate": 0.8636363636363636,
+          "program_error": false,
+          "same_suite_delta": -0.022727272727272707
+        },
+        {
+          "bundle_hash": "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284",
+          "test_version": 3,
+          "test_hash": "2ff1fe8bc041cef3d9a2089ff6b41bddedff11aa846d7f777c8a83890c2810fc",
+          "status": "MEASURED",
+          "passed": 38,
+          "total": 44,
+          "rate": 0.8636363636363636,
+          "program_error": false,
+          "same_suite_delta": 0.0
+        },
+        {
+          "bundle_hash": "07b104a9cbc820d350e77e53ace9c3294288578b0d3bf54ac16ea4ef9c1e3c9a",
+          "test_version": 3,
+          "test_hash": "2ff1fe8bc041cef3d9a2089ff6b41bddedff11aa846d7f777c8a83890c2810fc",
+          "status": "MEASURED",
+          "passed": 37,
+          "total": 44,
+          "rate": 0.8409090909090909,
+          "program_error": false,
+          "same_suite_delta": -0.022727272727272707
+        },
+        {
+          "bundle_hash": "225f6242c0f64c398164d23a12a734a93c305f3377412ee1809fdd2633eccfa0",
+          "test_version": 3,
+          "test_hash": "2ff1fe8bc041cef3d9a2089ff6b41bddedff11aa846d7f777c8a83890c2810fc",
+          "status": "MEASURED",
+          "passed": 38,
+          "total": 44,
+          "rate": 0.8636363636363636,
+          "program_error": false,
+          "same_suite_delta": 0.022727272727272707
+        }
+      ],
+      "official_selection": {
+        "historical_best": {
+          "status": "MEASURED",
+          "phase": "normal",
+          "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+          "parent_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+          "passed": false,
+          "official_reward": 0.0,
+          "raw_numeric_reward": 0.0,
+          "author_resolved_score": 0.0,
+          "reward_source": "official_reward",
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 11,
+            "total": 14,
+            "rate": 0.7857142857142857,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          },
+          "grader_evidence_hash": "605fb8be50bd50b32ced2518123c49b9dff9fce22c752ce242cd03f716a5aff3",
+          "failure_code": null
+        },
+        "actual_gt_runs": [
+          {
+            "status": "MEASURED",
+            "phase": "normal",
+            "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+            "parent_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+            "passed": false,
+            "official_reward": 0.0,
+            "raw_numeric_reward": 0.0,
+            "author_resolved_score": 0.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 11,
+              "total": 14,
+              "rate": 0.7857142857142857,
+              "unit": "reporter_group",
+              "source": "pytest-json-ctrf.summary",
+              "reason": null
+            },
+            "grader_evidence_hash": "605fb8be50bd50b32ced2518123c49b9dff9fce22c752ce242cd03f716a5aff3",
+            "failure_code": null
+          },
+          {
+            "status": "MEASURED",
+            "phase": "normal",
+            "bundle_hash": "8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a",
+            "parent_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+            "passed": false,
+            "official_reward": 0.0,
+            "raw_numeric_reward": 0.0,
+            "author_resolved_score": 0.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 13,
+              "total": 14,
+              "rate": 0.9285714285714286,
+              "unit": "reporter_group",
+              "source": "pytest-json-ctrf.summary",
+              "reason": null
+            },
+            "grader_evidence_hash": "f108924e21515ba500280de543daa12574873648a3403410e777c0d4076d2e63",
+            "failure_code": null
+          },
+          {
+            "status": "MEASURED",
+            "phase": "post_final",
+            "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+            "parent_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+            "passed": false,
+            "official_reward": 0.0,
+            "raw_numeric_reward": 0.0,
+            "author_resolved_score": 0.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 11,
+              "total": 14,
+              "rate": 0.7857142857142857,
+              "unit": "reporter_group",
+              "source": "pytest-json-ctrf.summary",
+              "reason": null
+            },
+            "grader_evidence_hash": "978105a3c8af716afde8d7a4c8193d7c6e01059cf9ddee1fec051963cfb5960f",
+            "failure_code": null
+          }
+        ],
+        "actual_post_final_runs": [
+          {
+            "status": "MEASURED",
+            "phase": "post_final",
+            "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+            "parent_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+            "passed": false,
+            "official_reward": 0.0,
+            "raw_numeric_reward": 0.0,
+            "author_resolved_score": 0.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 11,
+              "total": 14,
+              "rate": 0.7857142857142857,
+              "unit": "reporter_group",
+              "source": "pytest-json-ctrf.summary",
+              "reason": null
+            },
+            "grader_evidence_hash": "978105a3c8af716afde8d7a4c8193d7c6e01059cf9ddee1fec051963cfb5960f",
+            "failure_code": null
+          }
+        ],
+        "author_retained_result": {
+          "passed": false,
+          "reward": 0.0,
+          "resolved_reward": 0.0,
+          "source": "best_snapshot"
+        },
+        "rollback_status": "COMPLETED",
+        "rollback_bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+        "rollback_parent_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+        "selection_reason": "published_controller"
+      },
+      "process_counts": {
+        "native_r_interventions": 6,
+        "native_K_normal_gt_interventions": 2,
+        "native_generator_episodes": 42,
+        "generator_model_attempts": 42,
+        "generator_model_responses": 42,
+        "generator_terminal_calls": 132,
+        "verifier_terminal_calls": 89,
+        "sealed_submissions": 8,
+        "actual_content_versions": 7,
+        "recorded_revision_attempts": 8,
+        "actual_gt_runs": 3,
+        "submitted_learning_executions": 1,
+        "s0_actual_http_posts": 1,
+        "s0_http_evidence_sha256": "8503a41a3ccf637b210b0d840ef44eb54dbafaf9c28e6e0a9c572c28a1be2967"
+      },
+      "stage_failure_count": 0
+    },
+    {
+      "task_id": "pddl-tpp-planning",
+      "condition": "benign",
+      "pipeline_status": "COMPLETED",
+      "creation_status": {
+        "base_hash": "ac2cbc8f2c5af560d1babc886f03e2ab7375c628ebad7a3c356bcee98bdf250a",
+        "initial_bundle_hash": "1ffe3869a4df495055b668303e5fabbca1d073f0e0324447fd72fe228dd9f1a3",
+        "status": "CREATED"
+      },
+      "stop_reason": "gt_oracle_pass",
+      "acquisition": {
+        "base_hash": "ac2cbc8f2c5af560d1babc886f03e2ab7375c628ebad7a3c356bcee98bdf250a",
+        "base_tokens": 968,
+        "counters": {
+          "clarify": 0,
+          "read_only": 6,
+          "search": 1
+        },
+        "selected_documents": 2,
+        "stop_detail": "supported_public_requirements",
+        "stop_reason": "sufficient",
+        "unreviewable_document_ids": [],
+        "unreviewed_document_ids": []
+      },
+      "no_skill": {
+        "label": "NoSkill",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": null,
+        "utility": false,
+        "official_reward": 0.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 1,
+          "total": 2,
+          "rate": 0.5,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "s0": {
+        "label": "S0",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": "1ffe3869a4df495055b668303e5fabbca1d073f0e0324447fd72fe228dd9f1a3",
+        "utility": true,
+        "official_reward": 1.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 2,
+          "total": 2,
+          "rate": 1.0,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "actual_content_versions": [
+        {
+          "label": "S0",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "1ffe3869a4df495055b668303e5fabbca1d073f0e0324447fd72fe228dd9f1a3",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 2,
+            "total": 2,
+            "rate": 1.0,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        },
+        {
+          "label": "S1",
+          "status": "MEASURED",
+          "reason": null,
+          "bundle_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4",
+          "utility": true,
+          "official_reward": 1.0,
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 2,
+            "total": 2,
+            "rate": 1.0,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          }
+        }
+      ],
+      "final": {
+        "label": "Final",
+        "status": "MEASURED",
+        "reason": null,
+        "bundle_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4",
+        "utility": true,
+        "official_reward": 1.0,
+        "gt_checks": {
+          "status": "MEASURED",
+          "passed": 2,
+          "total": 2,
+          "rate": 1.0,
+          "unit": "reporter_group",
+          "source": "pytest-json-ctrf.summary",
+          "reason": null
+        }
+      },
+      "final_bundle_ref": {
+        "bundle_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4",
+        "parent_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4"
+      },
+      "delta_no_skill_to_s0": {
+        "status": "MEASURED",
+        "utility": 1,
+        "reward": 1.0,
+        "gt_rate": 0.5
+      },
+      "delta_s0_to_final": {
+        "status": "MEASURED",
+        "utility": 0,
+        "reward": 0.0,
+        "gt_rate": 0.0
+      },
+      "adjacent_content_deltas": [
+        {
+          "from": "S0",
+          "to": "S1",
+          "status": "MEASURED",
+          "utility": 0,
+          "reward": 0.0,
+          "gt_rate": 0.0
+        }
+      ],
+      "submissions": [
+        {
+          "attempt": 1,
+          "status": "changed",
+          "bundle_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4",
+          "parent_hash": "1ffe3869a4df495055b668303e5fabbca1d073f0e0324447fd72fe228dd9f1a3"
+        },
+        {
+          "attempt": 2,
+          "status": "unchanged",
+          "bundle_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4",
+          "parent_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4"
+        }
+      ],
+      "surrogate_checks": [
+        {
+          "bundle_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4",
+          "test_version": 1,
+          "test_hash": "202d678bee09d8cddac3c34c4b3552123b0470aebec2037ab53f72be27e1c7d0",
+          "status": "MEASURED",
+          "passed": 5,
+          "total": 5,
+          "rate": 1.0,
+          "program_error": false,
+          "same_suite_delta": null
+        }
+      ],
+      "official_selection": {
+        "historical_best": {
+          "status": "MEASURED",
+          "phase": "normal",
+          "bundle_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4",
+          "parent_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4",
+          "passed": true,
+          "official_reward": 1.0,
+          "raw_numeric_reward": 1.0,
+          "author_resolved_score": 1.0,
+          "reward_source": "official_reward",
+          "gt_checks": {
+            "status": "MEASURED",
+            "passed": 2,
+            "total": 2,
+            "rate": 1.0,
+            "unit": "reporter_group",
+            "source": "pytest-json-ctrf.summary",
+            "reason": null
+          },
+          "grader_evidence_hash": "577b3b63bdead1cd1175c8fa62519e856cce4cbd5cdcf51bd4e8b443e5fe508a",
+          "failure_code": null
+        },
+        "actual_gt_runs": [
+          {
+            "status": "MEASURED",
+            "phase": "normal",
+            "bundle_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4",
+            "parent_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4",
+            "passed": true,
+            "official_reward": 1.0,
+            "raw_numeric_reward": 1.0,
+            "author_resolved_score": 1.0,
+            "reward_source": "official_reward",
+            "gt_checks": {
+              "status": "MEASURED",
+              "passed": 2,
+              "total": 2,
+              "rate": 1.0,
+              "unit": "reporter_group",
+              "source": "pytest-json-ctrf.summary",
+              "reason": null
+            },
+            "grader_evidence_hash": "577b3b63bdead1cd1175c8fa62519e856cce4cbd5cdcf51bd4e8b443e5fe508a",
+            "failure_code": null
+          }
+        ],
+        "actual_post_final_runs": [],
+        "author_retained_result": {
+          "passed": true,
+          "reward": 1.0,
+          "resolved_reward": 1.0,
+          "source": null
+        },
+        "rollback_status": null,
+        "rollback_bundle_hash": null,
+        "rollback_parent_hash": null,
+        "selection_reason": "published_controller"
+      },
+      "process_counts": {
+        "native_r_interventions": 1,
+        "native_K_normal_gt_interventions": 1,
+        "native_generator_episodes": 10,
+        "generator_model_attempts": 10,
+        "generator_model_responses": 10,
+        "generator_terminal_calls": 24,
+        "verifier_terminal_calls": 19,
+        "sealed_submissions": 2,
+        "actual_content_versions": 2,
+        "recorded_revision_attempts": 2,
+        "actual_gt_runs": 1,
+        "submitted_learning_executions": 1,
+        "s0_actual_http_posts": 1,
+        "s0_http_evidence_sha256": "d68a4c9b00353fabaf1fff83fe7afc687435dafb3588d81d6ecafc48cca36ad4"
+      },
+      "stage_failure_count": 0
+    }
+  ],
+  "aggregate": {
+    "NoSkill": {
+      "intended_task_denominator": 5,
+      "measured_tasks": 5,
+      "task_passes": 1,
+      "task_pass_rate": 0.2,
+      "mean_official_reward_on_measured_tasks": 0.3666,
+      "macro_gt_check_rate_on_measured_tasks": 0.7333333333333334
+    },
+    "S0": {
+      "intended_task_denominator": 5,
+      "measured_tasks": 5,
+      "task_passes": 3,
+      "task_pass_rate": 0.6,
+      "mean_official_reward_on_measured_tasks": 0.7666000000000001,
+      "macro_gt_check_rate_on_measured_tasks": 0.9238095238095237
+    },
+    "Final": {
+      "intended_task_denominator": 5,
+      "measured_tasks": 5,
+      "task_passes": 3,
+      "task_pass_rate": 0.6,
+      "mean_official_reward_on_measured_tasks": 0.6,
+      "macro_gt_check_rate_on_measured_tasks": 0.9404761904761905
+    },
+    "paired_s0_to_final": {
+      "tasks": 5,
+      "rescued": 1,
+      "degraded": 1,
+      "unchanged_task_pass": 3
+    }
+  },
+  "usage": {
+    "basis": "provider_response_usage; successful responses only",
+    "cost_reason": "provider responses do not include billing charges",
+    "cost_status": "NOT_MEASURED",
+    "cost_usd": null,
+    "delivery_policies": {
+      "native_provider": 324,
+      "single_post": 376
+    },
+    "dispatched_model_requests": 700,
+    "http_posts": {
+      "count": null,
+      "reason": "journal counts logical operations, not individual transport attempts",
+      "status": "NOT_MEASURED"
+    },
+    "model_request_states": {
+      "COMPLETED": 700,
+      "NOT_SENT": 0,
+      "RECEIVED_INVALID": 0,
+      "UNKNOWN": 0
+    },
+    "roles": {
+      "analyzer": {
+        "cached_input_tokens": 317482,
+        "input_tokens": 2081256,
+        "output_tokens": 219278,
+        "requests": 126
+      },
+      "execution": {
+        "cached_input_tokens": 3906688,
+        "input_tokens": 4556655,
+        "output_tokens": 133100,
+        "requests": 324
+      },
+      "generator": {
+        "cached_input_tokens": 6077566,
+        "input_tokens": 6841404,
+        "output_tokens": 483339,
+        "requests": 117
+      },
+      "verifier": {
+        "cached_input_tokens": 1141776,
+        "input_tokens": 1508570,
+        "output_tokens": 232540,
+        "requests": 133
+      }
+    },
+    "status": "MEASURED",
+    "total": {
+      "cached_input_tokens": 11443512,
+      "input_tokens": 14987885,
+      "output_tokens": 1068257,
+      "requests": 700
+    },
+    "unknown_requests_may_be_billed": 0
+  },
+  "limitations": [
+    "Five selected tasks are a pilot, not a random full85 estimate or paper reproduction.",
+    "GT checks use official reporter groups, not individual Python assertions.",
+    "Surrogate rates are comparable only within the same sealed suite hash.",
+    "Final reuses the selected content evaluation; independent evaluations do not select the package.",
+    "Author finite reward has priority over partial check rate; reward0 ties retain the earlier best package.",
+    "Sufficient is Analyzer operational judgment, not proof of completeness; 3D froze incomplete after its budgets.",
+    "ACC and DAPT hit the configured context guard, not r15 or provider output/fee quota.",
+    "Usage records completed provider tokens; cumulative billing tokens are not context occupancy; fee NOT_MEASURED.",
+    "Provider usage for stopped diagnostics remains in their own journals and is excluded from primary totals; monetary charges are NOT_MEASURED.",
+    "Full85 v7 environment and two-model compatibility remain NOT_MEASURED.",
+    "S0 dispatch evidence is one acknowledged single-post transport operation per task; total native Codex HTTP traffic is not counted as 700 physical POSTs."
+  ]
+}

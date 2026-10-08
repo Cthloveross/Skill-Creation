@@ -1,0 +1,16 @@
+{
+  "schema": "skill-evolution-static-checks.v1",
+  "snapshot_at": "2026-10-08T20:59:01.168710+00:00",
+  "source_identity_hash": "f03d8156342ac18c482be6ad02540e470ed9884bbdd5af62d3da473834b64229",
+  "status": "PASS",
+  "checks": {
+    "ruff_check": "PASS",
+    "ruff_format": {
+      "status": "PASS",
+      "eligible_files": 82
+    },
+    "compileall": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "scope": "current src/tau_skill_evolution and tests/skill_evolution; author exclusions per pinned lint configuration; full regression recorded separately"
+}

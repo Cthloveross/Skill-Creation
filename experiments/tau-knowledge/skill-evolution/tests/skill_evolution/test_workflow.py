@@ -71,8 +71,8 @@ class Bank:
         {"type": "function", "function": {"name": "write_bank_action"}},
     ]
 
-    def __init__(self, log, metrics):
-        self.log, self.metrics = log, metrics
+    def __init__(self, log, metrics, *, experiment="tau"):
+        self.log, self.metrics, self.experiment = log, metrics, experiment
 
     @contextmanager
     def acquisition(self, *, checkpoint=None, identity=None):
@@ -90,7 +90,19 @@ class Bank:
             def clarify(self, question):
                 pytest.fail("this task requires no clarification")
 
-        yield Session()
+        session = Session()
+        if self.experiment == "skillsbench":
+            session.public_inputs = {
+                "task_id": "3d-scan-calc",
+                "opening": "Analyze the supplied scan.",
+                "workspace": {"directory": "/root", "input_directories": ["/root"]},
+            }
+            session.allowed_read_only_tool_names = ("list_input_directory", "read_input_file")
+            session.tool_schemas = [
+                {"type": "function", "function": {"name": name}}
+                for name in session.allowed_read_only_tool_names
+            ]
+        yield session
 
     def evaluate(self, bundle):
         self.log.append(("evaluate", bundle.bundle_hash))
@@ -147,7 +159,9 @@ def _workflow(tmp_path, *, output=None, metrics=None, experiment="tau"):
     workflow = Workflow(
         spec,
         tmp_path / "run",
-        bank_factory=lambda _: Bank(log, metrics or {"utility": 1.0, "asr": 0.0}),
+        bank_factory=lambda _: Bank(
+            log, metrics or {"utility": 1.0, "asr": 0.0}, experiment=experiment
+        ),
         model_factory=model_factory,
         corpus_factory=lambda task, arm: Corpus(log),
         counter=len,
@@ -273,8 +287,14 @@ def test_skillsbench_uses_shared_creation_and_domain_specific_reports(tmp_path):
     )
     cells = (("3d-scan-calc", "benign"),)
     workflow.create(cells)
-    assert requests[0][1]["allowed_read_only_tools"] == []
+    assert requests[0][1]["allowed_read_only_tools"] == [
+        "list_input_directory",
+        "read_input_file",
+    ]
     assert requests[0][1]["remaining"]["clarify"] == 0
+    assert requests[0][1]["remaining"]["read_only"] == 10
+    assert "public_input_manifest" not in json.dumps(requests)
+    assert "copies" not in json.dumps(requests)
     learning_requests = copy.deepcopy(requests)
     workflow.evaluate(cells)
     workflow.evaluate(cells)
@@ -288,6 +308,94 @@ def test_skillsbench_uses_shared_creation_and_domain_specific_reports(tmp_path):
     assert "Official check rate" in text and "Reference matched" not in text
     assert "ASR mean" not in text and "Reference action checks" not in text
     assert len([event for event in log if event[0] == "evaluate"]) == 1
+
+
+def test_skillsbench_discovery_observations_reach_s0_and_resume_does_not_repeat_reads(tmp_path):
+    workflow, log, requests = _workflow(tmp_path, experiment="skillsbench")
+    original_factory = workflow.model_factory
+    actions = iter(
+        [
+            {"kind": "read_only", "tool": "list_input_directory", "arguments": {"path": "/root"}},
+            {
+                "kind": "read_only",
+                "tool": "read_input_file",
+                "arguments": {"path": "/root/input.txt"},
+            },
+        ]
+    )
+
+    def model_factory(role):
+        original = original_factory(role)
+        if role != "analyzer":
+            return original
+
+        def model(payload):
+            result = original(payload)
+            if action := next(actions, None):
+                result["action"] = action
+            return result
+
+        return model
+
+    class FileAdapter(Bank):
+        @contextmanager
+        def acquisition(self, **options):
+            with super().acquisition(**options) as session:
+
+                def read(tool, arguments):
+                    log.append(("input_read", tool, dict(arguments)))
+                    return (
+                        {"entries": [{"name": "input.txt", "path": "/root/input.txt"}]}
+                        if tool == "list_input_directory"
+                        else {"content": "public supplied content", "encoding": "utf-8"}
+                    )
+
+                session.read = read
+                yield session
+            log.append(("input_view_closed",))
+
+    workflow.model_factory = model_factory
+    workflow.bank_factory = lambda _: FileAdapter(log, {}, experiment="skillsbench")
+    cell = ("3d-scan-calc", "benign")
+    workflow.create((cell,))
+    root, journal = workflow._cell(*cell)
+    assert journal.response("creation")["status"] == "CREATED"
+    base = load_base(root / "base")
+    observations = base.public_inputs["read_only_observations"]
+    assert [item["tool"] for item in observations] == [
+        "list_input_directory",
+        "read_input_file",
+    ]
+    generator_payload = next(payload for role, payload in requests if role == "generator")
+    assert (
+        generator_payload["frozen_base"]["public_inputs"]["read_only_observations"][1]["result"][
+            "content"
+        ]
+        == "public supplied content"
+    )
+    assert "public_input_manifest" not in json.dumps(requests)
+    assert log.index(("input_view_closed",)) < len(log)
+    before = copy.deepcopy((log, requests))
+    workflow.create((cell,))
+    assert (log, requests) == before
+    assert len([role for role, _ in requests if role == "generator"]) == 1
+    assert len([event for event in log if event[0] == "input_read"]) == 2
+
+
+def test_previous_manifest_based_method_is_readable_but_cannot_start_or_resume(tmp_path):
+    path = SKILLSBENCH_CONFIG.parent.parent / "runs/skillsbench/full-85-gpt56-v6/config.yaml"
+    old = load_spec(path)
+    assert old.namespace == "skillsbench.skill-evolution.v6"
+    assert old.values["acquisition"]["max_reads"] == 0
+    run = tmp_path / "historical"
+    with pytest.raises(ValueError, match="historical methods are read-only"):
+        Workflow(
+            old,
+            run,
+            model_factory=lambda _: pytest.fail("historical method cannot make a request"),
+            counter=len,
+        )
+    assert not run.exists()
 
 
 def test_no_skill_workflow_skips_learning_and_keeps_fixed_population(tmp_path):

@@ -6,7 +6,7 @@
 
 给定公开任务输入 `x`、背景资料池 `D` 和任务环境 `E`，先检索并冻结资料集合 `B*`，再创建初始 Skill `S0`，随后继承并修改已有包，得到最终包 `Sfinal`。
 
-当前任务的说明和原始输入直接提供；需要从共享池寻找的背景知识参与检索。隐藏答案、官方测试、参考解法和历史评分不进入资料池。每个任务独立建立 Skill 和学习会话，共享资料池不代表共享任务状态。
+公开输入包含用户原始请求和授权的输入入口。文件任务提供工作目录或附件入口，由 Analyzer 自行列目录、读取文件，了解实际输入；不自动附送构建生成的文件清单。需要从共享池寻找的背景知识参与检索。隐藏答案、官方测试、参考解法和历史评分不进入资料池。每个任务独立建立 Skill 和学习会话，共享资料池不代表共享任务状态。
 
 Skill 是执行说明及必要脚本、参考资料等组成的完整包。学习环境中的修复必须写入包，才能在新的执行环境中复用。研究对象是封存包的任务能力，而现场产物和公开测试用于指导学习。
 
@@ -26,17 +26,19 @@ Skill 是执行说明及必要脚本、参考资料等组成的完整包。学�
 
 | Role | Receives | Does |
 |---|---|---|
-| **LLM Analyzer** | Public task inputs, available retrieval and observation tools, retrieved documents, relevance scores, and unresolved evidence gaps. | Plan queries, assess relevance and coverage, discard unrelated material, and select the frozen evidence base `B*`. Search further when evidence is insufficient. |
-| **Skill Generator** | **Creation:** public inputs, frozen `B*`, and tool instructions. **Evolution:** the same fixed inputs, the complete parent skill, its own execution observations and history, skill format and progress checks, coarse failure categories, and oracle pass/fail. | Create `S0` once without self-testing. Then execute the task, inspect results, revise the parent skill, and submit the complete package with reusable fixes. |
-| **Surrogate Verifier** | Public inputs, frozen `B*`, submitted execution traces and artifacts or live task state, its own tests and results, and an oracle-failure signal when tests need upgrading. | Inspect actual outputs, build and run checks, and diagnose failures. Keep valid tests fixed during skill revision; refine them after oracle failure. |
+| **LLM Analyzer** | The user's request, an authorized input location, and tool descriptions. It obtains input observations and background documents through read-only inspection and search. | Understand the inputs, plan queries, assess relevance and coverage, and freeze `B*`. Inspect or search further when evidence is missing. |
+| **Skill Generator** | **Creation:** the request, frozen input observations, `B*`, and tool instructions. **Evolution:** those fixed inputs, the complete parent skill, its own execution history, format and progress checks, coarse failure categories, and oracle pass/fail. | Create `S0` once without self-testing. Then execute the task, inspect results, revise the parent skill, and submit reusable fixes in the complete package. |
+| **Surrogate Verifier** | The public request and inputs, `B*`, submitted results or live task state, its own tests, and an oracle-failure signal. | Inspect outputs, build and run checks, and diagnose failures. Keep valid tests fixed during skill revision; refine them after oracle failure. |
 
 Each role has a separate conversation. The Generator is not given the Analyzer's reasoning or unselected retrieval history, nor the Verifier's test code or detailed diagnostics. The Verifier is not given the Generator's reasoning; task-environment sharing and access to Skill files depend on the adapter. Separate conversations do not imply filesystem isolation.
 
 Hidden answers and official grader details are excluded from all three roles. Official scores remain with the host for the declared selection rule. Independent evaluation results feed neither learning nor skill selection.
 
+The initial task message does not include a build-derived inventory, copy mappings, or environment metadata. Paths already named by the user remain public. An adapter may expose a read-only view of supplied inputs; this does not promise access to the entire runtime filesystem. Runtime tools may later reveal task-local files and dependencies under the adapter's declared permissions.
+
 ### 3.2 资料获取与冻结
 
-Analyzer 先分析完成任务所需的知识、工具、参数和前置条件，再围绕缺口进行多轮查询。对已返回的材料给出相关性分数及理由，保留必要和可能有用的内容，剔除明显无关内容；不足时继续搜索或获取允许的公开观察。
+Analyzer 先依据用户请求，通过允许的只读工具发现和检查输入，再分析完成任务所需的知识、工具、参数和前置条件，围绕缺口进行多轮查询。输入观察与背景检索分别记录；前者帮助理解当前数据，后者提供方法与规则。对已返回的材料给出相关性分数及理由，保留必要和可能有用的内容，剔除明显无关内容；不足时继续搜索或获取允许的公开观察。
 
 停止依据是任务要求的证据覆盖、知识冲突和采集预算，不设固定文档篇数。只能冻结实际读取的内容；容量有限时优先保留必要证据。相关性分数表示材料与任务的关联程度，不是任务成功概率。
 
@@ -54,7 +56,7 @@ Generator 一次创建并提交完整 `S0`。控制器只校验包能否安全�
 
 ```mermaid
 flowchart TD
-    A["Task Specification and Background Corpus"] --> B["Retrieve Evidence and Freeze B*"]
+    A["User Request, Input Workspace and Background Corpus"] --> B["Inspect Inputs, Retrieve Evidence and Freeze B*"]
     B --> C["Generate the Initial Skill (S0)"]
     C --> D["Execute the Task and Submit the Skill"]
     D --> V["Independent Verification"]
@@ -103,7 +105,7 @@ NoSkill→S0 衡量创建包后的变化；S0→Sfinal 衡量演化后的变化�
 
 | 可替换部分 | 新实验必须明确的设置 |
 |---|---|
-| 数据与资料 | 任务范围、直接提供的输入、背景池来源、隐藏内容排除规则 |
+| 数据与资料 | 任务范围、提供的输入入口、只读发现权限、背景池来源、隐藏内容排除规则 |
 | 检索与冻结 | 检索模型、分块与融合、查询预算、相关性阈值、B* 容量和停止条件 |
 | 模型与执行 | 各角色型号、执行器、工具权限、环境依赖、网络及状态重置方式 |
 | 验证与反馈 | Verifier 可见文件、环境共享方式、测试生命周期、反馈投影 |

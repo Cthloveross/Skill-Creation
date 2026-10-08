@@ -1,0 +1,122 @@
+{
+  "schema": "skillsbench.input-discovery-independent-review.v1",
+  "status": "PASS_WITH_EXPLICIT_LIMITATIONS",
+  "reviewer": "input_discovery_docs_review",
+  "created_at": "2026-10-08T19:05:20.814180+00:00",
+  "namespace": "skillsbench.skill-evolution.v7",
+  "author_commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+  "author_files_verified": 44,
+  "source_sha256": {
+    "docs/skill-evolution-method.md": "7a489ef3bf5fd799aca6866ba4dc9621c78e30436c5dd7affb3ff0e9c24c0802",
+    "experiments/tau-knowledge/skill-evolution/PROTOCOL.md": "93d23ac5e0c996e05a677a02a5e47b68f24076c977b6b57a0ecbe07d04e6e985",
+    "experiments/tau-knowledge/skill-evolution/README.md": "190b09e4168e42850f63f36edac969f85fdc17eaec2d3782de596d7c8c79f004",
+    "experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md": "9e7a69f885687a6bf696eff5b2aa4a822de9872a91436fce0cb32419b4be39e7",
+    "experiments/tau-knowledge/skill-evolution/configs/skillsbench.yaml": "9d439bf916c894af64ac618edb7bb21a75daceecd1446607f7b3d6d1036c49f1",
+    "experiments/tau-knowledge/skill-evolution/prompts/analyzer-skillsbench.md": "d094559fd208f98a3111a452fa5509a3d2449ba0079e54825f7e91170bb88c46",
+    "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/skillsbench.py": "93836c1d7cf8b097f155bb8945f496e3683f60acc1c784029e7afeb637c641b6",
+    "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/spec.py": "f1b0d7782fed68a5cab23f846017f9e099b2f4996c28a8098b125e0a566ba4ff",
+    "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/workflow.py": "1ebd7c452e12d3e34c816db9226629418711e0dca1743e58ca17cc0960d59448",
+    "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/acquisition.py": "35c850347566574cb1c2e442a973bb9415224a7b1e66a6f62f1bc8db13d39545",
+    "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/skillsbench_runtime.py": "d2646ef62d91e92855cd0ab70e38653b8df09e8ff5fcf28b78d3d422fc773bb0",
+    "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/codex_runtime.py": "5493c4035fa492d0f2bb00b430a6cc001f7b89ff1d45d9bd241f06669b981782",
+    "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/skillsbench_evolution.py": "cffb48f2b20df7a5a92097af2efb97c21539578bd51cb63f19d2dbe11e4ab5d3"
+  },
+  "checks": {
+    "model_projection_excludes_automatic_build_manifest": "PASS",
+    "original_request_paths_preserved": "PASS",
+    "host_task_manifest_and_runtime_dependencies_retained": "PASS",
+    "current_task_only_read_only_view_and_revocation": "PASS",
+    "v7_routes_to_published_author_controller": "PASS",
+    "v7_identity_includes_original_author_source_closure": "PASS",
+    "v7_finite_oracle_reward_fallback_uses_existing_rules": "PASS",
+    "historical_v6_configs_readable_but_execution_rejected": "PASS",
+    "public_observations_are_not_document_ids": "PASS",
+    "coverage_not_applicable_matches_existing_host_schema": "PASS",
+    "nonempty_base_gate_explicit_in_prompt_and_protocol": "PASS",
+    "runtime_original_input_baseline_remains_accessible_as_declared": "PASS",
+    "original_author_bytes": "PASS",
+    "documentation_diff_check": "PASS"
+  },
+  "offline_rechecks": [
+    {
+      "scope": "test_skillsbench.py: input_discovery or model_public_inputs",
+      "passed": 22,
+      "deselected": 279,
+      "failed": 0
+    },
+    {
+      "scope": "test_spec.py and test_workflow.py: v7 namespace, budgets, historical execution rejection, shared creation, observation-to-S0 and reuse",
+      "passed": 5,
+      "deselected": 159,
+      "failed": 0
+    }
+  ],
+  "findings_resolved": [
+    "The prompt now permits public facts without fabricated document citations through the existing not_applicable field, and explicitly retains the nonempty base gate.",
+    "The current Workflow constructor rejects historical namespaces before new execution; historical configurations remain loadable only for inspection or use with their frozen source."
+  ],
+  "limitations": [
+    "The acquisition tools expose sealed original provided inputs, not the complete running container filesystem or installed programs.",
+    "Bounded binary previews do not establish that the Analyzer has fully interpreted a dataset.",
+    "Runtime Generator and Verifier can inspect task-local original-input baseline metadata through declared terminal access; metadata removal concerns automatic initial input payloads.",
+    "Separate model conversations in a shared MAIN do not provide physical filesystem isolation or guarantee verification semantics.",
+    "This review does not certify model task success, full-85 admission, or the new API trial results; those require their own sealed measurements."
+  ],
+  "credentials_accessed": false,
+  "live_model_requests": 0,
+  "historical_source_sha256_scope": "The top-level source_sha256 records the original input-discovery review. Later provider-phase repairs are independently recorded in phase-projection-review.json. Current documentation hashes and trial status are recorded in final_docs_review.",
+  "final_docs_review": {
+    "reviewed_at": "2026-10-08T21:08:24.551511+00:00",
+    "reviewer": "input_discovery_docs_review",
+    "status": "PASS_WITH_EXPLICIT_LIMITATIONS",
+    "current_source_identity_hash": "f03d8156342ac18c482be6ad02540e470ed9884bbdd5af62d3da473834b64229",
+    "source_and_prompts_stable": true,
+    "files_sha256": {
+      "docs/skill-evolution-method.md": "7a489ef3bf5fd799aca6866ba4dc9621c78e30436c5dd7affb3ff0e9c24c0802",
+      "experiments/tau-knowledge/skill-evolution/PROTOCOL.md": "7628d67f028bc55d2f7127f7cbe5762d9c9eb3f6c82c89ff6840ee7848e7d8f7",
+      "experiments/tau-knowledge/skill-evolution/README.md": "778646af93607849544e5224171572fd10021f588cf3875c7e81b668d2ba9048",
+      "experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md": "5cd54db3bdd823bd5a54ed0f2757115e0c3483b2564c1b86829084e199f26adf"
+    },
+    "checks": {
+      "generic_method_explains_self_discovery_without_dataset_budgets": true,
+      "protocol_keeps_v7_and_tau_v4_boundaries": true,
+      "handoff_distinguishes_001_002_diagnostics_from_003_primary": true,
+      "handoff_preserves_unknown_S0_and_null_measurements": true,
+      "handoff_links_current_1522_pass_and_docker_fixture_scope": true,
+      "frozen_v6_full85_sources_and_commands_not_claimed_v7": true,
+      "runtime_input_baseline_accessibility_not_overstated": true,
+      "five_task_final_metrics_and_versions_match": true,
+      "reward_and_partial_checks_and_task_pass_distinguished": true,
+      "final_best_and_post_final_and_independent_results_separate": true,
+      "confirmed_limits_and_no_aggregate_evolution_gain_recorded": true
+    },
+    "scope": "Primary003 is completed: 22 unique content versions, 27 independent evaluations, 700 completed logical model operations. Current four MD files were reviewed by input_discovery_docs_review; root synchronized these final file hashes after the review. Five-task scores and full85 NOT_MEASURED scope remain separate."
+  },
+  "historical_docs_review": {
+    "reviewed_at": "2026-10-08T19:49:56.514068+00:00",
+    "reviewer": "input_discovery_docs_review",
+    "status": "PASS_WITH_EXPLICIT_LIMITATIONS",
+    "current_source_identity_hash": "f03d8156342ac18c482be6ad02540e470ed9884bbdd5af62d3da473834b64229",
+    "source_and_prompts_stable": true,
+    "files_sha256": {
+      "docs/skill-evolution-method.md": "7a489ef3bf5fd799aca6866ba4dc9621c78e30436c5dd7affb3ff0e9c24c0802",
+      "experiments/tau-knowledge/skill-evolution/PROTOCOL.md": "93d23ac5e0c996e05a677a02a5e47b68f24076c977b6b57a0ecbe07d04e6e985",
+      "experiments/tau-knowledge/skill-evolution/README.md": "190b09e4168e42850f63f36edac969f85fdc17eaec2d3782de596d7c8c79f004",
+      "experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md": "c860df43fb0f0dd73aebc4b41ff064975f31c2716612a19ac6507235ec395d1d"
+    },
+    "checks": {
+      "generic_method_explains_self_discovery_without_dataset_budgets": true,
+      "protocol_keeps_v7_and_tau_v4_boundaries": true,
+      "handoff_distinguishes_001_002_diagnostics_from_003_primary": true,
+      "handoff_preserves_unknown_S0_and_null_measurements": true,
+      "handoff_links_current_1522_pass_and_docker_fixture_scope": true,
+      "frozen_v6_full85_sources_and_commands_not_claimed_v7": true,
+      "runtime_input_baseline_accessibility_not_overstated": true,
+      "five_task_final_metrics_and_versions_match": true,
+      "reward_and_partial_checks_and_task_pass_distinguished": true,
+      "final_best_and_post_final_and_independent_results_separate": true,
+      "confirmed_limits_and_no_aggregate_evolution_gain_recorded": true
+    },
+    "scope": "003 is running at this review snapshot. Final task measurements will be audited separately after sealing; this document check does not assert completed evolution or model utility."
+  }
+}

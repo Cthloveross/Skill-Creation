@@ -553,31 +553,72 @@ def test_bank_initial_clock_consumes_one_read_and_resume_does_not_repeat_it(tmp_
     assert restored == base
 
 
-def test_skillsbench_has_no_clock_clarification_or_read_only_dispatch():
+def test_skillsbench_discovers_inputs_without_bank_clock_clarification_or_exec(tmp_path):
+    names = ("list_input_directory", "read_input_file")
+    calls = []
+    journal = Journal(tmp_path)
     model = Model(
         [
             decision({"kind": "clarify", "question": "Unavailable"}),
             decision({"kind": "read_only", "tool": "get_current_time", "arguments": {}}),
+            decision({"kind": "read_only", "tool": "terminal", "arguments": {"command": "ls"}}),
+            decision({"kind": "read_only", "tool": names[0], "arguments": {"path": "/root"}}),
+            decision(
+                {
+                    "kind": "read_only",
+                    "tool": names[1],
+                    "arguments": {"path": "/root/input.txt"},
+                }
+            ),
             decision({"kind": "search", "query": "procedure"}),
             decision({"kind": "freeze"}, ["policy"], sufficient=True),
         ]
     )
+    tools = {
+        names[0]: lambda path: (
+            calls.append((names[0], path))
+            or {"entries": [{"name": "input.txt", "path": path + "/input.txt", "kind": "file"}]}
+        ),
+        names[1]: lambda path: (
+            calls.append((names[1], path))
+            or {"path": path, "content": "provided data", "encoding": "utf-8"}
+        ),
+    }
+    public = {"opening": "Analyze the supplied data", "workspace": {"directory": "/root"}}
     base = collect_base(
         model,
-        {},
+        public,
         Corpus(),
-        {},
+        tools,
         lambda _: pytest.fail("cannot clarify"),
         len,
-        allowed_read_only_tool_names=(),
-        budgets=AcquisitionBudgets(clarifications=0, read_only_queries=0),
+        allowed_read_only_tool_names=names,
+        tool_schemas=[{"name": name} for name in (*names, "get_current_time", "terminal")],
+        budgets=AcquisitionBudgets(clarifications=0, read_only_queries=10),
+        journal=journal,
     )
-    assert model.inputs[0]["allowed_read_only_tools"] == []
-    assert all(payload["remaining"]["read_only"] == 0 for payload in model.inputs)
-    assert (
-        base.public_inputs["clarifications"] == base.public_inputs["read_only_observations"] == ()
-    )
+    assert model.inputs[0]["allowed_read_only_tools"] == list(names)
+    assert model.inputs[0]["tool_schemas"] == [{"name": name} for name in names]
+    assert model.inputs[0]["remaining"]["read_only"] == 10
+    assert model.inputs[-1]["remaining"]["read_only"] == 8
+    assert calls == [(names[0], "/root"), (names[1], "/root/input.txt")]
+    assert base.public_inputs["clarifications"] == ()
+    assert base.public_inputs["read_only_observations"][1]["result"]["content"] == ("provided data")
     assert base.stop_reason == "sufficient"
+    assert journal.response("acquisition/read_only/1")["result"]["content"] == "provided data"
+    restored = collect_base(
+        lambda _: pytest.fail("received Analyzer response must not be requested again"),
+        public,
+        Corpus(),
+        {name: lambda **_: pytest.fail("frozen observation must be reused") for name in names},
+        lambda _: pytest.fail("cannot clarify"),
+        len,
+        allowed_read_only_tool_names=names,
+        tool_schemas=[{"name": name} for name in (*names, "get_current_time", "terminal")],
+        budgets=AcquisitionBudgets(clarifications=0, read_only_queries=10),
+        journal=journal,
+    )
+    assert restored == base and len(calls) == 2
 
 
 def test_search_budget_and_analyzer_bound_stop_with_incomplete_base():

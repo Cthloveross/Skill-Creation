@@ -1,3 +1,4 @@
+import base64
 import hashlib
 import json
 import os
@@ -18,6 +19,185 @@ from tau_skill_evolution.skillsbench import (
     validate_pool,
 )
 from tau_skill_evolution.skillsbench_runtime import SkillsBenchRunner
+
+
+def _discovery_view(source, task="3d-scan-calc"):
+    from tau_skill_evolution.skillsbench import SkillsBenchInputView
+
+    return SkillsBenchInputView(source, task)
+
+
+def _replace_public_input(source, task, relative, content, destination=None):
+    """Update a fixture's declared input; undeclared files remain inaccessible."""
+    path = source.checkout / "tasks" / task / "environment" / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(content)
+    entry = {
+        "task_id": task,
+        "relative_path": "environment/" + relative,
+        "path": path.relative_to(source.checkout).as_posix(),
+        "sha256": hashlib.sha256(content).hexdigest(),
+        "bytes": len(content),
+    }
+    source.manifest["files"] = [
+        item
+        for item in source.manifest["files"]
+        if (item["task_id"], item["relative_path"]) != (task, entry["relative_path"])
+    ] + [entry]
+    copies = source.manifest["environments"][task]["copies"]
+    copies[:] = [item for item in copies if item["source"] != relative]
+    copies.append({"source": relative, "destination": destination or "/root/" + relative})
+    return path
+
+
+def test_model_public_inputs_exclude_build_manifest_but_host_keeps_it(public_source):
+    raw = public_source.task("3d-scan-calc")
+    assert raw["public_input_manifest"] and raw["environment"]["copies"]
+    public = public_source.public_inputs("3d-scan-calc")
+    assert set(public) == {"task_id", "opening", "workspace"}
+    assert public["opening"] == raw["opening"]
+    assert public["workspace"]["directory"] == "/root"
+    assert public["workspace"]["input_directories"] == ["/root"]
+    assert "scan_data.stl" not in json.dumps(public)
+    assert "material_density_table.md" not in json.dumps(public)
+    assert not any(
+        field in json.dumps(public)
+        for field in ("sha256", "copies", "relative_path", "public_input_manifest", "Dockerfile")
+    )
+
+
+def test_input_discovery_lists_actual_sandbox_names_and_reads_only_current_inputs(public_source):
+    view = _discovery_view(public_source)
+    assert view.public_inputs == public_source.public_inputs("3d-scan-calc")
+    assert set(view.allowed_read_only_tool_names) == {
+        "list_input_directory",
+        "read_input_file",
+    }
+    listed = view.read("list_input_directory", {"path": "/root"})
+    assert {item["name"] for item in listed["entries"]} == {
+        "scan_data.stl",
+        "material_density_table.md",
+    }
+    assert all(item["path"].startswith("/root/") for item in listed["entries"])
+    assert listed["next_offset"] is None and not listed["truncated"]
+    result = view.read("read_input_file", {"path": "/root/scan_data.stl"})
+    assert result["content"] == "input" and result["encoding"] == "utf-8"
+    assert result["bytes"] == result["total_bytes"] == 5 and result["eof"]
+    assert not any(
+        field in json.dumps([listed, result]) for field in ("sha256", "source", "environment/")
+    )
+
+
+def test_input_discovery_text_and_binary_reads_are_bounded_and_pageable(public_source):
+    payload = b"text\n" * 2000
+    _replace_public_input(public_source, "3d-scan-calc", "scan_data.stl", payload)
+    _replace_public_input(public_source, "3d-scan-calc", "binary.bin", b"\xff\x00\x80\x01")
+    view = _discovery_view(public_source)
+    first = view.read("read_input_file", {"path": "/root/scan_data.stl"})
+    second = view.read("read_input_file", {"path": "/root/scan_data.stl", "offset": first["bytes"]})
+    assert first["bytes"] == 8192 and not first["eof"]
+    assert second["offset"] == 8192 and second["eof"]
+    assert (first["content"] + second["content"]).encode() == payload
+    binary = view.read("read_input_file", {"path": "/root/binary.bin", "offset": 1, "limit": 2})
+    assert binary["encoding"] == "base64"
+    assert base64.b64decode(binary["content"]) == b"\x00\x80"
+    assert binary["bytes"] == 2 and not binary["eof"]
+
+
+def test_input_discovery_directory_pagination_is_stable_and_capped(public_source):
+    for index in range(105):
+        _replace_public_input(
+            public_source, "3d-scan-calc", f"batch/{index:03}.txt", str(index).encode()
+        )
+    view = _discovery_view(public_source)
+    first = view.read("list_input_directory", {"path": "/root/batch"})
+    second = view.read(
+        "list_input_directory", {"path": "/root/batch", "offset": first["next_offset"]}
+    )
+    assert len(first["entries"]) == 100 and first["truncated"]
+    assert len(second["entries"]) == 5 and not second["truncated"]
+    assert [item["name"] for item in first["entries"] + second["entries"]] == [
+        f"{index:03}.txt" for index in range(105)
+    ]
+
+
+@pytest.mark.parametrize(
+    "tool,arguments",
+    [
+        ("terminal", {"command": "ls /root"}),
+        ("read_input_file", {"path": "scan_data.stl"}),
+        ("read_input_file", {"path": "/root/../root/scan_data.stl"}),
+        ("read_input_file", {"path": "/root/scan_data.stl", "offset": True}),
+        ("read_input_file", {"path": "/root/scan_data.stl", "offset": -1}),
+        ("read_input_file", {"path": "/root/scan_data.stl", "limit": 8193}),
+        ("read_input_file", {"path": "/root/scan_data.stl", "limit": 0}),
+        ("read_input_file", {"path": "/root/scan_data.stl", "command": "cat"}),
+        ("list_input_directory", {"path": "/root", "limit": 101}),
+        ("list_input_directory", {"path": "/root", "offset": "0"}),
+        ("read_input_file", {"path": "/tests/test_outputs.py"}),
+        ("read_input_file", {"path": "/root/groundtruth/answers.txt"}),
+        ("read_input_file", {"path": "/app/data.csv"}),
+        ("read_input_file", {"path": "/root/Dockerfile"}),
+    ],
+)
+def test_input_discovery_rejects_commands_invalid_arguments_and_unavailable_paths(
+    public_source, tool, arguments
+):
+    view = _discovery_view(public_source)
+    with pytest.raises((ValueError, PermissionError)):
+        view.read(tool, arguments)
+
+
+@pytest.mark.parametrize("change", ["file", "symlink", "ancestor_symlink"])
+def test_input_discovery_rejects_tampered_source_and_symlinks(public_source, tmp_path, change):
+    task, relative = "enterprise-information-search", "DATA/products.json"
+    original = public_source.checkout / "tasks" / task / "environment" / relative
+    view = _discovery_view(public_source, task)
+    if change == "file":
+        original.write_text("modified")
+    elif change == "symlink":
+        target = tmp_path / "original-input"
+        target.write_bytes(original.read_bytes())
+        original.unlink()
+        original.symlink_to(target)
+    else:
+        target = tmp_path / "original-directory"
+        original.parent.rename(target)
+        original.parent.symlink_to(target, target_is_directory=True)
+    with pytest.raises((ValueError, PermissionError)):
+        view.read("read_input_file", {"path": "/root/DATA/products.json"})
+
+
+def test_input_discovery_uses_copy_destination_and_revokes_tools_after_freeze(public_source):
+    _replace_public_input(
+        public_source, "3d-scan-calc", "renamed.txt", b"provided", "/data/current/input.txt"
+    )
+    view = _discovery_view(public_source)
+    assert view.read("read_input_file", {"path": "/data/current/input.txt"})["content"] == (
+        "provided"
+    )
+    with pytest.raises(PermissionError):
+        view.read("read_input_file", {"path": "/root/renamed.txt"})
+    view.close()
+    with pytest.raises(PermissionError, match="closed"):
+        view.read("list_input_directory", {"path": "/root"})
+
+
+def test_adapter_acquisition_revokes_discovery_even_when_collection_raises(public_source):
+    adapter = SkillsBenchAdapter(
+        SimpleNamespace(root=public_source.root), "3d-scan-calc", demo=False
+    )
+    with (
+        pytest.raises(RuntimeError, match="interrupted collection"),
+        adapter.acquisition() as session,
+    ):
+        assert session.read("read_input_file", {"path": "/root/scan_data.stl"})["content"] == (
+            "input"
+        )
+        raise RuntimeError("interrupted collection")
+    with pytest.raises(PermissionError, match="closed"):
+        session.read("list_input_directory", {"path": "/root"})
+
 
 _ENTERPRISE_BOOTSTRAP = """#!/bin/bash
 
@@ -204,15 +384,18 @@ def test_public_input_baseline_source_tampering_is_not_repaired(public_source, t
     assert not (work / "public-inputs").exists()
 
 
-def test_fresh_author_codex_public_input_declares_exportable_skill_alias(public_source):
+def test_fresh_author_codex_tool_declares_exportable_skill_alias_without_input_manifest(
+    public_source,
+):
     adapter = SkillsBenchAdapter(
         SimpleNamespace(root=public_source.root, values={"runtime": {"executor": "author-codex"}}),
         "3d-scan-calc",
         demo=False,
     )
+    assert set(adapter.public_inputs) == {"task_id", "opening", "workspace"}
     assert (
-        adapter.public_inputs["environment"]["skill_directory"]
-        == "/app/environment/skills/evo-current"
+        "/app/environment/skills/evo-current"
+        in (adapter.tool_schemas[0]["function"]["description"])
     )
 
 
@@ -712,11 +895,18 @@ def test_dense_build_checkpoints_resume_and_matches_shared_cache(tmp_path, monke
 
 def test_acquisition_has_no_simulator_or_bank_tools(public_source):
     adapter = SkillsBenchAdapter(SimpleNamespace(root=EXPERIMENT_ROOT), "3d-scan-calc", demo=True)
-    assert adapter.allowed_read_only_tool_names == ()
+    assert adapter.allowed_read_only_tool_names == ("list_input_directory", "read_input_file")
     with adapter.acquisition() as context:
-        assert context.tool_schemas == []
+        assert [schema["function"]["name"] for schema in context.tool_schemas] == [
+            "list_input_directory",
+            "read_input_file",
+        ]
         with pytest.raises(PermissionError):
             context.read("get_current_time", {})
+        with pytest.raises(PermissionError):
+            context.read("send_money", {})
+        with pytest.raises(PermissionError):
+            context.read("terminal", {"command": "ls"})
         with pytest.raises(PermissionError):
             context.clarify("Question")
     assert "private" not in adapter.public_inputs

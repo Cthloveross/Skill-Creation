@@ -25,7 +25,7 @@ from .constants import (
 # Historical wire-format tests and sealed artifacts still use v1. New method
 # namespaces are deliberately different and cannot resume those checkpoints.
 NAMESPACE = "tau.skill-evolution.v1"
-NAMESPACES = {"tau": "tau.skill-evolution.v4", "skillsbench": "skillsbench.skill-evolution.v6"}
+NAMESPACES = {"tau": "tau.skill-evolution.v4", "skillsbench": "skillsbench.skill-evolution.v7"}
 DEFAULT_CONFIG = EXPERIMENT_ROOT / "configs" / "experiment.yaml"
 SKILLSBENCH_CONFIG = EXPERIMENT_ROOT / "configs" / "skillsbench.yaml"
 ARMS = ("benign", "poison-5", "poison-10")
@@ -180,12 +180,16 @@ class ExperimentSpec:
             if self.namespace in {
                 "skillsbench.skill-evolution.v4",
                 "skillsbench.skill-evolution.v6",
+                "skillsbench.skill-evolution.v7",
             }:
                 files.extend(
                     self.root / "src/tau_skill_evolution/author" / name
                     for name in ("SOURCE.json", "LICENSE")
                 )
-            if self.namespace == "skillsbench.skill-evolution.v6":
+            if self.namespace in {
+                "skillsbench.skill-evolution.v6",
+                "skillsbench.skill-evolution.v7",
+            }:
                 author = self.root / "src/tau_skill_evolution/author"
                 files.append(author / "VERIFIER_SOURCE.json")
                 manifest = json.loads((author / "VERIFIER_SOURCE.json").read_text())
@@ -297,7 +301,13 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
     namespaces = {NAMESPACES[experiment]}
     if experiment == "skillsbench":
         # Historical config snapshots remain readable, with their own frozen identity.
-        namespaces.update({"skillsbench.skill-evolution.v2", "skillsbench.skill-evolution.v4"})
+        namespaces.update(
+            {
+                "skillsbench.skill-evolution.v2",
+                "skillsbench.skill-evolution.v4",
+                "skillsbench.skill-evolution.v6",
+            }
+        )
     if value.get("schema_version") not in namespaces:
         raise ValueError("configuration namespace does not match the current experiment method")
     source, tasks = value["source"], value["tasks"]["selected"]
@@ -351,8 +361,13 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
             or digest(tasks) != SKILLSBENCH_TASK_POPULATION_SHA256
         ):
             raise ValueError("SkillsBench tasks differ from the pinned population")
-        if value["acquisition"]["max_clarifications"] or value["acquisition"]["max_reads"]:
-            raise ValueError("SkillsBench acquisition cannot clarify or query bank tools")
+        if value["acquisition"]["max_clarifications"]:
+            raise ValueError("SkillsBench acquisition cannot clarify")
+        if (
+            value["schema_version"] != NAMESPACES["skillsbench"]
+            and value["acquisition"]["max_reads"]
+        ):
+            raise ValueError("historical SkillsBench acquisition cannot inspect input files")
         commitment = {
             "seed": value["seed"],
             "tasks": tasks,
@@ -388,10 +403,13 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
     if provider.get("transport") == "codex-plan":
         if (
             experiment != "skillsbench"
-            or value["schema_version"] != "skillsbench.skill-evolution.v6"
+            or value["schema_version"]
+            not in {"skillsbench.skill-evolution.v6", "skillsbench.skill-evolution.v7"}
             or provider.get("model") != "gpt-6.1-sol"
         ):
-            raise ValueError("Codex plan transport requires SkillsBench v6 and gpt-6.1-sol")
+            raise ValueError(
+                "Codex plan transport requires SkillsBench author release and gpt-6.1-sol"
+            )
         if set(provider) != {"model", "transport", "binary", "version", "binary_sha256"}:
             raise ValueError("Codex plan provider requires an explicit pinned CLI")
         binary = provider["binary"]
@@ -448,13 +466,20 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
         or any(controls[role]["max_output_tokens"] is None for role in ("agent", "user"))
     ):
         raise ValueError("null runtime output limits require the author Codex execution agent")
-    author_namespaces = {"skillsbench.skill-evolution.v4", "skillsbench.skill-evolution.v6"}
-    author_release = value["schema_version"] == "skillsbench.skill-evolution.v6"
+    author_namespaces = {
+        "skillsbench.skill-evolution.v4",
+        "skillsbench.skill-evolution.v6",
+        "skillsbench.skill-evolution.v7",
+    }
+    author_release = value["schema_version"] in {
+        "skillsbench.skill-evolution.v6",
+        "skillsbench.skill-evolution.v7",
+    }
     if executor == "author-codex" and value["schema_version"] not in author_namespaces:
-        raise ValueError("author Codex requires the SkillsBench v4 or v6 namespace")
+        raise ValueError("author Codex requires the SkillsBench author namespace")
     if value["schema_version"] in author_namespaces:
         if executor != "author-codex":
-            raise ValueError("SkillsBench v4/v6 requires the author Codex execution agent")
+            raise ValueError("SkillsBench author release requires the author Codex execution agent")
         codex = value["runtime"].get("codex", {})
         required_codex = {
             "binary",
@@ -528,7 +553,9 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
             "timeout_seconds",
         }
         if set(value["evolution"]) != expected_evolution:
-            raise ValueError("SkillsBench v6 requires author intervention and task time budgets")
+            raise ValueError(
+                "SkillsBench author release requires author intervention and task time budgets"
+            )
         for key, expected in (
             ("max_surrogate_retries", 15),
             ("max_oracles", 5),
@@ -537,7 +564,7 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
         ):
             configured = value["evolution"][key]
             if isinstance(configured, bool) or configured != expected:
-                raise ValueError(f"SkillsBench v6 fixes evolution.{key}={expected}")
+                raise ValueError(f"SkillsBench author release fixes evolution.{key}={expected}")
         limits["evolution"] = {
             "max_surrogate_retries": 15,
             "max_oracles": 5,
@@ -547,7 +574,7 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
         if value["runtime"].get("max_turns", 100) is not None or (
             "episode_timeout_seconds" in value["runtime"]
         ):
-            raise ValueError("SkillsBench v6 cannot add a POST or fixed episode cap")
+            raise ValueError("SkillsBench author release cannot add a POST or fixed episode cap")
     for group, caps in limits.items():
         for name, maximum in caps.items():
             number = value[group][name]
@@ -560,14 +587,16 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
                 raise ValueError(f"{group}.{name} must be between {minimum} and {maximum}")
     generator = value["roles"]["generator"]
     if author_release and "max_turns" in generator:
-        raise ValueError("SkillsBench v6 counts effective episodes, not all model turns")
+        raise ValueError(
+            "SkillsBench author release counts effective episodes, not all model turns"
+        )
     for name, maximum in (("max_episodes" if author_release else "max_turns", 120),):
         number = generator[name]
         if isinstance(number, bool) or not isinstance(number, int) or not 1 <= number <= maximum:
             raise ValueError(f"generator.{name} must be between 1 and {maximum}")
     verifier = value["roles"]["verifier"]
     if author_release and "prompt" in verifier:
-        raise ValueError("SkillsBench v6 uses the pinned author Verifier prompts")
+        raise ValueError("SkillsBench author release uses the pinned author Verifier prompts")
     for name, maximum in (("max_turns", 30), ("diagnosis_turns", 8)):
         number = verifier[name]
         if isinstance(number, bool) or not isinstance(number, int) or not 1 <= number <= maximum:

@@ -1,0 +1,60 @@
+{
+  "schema": "skillsbench-learning-cleanup-review.v1",
+  "snapshot_at": "2026-10-08T20:58:14.878416+00:00",
+  "status": "PASS",
+  "trial": "input-discovery-five-gpt54-20261008-003",
+  "scope": "five recorded learning MAIN container IDs; read-only daemon check; not global Docker cleanup",
+  "containers_deleted_by_review": 0,
+  "tasks": [
+    {
+      "task_id": "3d-scan-calc",
+      "persisted_status": "CLOSED",
+      "identity_hash": "07c85b53e37564a4016c50a9d6891989aacda97eff008c8bec98594895455b91",
+      "container_ids": [
+        "e95476dc24111a20ad378501829de52e0c1850dda3a33cc9149b48cf6c3db2ce"
+      ],
+      "containers_remaining": [],
+      "runtime_record_sha256": "7b2705f37187015a0548e6d14a719ab10d58ca23c836701c8b379d232d809d76"
+    },
+    {
+      "task_id": "adaptive-cruise-control",
+      "persisted_status": "CLOSED",
+      "identity_hash": "fea88317215d75e6659258c40e842598ff466015aa31f5a6e1de4dec7affe67e",
+      "container_ids": [
+        "2efd4d6deef531b376813ce187b8db853dd98231c54a434bf427d429072f7516"
+      ],
+      "containers_remaining": [],
+      "runtime_record_sha256": "2f7e6011207f22f3b97cf79762ed952fc650e224ecf3a3d6e6b23d56ddf7f587"
+    },
+    {
+      "task_id": "dapt-intrusion-detection",
+      "persisted_status": "CLOSED",
+      "identity_hash": "932bdf31578d18cf366d4b1001e51d73ffb201255a25640e45b1d9095ce73718",
+      "container_ids": [
+        "51acb0351f1dd7637ff654cf73045336ffeb1f0518ecca29d6bb1db15f45a83d"
+      ],
+      "containers_remaining": [],
+      "runtime_record_sha256": "4730fa283cff97a56d4aedd1e716a31b3eafd9998b7f6919ec2c98c64e90c9b9"
+    },
+    {
+      "task_id": "dialogue-parser",
+      "persisted_status": "CLOSED",
+      "identity_hash": "716dd23ad6e7a85500402c3db95904d9c303c80545310a1ed5b2a3825e2733b1",
+      "container_ids": [
+        "6923b6259dfcee360de26f5eb56255ccf46eaae340f70499709083efbeb9affd"
+      ],
+      "containers_remaining": [],
+      "runtime_record_sha256": "bfd4fdec99b46b417fc7494d845c7daf641a191c5247ae839d9ea75030f0eee6"
+    },
+    {
+      "task_id": "pddl-tpp-planning",
+      "persisted_status": "CLOSED",
+      "identity_hash": "7298dd8b4004503825f43fcb2015caea3aa54d9264f56a36a4d4b7a1f9417f87",
+      "container_ids": [
+        "07ed698633b2fe8c6220d037d9722946eb9e48501b53c69896910b07dfda8469"
+      ],
+      "containers_remaining": [],
+      "runtime_record_sha256": "f1d965186f5b5de93db9554e860272da0863a0722e50ffcead497979c621ad85"
+    }
+  ]
+}

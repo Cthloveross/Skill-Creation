@@ -889,6 +889,8 @@ def _assistant_response(decoded: Any) -> dict[str, Any]:
     if not isinstance(output, list):
         raise ModelClientError("invalid_response", "Bedrock response has no output items")
     text: list[str] = []
+    final_text: list[str] = []
+    has_final = False
     calls: list[dict[str, Any]] = []
     for item in output:
         if not isinstance(item, Mapping):
@@ -897,11 +899,17 @@ def _assistant_response(decoded: Any) -> dict[str, Any]:
             content = item.get("content")
             if item.get("role") != "assistant" or not isinstance(content, list):
                 raise ModelClientError("invalid_response", "Bedrock message is malformed")
+            phase = item.get("phase")
+            if phase not in (None, "commentary", "final_answer"):
+                raise ModelClientError("invalid_response", "Bedrock message phase is malformed")
+            has_final = has_final or phase == "final_answer"
             for block in content:
                 if not isinstance(block, Mapping):
                     raise ModelClientError("invalid_response", "Bedrock content is malformed")
                 if block.get("type") == "output_text" and isinstance(block.get("text"), str):
                     text.append(block["text"])
+                    if phase == "final_answer":
+                        final_text.append(block["text"])
                 elif block.get("type") == "refusal":
                     raise ModelClientError("model_refusal", "Bedrock model refused the request")
                 else:
@@ -920,6 +928,10 @@ def _assistant_response(decoded: Any) -> dict[str, Any]:
             )
         elif item.get("type") != "reasoning":
             raise ModelClientError("invalid_response", "unexpected server-side output item")
+    # Prefer a marked final answer; commentary can itself carry an agent action.
+    # Native items retain every phase for subsequent requests.
+    if has_final:
+        text = final_text
     finish_reason = "tool_calls" if calls else "stop"
     if decoded["status"] == "incomplete":
         details = decoded.get("incomplete_details")

@@ -83,6 +83,144 @@ def _client(config=None, *, raw=None, counter=None):
     ), requests
 
 
+def _phase_message(text, phase=None):
+    return {
+        "type": "message",
+        "role": "assistant",
+        "phase": phase,
+        "content": [{"type": "output_text", "text": text}],
+    }
+
+
+def test_responses_final_answer_excludes_commentary_and_preserves_native_history():
+    final = '{"sufficient": false, "action": {"kind": "search", "query": "parser"}}'
+    output = [
+        {"type": "reasoning", "summary": [], "encrypted_content": "opaque-fixture"},
+        _phase_message("I will inspect the provided files first.", "commentary"),
+        _phase_message("The first query should cover branch parsing.", "commentary"),
+        _phase_message(final, "final_answer"),
+    ]
+    original = copy.deepcopy(output)
+    client, requests = _client(raw=_response(output))
+    answer = client.complete([{"role": "user", "content": "decide the next retrieval action"}])
+    assert answer["content"] == final
+    assert json.loads(answer["content"])["action"]["kind"] == "search"
+    assert answer["_bedrock_output_items"] == original
+    assert answer["usage"]["prompt_tokens"] == 11
+    assert answer["usage"]["completion_tokens"] == 7
+    client.complete([answer, {"role": "user", "content": "continue"}])
+    assert requests[-1]["input"][:-1] == original
+    assert output == original
+
+
+def test_responses_final_answer_takes_priority_over_unphased_text():
+    client, _ = _client(
+        raw=_response(
+            [
+                _phase_message("unlabelled progress"),
+                _phase_message("labelled progress", "commentary"),
+                _phase_message('{"files": []}', "final_answer"),
+            ]
+        )
+    )
+    assert client.complete([{"role": "user", "content": "generate"}])["content"] == (
+        '{"files": []}'
+    )
+
+
+@pytest.mark.parametrize("phase", [None, "omitted"])
+def test_responses_without_phase_keep_legacy_text_projection(phase):
+    output = [_phase_message("first"), _phase_message("second")]
+    if phase == "omitted":
+        for item in output:
+            item.pop("phase")
+    client, _ = _client(raw=_response(output))
+    assert client.complete([{"role": "user", "content": "request"}])["content"] == ("first\nsecond")
+
+
+def test_responses_commentary_preserves_structured_agent_action_without_final_answer():
+    action = '{"sufficient": false, "action": {"kind": "read_only", "tool": "read_input_file"}}'
+    output = [_phase_message(action, "commentary")]
+    client, requests = _client(raw=_response(output))
+    answer = client.complete([{"role": "user", "content": "request"}])
+    assert answer["content"] == action and len(requests) == 1
+    assert json.loads(answer["content"])["action"]["kind"] == "read_only"
+    assert answer["_bedrock_output_items"] == output
+
+
+def test_responses_without_final_answer_preserve_all_assistant_text_in_order():
+    output = [
+        _phase_message("unlabelled progress"),
+        _phase_message("labelled progress", "commentary"),
+    ]
+    client, _ = _client(raw=_response(output))
+    answer = client.complete([{"role": "user", "content": "request"}])
+    assert answer["content"] == "unlabelled progress\nlabelled progress"
+    assert answer["_bedrock_output_items"] == output
+
+
+def test_responses_commentary_with_tool_call_remains_an_intermediate_tool_turn():
+    output = [
+        _phase_message("I will list the provided directory.", "commentary"),
+        {
+            "type": "function_call",
+            "call_id": "call_fixture",
+            "name": "list_input_directory",
+            "arguments": '{"path": "/app"}',
+        },
+    ]
+    client, _ = _client(raw=_response(output))
+    answer = client.complete([{"role": "user", "content": "request"}])
+    assert answer["content"] == output[0]["content"][0]["text"]
+    assert answer["finish_reason"] == "tool_calls"
+    assert answer["tool_calls"][0]["function"]["name"] == "list_input_directory"
+    assert answer["_bedrock_output_items"] == output
+
+
+@pytest.mark.parametrize("phase", ["analysis", "final", 1, True, []])
+def test_responses_invalid_message_phase_is_rejected(phase):
+    client, _ = _client(raw=_response([_phase_message('{"valid": true}', phase)]))
+    with pytest.raises(ModelClientError) as error:
+        client.complete([{"role": "user", "content": "request"}])
+    assert error.value.code == "invalid_response"
+
+
+def test_responses_incomplete_commentary_keeps_output_stop_and_usage():
+    raw = _response([_phase_message("I am still investigating.", "commentary")])
+    raw.update(status="incomplete", incomplete_details={"reason": "max_output_tokens"})
+    client, _ = _client(raw=raw)
+    answer = client.complete([{"role": "user", "content": "request"}])
+    assert answer["content"] == raw["output"][0]["content"][0]["text"]
+    assert answer["finish_reason"] == "length"
+    assert answer["usage"]["output_tokens"] == 7
+    assert answer["_bedrock_output_items"] == raw["output"]
+
+
+@pytest.mark.parametrize("has_final", [True, False])
+def test_responses_phase_journal_preserves_raw_bytes_and_never_resends(tmp_path, has_final):
+    import base64
+
+    from tau_skill_evolution.journal import Journal
+
+    action = '{"action": {"kind": "read_only", "tool": "list_input_directory"}}'
+    output = [_phase_message(action, "commentary")]
+    if has_final:
+        output.append(_phase_message('{"action": "read"}', "final_answer"))
+    body = json.dumps(_response(output)).encode()
+    client, requests = _client(raw=body)
+    journal = Journal(tmp_path)
+    for _ in range(2):
+        result = client.complete_journaled(
+            journal, "analyzer", {}, [{"role": "user", "content": "request"}]
+        )
+        assert result["content"] == ('{"action": "read"}' if has_final else action)
+        assert result["_bedrock_output_items"] == output
+    sealed = next(journal.root.glob("*/raw-response.json"))
+    assert base64.b64decode(json.loads(sealed.read_text())["body_base64"]) == body
+    assert len(requests) == 1
+    assert journal.status("analyzer") == "COMPLETED"
+
+
 def test_null_output_limit_is_omitted_from_live_and_journaled_requests(tmp_path):
     from tau_skill_evolution.journal import Journal
 

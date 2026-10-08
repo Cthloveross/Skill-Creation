@@ -1,0 +1,1931 @@
+{
+  "schema": "skillsbench.public-summary-independent-review.v1",
+  "status": "PASS_WITH_EXPLICIT_LIMITATIONS",
+  "reviewed_at": "2026-10-08T21:01:33.592755+00:00",
+  "reviewer": "input_discovery_docs_review",
+  "namespace": "skillsbench.skill-evolution.v7",
+  "source_identity_hash": "f03d8156342ac18c482be6ad02540e470ed9884bbdd5af62d3da473834b64229",
+  "summary_sha256": "c229d461200137b738b873878d942ddf1d3267a469fdd05e70f4a20350ac1f42",
+  "checks": [
+    {
+      "name": "primary_completed",
+      "passed": true
+    },
+    {
+      "name": "namespace_and_model",
+      "passed": true
+    },
+    {
+      "name": "source_identity",
+      "passed": true
+    },
+    {
+      "name": "identity_receipt",
+      "passed": true
+    },
+    {
+      "name": "report_receipt",
+      "passed": true
+    },
+    {
+      "name": "denominators",
+      "passed": true
+    },
+    {
+      "name": "diagnostics_excluded",
+      "passed": true
+    },
+    {
+      "name": "dialogue-parser:pipeline_completed",
+      "passed": true
+    },
+    {
+      "name": "dialogue-parser:NoSkill:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-no-skill",
+      "response_sha256": "f0f15f607f2681af87ed4c96584b1b5d46c4194db2fe13dce7ba696b423a8069"
+    },
+    {
+      "name": "dialogue-parser:S0:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "dialogue-parser:S0:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-6f05387fc4e264c434cc204febdaa43d4045670172577575187459def91566e7",
+      "response_sha256": "ecf90062b9ba02b5c6fd02c77a3998fb88157c717a179ff202b3ef23bd77dd2b"
+    },
+    {
+      "name": "dialogue-parser:S1:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "dialogue-parser:S1:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-6bcde51a37625e3574b926105658beafe0a8cdd5d2e61c58b89bcc77033b3191",
+      "response_sha256": "73c597d4f4dc8e24b849237caf80ca3022831863e6db50bc2a757843df469c79"
+    },
+    {
+      "name": "dialogue-parser:contents_deduplicated",
+      "passed": true
+    },
+    {
+      "name": "dialogue-parser:S0_alias",
+      "passed": true
+    },
+    {
+      "name": "dialogue-parser:creation_hash",
+      "passed": true
+    },
+    {
+      "name": "dialogue-parser:recorded_content_versions",
+      "passed": true
+    },
+    {
+      "name": "dialogue-parser:final_ref",
+      "passed": true
+    },
+    {
+      "name": "dialogue-parser:final_evaluation_alias",
+      "passed": true
+    },
+    {
+      "name": "dialogue-parser:content_count",
+      "passed": true
+    },
+    {
+      "name": "dialogue-parser:S0_single_post",
+      "passed": true
+    },
+    {
+      "name": "dialogue-parser:author_counters",
+      "passed": true
+    },
+    {
+      "name": "dialogue-parser:stop_reason",
+      "passed": true
+    },
+    {
+      "name": "3d-scan-calc:pipeline_completed",
+      "passed": true
+    },
+    {
+      "name": "3d-scan-calc:NoSkill:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-no-skill",
+      "response_sha256": "23c026ec1a00c61153da8195798666d52f2ba8d01ef092e04463d2abdda4c2d7"
+    },
+    {
+      "name": "3d-scan-calc:S0:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "3d-scan-calc:S0:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-bacb52136b25891ad79e3bda22b2fd12f59e00025c759b0f76537da96eb6a333",
+      "response_sha256": "11bfe31c830b70b803a470761b16fb3137d9ca5bdd2b8647850fd2c283d0ebc9"
+    },
+    {
+      "name": "3d-scan-calc:S1:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "3d-scan-calc:S1:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-f5ed6e0f81598431f42d5aacd48e2e47ce0347b1acc84ff47f91bd9282a227b3",
+      "response_sha256": "b77fa1271c40cdc3a64c04011adbf3a291a5a24990eb4d50a180cdc8396b1ba2"
+    },
+    {
+      "name": "3d-scan-calc:contents_deduplicated",
+      "passed": true
+    },
+    {
+      "name": "3d-scan-calc:S0_alias",
+      "passed": true
+    },
+    {
+      "name": "3d-scan-calc:creation_hash",
+      "passed": true
+    },
+    {
+      "name": "3d-scan-calc:recorded_content_versions",
+      "passed": true
+    },
+    {
+      "name": "3d-scan-calc:final_ref",
+      "passed": true
+    },
+    {
+      "name": "3d-scan-calc:final_evaluation_alias",
+      "passed": true
+    },
+    {
+      "name": "3d-scan-calc:content_count",
+      "passed": true
+    },
+    {
+      "name": "3d-scan-calc:S0_single_post",
+      "passed": true
+    },
+    {
+      "name": "3d-scan-calc:author_counters",
+      "passed": true
+    },
+    {
+      "name": "3d-scan-calc:stop_reason",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:pipeline_completed",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:NoSkill:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-no-skill",
+      "response_sha256": "aa948cc25debe83436e60e3234e69b7c679f10b6879404215406e142df18b1b8"
+    },
+    {
+      "name": "adaptive-cruise-control:S0:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:S0:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-b48e3d3a930d285c4aa94099d8303f08953a8c6ea9c3d14fb0cc12e4db70e8b3",
+      "response_sha256": "d87d171091eed73240125a2d82865f76e5321282d4ac45d04da9ef82be034c89"
+    },
+    {
+      "name": "adaptive-cruise-control:S1:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:S1:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-75354b402c592183d11b046b7acd61047531dffb7af046c94f82e569f5eba7db",
+      "response_sha256": "7203075ab2f0d931a59cf9d8dfc8b687fb3c6a15b6c6387fc42476b9daa98368"
+    },
+    {
+      "name": "adaptive-cruise-control:S2:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:S2:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-bf70d88c3fe5a25d45ea6f0943a53efd07af47fc279580c4b0745d693926ac81",
+      "response_sha256": "79d68341423d84a52022c08af8286af14bcae6a505cf9088cb418cd3abf1d972"
+    },
+    {
+      "name": "adaptive-cruise-control:S3:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:S3:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+      "response_sha256": "21013e90c52424d17520a271592579e535c4ba5515aaf0721757a6b4aed4de7e"
+    },
+    {
+      "name": "adaptive-cruise-control:S4:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:S4:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204",
+      "response_sha256": "ac79a0ca762007fa83903a074d34b667a2e3b3a992841c2fbc34e30c29469050"
+    },
+    {
+      "name": "adaptive-cruise-control:S5:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:S5:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-95d9791c462d1ff4b1f0b3475ba118933aef1725a9a515e80eef32d422098021",
+      "response_sha256": "032b2b54739cfe0667b83a7be19dbbd45accfbd90e43e4b2859cc92631f95498"
+    },
+    {
+      "name": "adaptive-cruise-control:S6:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:S6:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-2d1cc80c148b32709f7e0023bf6753c938b23954778543026e46cc84f5445d2e",
+      "response_sha256": "634410d92445da24ca43fa4d386d3d7bcf5b9df1d340c7fea04e583d7716c69d"
+    },
+    {
+      "name": "adaptive-cruise-control:S7:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:S7:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-30edc592c3862f228c434e32c46771a3fecd8ed5f6df786710b6c0a217162678",
+      "response_sha256": "129d89f59e912e9f51359b5c979e1fe842c980b06a703fb62c756f8551e8166d"
+    },
+    {
+      "name": "adaptive-cruise-control:S8:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:S8:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5",
+      "response_sha256": "f397b851225212a811c0891e0d4a39cb5fb9f390297726e7ac3956643a0de65e"
+    },
+    {
+      "name": "adaptive-cruise-control:contents_deduplicated",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:S0_alias",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:creation_hash",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:recorded_content_versions",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:final_ref",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:final_evaluation_alias",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:content_count",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:S0_single_post",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:author_counters",
+      "passed": true
+    },
+    {
+      "name": "adaptive-cruise-control:stop_reason",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:pipeline_completed",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:NoSkill:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-no-skill",
+      "response_sha256": "1024f274fac458300eb5e49860d48064ed6be683302122578400b89fd6f7bffa"
+    },
+    {
+      "name": "dapt-intrusion-detection:S0:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:S0:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+      "response_sha256": "d41b6adb968abe16c9a4c2c0bc076b37f2c67cb8affb79cbc36a40157435e5f3"
+    },
+    {
+      "name": "dapt-intrusion-detection:S1:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:S1:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+      "response_sha256": "a042b492ab614610c429648c1b85c66ca7a62b20ed51b96101fe6f898db79bfd"
+    },
+    {
+      "name": "dapt-intrusion-detection:S2:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:S2:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a",
+      "response_sha256": "ac81168f216d842ffe0d09ddaa9b5b01dba3497560539396f72693d105ad750d"
+    },
+    {
+      "name": "dapt-intrusion-detection:S3:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:S3:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02",
+      "response_sha256": "231ac52afc9f189a80fb801e3cbdd5a12dd8dc95eea36934d3b811a60d0d5e8d"
+    },
+    {
+      "name": "dapt-intrusion-detection:S4:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:S4:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284",
+      "response_sha256": "ed5c23b2aeb04c6b8b4dc4f298cb5149fae4fce351482e01ebcf742b00c1afe1"
+    },
+    {
+      "name": "dapt-intrusion-detection:S5:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:S5:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-07b104a9cbc820d350e77e53ace9c3294288578b0d3bf54ac16ea4ef9c1e3c9a",
+      "response_sha256": "477057049fd517f84c926c892740e2af74a530ee751e13385da98ccd59d17813"
+    },
+    {
+      "name": "dapt-intrusion-detection:S6:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:S6:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-225f6242c0f64c398164d23a12a734a93c305f3377412ee1809fdd2633eccfa0",
+      "response_sha256": "ae9c2a0ae19b3e6945c50688a1e0b05a2c69d08e41fe7be177374e22cd0aa3b5"
+    },
+    {
+      "name": "dapt-intrusion-detection:contents_deduplicated",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:S0_alias",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:creation_hash",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:recorded_content_versions",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:final_ref",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:final_evaluation_alias",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:content_count",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:S0_single_post",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:author_counters",
+      "passed": true
+    },
+    {
+      "name": "dapt-intrusion-detection:stop_reason",
+      "passed": true
+    },
+    {
+      "name": "pddl-tpp-planning:pipeline_completed",
+      "passed": true
+    },
+    {
+      "name": "pddl-tpp-planning:NoSkill:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-no-skill",
+      "response_sha256": "7d6704e9f36e6bc6c71137c92b7b5309ed96cc6221442e3a1fe698da07bef02f"
+    },
+    {
+      "name": "pddl-tpp-planning:S0:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "pddl-tpp-planning:S0:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-1ffe3869a4df495055b668303e5fabbca1d073f0e0324447fd72fe228dd9f1a3",
+      "response_sha256": "f9ec6253ae97ec0d74943652a08aeb27f0ed2e06584580d9ec9f02d6fc6015ba"
+    },
+    {
+      "name": "pddl-tpp-planning:S1:sealed_bundle",
+      "passed": true
+    },
+    {
+      "name": "pddl-tpp-planning:S1:matches_sealed_evaluation",
+      "passed": true,
+      "operation_id": "evaluation-a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4",
+      "response_sha256": "4f1046d6aebd2cf4116fc69312f308a7ea2c8356ec6e98277b35c509287ffcf9"
+    },
+    {
+      "name": "pddl-tpp-planning:contents_deduplicated",
+      "passed": true
+    },
+    {
+      "name": "pddl-tpp-planning:S0_alias",
+      "passed": true
+    },
+    {
+      "name": "pddl-tpp-planning:creation_hash",
+      "passed": true
+    },
+    {
+      "name": "pddl-tpp-planning:recorded_content_versions",
+      "passed": true
+    },
+    {
+      "name": "pddl-tpp-planning:final_ref",
+      "passed": true
+    },
+    {
+      "name": "pddl-tpp-planning:final_evaluation_alias",
+      "passed": true
+    },
+    {
+      "name": "pddl-tpp-planning:content_count",
+      "passed": true
+    },
+    {
+      "name": "pddl-tpp-planning:S0_single_post",
+      "passed": true
+    },
+    {
+      "name": "pddl-tpp-planning:author_counters",
+      "passed": true
+    },
+    {
+      "name": "pddl-tpp-planning:stop_reason",
+      "passed": true
+    },
+    {
+      "name": "NoSkill:task_pass_rate",
+      "passed": true
+    },
+    {
+      "name": "NoSkill:reward_mean",
+      "passed": true
+    },
+    {
+      "name": "NoSkill:macro_GT_mean",
+      "passed": true
+    },
+    {
+      "name": "S0:task_pass_rate",
+      "passed": true
+    },
+    {
+      "name": "S0:reward_mean",
+      "passed": true
+    },
+    {
+      "name": "S0:macro_GT_mean",
+      "passed": true
+    },
+    {
+      "name": "Final:task_pass_rate",
+      "passed": true
+    },
+    {
+      "name": "Final:reward_mean",
+      "passed": true
+    },
+    {
+      "name": "Final:macro_GT_mean",
+      "passed": true
+    },
+    {
+      "name": "paired_evolution_counts",
+      "passed": true
+    },
+    {
+      "name": "usage_totals",
+      "passed": true,
+      "single_post_JSONL_rows": 376,
+      "native_provider_usage_receipts": 324
+    },
+    {
+      "name": "model_consistency",
+      "passed": true
+    },
+    {
+      "name": "billing_not_invented",
+      "passed": true
+    },
+    {
+      "name": "public_summary_excludes_private_detail_fields",
+      "passed": true
+    },
+    {
+      "name": "usage_role_breakdown",
+      "passed": true
+    },
+    {
+      "name": "native_usage_completed",
+      "passed": true
+    }
+  ],
+  "tasks": [
+    {
+      "task_id": "dialogue-parser",
+      "content_count": 2,
+      "independent_evaluation_count": 3,
+      "final_content_label": "S1",
+      "final_bundle_hash": "6bcde51a37625e3574b926105658beafe0a8cdd5d2e61c58b89bcc77033b3191",
+      "public_GT_fraction_path": [
+        [
+          "S0",
+          5,
+          6
+        ],
+        [
+          "S1",
+          6,
+          6
+        ]
+      ],
+      "official_reward_path": [
+        [
+          "S0",
+          0.833
+        ],
+        [
+          "S1",
+          1.0
+        ]
+      ]
+    },
+    {
+      "task_id": "3d-scan-calc",
+      "content_count": 2,
+      "independent_evaluation_count": 3,
+      "final_content_label": "S1",
+      "final_bundle_hash": "f5ed6e0f81598431f42d5aacd48e2e47ce0347b1acc84ff47f91bd9282a227b3",
+      "public_GT_fraction_path": [
+        [
+          "S0",
+          2,
+          2
+        ],
+        [
+          "S1",
+          2,
+          2
+        ]
+      ],
+      "official_reward_path": [
+        [
+          "S0",
+          1.0
+        ],
+        [
+          "S1",
+          1.0
+        ]
+      ]
+    },
+    {
+      "task_id": "adaptive-cruise-control",
+      "content_count": 9,
+      "independent_evaluation_count": 10,
+      "final_content_label": "S8",
+      "final_bundle_hash": "a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5",
+      "public_GT_fraction_path": [
+        [
+          "S0",
+          12,
+          12
+        ],
+        [
+          "S1",
+          10,
+          12
+        ],
+        [
+          "S2",
+          11,
+          12
+        ],
+        [
+          "S3",
+          11,
+          12
+        ],
+        [
+          "S4",
+          11,
+          12
+        ],
+        [
+          "S5",
+          11,
+          12
+        ],
+        [
+          "S6",
+          11,
+          12
+        ],
+        [
+          "S7",
+          11,
+          12
+        ],
+        [
+          "S8",
+          11,
+          12
+        ]
+      ],
+      "official_reward_path": [
+        [
+          "S0",
+          1.0
+        ],
+        [
+          "S1",
+          0.0
+        ],
+        [
+          "S2",
+          0.0
+        ],
+        [
+          "S3",
+          0.0
+        ],
+        [
+          "S4",
+          0.0
+        ],
+        [
+          "S5",
+          0.0
+        ],
+        [
+          "S6",
+          0.0
+        ],
+        [
+          "S7",
+          0.0
+        ],
+        [
+          "S8",
+          0.0
+        ]
+      ]
+    },
+    {
+      "task_id": "dapt-intrusion-detection",
+      "content_count": 7,
+      "independent_evaluation_count": 8,
+      "final_content_label": "S1",
+      "final_bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+      "public_GT_fraction_path": [
+        [
+          "S0",
+          11,
+          14
+        ],
+        [
+          "S1",
+          11,
+          14
+        ],
+        [
+          "S2",
+          13,
+          14
+        ],
+        [
+          "S3",
+          12,
+          14
+        ],
+        [
+          "S4",
+          10,
+          14
+        ],
+        [
+          "S5",
+          9,
+          14
+        ],
+        [
+          "S6",
+          10,
+          14
+        ]
+      ],
+      "official_reward_path": [
+        [
+          "S0",
+          0.0
+        ],
+        [
+          "S1",
+          0.0
+        ],
+        [
+          "S2",
+          0.0
+        ],
+        [
+          "S3",
+          0.0
+        ],
+        [
+          "S4",
+          0.0
+        ],
+        [
+          "S5",
+          0.0
+        ],
+        [
+          "S6",
+          0.0
+        ]
+      ]
+    },
+    {
+      "task_id": "pddl-tpp-planning",
+      "content_count": 2,
+      "independent_evaluation_count": 3,
+      "final_content_label": "S1",
+      "final_bundle_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4",
+      "public_GT_fraction_path": [
+        [
+          "S0",
+          2,
+          2
+        ],
+        [
+          "S1",
+          2,
+          2
+        ]
+      ],
+      "official_reward_path": [
+        [
+          "S0",
+          1.0
+        ],
+        [
+          "S1",
+          1.0
+        ]
+      ]
+    }
+  ],
+  "aggregate_recalculated": {
+    "NoSkill": {
+      "intended_task_denominator": 5,
+      "measured_tasks": 5,
+      "task_passes": 1,
+      "task_pass_rate": 0.2,
+      "mean_official_reward_on_measured_tasks": 0.3666,
+      "macro_gt_check_rate_on_measured_tasks": 0.7333333333333334
+    },
+    "S0": {
+      "intended_task_denominator": 5,
+      "measured_tasks": 5,
+      "task_passes": 3,
+      "task_pass_rate": 0.6,
+      "mean_official_reward_on_measured_tasks": 0.7666000000000001,
+      "macro_gt_check_rate_on_measured_tasks": 0.9238095238095237
+    },
+    "Final": {
+      "intended_task_denominator": 5,
+      "measured_tasks": 5,
+      "task_passes": 3,
+      "task_pass_rate": 0.6,
+      "mean_official_reward_on_measured_tasks": 0.6,
+      "macro_gt_check_rate_on_measured_tasks": 0.9404761904761905
+    },
+    "paired_s0_to_final": {
+      "tasks": 5,
+      "rescued": 1,
+      "degraded": 1,
+      "unchanged_task_pass": 3
+    }
+  },
+  "usage_recalculated": {
+    "requests": 700,
+    "input_tokens": 14987885,
+    "output_tokens": 1068257,
+    "cached_input_tokens": 11443512
+  },
+  "independent_evaluations_checked": 27,
+  "model_requests_from_audit": 0,
+  "learning_feedback_written": false,
+  "credentials_accessed": false,
+  "thinking_items_inspected": false,
+  "scope": "Recorded metric values, sealed content integrity, final references, denominators, aggregates and provider usage were checked independently. No official grader or solution file was loaded, and no results were supplied to a learning model.",
+  "private_evidence_scope": "A structural inspection of the host evolution-result best reference exposed inline official test details to the reviewer; those details are not exported here, were not used for new tests or method changes, and were not fed to a learning role. This review does not assert that the reviewer inspected only public evidence.",
+  "limitations": [
+    "One fresh evaluation per unique content version is a descriptive pilot measurement, not proof of causal improvement or statistical significance.",
+    "GT counts are official reporter groups, not counted Python assertions; surrogate results use their own suite and cannot be substituted.",
+    "Official reward, macro GT check fraction and task pass rate are separately recalculated.",
+    "DAPT selects the earlier reward-tied S1; higher independent GT fraction in S2 does not alter selection.",
+    "Final aliases the selected content evaluation; it is not another unrecorded measurement."
+  ],
+  "usage_roles_recalculated": {
+    "analyzer": {
+      "requests": 126,
+      "input_tokens": 2081256,
+      "output_tokens": 219278,
+      "cached_input_tokens": 317482
+    },
+    "generator": {
+      "requests": 117,
+      "input_tokens": 6841404,
+      "output_tokens": 483339,
+      "cached_input_tokens": 6077566
+    },
+    "verifier": {
+      "requests": 133,
+      "input_tokens": 1508570,
+      "output_tokens": 232540,
+      "cached_input_tokens": 1141776
+    },
+    "execution": {
+      "requests": 324,
+      "input_tokens": 4556655,
+      "output_tokens": 133100,
+      "cached_input_tokens": 3906688
+    }
+  },
+  "native_usage_scope": "Only native provider identity.framework, operation_id/state and response.usage were projected. No native output/prompt/body fields were inspected; no Journal object was initialized.",
+  "audit_history": [
+    {
+      "status": "SUPERSEDED_INCOMPLETE_USAGE_COVERAGE",
+      "scope": "initial reviewer read shared usage.jsonl only",
+      "shared_completed_operations": 376,
+      "native_completed_operations_omitted": 324,
+      "resolution": "Native provider usage was added and both reviewers independently matched all 700 completed logical operations. This was incomplete audit coverage, not a demonstrated pipeline mismatch."
+    }
+  ],
+  "second_metrics_review": {
+    "schema": "skillsbench.public-summary-independent-review.v1",
+    "created_at": "2026-10-08T21:05:21.276410+00:00",
+    "reviewer": "input_discovery_tests",
+    "trial_id": "input-discovery-five-gpt54-20261008-003",
+    "review_status": "PASS",
+    "review_scope": "Read-only hashes, counts and selections from final public export and sealed journals; no hidden grader bodies, reasoning, credentials or new model calls.",
+    "source_identity_hash": "f03d8156342ac18c482be6ad02540e470ed9884bbdd5af62d3da473834b64229",
+    "public_summary_sha256": "c229d461200137b738b873878d942ddf1d3267a469fdd05e70f4a20350ac1f42",
+    "report_sha256": "f686e868b899b6d9a91a1db16883fbbb30b33dfc88fca9b007701333a25c2fa2",
+    "source_identity_file_sha256": "bdf44c0312615dc7f04e58245933c016bc6b4d24083f00bfd8b9d5aeafbcbfb5",
+    "source_files_checked": 291,
+    "source_mismatch_count": 0,
+    "selected_denominator": 5,
+    "population_denominator": 85,
+    "unselected_NOT_MEASURED_count": 80,
+    "content_evaluations_checked": 22,
+    "fresh_independent_measurements_checked": 27,
+    "actual_learning_GT_executions_checked": 7,
+    "S0_acknowledgments": [
+      {
+        "task_id": "dialogue-parser",
+        "acknowledged_single_post_count": 1,
+        "receipt_sha256": "1ecd883163d9c1144336f4e9be8d90e3ad41c2b673332aa62c4ded8bd44f6d81"
+      },
+      {
+        "task_id": "3d-scan-calc",
+        "acknowledged_single_post_count": 1,
+        "receipt_sha256": "75532747a3978418ab060b628c082df65c04d8e6f4a461b27cd3f8461433a115"
+      },
+      {
+        "task_id": "adaptive-cruise-control",
+        "acknowledged_single_post_count": 1,
+        "receipt_sha256": "52177ccb44c3d9a80707f5dfa3abc1c8996fd3add70d63569d171e77d48d658e"
+      },
+      {
+        "task_id": "dapt-intrusion-detection",
+        "acknowledged_single_post_count": 1,
+        "receipt_sha256": "a9739e495f923557d3739bae35683761dd104233912d962b724d16d693be3093"
+      },
+      {
+        "task_id": "pddl-tpp-planning",
+        "acknowledged_single_post_count": 1,
+        "receipt_sha256": "d1316c5b115c1aea81a4cb431fb7d8fa9a8dd21e27e2ad730613b598518d02c6"
+      }
+    ],
+    "tasks": [
+      {
+        "task_id": "dialogue-parser",
+        "content_version_count": 2,
+        "fresh_independent_measurements": 3,
+        "NoSkill": {
+          "utility": false,
+          "reward": 0.833,
+          "gt_passed": 5,
+          "gt_total": 6
+        },
+        "versions": [
+          {
+            "label": "S0",
+            "bundle_hash": "6f05387fc4e264c434cc204febdaa43d4045670172577575187459def91566e7",
+            "utility": false,
+            "official_reward": 0.833,
+            "gt_passed": 5,
+            "gt_total": 6
+          },
+          {
+            "label": "S1",
+            "bundle_hash": "6bcde51a37625e3574b926105658beafe0a8cdd5d2e61c58b89bcc77033b3191",
+            "utility": true,
+            "official_reward": 1.0,
+            "gt_passed": 6,
+            "gt_total": 6
+          }
+        ],
+        "Final": {
+          "selected_content_label": "S1",
+          "bundle_hash": "6bcde51a37625e3574b926105658beafe0a8cdd5d2e61c58b89bcc77033b3191",
+          "utility": true,
+          "reward": 1.0,
+          "gt_passed": 6,
+          "gt_total": 6
+        },
+        "normal_GT_interventions": 1,
+        "actual_GT_executions": 1,
+        "post_final_GT_executions": 0
+      },
+      {
+        "task_id": "3d-scan-calc",
+        "content_version_count": 2,
+        "fresh_independent_measurements": 3,
+        "NoSkill": {
+          "utility": true,
+          "reward": 1.0,
+          "gt_passed": 2,
+          "gt_total": 2
+        },
+        "versions": [
+          {
+            "label": "S0",
+            "bundle_hash": "bacb52136b25891ad79e3bda22b2fd12f59e00025c759b0f76537da96eb6a333",
+            "utility": true,
+            "official_reward": 1.0,
+            "gt_passed": 2,
+            "gt_total": 2
+          },
+          {
+            "label": "S1",
+            "bundle_hash": "f5ed6e0f81598431f42d5aacd48e2e47ce0347b1acc84ff47f91bd9282a227b3",
+            "utility": true,
+            "official_reward": 1.0,
+            "gt_passed": 2,
+            "gt_total": 2
+          }
+        ],
+        "Final": {
+          "selected_content_label": "S1",
+          "bundle_hash": "f5ed6e0f81598431f42d5aacd48e2e47ce0347b1acc84ff47f91bd9282a227b3",
+          "utility": true,
+          "reward": 1.0,
+          "gt_passed": 2,
+          "gt_total": 2
+        },
+        "normal_GT_interventions": 1,
+        "actual_GT_executions": 1,
+        "post_final_GT_executions": 0
+      },
+      {
+        "task_id": "adaptive-cruise-control",
+        "content_version_count": 9,
+        "fresh_independent_measurements": 10,
+        "NoSkill": {
+          "utility": false,
+          "reward": 0.0,
+          "gt_passed": 10,
+          "gt_total": 12
+        },
+        "versions": [
+          {
+            "label": "S0",
+            "bundle_hash": "b48e3d3a930d285c4aa94099d8303f08953a8c6ea9c3d14fb0cc12e4db70e8b3",
+            "utility": true,
+            "official_reward": 1.0,
+            "gt_passed": 12,
+            "gt_total": 12
+          },
+          {
+            "label": "S1",
+            "bundle_hash": "75354b402c592183d11b046b7acd61047531dffb7af046c94f82e569f5eba7db",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 10,
+            "gt_total": 12
+          },
+          {
+            "label": "S2",
+            "bundle_hash": "bf70d88c3fe5a25d45ea6f0943a53efd07af47fc279580c4b0745d693926ac81",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 11,
+            "gt_total": 12
+          },
+          {
+            "label": "S3",
+            "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 11,
+            "gt_total": 12
+          },
+          {
+            "label": "S4",
+            "bundle_hash": "e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 11,
+            "gt_total": 12
+          },
+          {
+            "label": "S5",
+            "bundle_hash": "95d9791c462d1ff4b1f0b3475ba118933aef1725a9a515e80eef32d422098021",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 11,
+            "gt_total": 12
+          },
+          {
+            "label": "S6",
+            "bundle_hash": "2d1cc80c148b32709f7e0023bf6753c938b23954778543026e46cc84f5445d2e",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 11,
+            "gt_total": 12
+          },
+          {
+            "label": "S7",
+            "bundle_hash": "30edc592c3862f228c434e32c46771a3fecd8ed5f6df786710b6c0a217162678",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 11,
+            "gt_total": 12
+          },
+          {
+            "label": "S8",
+            "bundle_hash": "a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 11,
+            "gt_total": 12
+          }
+        ],
+        "Final": {
+          "selected_content_label": "S8",
+          "bundle_hash": "a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5",
+          "utility": false,
+          "reward": 0.0,
+          "gt_passed": 11,
+          "gt_total": 12
+        },
+        "normal_GT_interventions": 0,
+        "actual_GT_executions": 1,
+        "post_final_GT_executions": 1
+      },
+      {
+        "task_id": "dapt-intrusion-detection",
+        "content_version_count": 7,
+        "fresh_independent_measurements": 8,
+        "NoSkill": {
+          "utility": false,
+          "reward": 0.0,
+          "gt_passed": 7,
+          "gt_total": 14
+        },
+        "versions": [
+          {
+            "label": "S0",
+            "bundle_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 11,
+            "gt_total": 14
+          },
+          {
+            "label": "S1",
+            "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 11,
+            "gt_total": 14
+          },
+          {
+            "label": "S2",
+            "bundle_hash": "8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 13,
+            "gt_total": 14
+          },
+          {
+            "label": "S3",
+            "bundle_hash": "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 12,
+            "gt_total": 14
+          },
+          {
+            "label": "S4",
+            "bundle_hash": "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 10,
+            "gt_total": 14
+          },
+          {
+            "label": "S5",
+            "bundle_hash": "07b104a9cbc820d350e77e53ace9c3294288578b0d3bf54ac16ea4ef9c1e3c9a",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 9,
+            "gt_total": 14
+          },
+          {
+            "label": "S6",
+            "bundle_hash": "225f6242c0f64c398164d23a12a734a93c305f3377412ee1809fdd2633eccfa0",
+            "utility": false,
+            "official_reward": 0.0,
+            "gt_passed": 10,
+            "gt_total": 14
+          }
+        ],
+        "Final": {
+          "selected_content_label": "S1",
+          "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+          "utility": false,
+          "reward": 0.0,
+          "gt_passed": 11,
+          "gt_total": 14
+        },
+        "normal_GT_interventions": 2,
+        "actual_GT_executions": 3,
+        "post_final_GT_executions": 1
+      },
+      {
+        "task_id": "pddl-tpp-planning",
+        "content_version_count": 2,
+        "fresh_independent_measurements": 3,
+        "NoSkill": {
+          "utility": false,
+          "reward": 0.0,
+          "gt_passed": 1,
+          "gt_total": 2
+        },
+        "versions": [
+          {
+            "label": "S0",
+            "bundle_hash": "1ffe3869a4df495055b668303e5fabbca1d073f0e0324447fd72fe228dd9f1a3",
+            "utility": true,
+            "official_reward": 1.0,
+            "gt_passed": 2,
+            "gt_total": 2
+          },
+          {
+            "label": "S1",
+            "bundle_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4",
+            "utility": true,
+            "official_reward": 1.0,
+            "gt_passed": 2,
+            "gt_total": 2
+          }
+        ],
+        "Final": {
+          "selected_content_label": "S1",
+          "bundle_hash": "a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4",
+          "utility": true,
+          "reward": 1.0,
+          "gt_passed": 2,
+          "gt_total": 2
+        },
+        "normal_GT_interventions": 1,
+        "actual_GT_executions": 1,
+        "post_final_GT_executions": 0
+      }
+    ],
+    "verified_aggregate": {
+      "NoSkill": {
+        "intended_task_denominator": 5,
+        "measured_tasks": 5,
+        "task_passes": 1,
+        "task_pass_rate": 0.2,
+        "mean_official_reward_on_measured_tasks": 0.3666,
+        "macro_gt_check_rate_on_measured_tasks": 0.7333333333333334
+      },
+      "S0": {
+        "intended_task_denominator": 5,
+        "measured_tasks": 5,
+        "task_passes": 3,
+        "task_pass_rate": 0.6,
+        "mean_official_reward_on_measured_tasks": 0.7666000000000001,
+        "macro_gt_check_rate_on_measured_tasks": 0.9238095238095237
+      },
+      "Final": {
+        "intended_task_denominator": 5,
+        "measured_tasks": 5,
+        "task_passes": 3,
+        "task_pass_rate": 0.6,
+        "mean_official_reward_on_measured_tasks": 0.6,
+        "macro_gt_check_rate_on_measured_tasks": 0.9404761904761905
+      },
+      "paired_s0_to_final": {
+        "tasks": 5,
+        "rescued": 1,
+        "degraded": 1,
+        "unchanged_task_pass": 3
+      }
+    },
+    "usage_reconstructed": {
+      "roles": {
+        "analyzer": {
+          "requests": 126,
+          "input_tokens": 2081256,
+          "output_tokens": 219278,
+          "cached_input_tokens": 317482
+        },
+        "generator": {
+          "requests": 117,
+          "input_tokens": 6841404,
+          "output_tokens": 483339,
+          "cached_input_tokens": 6077566
+        },
+        "verifier": {
+          "requests": 133,
+          "input_tokens": 1508570,
+          "output_tokens": 232540,
+          "cached_input_tokens": 1141776
+        },
+        "execution": {
+          "requests": 324,
+          "input_tokens": 4556655,
+          "output_tokens": 133100,
+          "cached_input_tokens": 3906688
+        }
+      },
+      "total": {
+        "requests": 700,
+        "input_tokens": 14987885,
+        "output_tokens": 1068257,
+        "cached_input_tokens": 11443512
+      },
+      "states": {
+        "COMPLETED": 700,
+        "NOT_SENT": 0,
+        "RECEIVED_INVALID": 0,
+        "UNKNOWN": 0
+      },
+      "policies": {
+        "single_post": 376,
+        "native_provider": 324
+      },
+      "cost_status": "NOT_MEASURED",
+      "cost_usd": null,
+      "HTTP_transport_attempts_status": "NOT_MEASURED"
+    },
+    "checks_run": 1842,
+    "validation_counts": {
+      "selected_tasks": 1,
+      "denominators": 1,
+      "source_identity_binding": 1,
+      "source_identity_hash": 1,
+      "report_hash": 1,
+      "source_identity_file_hash": 1,
+      "namespace": 1,
+      "provider_identity": 1,
+      "primary_eligible": 1,
+      "current_source_identity": 1,
+      "unselected_not_measured": 80,
+      "condition": 5,
+      "all_stages_finished": 5,
+      "base_hash": 5,
+      "document_hash": 8,
+      "journal_operation": 32,
+      "journal_request_hash": 32,
+      "journal_request_response_binding": 32,
+      "journal_response_hash": 32,
+      "journal_complete": 32,
+      "version_order": 5,
+      "deduplicated_S0_first": 5,
+      "final_hash": 5,
+      "final_parent_lineage": 5,
+      "stop_reason": 5,
+      "version_label": 22,
+      "bundle_manifest_hash": 22,
+      "bundle_inventory": 22,
+      "bundle_file_hash": 138,
+      "journal_result_hash": 27,
+      "evaluation_journal_report": 22,
+      "raw_sealed_evaluation": 22,
+      "measurement_status": 27,
+      "measurement_bundle": 27,
+      "utility_match": 27,
+      "reward_match": 27,
+      "official_checks_status": 27,
+      "official_checks_passed": 27,
+      "official_checks_total": 27,
+      "official_checks_unit": 27,
+      "official_checks_source": 27,
+      "official_counts_valid": 27,
+      "official_rate": 27,
+      "utility_official_reward": 27,
+      "evaluation_after_learning_complete": 22,
+      "baseline_journal_report": 5,
+      "raw_sealed_baseline": 5,
+      "S0_alias": 5,
+      "final_content_eval_alias": 5,
+      "delta_utility": 27,
+      "delta_reward": 27,
+      "delta_official_rate": 27,
+      "adjacent_delta_count": 5,
+      "adjacent_delta_order": 17,
+      "surrogate_count": 5,
+      "surrogate_validity": 21,
+      "surrogate_binding": 21,
+      "surrogate_counts_rate": 21,
+      "surrogate_same_hash_delta": 21,
+      "oracle_count": 5,
+      "oracle_phase": 7,
+      "oracle_status": 7,
+      "oracle_passed": 7,
+      "oracle_bundle_hash": 7,
+      "oracle_parent_hash": 7,
+      "oracle_reward_source": 7,
+      "oracle_grader_evidence_hash": 7,
+      "oracle_score_provenance": 7,
+      "oracle_aggregate_counts": 7,
+      "post_final_not_normal_K": 5,
+      "best_presence": 5,
+      "best_record_binding": 4,
+      "retained_result_separate": 5,
+      "rollback_binding": 5,
+      "counter_native_r_interventions": 5,
+      "counter_native_K_normal_gt_interventions": 5,
+      "counter_native_generator_episodes": 5,
+      "counter_generator_model_attempts": 5,
+      "counter_generator_model_responses": 5,
+      "counter_generator_terminal_calls": 5,
+      "counter_verifier_terminal_calls": 5,
+      "GT_executions_vs_normal_K": 5,
+      "attempt_submission_content_counts": 5,
+      "single_post_acknowledgment": 5,
+      "aggregate_task_pass": 3,
+      "aggregate_reward": 3,
+      "aggregate_macro_GT": 3,
+      "aggregate_paired": 1,
+      "native_response_hash": 324,
+      "usage_role_reconstruction": 1,
+      "usage_total_reconstruction": 1,
+      "usage_state_reconstruction": 1,
+      "usage_policy_reconstruction": 1,
+      "usage_logical_operation_count": 1,
+      "usage_HTTP_not_fabricated": 1,
+      "usage_cost_not_fabricated": 1,
+      "usage_unknown_billing": 1,
+      "safe_export_no_private_body_fields": 226,
+      "safe_export_no_credential_patterns": 1
+    },
+    "mismatch_count": 0,
+    "mismatches": [],
+    "evidence_references": [
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/public-summary.json",
+        "sha256": "c229d461200137b738b873878d942ddf1d3267a469fdd05e70f4a20350ac1f42",
+        "bytes": 66003
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/report.json",
+        "sha256": "f686e868b899b6d9a91a1db16883fbbb30b33dfc88fca9b007701333a25c2fa2",
+        "bytes": 597541
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/source-identity.json",
+        "sha256": "bdf44c0312615dc7f04e58245933c016bc6b4d24083f00bfd8b9d5aeafbcbfb5",
+        "bytes": 39700
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/usage.jsonl",
+        "sha256": "ce394c15ca6a7c44dc1952912bbbe3054687d3500e6589d03c56f6d7e51e01f4",
+        "bytes": 180695
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dialogue-parser/benign/base",
+        "sha256": "49a4d092549aba550d86c7c32ce36fe1c9c2740a1d90f07f00a1a14933782663",
+        "bytes": 28596
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dialogue-parser/benign/journal/04062031d33c6c869f5c1c60ea542ca8749101a7079ed943c4126bdabf9fd000/response.json",
+        "sha256": "e08409e3185438a4e7c0451f8985b57df0baa80923ef63498969be46267a350f",
+        "bytes": 63858
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dialogue-parser/benign/initial/manifest.json",
+        "sha256": "bee769719885fabf66d0b3487104039df713f5b2389b72550b58bfdb54c71f72",
+        "bytes": 671
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dialogue-parser/benign/journal/bf2e24749559da459dee61b5708ac4572650a4b7b07566e52e6ce88be9d122eb/response.json",
+        "sha256": "ecf90062b9ba02b5c6fd02c77a3998fb88157c717a179ff202b3ef23bd77dd2b",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dialogue-parser/benign/journal/bf2e24749559da459dee61b5708ac4572650a4b7b07566e52e6ce88be9d122eb/result.json",
+        "sha256": "ceb0f75f4c6d9b38a41772e4fbee90fa4173b24125bf9f5e67a2bcc4569b92e6",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dialogue-parser/benign/versions/6bcde51a37625e3574b926105658beafe0a8cdd5d2e61c58b89bcc77033b3191/manifest.json",
+        "sha256": "102c4aeffe5ff618b0607cc9259904e2c74065c0c3eeb3334780b54816a1e440",
+        "bytes": 854
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dialogue-parser/benign/journal/e91329636d47b05fd073050e2e57a2dcf96c4f55adb33d0e430949c8e8914a55/response.json",
+        "sha256": "73c597d4f4dc8e24b849237caf80ca3022831863e6db50bc2a757843df469c79",
+        "bytes": 1942
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dialogue-parser/benign/journal/e91329636d47b05fd073050e2e57a2dcf96c4f55adb33d0e430949c8e8914a55/result.json",
+        "sha256": "01c56ed7fd18a8efcbfe235527080680a7e94629bdac14e7ffffcf5f03f40cc5",
+        "bytes": 2104
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dialogue-parser/benign/journal/39784f62bf391349fb1ea8345dbe837396cc4b84337a6cea9c7913831707c86d/response.json",
+        "sha256": "f0f15f607f2681af87ed4c96584b1b5d46c4194db2fe13dce7ba696b423a8069",
+        "bytes": 1904
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dialogue-parser/benign/journal/39784f62bf391349fb1ea8345dbe837396cc4b84337a6cea9c7913831707c86d/result.json",
+        "sha256": "a38224c811e9b813cb8d57713d24e502ffa98443929ff920a10ad25ca798c8d7",
+        "bytes": 2083
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dialogue-parser/benign/journal/a0c9aa73e6a864125f963a932bd71f27f10f0eaa587965fce5028e9c11843f93/raw-response.json",
+        "sha256": "1ecd883163d9c1144336f4e9be8d90e3ad41c2b673332aa62c4ded8bd44f6d81",
+        "bytes": 74224
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/3d-scan-calc/benign/base",
+        "sha256": "f8e761fe7225ba8453b668b68387ae7c9319b03676ab32ac57232e2d42e8c21e",
+        "bytes": 31520
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/3d-scan-calc/benign/journal/04062031d33c6c869f5c1c60ea542ca8749101a7079ed943c4126bdabf9fd000/response.json",
+        "sha256": "3013272e64ebe57039fe617c9966405b5543b3d4aac9db2e02eb6f9c40fe02c9",
+        "bytes": 79352
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/3d-scan-calc/benign/initial/manifest.json",
+        "sha256": "b0b7804ff9124b62beac72847c7871682554cd6badd041d3edbbf94bfb6aa806",
+        "bytes": 673
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/3d-scan-calc/benign/journal/3313d97f5a68905dcb042ed60f1260670d1d298ad9f5ba89925d67fc8b82694f/response.json",
+        "sha256": "11bfe31c830b70b803a470761b16fb3137d9ca5bdd2b8647850fd2c283d0ebc9",
+        "bytes": 1942
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/3d-scan-calc/benign/journal/3313d97f5a68905dcb042ed60f1260670d1d298ad9f5ba89925d67fc8b82694f/result.json",
+        "sha256": "34443c4592a08509b8d69eefd653134b47a401c2be54caaff3c6023bad6818f9",
+        "bytes": 2104
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/3d-scan-calc/benign/versions/f5ed6e0f81598431f42d5aacd48e2e47ce0347b1acc84ff47f91bd9282a227b3/manifest.json",
+        "sha256": "680128fa03304f1f3b9206674d090902089ed083e6e5cc7bad0dd0d45750ff5f",
+        "bytes": 735
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/3d-scan-calc/benign/journal/3bace6ae90abd7f920536f1e2b63695f572f6a7492669e344e5a89c663017758/response.json",
+        "sha256": "b77fa1271c40cdc3a64c04011adbf3a291a5a24990eb4d50a180cdc8396b1ba2",
+        "bytes": 1942
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/3d-scan-calc/benign/journal/3bace6ae90abd7f920536f1e2b63695f572f6a7492669e344e5a89c663017758/result.json",
+        "sha256": "2b687b001bf0731b53cce70b3c1634678150094f8385d610136591c6f7c346ec",
+        "bytes": 2104
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/3d-scan-calc/benign/journal/39784f62bf391349fb1ea8345dbe837396cc4b84337a6cea9c7913831707c86d/response.json",
+        "sha256": "23c026ec1a00c61153da8195798666d52f2ba8d01ef092e04463d2abdda4c2d7",
+        "bytes": 1886
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/3d-scan-calc/benign/journal/39784f62bf391349fb1ea8345dbe837396cc4b84337a6cea9c7913831707c86d/result.json",
+        "sha256": "ca1860d731a10864198a251b876764eb061e23fb683141dbc48b282185bd8bf4",
+        "bytes": 2064
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/3d-scan-calc/benign/journal/a0c9aa73e6a864125f963a932bd71f27f10f0eaa587965fce5028e9c11843f93/raw-response.json",
+        "sha256": "75532747a3978418ab060b628c082df65c04d8e6f4a461b27cd3f8461433a115",
+        "bytes": 85208
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/base",
+        "sha256": "6a22575095a415c66dd698aa3831332b331d18933270c9bea1736c05e486d3f3",
+        "bytes": 26347
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/04062031d33c6c869f5c1c60ea542ca8749101a7079ed943c4126bdabf9fd000/response.json",
+        "sha256": "3a023881b90a403b01e13445e8916eec95669ecd179fa3875e3facbebb066edb",
+        "bytes": 500250
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/initial/manifest.json",
+        "sha256": "a916175e03d2f2bee907515cb9aeb0d1917869f10623f14bf923b5f4a4787b0c",
+        "bytes": 266
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/bb8303771d6e1031e0c5ea16252416a163d8cb12679f6c9e48f2461b2f3ca80f/response.json",
+        "sha256": "d87d171091eed73240125a2d82865f76e5321282d4ac45d04da9ef82be034c89",
+        "bytes": 1944
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/bb8303771d6e1031e0c5ea16252416a163d8cb12679f6c9e48f2461b2f3ca80f/result.json",
+        "sha256": "ba8b0ee079048acc0e7f93497b6542f0ef3b2527d3335154e872dc40a81e641b",
+        "bytes": 2106
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/75354b402c592183d11b046b7acd61047531dffb7af046c94f82e569f5eba7db/manifest.json",
+        "sha256": "9b114bc9c41f294801ba915a3da1ff9e59589656fde939321ecd3b952809289e",
+        "bytes": 1464
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/75d7ec3ebd7244f05c67227828f8fe8a9c683243aa79b7b0e8d188a446e05468/response.json",
+        "sha256": "7203075ab2f0d931a59cf9d8dfc8b687fb3c6a15b6c6387fc42476b9daa98368",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/75d7ec3ebd7244f05c67227828f8fe8a9c683243aa79b7b0e8d188a446e05468/result.json",
+        "sha256": "7f2167a54f66c069d5c21cc650500d1e7b9506de9ab2816952d7d71f9b148c17",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/bf70d88c3fe5a25d45ea6f0943a53efd07af47fc279580c4b0745d693926ac81/manifest.json",
+        "sha256": "2deb94d9e03f076a7196d7e53653a3f647abfafb07c01f7ed47e6d2249a82528",
+        "bytes": 1464
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/a619b870552a301e8055dfa9809f96a8edcb647b8d8a6c0242e5d5deeefd3250/response.json",
+        "sha256": "79d68341423d84a52022c08af8286af14bcae6a505cf9088cb418cd3abf1d972",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/a619b870552a301e8055dfa9809f96a8edcb647b8d8a6c0242e5d5deeefd3250/result.json",
+        "sha256": "2ab8c8e7a268897c6a50ee94d0befa283a07bb650fa688db1341ae4408867de0",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507/manifest.json",
+        "sha256": "d0b21c873c49904bba31f1919c0520bc085194ef676915e124ba4dad27aa7c39",
+        "bytes": 1464
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/e6068958fbab2b7da2d352e1699c72c1a42bd90945dd587a5b38c31c6aa6aad5/response.json",
+        "sha256": "21013e90c52424d17520a271592579e535c4ba5515aaf0721757a6b4aed4de7e",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/e6068958fbab2b7da2d352e1699c72c1a42bd90945dd587a5b38c31c6aa6aad5/result.json",
+        "sha256": "44bc7bf63801d5f5867a41712d207c675c4f5961216916c8b069dec31022579c",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204/manifest.json",
+        "sha256": "0c463a42d484f01956d35523fd928949e54948931ce55354b34851b4c5b3dcc8",
+        "bytes": 1464
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/327be4dea37158f25de50a7bd5253bb3457b4a87c246be457dee5234233e0ff4/response.json",
+        "sha256": "ac79a0ca762007fa83903a074d34b667a2e3b3a992841c2fbc34e30c29469050",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/327be4dea37158f25de50a7bd5253bb3457b4a87c246be457dee5234233e0ff4/result.json",
+        "sha256": "933237efc0c6f932625d1b80ad2343e878d29804996a827136a7510e57fdfc4f",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/95d9791c462d1ff4b1f0b3475ba118933aef1725a9a515e80eef32d422098021/manifest.json",
+        "sha256": "bf07eee40ab5fdbf5a497ec6ce516bb2de02ea0292b33d7f67feac276e23d3ef",
+        "bytes": 1464
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/a5a19a261b32b16f15f9023dfaa6d65cc5c68190966e802cf2981013bb5917f0/response.json",
+        "sha256": "032b2b54739cfe0667b83a7be19dbbd45accfbd90e43e4b2859cc92631f95498",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/a5a19a261b32b16f15f9023dfaa6d65cc5c68190966e802cf2981013bb5917f0/result.json",
+        "sha256": "a6043a6fb4e653e16a94747d6be40f796fe533e0ef58ec37adce14a51a711e86",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/2d1cc80c148b32709f7e0023bf6753c938b23954778543026e46cc84f5445d2e/manifest.json",
+        "sha256": "33bef54a6619f5c1a4c07aa4e82b1fa78d6ac7ad3e5882446388e450848e2558",
+        "bytes": 1464
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/e336e7704e65d317d2fd1ddc5303f44f069d535e4450261ded4bd74d724367f7/response.json",
+        "sha256": "634410d92445da24ca43fa4d386d3d7bcf5b9df1d340c7fea04e583d7716c69d",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/e336e7704e65d317d2fd1ddc5303f44f069d535e4450261ded4bd74d724367f7/result.json",
+        "sha256": "c0a6145ba30859c1b42f863f5f7c92ec240257f634cc85c7d09b1afff4f6ad2a",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/30edc592c3862f228c434e32c46771a3fecd8ed5f6df786710b6c0a217162678/manifest.json",
+        "sha256": "d121ad8902af956f5dce3a72e54d1ce4eff7e53ec0a5684b931319804bd75a77",
+        "bytes": 1464
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/42d957687c27a95b6cce989b44e80e82cfda8fd1b8d5b97e66275008c9876729/response.json",
+        "sha256": "129d89f59e912e9f51359b5c979e1fe842c980b06a703fb62c756f8551e8166d",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/42d957687c27a95b6cce989b44e80e82cfda8fd1b8d5b97e66275008c9876729/result.json",
+        "sha256": "5836e7b8d54ef9209d64b554334dd366fe21b36401f5ccb55514dbf43d982be2",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/manifest.json",
+        "sha256": "8ef4e9770fb1e5f9c93bd8314937f0eeae183134e53e7d99edc7072093b87f30",
+        "bytes": 1464
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/a3f5cbb1114ead6a5a0ac1372b5e56b12fefddddbd2d5a185e7f2f0b7f389560/response.json",
+        "sha256": "f397b851225212a811c0891e0d4a39cb5fb9f390297726e7ac3956643a0de65e",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/a3f5cbb1114ead6a5a0ac1372b5e56b12fefddddbd2d5a185e7f2f0b7f389560/result.json",
+        "sha256": "bf7b2b7003ead68e28c76d3dcd0647603c2af7eb582f4d75ded740789636c06f",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/39784f62bf391349fb1ea8345dbe837396cc4b84337a6cea9c7913831707c86d/response.json",
+        "sha256": "aa948cc25debe83436e60e3234e69b7c679f10b6879404215406e142df18b1b8",
+        "bytes": 1917
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/39784f62bf391349fb1ea8345dbe837396cc4b84337a6cea9c7913831707c86d/result.json",
+        "sha256": "cefb7cc83359345257dd45ad5fd68776e97ae7021c958f91a56cf268043806bd",
+        "bytes": 2096
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/journal/a0c9aa73e6a864125f963a932bd71f27f10f0eaa587965fce5028e9c11843f93/raw-response.json",
+        "sha256": "52177ccb44c3d9a80707f5dfa3abc1c8996fd3add70d63569d171e77d48d658e",
+        "bytes": 81128
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/base",
+        "sha256": "41f027b6ebe8ee1e3c385c6805098c3eafebd902dbd5d9f6a7c73baddaa43464",
+        "bytes": 22420
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/04062031d33c6c869f5c1c60ea542ca8749101a7079ed943c4126bdabf9fd000/response.json",
+        "sha256": "2793f17f09f00d44773d03e34b0fb0cd8aadedf8191ee95dacf6a4b4accf5a2f",
+        "bytes": 479191
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/initial/manifest.json",
+        "sha256": "3f8713bcf4abe4c65156e65fcafdadd797f8ad70fd5f6fd23ce40d6c41a060b2",
+        "bytes": 673
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/92adb6a020d33e905f00b2c62a06d2848ce40d8ad1049d32c0265ae19185d82e/response.json",
+        "sha256": "d41b6adb968abe16c9a4c2c0bc076b37f2c67cb8affb79cbc36a40157435e5f3",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/92adb6a020d33e905f00b2c62a06d2848ce40d8ad1049d32c0265ae19185d82e/result.json",
+        "sha256": "8e47662fa42ec39488b88792eda659ead9bcb4f30d75569dae60c1a2d8021419",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2/manifest.json",
+        "sha256": "a90d6d9441d389e466fe5e36dc878e108ff7696aad2ca987c027171e60e87812",
+        "bytes": 735
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/4f090c003fb06ee0df4c81c37c6dcc39d2b90f08979b4b5d52ca9157cae99724/response.json",
+        "sha256": "a042b492ab614610c429648c1b85c66ca7a62b20ed51b96101fe6f898db79bfd",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/4f090c003fb06ee0df4c81c37c6dcc39d2b90f08979b4b5d52ca9157cae99724/result.json",
+        "sha256": "b854dd033e9a85bb1ca10c7fc050d3800e51dd65997ad6a535823186c68d4ac2",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a/manifest.json",
+        "sha256": "4f83af2ed1322753b49f15044ff47c715b492b98fc75ffcd9f2cadbe3a8e1dfb",
+        "bytes": 735
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/a986d556b86b5e9efcc72c55412b22aefc843ef0d03943b102da2531b21e79ab/response.json",
+        "sha256": "ac81168f216d842ffe0d09ddaa9b5b01dba3497560539396f72693d105ad750d",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/a986d556b86b5e9efcc72c55412b22aefc843ef0d03943b102da2531b21e79ab/result.json",
+        "sha256": "c4e89ad0711a0008c8282017feebc2c9a6afb857516995a53d230d0502cfc092",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02/manifest.json",
+        "sha256": "876cac3a58ae763096f79ac95a7462e5ba6b3f457815466fb8c5a39d7a8f395b",
+        "bytes": 735
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/d658404ceee7f13c84ac2df02684074a8e39599f9d87cfb137acdda992baf166/response.json",
+        "sha256": "231ac52afc9f189a80fb801e3cbdd5a12dd8dc95eea36934d3b811a60d0d5e8d",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/d658404ceee7f13c84ac2df02684074a8e39599f9d87cfb137acdda992baf166/result.json",
+        "sha256": "142c19e2824e158a4b2dfaf6fc63c323a835b27f101a56a20a1fedc973c16313",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284/manifest.json",
+        "sha256": "5a845eb4b3173986002a9b88fff1a156fd4ab94016056ac3318269f1bc83cb19",
+        "bytes": 735
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/851b8d8b7a48f85f916bcf132891644c916b0897219f15269d2de4860afd6436/response.json",
+        "sha256": "ed5c23b2aeb04c6b8b4dc4f298cb5149fae4fce351482e01ebcf742b00c1afe1",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/851b8d8b7a48f85f916bcf132891644c916b0897219f15269d2de4860afd6436/result.json",
+        "sha256": "27a73baf0bdec6879d3f0056dd6d637c6ee46557437ca4b522c7a07094e1eafe",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/07b104a9cbc820d350e77e53ace9c3294288578b0d3bf54ac16ea4ef9c1e3c9a/manifest.json",
+        "sha256": "8009239911acf034e320f75e9daca9bb00e9e9ecc49182b9e4714ac43dca5038",
+        "bytes": 735
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/302a3d6603d7ea80f4af1dd66f933fd43055a1bd545337f32236875a7ec5c445/response.json",
+        "sha256": "477057049fd517f84c926c892740e2af74a530ee751e13385da98ccd59d17813",
+        "bytes": 1959
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/302a3d6603d7ea80f4af1dd66f933fd43055a1bd545337f32236875a7ec5c445/result.json",
+        "sha256": "97d3809849cf683e464f75a7d9ab5da1c534fc7ff917f2d488f7c5ccc901e910",
+        "bytes": 2122
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/225f6242c0f64c398164d23a12a734a93c305f3377412ee1809fdd2633eccfa0/manifest.json",
+        "sha256": "d4b5a7122d2665a9048e4cbc4d3a76fa8cab49e5242447b4176f154f23292a79",
+        "bytes": 735
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/faa9bac9246a774c38a92a233302214f1c46de973d2ec1f090fe764bd3ced502/response.json",
+        "sha256": "ae9c2a0ae19b3e6945c50688a1e0b05a2c69d08e41fe7be177374e22cd0aa3b5",
+        "bytes": 1960
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/faa9bac9246a774c38a92a233302214f1c46de973d2ec1f090fe764bd3ced502/result.json",
+        "sha256": "45a11d025f17a780b1492bf9626af0ab276bf2b9e051263e2f8202dd749efc1a",
+        "bytes": 2123
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/39784f62bf391349fb1ea8345dbe837396cc4b84337a6cea9c7913831707c86d/response.json",
+        "sha256": "1024f274fac458300eb5e49860d48064ed6be683302122578400b89fd6f7bffa",
+        "bytes": 1888
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/39784f62bf391349fb1ea8345dbe837396cc4b84337a6cea9c7913831707c86d/result.json",
+        "sha256": "8d2a3fa673162c56e91a570db3cad5844810849253c73cac57b4b64fdcd01d23",
+        "bytes": 2067
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/journal/a0c9aa73e6a864125f963a932bd71f27f10f0eaa587965fce5028e9c11843f93/raw-response.json",
+        "sha256": "a9739e495f923557d3739bae35683761dd104233912d962b724d16d693be3093",
+        "bytes": 97256
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/pddl-tpp-planning/benign/base",
+        "sha256": "d8d269581890f8f7c0dcf1b10e0fae169c9f0bf58ace59504b954798f3d8652d",
+        "bytes": 14860
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/pddl-tpp-planning/benign/journal/04062031d33c6c869f5c1c60ea542ca8749101a7079ed943c4126bdabf9fd000/response.json",
+        "sha256": "d9b91ef7f6069b6134c60dc2bc69e76ead95478a3b0e49cae41af977f183a348",
+        "bytes": 121175
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/pddl-tpp-planning/benign/initial/manifest.json",
+        "sha256": "78e035c285bd013fb6024a8dda22becf021f9434795e5602a97b24f1c30c4cd7",
+        "bytes": 927
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/pddl-tpp-planning/benign/journal/44ccf3649f658d039175cfc1e4f1378c1dedbec8ff943d8fe07109871baaaaa3/response.json",
+        "sha256": "f9ec6253ae97ec0d74943652a08aeb27f0ed2e06584580d9ec9f02d6fc6015ba",
+        "bytes": 1942
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/pddl-tpp-planning/benign/journal/44ccf3649f658d039175cfc1e4f1378c1dedbec8ff943d8fe07109871baaaaa3/result.json",
+        "sha256": "b26d582e526c2e31d36465e65dfabbe5273129d7351370c33c9cf40450451fae",
+        "bytes": 2104
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/pddl-tpp-planning/benign/versions/a9a511849473c14697ecb716904ed51d14f9d103647090a0759b56968e4bc9c4/manifest.json",
+        "sha256": "55b672e80bb2b1dee863517893382550ca64ccefb7aefae3eae5ef70137e9797",
+        "bytes": 989
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/pddl-tpp-planning/benign/journal/d75c11fd1cd57b0db20671f8844d0f703e6c7a4b0ffe38648b25065682a2822c/response.json",
+        "sha256": "4f1046d6aebd2cf4116fc69312f308a7ea2c8356ec6e98277b35c509287ffcf9",
+        "bytes": 1942
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/pddl-tpp-planning/benign/journal/d75c11fd1cd57b0db20671f8844d0f703e6c7a4b0ffe38648b25065682a2822c/result.json",
+        "sha256": "8977b67bbe69c62658823aaeea7e8500af0b79bfb537c6d6c9aba4dd0f05617b",
+        "bytes": 2104
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/pddl-tpp-planning/benign/journal/39784f62bf391349fb1ea8345dbe837396cc4b84337a6cea9c7913831707c86d/response.json",
+        "sha256": "7d6704e9f36e6bc6c71137c92b7b5309ed96cc6221442e3a1fe698da07bef02f",
+        "bytes": 1887
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/pddl-tpp-planning/benign/journal/39784f62bf391349fb1ea8345dbe837396cc4b84337a6cea9c7913831707c86d/result.json",
+        "sha256": "eec19bc2a8f065d0d07d59fda3ff88ddec986de0a69fbe6eb570a237a9fda022",
+        "bytes": 2066
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/pddl-tpp-planning/benign/journal/a0c9aa73e6a864125f963a932bd71f27f10f0eaa587965fce5028e9c11843f93/raw-response.json",
+        "sha256": "d1316c5b115c1aea81a4cb431fb7d8fa9a8dd21e27e2ad730613b598518d02c6",
+        "bytes": 170469
+      }
+    ],
+    "limits": [
+      "PASS verifies agreement and integrity of exported measured results; it does not prove semantic correctness of generated tests or causal utility improvement.",
+      "Five selected tasks are a pilot;80unexecuted tasks are NOT_MEASURED.",
+      "NoSkill and each content have one fresh independent episode; no uncertainty estimate from repetitions is provided.",
+      "Independent content evaluation starts after learning completion and is not used in the recorded final selection.",
+      "Historical author best, actual terminal GT and final independent evaluation are checked separately.",
+      "Usage excludes diagnostic trials001/002; no monetary charge is inferred."
+    ]
+  }
+}

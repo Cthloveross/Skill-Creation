@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import fnmatch
 import hashlib
 import json
@@ -11,6 +12,7 @@ import posixpath
 import re
 import shlex
 import shutil
+import stat
 import struct
 import subprocess
 import tempfile
@@ -22,7 +24,6 @@ from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
 
 import tomllib
@@ -552,6 +553,215 @@ class SkillsBenchSource:
             },
         }
 
+    def public_inputs(self, task_id: str) -> dict[str, Any]:
+        """Expose the request and directory access, not the host build manifest."""
+        task = self.task(task_id)
+        environment = task["environment"]
+        directories = {
+            "/" + posixpath.dirname(path).strip("/").split("/")[0]
+            for entry in task["public_input_manifest"]
+            for path in entry["sandbox_paths"]
+        }
+        return {
+            "task_id": task_id,
+            "opening": task["opening"],
+            "workspace": {
+                "directory": environment["workdir"],
+                "input_directories": sorted(directories),
+                "view": (
+                    "Read-only view of this task's provided input files at their sandbox "
+                    "paths. List directories and read files to discover inputs; this is "
+                    "not a view of installed programs or the complete container filesystem."
+                ),
+            },
+        }
+
+
+class SkillsBenchInputView:
+    """Task-local, immutable input discovery without terminal or host access."""
+
+    allowed_read_only_tool_names = ("list_input_directory", "read_input_file")
+    tool_schemas = [
+        {
+            "type": "function",
+            "function": {
+                "name": name,
+                "description": description,
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string"},
+                        "offset": {"type": "integer", "minimum": 0},
+                        "limit": {"type": "integer", "minimum": 1, "maximum": maximum},
+                    },
+                    "required": ["path"],
+                    "additionalProperties": False,
+                },
+            },
+        }
+        for name, description, maximum in (
+            (
+                "list_input_directory",
+                "List provided input entries at an authorized sandbox directory. "
+                "Offset and limit paginate entries, with at most 100 per call.",
+                100,
+            ),
+            (
+                "read_input_file",
+                "Read a provided input file at its sandbox path. Offset and limit are "
+                "bytes, with at most 8192 bytes per call; binary content is base64.",
+                8192,
+            ),
+        )
+    ]
+
+    def __init__(self, source: SkillsBenchSource, task_id: str):
+        self.source, self.task_id = source, task_id
+        self.public_inputs = source.public_inputs(task_id)
+        self._closed = False
+        self._files: dict[str, Mapping[str, Any]] = {}
+        self._directories = {self.public_inputs["workspace"]["directory"]}
+        for entry in source.task(task_id)["public_input_manifest"]:
+            relative = entry["relative_path"]
+            if not relative.startswith("environment/") or _private_path(relative):
+                raise ValueError("skillsbench_input_mapping_invalid")
+            for sandbox_path in entry["sandbox_paths"]:
+                path = self._path(sandbox_path)
+                if path in self._files and self._files[path] != entry:
+                    raise ValueError("skillsbench_input_mapping_ambiguous")
+                self._files[path] = entry
+                parent = posixpath.dirname(path)
+                while parent != "/":
+                    self._directories.add(parent)
+                    parent = posixpath.dirname(parent)
+
+    def close(self) -> None:
+        self._closed = True
+
+    @staticmethod
+    def _path(value: Any) -> str:
+        if (
+            not isinstance(value, str)
+            or not value.startswith("/")
+            or value.startswith("//")
+            or "\\" in value
+            or "\x00" in value
+            or any(part in {".", ".."} for part in value.split("/"))
+            or _private_path(value)
+            or _HIDDEN_EVALUATOR_ACCESS_RE.search(value)
+            or any(
+                value == root or value.startswith(root + "/")
+                for root in (*_EVOLUTION_PRIVATE_ROOTS, "/tests", "/logs")
+            )
+        ):
+            raise PermissionError("skillsbench_input_path_not_authorized")
+        return value.rstrip("/") or "/"
+
+    def _read(self, entry: Mapping[str, Any], offset: int, limit: int) -> bytes:
+        path = self.source.checkout / "tasks" / self.task_id / _safe_path(entry["relative_path"])
+        if any(parent.is_symlink() for parent in (path, *path.parents)):
+            raise PermissionError("skillsbench_input_link_not_authorized")
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        with os.fdopen(descriptor, "rb") as stream:
+            before = os.fstat(stream.fileno())
+            if not stat.S_ISREG(before.st_mode):
+                raise PermissionError("skillsbench_input_not_regular")
+            digest = hashlib.sha256()
+            preview, position = bytearray(), 0
+            while chunk := stream.read(1024 * 1024):
+                digest.update(chunk)
+                start, stop = max(0, offset - position), min(len(chunk), offset + limit - position)
+                if stop > start:
+                    preview.extend(chunk[start:stop])
+                position += len(chunk)
+            after = os.fstat(stream.fileno())
+            if (
+                digest.hexdigest() != entry["sha256"]
+                or before.st_size != entry["bytes"]
+                or any(
+                    getattr(before, name) != getattr(after, name)
+                    for name in ("st_dev", "st_ino", "st_size", "st_mtime_ns", "st_ctime_ns")
+                )
+            ):
+                raise ValueError("skillsbench_public_input_source_changed")
+            return bytes(preview)
+
+    def read(self, tool: str, arguments: Mapping[str, Any]) -> dict[str, Any]:
+        if self._closed:
+            raise PermissionError("skillsbench_input_discovery_closed")
+        if tool not in self.allowed_read_only_tool_names:
+            raise PermissionError("skillsbench_acquisition_tool_not_authorized")
+        maximum = 100 if tool == "list_input_directory" else 8192
+        if (
+            not isinstance(arguments, Mapping)
+            or set(arguments) - {"path", "offset", "limit"}
+            or "path" not in arguments
+        ):
+            raise ValueError("skillsbench_input_arguments_invalid")
+        path = self._path(arguments["path"])
+        offset, limit = arguments.get("offset", 0), arguments.get("limit", maximum)
+        if (
+            type(offset) is not int
+            or offset < 0
+            or type(limit) is not int
+            or not 1 <= limit <= maximum
+        ):
+            raise ValueError("skillsbench_input_slice_invalid")
+        if tool == "list_input_directory":
+            if path not in self._directories:
+                raise PermissionError("skillsbench_input_directory_not_authorized")
+            entries = []
+            for candidate in sorted(self._directories | self._files.keys()):
+                if candidate == path or posixpath.dirname(candidate) != path:
+                    continue
+                entry = {"name": posixpath.basename(candidate), "path": candidate}
+                if candidate in self._files:
+                    source_entry = self._files[candidate]
+                    entry.update(kind="file", bytes=source_entry["bytes"])
+                else:
+                    entry["kind"] = "directory"
+                entries.append(entry)
+            page = entries[offset : offset + limit]
+            for entry in page:
+                if entry["kind"] == "file":
+                    self._read(self._files[entry["path"]], 0, 0)
+            next_offset = offset + limit if offset + limit < len(entries) else None
+            return {
+                "path": path,
+                "entries": page,
+                "offset": offset,
+                "next_offset": next_offset,
+                "truncated": next_offset is not None,
+            }
+        if path not in self._files:
+            raise PermissionError("skillsbench_input_file_not_authorized")
+        entry = self._files[path]
+        if offset > entry["bytes"]:
+            raise ValueError("skillsbench_input_offset_out_of_bounds")
+        content = self._read(entry, offset, limit)
+        try:
+            text = content.decode("utf-8")
+            encoding = "utf-8" if "\x00" not in text else "base64"
+        except UnicodeDecodeError:
+            encoding = "base64"
+        return {
+            "path": path,
+            "offset": offset,
+            "bytes": len(content),
+            "total_bytes": entry["bytes"],
+            "eof": offset + len(content) >= entry["bytes"],
+            "encoding": encoding,
+            "content": text if encoding == "utf-8" else base64.b64encode(content).decode("ascii"),
+        }
+
+    def perform(self, _operation_id: str, action: Mapping[str, Any]) -> dict[str, Any]:
+        if action.get("kind") != "read_only":
+            raise PermissionError("skillsbench_acquisition_tool_not_authorized")
+        return self.read(action.get("tool"), action.get("arguments"))
+
+    def clarify(self, *_args: Any, **_kwargs: Any) -> Any:
+        raise PermissionError("skillsbench_acquisition_has_no_simulator_or_bank_tools")
+
 
 def prepare_pool(root: Path, tokenizer: Any) -> dict[str, Any]:
     """Pool background documents; task instructions and inputs stay task-local."""
@@ -922,7 +1132,7 @@ class SkillsBenchAdapter:
 
         self.spec, self.task_id, self.demo = spec, task, demo
         self.source = SkillsBenchSource(spec.root)
-        self.public_inputs = self.source.task(task)
+        self.public_inputs = self.source.public_inputs(task)
         selected_lock = getattr(spec, "values", {}).get("source", {}).get("runtime_lock")
         self.runner = SkillsBenchRunner(
             spec.root,
@@ -930,13 +1140,6 @@ class SkillsBenchAdapter:
             demo=demo,
             runtime=runtime,
             runtime_lock_path=spec.root / selected_lock if selected_lock else None,
-        )
-        self.public_inputs["environment"]["execution_runtime"] = self.runner.runtime
-        self.public_inputs["environment"]["runtime_network"] = (
-            "bridge"
-            if not self.runner.use_bwrap
-            and self.public_inputs["environment"].get("allow_internet") is True
-            else "none"
         )
         self.model_factory, self.counter = model_factory, counter
         self.artifact_root = Path(
@@ -949,14 +1152,6 @@ class SkillsBenchAdapter:
             getattr(spec, "values", {}).get("runtime", {}).get("executor", "local-tools")
         )
         self.runner.execution_framework = self.executor
-        if self.executor == "author-codex":
-            self.public_inputs["environment"].update(
-                execution_agent="author-codex",
-                skill_directory="/app/environment/skills/evo-current",
-                execution_interface=(
-                    "Native Codex terminal; read files and run scripts with shell commands."
-                ),
-            )
 
     @property
     def tool_schemas(self) -> list[dict[str, Any]]:
@@ -968,7 +1163,8 @@ class SkillsBenchAdapter:
                         "name": "exec_command",
                         "description": (
                             "Native Codex terminal in the task container. Read installed "
-                            "Skill files and invoke their scripts through shell commands."
+                            "Skill files in /app/environment/skills/evo-current and invoke "
+                            "their scripts through shell commands."
                         ),
                         "parameters": {
                             "type": "object",
@@ -982,16 +1178,15 @@ class SkillsBenchAdapter:
 
     @property
     def allowed_read_only_tool_names(self) -> tuple[str, ...]:
-        return ()
+        return SkillsBenchInputView.allowed_read_only_tool_names
 
     @contextmanager
     def acquisition(self) -> Any:
-        def reject(*_args: Any, **_kwargs: Any) -> Any:
-            raise PermissionError("skillsbench_acquisition_has_no_simulator_or_bank_tools")
-
-        yield SimpleNamespace(
-            public_inputs=self.public_inputs, tool_schemas=[], clarify=reject, read=reject
-        )
+        view = SkillsBenchInputView(self.source, self.task_id)
+        try:
+            yield view
+        finally:
+            view.close()
 
     @contextmanager
     def evolution_session(
@@ -1599,7 +1794,11 @@ class SkillsBenchAdapter:
                             + stderr,
                             error_output=stderr,
                             allow_finite_reward=getattr(self.spec, "namespace", None)
-                            in {"skillsbench.skill-evolution.v5", "skillsbench.skill-evolution.v6"},
+                            in {
+                                "skillsbench.skill-evolution.v5",
+                                "skillsbench.skill-evolution.v6",
+                                "skillsbench.skill-evolution.v7",
+                            },
                         )
                         metrics["status"] = "MEASURED"
                         details = data.get("results", {}).get("tests", []) if data else []

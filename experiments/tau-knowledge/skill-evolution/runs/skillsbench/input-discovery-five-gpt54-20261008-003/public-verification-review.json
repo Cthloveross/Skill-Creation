@@ -1,0 +1,2226 @@
+{
+  "schema": "skillsbench.public-verification-review.v1",
+  "created_at": "2026-10-08T20:09:39.325887+00:00",
+  "run_directory": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003",
+  "namespace": "skillsbench.skill-evolution.v7",
+  "source_identity_hash": "f03d8156342ac18c482be6ad02540e470ed9884bbdd5af62d3da473834b64229",
+  "source_identity": {
+    "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/source-identity.json",
+    "sha256": "bdf44c0312615dc7f04e58245933c016bc6b4d24083f00bfd8b9d5aeafbcbfb5",
+    "bytes": 39700
+  },
+  "review_mode": "read_only_public_task_and_learning_evidence",
+  "scope": {
+    "live_run_final": false,
+    "acc_reviewed_through": "S4/submission6/check6",
+    "dapt_reviewed_through": "S2/submission2; only V1/S1check completed in reviewed evidence",
+    "roles": {
+      "generator": "No feedback injected",
+      "verifier": "No suite or environment modification"
+    },
+    "hidden_grader": "NOT_INSPECTED",
+    "provider_credentials_and_model_reasoning": "NOT_INSPECTED",
+    "raw_test_source_included": false,
+    "paid_model_requests_issued": 0,
+    "effect_on_live_execution": "NONE"
+  },
+  "tasks": [
+    {
+      "task_id": "adaptive-cruise-control",
+      "scope": {
+        "final": false,
+        "verification_records_reviewed": 6,
+        "submissions_reviewed": 6,
+        "later_records_are_out_of_scope": true
+      },
+      "initial": {
+        "content_label": "S0",
+        "bundle_hash": "b48e3d3a930d285c4aa94099d8303f08953a8c6ea9c3d14fb0cc12e4db70e8b3",
+        "manifest": {
+          "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/initial/manifest.json",
+          "sha256": "a916175e03d2f2bee907515cb9aeb0d1917869f10623f14bf923b5f4a4787b0c",
+          "bytes": 266
+        }
+      },
+      "frozen_base": {
+        "base_hash": "9b1221e3a79aee3fefb3abd73a59c95b4ea22a4cccf4c2faae2b5710e657bd27",
+        "stop_reason": "sufficient",
+        "public_instruction_sha256": "c5def70c3ccb7a14cc3da61daed59eb138f5782e75d787c5f4ad1223feb75124",
+        "selected_background": [
+          {
+            "document_id": "adaptive-cruise-control::background/adaptive-cruise-control-background.md::tokens-0-2048",
+            "content_hash": "146503576e3c83a63c37caa1f5f8fb40e7462f6e508dd44a24216b42f15a55f4"
+          },
+          {
+            "document_id": "adaptive-cruise-control::background/adaptive-cruise-control-background.md::tokens-1920-3228",
+            "content_hash": "0ca5ebf5c7f1b73ee4da6996fdc11e4acf7e1f5572d0688fab48b1c119d27d1d"
+          }
+        ]
+      },
+      "submissions": [
+        {
+          "submission": 1,
+          "content_label": "S1",
+          "bundle_hash": "75354b402c592183d11b046b7acd61047531dffb7af046c94f82e569f5eba7db",
+          "parent_hash": "b48e3d3a930d285c4aa94099d8303f08953a8c6ea9c3d14fb0cc12e4db70e8b3",
+          "initial_submission": false,
+          "execution_id": "1ed8ee63ab474da59d2597f13205bc08",
+          "submission_hash": "e931438e827f8f875f65aff2987bb4713223200bf3ac070f23a681fe65c6d3b0",
+          "public_trace_hash": "252b340119b50b1159b0d597113a5282e9afd3559760c6a69f8ff0f268c5d12e",
+          "public_artifacts_hash": "1c94736580561e1c1de471b174f87d642d35cd8953cdddd1a9096bdf134e1804",
+          "public_artifact_count": 103,
+          "preview_manifest_truncated": false,
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/private/author-controller/submission-1.json",
+            "sha256": "6b178f1aebf4bcb3c0dd3934acc81e916a5b112b567c4e345f02418c1880e05e",
+            "bytes": 69742
+          },
+          "public_files": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/fe0a921996cb4310bce06bfc83c72739/files/root/simulation_results.csv",
+              "sha256": "ab3a5306ad9bda6559b62bf19963ca56c0d79037556e0a1d9b4360bb001aef9e",
+              "bytes": 74181
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/fe0a921996cb4310bce06bfc83c72739/files/root/sensor_data.csv",
+              "sha256": "358f88028394dfa89cd96cadeb6450a3f73be01e274e5e9c53e51e9afec2f11d",
+              "bytes": 28478
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/fe0a921996cb4310bce06bfc83c72739/files/root/acc_report.md",
+              "sha256": "097ce96c63d9507a92b23994d6ec52169ffc6cfe9525ee81aed11bb4c6c5d38b",
+              "bytes": 1206
+            }
+          ]
+        },
+        {
+          "submission": 2,
+          "content_label": "S2",
+          "bundle_hash": "bf70d88c3fe5a25d45ea6f0943a53efd07af47fc279580c4b0745d693926ac81",
+          "parent_hash": "75354b402c592183d11b046b7acd61047531dffb7af046c94f82e569f5eba7db",
+          "initial_submission": false,
+          "execution_id": "1ed8ee63ab474da59d2597f13205bc08",
+          "submission_hash": "e271d2fb6c5e3e895b2733bff6b9847d140c752a64577490ff2a1e86bf81fc23",
+          "public_trace_hash": "80b534add975e8344117a27634de101f4c918c91b41fd4e6f195117e19077aee",
+          "public_artifacts_hash": "2afc72f14a0f576d5d9bc663c443c6421463b47321e76eeb322c352e2b1f0a96",
+          "public_artifact_count": 140,
+          "preview_manifest_truncated": true,
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/private/author-controller/submission-2.json",
+            "sha256": "260f0d6e7851fa6f8cd398c9436fa0553ef093da66b9ba77d194c037e973dc95",
+            "bytes": 80445
+          },
+          "public_files": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/d6cb5de1cd8642f399f899dd6e3e909a/files/root/simulation_results.csv",
+              "sha256": "a4900fea3768c3f016b905592adf31d5b17c20e1928d414e2e8bf2d3dca8166c",
+              "bytes": 73728
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/d6cb5de1cd8642f399f899dd6e3e909a/files/root/sensor_data.csv",
+              "sha256": "358f88028394dfa89cd96cadeb6450a3f73be01e274e5e9c53e51e9afec2f11d",
+              "bytes": 28478
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/d6cb5de1cd8642f399f899dd6e3e909a/files/root/acc_report.md",
+              "sha256": "668f794861a1a5b0fe146d4b9fcfc08b8c5c5c6930c99496611ec6ffa43ac197",
+              "bytes": 1622
+            }
+          ]
+        },
+        {
+          "submission": 3,
+          "content_label": "S3",
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "parent_hash": "bf70d88c3fe5a25d45ea6f0943a53efd07af47fc279580c4b0745d693926ac81",
+          "initial_submission": false,
+          "execution_id": "1ed8ee63ab474da59d2597f13205bc08",
+          "submission_hash": "1d503302a42f6741c15c5f157b8cb78fd2b47cb555e51964634719aedc1bdb55",
+          "public_trace_hash": "9071626e65e1d8c30d1b0ce969a86324bff7b09afc1b7d7c017bf5dfbb41353b",
+          "public_artifacts_hash": "053d22a85acffa902af96c8bb97c2f92c00023d5bc4ae38926c97563884edae6",
+          "public_artifact_count": 139,
+          "preview_manifest_truncated": true,
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/private/author-controller/submission-3.json",
+            "sha256": "d771fcad3e36a932d5f2c92327ae309312998b10f9c847c2291fa91c80706bf8",
+            "bytes": 82616
+          },
+          "public_files": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/3945a15cd5f6441985608091f5abd26a/files/root/simulation_results.csv",
+              "sha256": "4de780687df1230ae076a09b7a056d5037bb470f715149115fd20724388fce81",
+              "bytes": 74043
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/3945a15cd5f6441985608091f5abd26a/files/root/sensor_data.csv",
+              "sha256": "358f88028394dfa89cd96cadeb6450a3f73be01e274e5e9c53e51e9afec2f11d",
+              "bytes": 28478
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/3945a15cd5f6441985608091f5abd26a/files/root/acc_report.md",
+              "sha256": "e23484ef8e1545c05244d8b88a1ab55f70dc7885aa27b09f13f924fdcaf231cb",
+              "bytes": 1641
+            }
+          ]
+        },
+        {
+          "submission": 4,
+          "content_label": "S3",
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "parent_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "initial_submission": false,
+          "execution_id": "1ed8ee63ab474da59d2597f13205bc08",
+          "submission_hash": "3b84c1e1f416eda50bcedda1a59241a1b839e5f34f7610617032eb8267d22691",
+          "public_trace_hash": "7694b3b0d8581865f768e8773859e6e87de93829c459fcd586733022264b7b8b",
+          "public_artifacts_hash": "343981721d0432307ed422703fbb908fb39d4b12dcb7dc846f441476530cbaa2",
+          "public_artifact_count": 139,
+          "preview_manifest_truncated": true,
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/private/author-controller/submission-4.json",
+            "sha256": "bff79f75fbc4243cffd043b3db65e8e04e9de1c2fd294786767bda8ae000858d",
+            "bytes": 82616
+          },
+          "public_files": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/2e03047f445143a49a8c0c7ed6fdc78f/files/root/simulation_results.csv",
+              "sha256": "4de780687df1230ae076a09b7a056d5037bb470f715149115fd20724388fce81",
+              "bytes": 74043
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/2e03047f445143a49a8c0c7ed6fdc78f/files/root/sensor_data.csv",
+              "sha256": "358f88028394dfa89cd96cadeb6450a3f73be01e274e5e9c53e51e9afec2f11d",
+              "bytes": 28478
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/2e03047f445143a49a8c0c7ed6fdc78f/files/root/acc_report.md",
+              "sha256": "e23484ef8e1545c05244d8b88a1ab55f70dc7885aa27b09f13f924fdcaf231cb",
+              "bytes": 1641
+            }
+          ]
+        },
+        {
+          "submission": 5,
+          "content_label": "S3",
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "parent_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "initial_submission": false,
+          "execution_id": "1ed8ee63ab474da59d2597f13205bc08",
+          "submission_hash": "8e3d043871e545fda8a86fc02881d7af3c4ad30911e0544c8786072a752b7e10",
+          "public_trace_hash": "1845ea830d79dae74a82625be80e6243820ba22eb7e13cf537e96363c089d11b",
+          "public_artifacts_hash": "f4932b20ac013185b21d5b894f2a4d17477481991b94e77759b9cbb2180c058e",
+          "public_artifact_count": 139,
+          "preview_manifest_truncated": true,
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/private/author-controller/submission-5.json",
+            "sha256": "62a3b7206a8c363e07a45591c7bb2cefa13c7437cc54874d0f3d8044dcffef34",
+            "bytes": 82616
+          },
+          "public_files": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/22e3337cb8644736914c54e2fa2ad436/files/root/simulation_results.csv",
+              "sha256": "4de780687df1230ae076a09b7a056d5037bb470f715149115fd20724388fce81",
+              "bytes": 74043
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/22e3337cb8644736914c54e2fa2ad436/files/root/sensor_data.csv",
+              "sha256": "358f88028394dfa89cd96cadeb6450a3f73be01e274e5e9c53e51e9afec2f11d",
+              "bytes": 28478
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/22e3337cb8644736914c54e2fa2ad436/files/root/acc_report.md",
+              "sha256": "e23484ef8e1545c05244d8b88a1ab55f70dc7885aa27b09f13f924fdcaf231cb",
+              "bytes": 1641
+            }
+          ]
+        },
+        {
+          "submission": 6,
+          "content_label": "S4",
+          "bundle_hash": "e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204",
+          "parent_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "initial_submission": false,
+          "execution_id": "1ed8ee63ab474da59d2597f13205bc08",
+          "submission_hash": "9acb0cf675c82dd138c87b6a961976dd7de665dbff2d90f56dfeb9e3db3833cb",
+          "public_trace_hash": "09708f7027c329465eae58d4c9d4eeed44e928dddf147d2e3e2dc00018efd16f",
+          "public_artifacts_hash": "bb5ecda4c1d52f669ce892986961a08637c5b72987a315c117dd2c89c94570db",
+          "public_artifact_count": 139,
+          "preview_manifest_truncated": true,
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/private/author-controller/submission-6.json",
+            "sha256": "81cd068b571ac67e6f6dce3a9cd572fab0ae09b13eb5b2346368d87a9c7e8a8b",
+            "bytes": 82426
+          },
+          "public_files": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/bf19c735f2e24e65bda46e5d54ba7b62/files/root/simulation_results.csv",
+              "sha256": "62b901dba55b742a4639d3792e0be0796c03b992b823aed564f48776e10cb276",
+              "bytes": 74032
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/bf19c735f2e24e65bda46e5d54ba7b62/files/root/sensor_data.csv",
+              "sha256": "358f88028394dfa89cd96cadeb6450a3f73be01e274e5e9c53e51e9afec2f11d",
+              "bytes": 28478
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/bf19c735f2e24e65bda46e5d54ba7b62/files/root/acc_report.md",
+              "sha256": "06e7809f9ae3c68b3e410ef16e7086ba37520ba86dab3566fb4414431e801b52",
+              "bytes": 1626
+            }
+          ]
+        }
+      ],
+      "verifications": [
+        {
+          "check": 1,
+          "content_label": "S1",
+          "bundle_hash": "75354b402c592183d11b046b7acd61047531dffb7af046c94f82e569f5eba7db",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed": false,
+          "program_error": false,
+          "passed_checks": 13,
+          "failed_checks": 3,
+          "total_checks": 16,
+          "pass_rate": 0.8125,
+          "count_unit": "collected_pytest_test_cases_not_python_assertions",
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 6268.738357437279 at t=35.1, got 6268.46136"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 16.76575527"
+            },
+            {
+              "name": "test_speed_performance_targets",
+              "message": "Expected speed overshoot < 5%, got 7.6760233333333385%"
+            }
+          ]
+        },
+        {
+          "check": 2,
+          "content_label": "S2",
+          "bundle_hash": "bf70d88c3fe5a25d45ea6f0943a53efd07af47fc279580c4b0745d693926ac81",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed": false,
+          "program_error": false,
+          "passed_checks": 14,
+          "failed_checks": 2,
+          "total_checks": 16,
+          "pass_rate": 0.875,
+          "count_unit": "collected_pytest_test_cases_not_python_assertions",
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 4002.1838148332813 at t=39.0, got 4002.049059"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 12.02376667"
+            }
+          ]
+        },
+        {
+          "check": 3,
+          "content_label": "S3",
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed": false,
+          "program_error": false,
+          "passed_checks": 14,
+          "failed_checks": 2,
+          "total_checks": 16,
+          "pass_rate": 0.875,
+          "count_unit": "collected_pytest_test_cases_not_python_assertions",
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 2049.332917330281 at t=37.6, got 2049.29136"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 14.022123119999998"
+            }
+          ]
+        },
+        {
+          "check": 4,
+          "content_label": "S3",
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed": false,
+          "program_error": false,
+          "passed_checks": 14,
+          "failed_checks": 2,
+          "total_checks": 16,
+          "pass_rate": 0.875,
+          "count_unit": "collected_pytest_test_cases_not_python_assertions",
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 2049.332917330281 at t=37.6, got 2049.29136"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 14.022123119999998"
+            }
+          ]
+        },
+        {
+          "check": 5,
+          "content_label": "S3",
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed": false,
+          "program_error": false,
+          "passed_checks": 14,
+          "failed_checks": 2,
+          "total_checks": 16,
+          "pass_rate": 0.875,
+          "count_unit": "collected_pytest_test_cases_not_python_assertions",
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 2049.332917330281 at t=37.6, got 2049.29136"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 14.022123119999998"
+            }
+          ]
+        },
+        {
+          "check": 6,
+          "content_label": "S4",
+          "bundle_hash": "e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed": false,
+          "program_error": false,
+          "passed_checks": 14,
+          "failed_checks": 2,
+          "total_checks": 16,
+          "pass_rate": 0.875,
+          "count_unit": "collected_pytest_test_cases_not_python_assertions",
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 2065.3229388037053 at t=37.6, got 2065.288945"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 14.0223985"
+            }
+          ]
+        }
+      ],
+      "findings": [
+        {
+          "id": "ACC_SPEED_OVERSHOOT",
+          "category": "observed_public_requirement_improvement",
+          "finding": "The first submitted content failed the explicitly stated overshoot<5 percent requirement; subsequent reviewed contents pass this check.",
+          "first_observed_overshoot_percent": 7.6760233333333385,
+          "check": "test_speed_performance_targets",
+          "first_content": "S1",
+          "later_content": "S2"
+        },
+        {
+          "id": "ACC_TTC_SERIALIZATION",
+          "category": "candidate_numerical_output_contract_and_test_tolerance",
+          "finding": "The candidate computes TTC before rounding its continuous state, then writes ego speed, distance and TTC independently with six decimal places. The fixed suite recomputes TTC from the rounded CSV values using a1e-5 relative tolerance. Near zero closing speeds this magnifies input quantization. This is not evidence of a terminal or model transport adapter fault.",
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "sources": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507/scripts/io_utils.py",
+              "sha256": "0cdbc2756dd4e5370675a50e792bfd0626f7cb850c13e5ec01e56fc5a05e6128",
+              "bytes": 1797,
+              "line": 29
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507/scripts/sim_core.py",
+              "sha256": "b4d7bc7b912991a0ffe22ec5900382008c8a5405c35b5f846a7fc90733ad401f",
+              "bytes": 2721,
+              "line": 35
+            }
+          ],
+          "suite": "V1",
+          "check": "test_ttc_semantics_and_emergency_trigger",
+          "reviewed_snapshot": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/3945a15cd5f6441985608091f5abd26a/files/root/simulation_results.csv",
+              "sha256": "4de780687df1230ae076a09b7a056d5037bb470f715149115fd20724388fce81",
+              "bytes": 74043
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/3945a15cd5f6441985608091f5abd26a/files/root/sensor_data.csv",
+              "sha256": "358f88028394dfa89cd96cadeb6450a3f73be01e274e5e9c53e51e9afec2f11d",
+              "bytes": 28478
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/3945a15cd5f6441985608091f5abd26a/files/root/acc_report.md",
+              "sha256": "e23484ef8e1545c05244d8b88a1ab55f70dc7885aa27b09f13f924fdcaf231cb",
+              "bytes": 1641
+            }
+          ],
+          "mismatching_rows_in_S3_snapshot": 10,
+          "all_mismatches_within_input_rounding_interval": true,
+          "first_two_examples": [
+            {
+              "time": "37.6",
+              "csv_ego_speed": 25.093237,
+              "sensor_lead_speed": 25.07,
+              "csv_closing_speed": 0.023236999999998176,
+              "csv_distance": 47.620349,
+              "csv_recomputed_ttc": 2049.332917330281,
+              "saved_ttc": 2049.29136,
+              "relative_difference": 2.0278467168173257e-05,
+              "ttc_range_consistent_with_six_decimal_rounding": [
+                2049.2888004304996,
+                2049.3770361286656
+              ],
+              "saved_ttc_in_rounding_range": true
+            },
+            {
+              "time": "37.8",
+              "csv_ego_speed": 25.083469,
+              "sensor_lead_speed": 25.07,
+              "csv_closing_speed": 0.01346900000000062,
+              "csv_distance": 47.587287,
+              "csv_recomputed_ttc": 3533.0972603755154,
+              "saved_ttc": 3533.184401,
+              "relative_difference": 2.466408877613426e-05,
+              "ttc_range_consistent_with_six_decimal_rounding": [
+                3532.9660714946967,
+                3533.2284589967567
+              ],
+              "saved_ttc_in_rounding_range": true
+            }
+          ]
+        },
+        {
+          "id": "ACC_DISTANCE_WINDOW",
+          "category": "public_requirement_ambiguity_and_candidate_metric_definition",
+          "finding": "The public instruction requires distance steady-state error<2m but does not define a sample window. The suite averages the final100 follow/emergency samples; the candidate report instead averages final100 closing samples where TTC exists. The latter value does not establish fulfillment of the unrestricted public criterion. The suite window also includes emergency recovery and a rapidly changing lead speed, so it is not demonstrated to be a steady-state segment. This audit does not prove that the suite target is impossible.",
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "sources": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507/scripts/metrics.py",
+              "sha256": "be5214fe461b0e2dde5b07f94d871c8f8c2bf34713fef3db08c4fab71d8a3b6b",
+              "bytes": 1907,
+              "line": 24
+            }
+          ],
+          "check": "test_distance_error_formula_and_steady_state_target",
+          "suite_window": {
+            "from_seconds": 120.0,
+            "to_seconds": 129.9,
+            "sample_count": 100,
+            "mean_absolute_distance_error_m": 14.022123119999998,
+            "lead_speed_min_mps": 0.0,
+            "lead_speed_max_mps": 31.62
+          },
+          "candidate_window": {
+            "criterion": "last100 follow/emergency rows with defined TTC",
+            "mean_absolute_distance_error_m": 0.65744143,
+            "sample_count": 100
+          },
+          "background_constraint": "Following may accelerate toward set speed, but must not exceed set speed simply to close excess gap."
+        },
+        {
+          "id": "ACC_SNAPSHOT_PREVIEW",
+          "category": "audit_metadata_limit_not_missing_artifacts",
+          "finding": "Later submission metadata marks the file preview as truncated. The independently checked snapshot directories nevertheless contain the simulation CSV, sensor CSV and report. This audit found no loss of these delivery files."
+        }
+      ]
+    },
+    {
+      "task_id": "dapt-intrusion-detection",
+      "scope": {
+        "final": false,
+        "verification_records_reviewed": 1,
+        "submissions_reviewed": 2,
+        "later_records_are_out_of_scope": true
+      },
+      "initial": {
+        "content_label": "S0",
+        "bundle_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+        "manifest": {
+          "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/initial/manifest.json",
+          "sha256": "3f8713bcf4abe4c65156e65fcafdadd797f8ad70fd5f6fd23ce40d6c41a060b2",
+          "bytes": 673
+        }
+      },
+      "frozen_base": {
+        "base_hash": "9dd0fd0af17947089b85aa9c20f267800db6fd3e9f25f3542c777e1a8ca8c1ce",
+        "stop_reason": "sufficient",
+        "public_instruction_sha256": "569faf67fc4c02d6c1bbc63ce0d243ac7687cb85a4668a0d780e4d1da3bf4861",
+        "selected_background": [
+          {
+            "document_id": "dapt-intrusion-detection::background/network-traffic-analysis-background.md::tokens-0-2048",
+            "content_hash": "6043c67b57192be9c0a260e01624742ba12786e1731c6eefa4a872adf1bfd2f4"
+          },
+          {
+            "document_id": "dapt-intrusion-detection::background/network-traffic-analysis-background.md::tokens-1920-3151",
+            "content_hash": "fe371bf40d677eba3aa5fcbc99f24aab220a516e1b55892849e9e90ed9ddf3f3"
+          }
+        ]
+      },
+      "submissions": [
+        {
+          "submission": 1,
+          "content_label": "S1",
+          "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+          "parent_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+          "initial_submission": false,
+          "execution_id": "28f738e6fa6b4aac98954f0b7f7466ff",
+          "submission_hash": "459781e3eab6c65a1647e976d2a579505638fd76d7e276609deed1b1c5099194",
+          "public_trace_hash": "04aebc7befff20b48ea4d09e81d484db721a38d8b86e989e8ef4bf49c35f31b8",
+          "public_artifacts_hash": "26f69b4f6b64c15cd154e3b464bec697ae53d4aad3e8e6dbe5ce93702de3ba40",
+          "public_artifact_count": 47,
+          "preview_manifest_truncated": false,
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/private/author-controller/submission-1.json",
+            "sha256": "c59c4a6a217016fa2ded1a0fd615e3b9cee74b6596756e0559993bd15a5ae3f0",
+            "bytes": 49128
+          },
+          "public_files": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/dapt-intrusion-detection/f026b036079245ef966ec9381599673d/files/root/network_stats.csv",
+              "sha256": "30ecab823c74bb7edaf3b039324ab199aec55f5c8c96cd59d565a2db48f478e3",
+              "bytes": 1069
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/dapt-intrusion-detection/f026b036079245ef966ec9381599673d/files/root/packets.pcap",
+              "sha256": "6ef0b1a736796e4be23ee634e0d424dac15c6d35ba243f250ff2a7d1cd98795d",
+              "bytes": 32715078
+            }
+          ],
+          "observed_public_output": {
+            "bidirectional_flows": "1758",
+            "packets_per_minute_avg": "262.900921658986",
+            "packets_per_minute_max": "2372",
+            "iat_cv": "1.10264851938327",
+            "is_traffic_benign": "false",
+            "has_port_scan": "false",
+            "has_dos_pattern": "true",
+            "has_beaconing": "false"
+          }
+        },
+        {
+          "submission": 2,
+          "content_label": "S2",
+          "bundle_hash": "8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a",
+          "parent_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+          "initial_submission": false,
+          "execution_id": "28f738e6fa6b4aac98954f0b7f7466ff",
+          "submission_hash": "eafa174b0bc63111223818b867a0145a4169c095547f491fd796509076ae06e8",
+          "public_trace_hash": "51710f869ff5ea4808816a70590f953bc2f277fa761fc436fa706c38453e61b2",
+          "public_artifacts_hash": "65592f47bbbe2fd64e9f2a6f1bc34c083d020dfd3532ef92f8123117ddad50cb",
+          "public_artifact_count": 86,
+          "preview_manifest_truncated": false,
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/private/author-controller/submission-2.json",
+            "sha256": "34313ec94e63d61b7931e334ff950d64e091915e98207e863b5bd751dc90f91e",
+            "bytes": 63205
+          },
+          "public_files": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/dapt-intrusion-detection/7bd36d66f05b4716ab7100bb3cedca8d/files/root/network_stats.csv",
+              "sha256": "8e6d4d97e8577b6cbd37fd98b5eafe933dfb287ed09de9b333eb46c6de78b947",
+              "bytes": 1069
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/dapt-intrusion-detection/7bd36d66f05b4716ab7100bb3cedca8d/files/root/packets.pcap",
+              "sha256": "6ef0b1a736796e4be23ee634e0d424dac15c6d35ba243f250ff2a7d1cd98795d",
+              "bytes": 32715078
+            }
+          ],
+          "observed_public_output": {
+            "bidirectional_flows": "1758",
+            "packets_per_minute_avg": "262.900921658986",
+            "packets_per_minute_max": "2372",
+            "iat_cv": "1.10264851938327",
+            "is_traffic_benign": "true",
+            "has_port_scan": "false",
+            "has_dos_pattern": "false",
+            "has_beaconing": "false"
+          }
+        }
+      ],
+      "verifications": [
+        {
+          "check": 1,
+          "content_label": "S1",
+          "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+          "suite_version": 1,
+          "suite_hash": "fe33e3ec2a157ba7f61b348a4e93d3bcb6ac20639fee9196deba617acc8661fb",
+          "passed": true,
+          "program_error": false,
+          "passed_checks": 13,
+          "failed_checks": 0,
+          "total_checks": 13,
+          "pass_rate": 1.0,
+          "count_unit": "collected_pytest_test_cases_not_python_assertions",
+          "failed_checks_detail": []
+        }
+      ],
+      "findings": [
+        {
+          "id": "DAPT_FLOW_DEFINITION",
+          "category": "public_instruction_and_retrieved_background_conflict",
+          "finding": "The public instruction describes counting flows whose reverse key exists; frozen background explicitly says to count forward/reverse pairs once, dividing the reverse-present flow count by2. Both the reviewed candidate and suite use the background pair convention. This is not evidence that the Verifier invented the convention. No hidden official expectation was inspected.",
+          "metric": "bidirectional_flows",
+          "suite": "V1",
+          "selected_background_document": {
+            "document_id": "dapt-intrusion-detection::background/network-traffic-analysis-background.md::tokens-1920-3151",
+            "content_hash": "fe371bf40d677eba3aa5fcbc99f24aab220a516e1b55892849e9e90ed9ddf3f3"
+          },
+          "sources": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2/scripts/pcap_metrics.py",
+              "sha256": "f7eba7d66e5e40beedb731658b2d4cc893f7957a70518a18afc7603739a2dcd6",
+              "bytes": 21448,
+              "line": 499
+            }
+          ]
+        },
+        {
+          "id": "DAPT_TIMESTAMP_SORT",
+          "category": "public_suite_implementation_gap",
+          "finding": "The public instruction and selected background require sorting packet timestamps before computing inter-arrival times. The reviewed suite appends timestamps in capture order and uses adjacent differences without sorting. The candidate does sort. Whether capture order differs on this particular input was not measured; this audit does not attribute the official failure to this gap.",
+          "suite": "V1",
+          "check": "test_iat_metrics",
+          "candidate_source": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2/scripts/pcap_metrics.py",
+            "sha256": "f7eba7d66e5e40beedb731658b2d4cc893f7957a70518a18afc7603739a2dcd6",
+            "bytes": 21448,
+            "line": 453
+          }
+        },
+        {
+          "id": "DAPT_FLAG_COVERAGE",
+          "category": "surrogate_semantic_coverage_limit",
+          "finding": "Portscan and DoS flags are validated as booleans but their substantive classification is not checked. Benign consistency is only enforced when any malicious-pattern flag is true; the all-false case has no assertion. The beacon test asserts the current capture has CV>0.5 then requires False. The selected background supports0.5 as guidance, but the test remains tied to this capture rather than a general conditional classification. A13/13 suite result therefore does not prove all analysis flags satisfy the public task.",
+          "suite": "V1",
+          "checks": [
+            "test_flag_values_are_booleans",
+            "test_beaconing_flag_consistent_with_public_cv_guidance",
+            "test_benign_flag_consistent_with_other_flags"
+          ],
+          "not_claimed": "These observations do not identify which hidden official check caused a completed negative oracle."
+        },
+        {
+          "id": "DAPT_DOS_REVISION",
+          "category": "observed_sealed_content_change",
+          "finding": "S2 retains the numerical statistics but strengthens the DoS heuristic with busiest-minute IPv4 volume and single-target concentration. On the submitted snapshot this changes DoS true to false and benign false to true. The reviewed V1 suite cannot discriminate these outcomes through its DoS check.",
+          "parent_content": "S1",
+          "content": "S2",
+          "sources": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2/scripts/pcap_metrics.py",
+              "sha256": "f7eba7d66e5e40beedb731658b2d4cc893f7957a70518a18afc7603739a2dcd6",
+              "bytes": 21448,
+              "line": 590
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a/scripts/pcap_metrics.py",
+              "sha256": "5ca28d6ae2bb87bbd1936751cc91051db4c3d6501a848ca618e4468c60383b60",
+              "bytes": 24122,
+              "line": 99
+            }
+          ],
+          "new_criteria": {
+            "maximum_ipv4_minute_packets_minimum": 1000,
+            "maximum_ipv4_minute_top_destination_share_minimum": 0.6,
+            "max_to_average_ppm_ratio_minimum": 5.0
+          }
+        }
+      ]
+    }
+  ],
+  "interpretation_limits": [
+    "Surrogate counts denote collected pytest test cases, not individual assertions.",
+    "No claim of exact hidden grader failure causality is made.",
+    "Public test coverage and numerical tolerance may differ from the official grader.",
+    "No new runtime/adapter defect is established by the reviewed evidence.",
+    "Later submissions, upgrades and final independent evaluations require separate reporting."
+  ],
+  "addenda": [
+    {
+      "id": "ACC_COMPLETED_LEARNING",
+      "created_at": "2026-10-08T20:21:15.120065+00:00",
+      "previous_evidence_file_sha256": "130643665a184132bad3c4517a790501f7c6d62d0efa099f8c0f09c0586a2963",
+      "scope": {
+        "task_id": "adaptive-cruise-control",
+        "learning_complete": true,
+        "independent_evaluation_included": false,
+        "independent_evaluation_status": "NOT_REVIEWED_IN_THIS_ADDENDUM",
+        "dapt_live_chain_not_modified_or_reviewed_again": true,
+        "original_scope_and_findings_preserved": true
+      },
+      "completion": {
+        "stop_reason": "token_budget",
+        "effective_generator_episodes": 42,
+        "r_interventions": 10,
+        "normal_k_interventions": 0,
+        "actual_official_oracle_executions": 1,
+        "content_versions_including_S0": 9,
+        "submission_count": 10,
+        "all_r_event_types": [
+          "surrogate_fail",
+          "surrogate_fail",
+          "surrogate_fail",
+          "surrogate_fail",
+          "surrogate_fail",
+          "surrogate_fail",
+          "surrogate_fail",
+          "surrogate_fail",
+          "surrogate_fail",
+          "surrogate_fail"
+        ],
+        "activity_duration_seconds": 1943.3,
+        "context_stop": {
+          "exception": "InputTokenBudgetExceeded",
+          "observed_input_tokens": 157784,
+          "limit_input_tokens": 157632,
+          "meaning": "context input admission boundary; not an output-token quota or cost cap"
+        },
+        "completion_evidence": {
+          "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/private/author-controller/logs/evolution_run_log.json",
+          "sha256": "6213f78d004ebaad855170d3f116cf42d41d74bc961c9077b602c86ae13225fb",
+          "bytes": 94438
+        }
+      },
+      "content_mapping": {
+        "b48e3d3a930d285c4aa94099d8303f08953a8c6ea9c3d14fb0cc12e4db70e8b3": "S0",
+        "75354b402c592183d11b046b7acd61047531dffb7af046c94f82e569f5eba7db": "S1",
+        "bf70d88c3fe5a25d45ea6f0943a53efd07af47fc279580c4b0745d693926ac81": "S2",
+        "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507": "S3",
+        "e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204": "S4",
+        "95d9791c462d1ff4b1f0b3475ba118933aef1725a9a515e80eef32d422098021": "S5",
+        "2d1cc80c148b32709f7e0023bf6753c938b23954778543026e46cc84f5445d2e": "S6",
+        "30edc592c3862f228c434e32c46771a3fecd8ed5f6df786710b6c0a217162678": "S7",
+        "a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5": "S8"
+      },
+      "final_bundle": {
+        "content_label": "S8",
+        "bundle_hash": "a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5",
+        "parent_hash": "30edc592c3862f228c434e32c46771a3fecd8ed5f6df786710b6c0a217162678",
+        "manifest": {
+          "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/manifest.json",
+          "sha256": "8ef4e9770fb1e5f9c93bd8314937f0eeae183134e53e7d99edc7072093b87f30",
+          "bytes": 1464
+        }
+      },
+      "S0_comparison": {
+        "initial_manifest": {
+          "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/initial/manifest.json",
+          "sha256": "a916175e03d2f2bee907515cb9aeb0d1917869f10623f14bf923b5f4a4787b0c",
+          "bytes": 266
+        },
+        "S0_content_files": [
+          "SKILL.md"
+        ],
+        "final_content_files": [
+          "SKILL.md",
+          "scripts/acc_core.py",
+          "scripts/deliverables.py",
+          "scripts/io_utils.py",
+          "scripts/metrics.py",
+          "scripts/pid_core.py",
+          "scripts/reporting.py",
+          "scripts/sim_core.py",
+          "scripts/tuning.py",
+          "scripts/validator.py"
+        ],
+        "finding": "S0 consists of SKILL.md only; the sealed final contains SKILL.md and nine Python scripts. The learning loop materialized and revised a reusable implementation rather than only adjusting an existing initial script."
+      },
+      "S4_to_final_file_comparison": [
+        {
+          "relative_path": "SKILL.md",
+          "same_bytes_as_S4": false,
+          "S4": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204/SKILL.md",
+            "sha256": "05098368b94ac023a874f03c1ffd301b3ab34e6386a9b857b0c1dd26bdc54e4b",
+            "bytes": 4792
+          },
+          "final": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/SKILL.md",
+            "sha256": "f8f4d9cd3e68794f810803a6bf19766197933acd675cf4de1acb6f63a4f298d4",
+            "bytes": 5186
+          }
+        },
+        {
+          "relative_path": "scripts/acc_core.py",
+          "same_bytes_as_S4": true,
+          "S4": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204/scripts/acc_core.py",
+            "sha256": "bba96c11c9bf202f5efce5830c15e391152c394ac2969355eba1f0517a47bf91",
+            "bytes": 3461
+          },
+          "final": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/acc_core.py",
+            "sha256": "bba96c11c9bf202f5efce5830c15e391152c394ac2969355eba1f0517a47bf91",
+            "bytes": 3461
+          }
+        },
+        {
+          "relative_path": "scripts/deliverables.py",
+          "same_bytes_as_S4": false,
+          "S4": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204/scripts/deliverables.py",
+            "sha256": "abd4cb58e338dce88c134cc43592826f736a425b447ce5154d3d2e53e9dedc84",
+            "bytes": 12107
+          },
+          "final": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/deliverables.py",
+            "sha256": "57892c714cd33169e4117912ec4a790dbdf3faba6723e726e0fc49537ff89044",
+            "bytes": 13636
+          }
+        },
+        {
+          "relative_path": "scripts/io_utils.py",
+          "same_bytes_as_S4": true,
+          "S4": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204/scripts/io_utils.py",
+            "sha256": "0cdbc2756dd4e5370675a50e792bfd0626f7cb850c13e5ec01e56fc5a05e6128",
+            "bytes": 1797
+          },
+          "final": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/io_utils.py",
+            "sha256": "0cdbc2756dd4e5370675a50e792bfd0626f7cb850c13e5ec01e56fc5a05e6128",
+            "bytes": 1797
+          }
+        },
+        {
+          "relative_path": "scripts/metrics.py",
+          "same_bytes_as_S4": true,
+          "S4": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204/scripts/metrics.py",
+            "sha256": "be5214fe461b0e2dde5b07f94d871c8f8c2bf34713fef3db08c4fab71d8a3b6b",
+            "bytes": 1907
+          },
+          "final": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/metrics.py",
+            "sha256": "be5214fe461b0e2dde5b07f94d871c8f8c2bf34713fef3db08c4fab71d8a3b6b",
+            "bytes": 1907
+          }
+        },
+        {
+          "relative_path": "scripts/pid_core.py",
+          "same_bytes_as_S4": true,
+          "S4": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204/scripts/pid_core.py",
+            "sha256": "36e0d3952560fabfcc27b37cba006fdab6f1c1b3e96569a3b0afaeeb68637477",
+            "bytes": 939
+          },
+          "final": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/pid_core.py",
+            "sha256": "36e0d3952560fabfcc27b37cba006fdab6f1c1b3e96569a3b0afaeeb68637477",
+            "bytes": 939
+          }
+        },
+        {
+          "relative_path": "scripts/reporting.py",
+          "same_bytes_as_S4": false,
+          "S4": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204/scripts/reporting.py",
+            "sha256": "d82adfc12738f1e290418137c98a7c6bbd4a3b5f26af949999355f39178f4ac8",
+            "bytes": 2892
+          },
+          "final": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/reporting.py",
+            "sha256": "8038997acb131e0cd91aab48061b4c8d011cf8374c12e10e12388ee5d0664a1b",
+            "bytes": 2906
+          }
+        },
+        {
+          "relative_path": "scripts/sim_core.py",
+          "same_bytes_as_S4": true,
+          "S4": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204/scripts/sim_core.py",
+            "sha256": "b4d7bc7b912991a0ffe22ec5900382008c8a5405c35b5f846a7fc90733ad401f",
+            "bytes": 2721
+          },
+          "final": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/sim_core.py",
+            "sha256": "b4d7bc7b912991a0ffe22ec5900382008c8a5405c35b5f846a7fc90733ad401f",
+            "bytes": 2721
+          }
+        },
+        {
+          "relative_path": "scripts/tuning.py",
+          "same_bytes_as_S4": false,
+          "S4": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204/scripts/tuning.py",
+            "sha256": "6683866df330cb011b873dc5084969b75375d27fc18aea4e8b02185112629136",
+            "bytes": 2319
+          },
+          "final": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/tuning.py",
+            "sha256": "7eccfd028918703edc576347f17811d8ba63032a372a4e36413d87cab3e81195",
+            "bytes": 3493
+          }
+        },
+        {
+          "relative_path": "scripts/validator.py",
+          "same_bytes_as_S4": false,
+          "S4": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204/scripts/validator.py",
+            "sha256": "44605937bff2cd28d21229a4cac6f57bffb94beebc455706a3b16ffb6a7ac7ad",
+            "bytes": 6111
+          },
+          "final": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/validator.py",
+            "sha256": "df347a69ebd70eea8cefc7620830783af7f508dcfba3c634500fd2a2d3edd16c",
+            "bytes": 6947
+          }
+        }
+      ],
+      "observed_changes": [
+        {
+          "kind": "TTC_precision",
+          "fixed": false,
+          "finding": "io_utils, sim_core and the output-number format remain byte-identical to S4. Both core and generated standalone simulation still use six decimal places for CSV numbers.",
+          "sources": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/io_utils.py",
+              "sha256": "0cdbc2756dd4e5370675a50e792bfd0626f7cb850c13e5ec01e56fc5a05e6128",
+              "bytes": 1797,
+              "line": 29
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/deliverables.py",
+              "sha256": "57892c714cd33169e4117912ec4a790dbdf3faba6723e726e0fc49537ff89044",
+              "bytes": 13636,
+              "line": 21
+            }
+          ]
+        },
+        {
+          "kind": "delivered_execution_consistency",
+          "finding": "generate_all now executes the generated standalone simulation.py as the authoritative producer. Exported PID adds integral clamping; validation compares CSV/report hashes against a fresh standalone rerun.",
+          "sources": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/deliverables.py",
+              "sha256": "57892c714cd33169e4117912ec4a790dbdf3faba6723e726e0fc49537ff89044",
+              "bytes": 13636,
+              "line": 60
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/validator.py",
+              "sha256": "df347a69ebd70eea8cefc7620830783af7f508dcfba3c634500fd2a2d3edd16c",
+              "bytes": 6947,
+              "line": 149
+            }
+          ]
+        },
+        {
+          "kind": "tuning_selection",
+          "finding": "The tuner now first selects candidates satisfying its own published-metric predicates, then uses lexicographic ranking; noncompliant candidates use a fallback score. Its distance predicate still uses closing-only metrics, so this is not proof the fixed suite distance target is met.",
+          "sources": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/tuning.py",
+              "sha256": "7eccfd028918703edc576347f17811d8ba63032a372a4e36413d87cab3e81195",
+              "bytes": 3493,
+              "line": 27
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/tuning.py",
+              "sha256": "7eccfd028918703edc576347f17811d8ba63032a372a4e36413d87cab3e81195",
+              "bytes": 3493,
+              "line": 41
+            }
+          ]
+        },
+        {
+          "kind": "report_format",
+          "finding": "Report rendering explicitly gives numerical values three decimal places and documents the closing-only distance-error convention.",
+          "sources": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/reporting.py",
+              "sha256": "8038997acb131e0cd91aab48061b4c8d011cf8374c12e10e12388ee5d0664a1b",
+              "bytes": 2906,
+              "line": 7
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/versions/a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5/scripts/deliverables.py",
+              "sha256": "57892c714cd33169e4117912ec4a790dbdf3faba6723e726e0fc49537ff89044",
+              "bytes": 13636,
+              "line": 21
+            }
+          ]
+        }
+      ],
+      "final_public_snapshot": {
+        "submission_record": {
+          "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/private/author-controller/submission-10.json",
+          "sha256": "1d9816a85257e3fb3ab04413bc6f271a07c600b9fed3527edbd3eb8fa7572c11",
+          "bytes": 86482
+        },
+        "submission_hash": "6ff90ad4b031931bef99db8780fed3af5f5b9068cf758851d3d502558ae27d92",
+        "public_trace_hash": "bdcb2dc9831e2dbdbbf2ed212fa217a69c5cc5c850153b6a539e1e7ffa2b658c",
+        "public_artifacts_hash": "8c369ef6298f51c23e5cd05a00c03d67c339f083a1c6cfb40b16143683af6cff",
+        "execution_id": "1ed8ee63ab474da59d2597f13205bc08",
+        "public_files": [
+          {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/0e54526007bb4b5ab4205376802f5ab8/files/root/simulation_results.csv",
+            "sha256": "1f62b8045c601d9eaf8feb6b18778f9422c6e118bd9ac04c6490687f1c178c94",
+            "bytes": 74012
+          },
+          {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/0e54526007bb4b5ab4205376802f5ab8/files/root/sensor_data.csv",
+            "sha256": "358f88028394dfa89cd96cadeb6450a3f73be01e274e5e9c53e51e9afec2f11d",
+            "bytes": 28478
+          },
+          {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/0e54526007bb4b5ab4205376802f5ab8/files/root/acc_report.md",
+            "sha256": "49e8287ef0b155fbeb17c8c5260edc560df41df67f808b5d453adfc99eea4198",
+            "bytes": 1691
+          },
+          {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/0e54526007bb4b5ab4205376802f5ab8/files/root/tuning_results.yaml",
+            "sha256": "74d8def56c498ba9bba41680d3705bc8117a5e9c7b5a80c3c5dc69f08c6cb044",
+            "bytes": 87
+          },
+          {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/0e54526007bb4b5ab4205376802f5ab8/files/root/simulation.py",
+            "sha256": "b9ca1cf5065273a2952f13f30deeae40a7ec05e130210d8f65c76315ddb356fc",
+            "bytes": 6979
+          },
+          {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/adaptive-cruise-control/0e54526007bb4b5ab4205376802f5ab8/files/root/pid_controller.py",
+            "sha256": "157fed0eca4d97b153433fe9d1f6057270ca410123c8bb77335faaaec5410926",
+            "bytes": 821
+          }
+        ],
+        "csv_rows": 1501,
+        "TTC_rows_outside_V1_tolerance": 7,
+        "first_TTC_discrepancy": {
+          "time": "37.6",
+          "csv_recomputed_ttc": 2029.0875623163654,
+          "saved_ttc": 2029.128617
+        },
+        "last_100_all_follow_distance_error_m": 14.04606634,
+        "last_100_closing_follow_distance_error_m": 1.0530336900000001,
+        "recorded_report_metrics": {
+          "speed_overshoot_percent": 2.281,
+          "speed_steady_state_error_mps": 0.029,
+          "distance_closing_only_steady_state_error_m": 1.053
+        }
+      },
+      "completed_public_checks": [
+        {
+          "check": 1,
+          "content_label": "S1",
+          "bundle_hash": "75354b402c592183d11b046b7acd61047531dffb7af046c94f82e569f5eba7db",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed_checks": 13,
+          "total_checks": 16,
+          "pass_rate": 0.8125,
+          "program_error": false,
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 6268.738357437279 at t=35.1, got 6268.46136"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 16.76575527"
+            },
+            {
+              "name": "test_speed_performance_targets",
+              "message": "Expected speed overshoot < 5%, got 7.6760233333333385%"
+            }
+          ]
+        },
+        {
+          "check": 2,
+          "content_label": "S2",
+          "bundle_hash": "bf70d88c3fe5a25d45ea6f0943a53efd07af47fc279580c4b0745d693926ac81",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed_checks": 14,
+          "total_checks": 16,
+          "pass_rate": 0.875,
+          "program_error": false,
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 4002.1838148332813 at t=39.0, got 4002.049059"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 12.02376667"
+            }
+          ]
+        },
+        {
+          "check": 3,
+          "content_label": "S3",
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed_checks": 14,
+          "total_checks": 16,
+          "pass_rate": 0.875,
+          "program_error": false,
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 2049.332917330281 at t=37.6, got 2049.29136"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 14.022123119999998"
+            }
+          ]
+        },
+        {
+          "check": 4,
+          "content_label": "S3",
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed_checks": 14,
+          "total_checks": 16,
+          "pass_rate": 0.875,
+          "program_error": false,
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 2049.332917330281 at t=37.6, got 2049.29136"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 14.022123119999998"
+            }
+          ]
+        },
+        {
+          "check": 5,
+          "content_label": "S3",
+          "bundle_hash": "0731da48df553b9f3f68b22e2f1ae3bd45ded4b6cf4db11b3a9a50b277aa8507",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed_checks": 14,
+          "total_checks": 16,
+          "pass_rate": 0.875,
+          "program_error": false,
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 2049.332917330281 at t=37.6, got 2049.29136"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 14.022123119999998"
+            }
+          ]
+        },
+        {
+          "check": 6,
+          "content_label": "S4",
+          "bundle_hash": "e7045bd62f82ade5f03942994005554b2a037f0bedee3b590033bcc410055204",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed_checks": 14,
+          "total_checks": 16,
+          "pass_rate": 0.875,
+          "program_error": false,
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 2065.3229388037053 at t=37.6, got 2065.288945"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 14.0223985"
+            }
+          ]
+        },
+        {
+          "check": 7,
+          "content_label": "S5",
+          "bundle_hash": "95d9791c462d1ff4b1f0b3475ba118933aef1725a9a515e80eef32d422098021",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed_checks": 14,
+          "total_checks": 16,
+          "pass_rate": 0.875,
+          "program_error": false,
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 2065.3229388037053 at t=37.6, got 2065.288945"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 14.0223985"
+            }
+          ]
+        },
+        {
+          "check": 8,
+          "content_label": "S6",
+          "bundle_hash": "2d1cc80c148b32709f7e0023bf6753c938b23954778543026e46cc84f5445d2e",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed_checks": 14,
+          "total_checks": 16,
+          "pass_rate": 0.875,
+          "program_error": false,
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 2065.3229388037053 at t=37.6, got 2065.288945"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 14.0223985"
+            }
+          ]
+        },
+        {
+          "check": 9,
+          "content_label": "S7",
+          "bundle_hash": "30edc592c3862f228c434e32c46771a3fecd8ed5f6df786710b6c0a217162678",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed_checks": 14,
+          "total_checks": 16,
+          "pass_rate": 0.875,
+          "program_error": false,
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 2065.3229388037053 at t=37.6, got 2065.288945"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 14.0223985"
+            }
+          ]
+        },
+        {
+          "check": 10,
+          "content_label": "S8",
+          "bundle_hash": "a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5",
+          "suite_version": 1,
+          "suite_hash": "0af5dea24dd50fc644871e7f7c4340bba3e86875e6229505946a5091d4ac5a2b",
+          "passed_checks": 14,
+          "total_checks": 16,
+          "pass_rate": 0.875,
+          "program_error": false,
+          "failed_checks_detail": [
+            {
+              "name": "test_ttc_semantics_and_emergency_trigger",
+              "message": "Expected TTC 2029.0875623163654 at t=37.6, got 2029.128617"
+            },
+            {
+              "name": "test_distance_error_formula_and_steady_state_target",
+              "message": "Expected distance steady-state error < 2 m, got 14.04606634"
+            }
+          ]
+        }
+      ],
+      "author_identifier_diagnostic_provenance": {
+        "repository": "https://github.com/Zhang-Henry/CoEvoSkills",
+        "commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+        "source_manifest": {
+          "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/VERIFIER_SOURCE.json",
+          "sha256": "e3691bb73754019016621a9b618b8f5e38d3829a590dd3030379717a916f4932",
+          "bytes": 10786
+        },
+        "byte_matches": [
+          {
+            "file": {
+              "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_evolution.py",
+              "sha256": "f87e0a7fd760688a71269672a512db2c1e2a53aa71cd5d9b9908a61d794390f1",
+              "bytes": 230232
+            },
+            "pinned_sha256": "f87e0a7fd760688a71269672a512db2c1e2a53aa71cd5d9b9908a61d794390f1",
+            "match": true,
+            "upstream_source_path": "libs/terminus_agent/agents/terminus_2/harbor_terminus_2_evolution.py"
+          },
+          {
+            "file": {
+              "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/skill_information_boundary.py",
+              "sha256": "1d9d29e4caa1dddccc6192d37735d34cbefd04793109086650343dcbc964a0dc",
+              "bytes": 128408
+            },
+            "pinned_sha256": "1d9d29e4caa1dddccc6192d37735d34cbefd04793109086650343dcbc964a0dc",
+            "match": true,
+            "upstream_source_path": "libs/terminus_agent/evolution/skill_information_boundary.py"
+          }
+        ],
+        "scanner_entry_point": {
+          "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/skill_information_boundary.py",
+          "sha256": "1d9d29e4caa1dddccc6192d37735d34cbefd04793109086650343dcbc964a0dc",
+          "bytes": 128408,
+          "line": 2371
+        },
+        "controller_branch": {
+          "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_evolution.py",
+          "sha256": "f87e0a7fd760688a71269672a512db2c1e2a53aa71cd5d9b9908a61d794390f1",
+          "bytes": 230232,
+          "line": 1606
+        },
+        "status": "AUTHOR_ADVISORY_NOT_NEW_LOCAL_COMPLETION_GATE",
+        "finding": "The identifier scanner and controller branch are exact pinned-author bytes. In this release the static overlaps are advisory portability diagnostics, not a surrogate completion gate. They do not consume r interventions or expose exact evidence to Generator. ACC recorded ten surrogate_fail interventions and stopped for context input capacity, not an identifier rejection."
+      },
+      "post_final_official_oracle": {
+        "phase": "post_final",
+        "status": "MEASURED",
+        "passed": false,
+        "bundle_hash": "a4f8046cfdd0cdbfef078936e78827fce7a8d451a94e53617feb71d758518ca5",
+        "parent_hash": "30edc592c3862f228c434e32c46771a3fecd8ed5f6df786710b6c0a217162678",
+        "execution_id": "3279679705d24fe8ba37b271ed6b0938",
+        "raw_reward": "0",
+        "resolved_reward": 0.0,
+        "canonical_reward": 0.0,
+        "reward_source": "official_reward",
+        "official_checks_passed": 11,
+        "official_checks_total": 12,
+        "oracle_history_record": {
+          "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/adaptive-cruise-control/benign/private/author-controller/oracle-history.json",
+          "sha256": "7501f1cb3a84f27880b48eabbf38b0b8bfceeab311be3f2ac1087f19894204a2",
+          "bytes": 5922
+        },
+        "not_claimed": "This is the author-loop terminal fresh official oracle, not the separate per-version independent evaluation. No hidden test names, source or expected values are copied."
+      }
+    },
+    {
+      "id": "DAPT_COMPLETED_LEARNING",
+      "created_at": "2026-10-08T20:52:33.265744+00:00",
+      "previous_evidence_file_sha256": "8d88fd316f4f9d79204966aacd6004cbe58a72b48c251a25140550cf14468409",
+      "scope": {
+        "task_id": "dapt-intrusion-detection",
+        "learning_complete": true,
+        "independent_evaluation_included": false,
+        "independent_evaluation_status": "NOT_REVIEWED_IN_THIS_ADDENDUM",
+        "hidden_grader_test_names_source_and_expected_answers": "NOT_INSPECTED_OR_COPIED",
+        "original_scope_and_findings_preserved": true,
+        "live_generator_feedback": "NONE"
+      },
+      "completion": {
+        "stop_reason": "token_budget",
+        "effective_generator_episodes": 42,
+        "r_interventions": 6,
+        "normal_k_interventions": 2,
+        "actual_official_oracle_executions": 3,
+        "content_versions_including_S0": 7,
+        "submission_count": 8,
+        "all_recorded_intervention_event_types": [
+          "surrogate_pass",
+          "surrogate_pass",
+          "surrogate_fail",
+          "surrogate_fail",
+          "surrogate_fail",
+          "surrogate_fail",
+          "surrogate_fail",
+          "surrogate_fail"
+        ],
+        "activity_duration_seconds": 3394.4,
+        "context_stop": {
+          "exception": "InputTokenBudgetExceeded",
+          "observed_input_tokens": 158841,
+          "limit_input_tokens": 157632,
+          "meaning": "context input admission boundary; not output-token quota or cost cap"
+        },
+        "completion_evidence": {
+          "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/private/author-controller/logs/evolution_run_log.json",
+          "sha256": "364d48fbd4a89c045afdfdabd81b433f40887f9b823b03f9543ceb4b8a2d24cf",
+          "bytes": 83859
+        }
+      },
+      "content_mapping": {
+        "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1": "S0",
+        "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2": "S1",
+        "8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a": "S2",
+        "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02": "S3",
+        "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284": "S4",
+        "07b104a9cbc820d350e77e53ace9c3294288578b0d3bf54ac16ea4ef9c1e3c9a": "S5",
+        "225f6242c0f64c398164d23a12a734a93c305f3377412ee1809fdd2633eccfa0": "S6"
+      },
+      "submissions": [
+        {
+          "submission": 1,
+          "content_label": "S1",
+          "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+          "parent_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+          "submission_kind": "model_task_complete",
+          "execution_id": "28f738e6fa6b4aac98954f0b7f7466ff",
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/private/author-controller/submission-1.json",
+            "sha256": "c59c4a6a217016fa2ded1a0fd615e3b9cee74b6596756e0559993bd15a5ae3f0",
+            "bytes": 49128
+          },
+          "submission_hash": "459781e3eab6c65a1647e976d2a579505638fd76d7e276609deed1b1c5099194",
+          "public_trace_hash": "04aebc7befff20b48ea4d09e81d484db721a38d8b86e989e8ef4bf49c35f31b8",
+          "public_artifacts_hash": "26f69b4f6b64c15cd154e3b464bec697ae53d4aad3e8e6dbe5ce93702de3ba40",
+          "public_output": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/dapt-intrusion-detection/f026b036079245ef966ec9381599673d/files/root/network_stats.csv",
+            "sha256": "30ecab823c74bb7edaf3b039324ab199aec55f5c8c96cd59d565a2db48f478e3",
+            "bytes": 1069
+          },
+          "observed_output": {
+            "src_port_entropy": "4.33961510324535",
+            "dst_port_entropy": "4.2811152557544",
+            "unique_src_ports": "1713",
+            "unique_dst_ports": "1675",
+            "bidirectional_flows": "1758",
+            "is_traffic_benign": "false",
+            "has_port_scan": "false",
+            "has_dos_pattern": "true",
+            "has_beaconing": "false"
+          }
+        },
+        {
+          "submission": 2,
+          "content_label": "S2",
+          "bundle_hash": "8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a",
+          "parent_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+          "submission_kind": "model_task_complete",
+          "execution_id": "28f738e6fa6b4aac98954f0b7f7466ff",
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/private/author-controller/submission-2.json",
+            "sha256": "34313ec94e63d61b7931e334ff950d64e091915e98207e863b5bd751dc90f91e",
+            "bytes": 63205
+          },
+          "submission_hash": "eafa174b0bc63111223818b867a0145a4169c095547f491fd796509076ae06e8",
+          "public_trace_hash": "51710f869ff5ea4808816a70590f953bc2f277fa761fc436fa706c38453e61b2",
+          "public_artifacts_hash": "65592f47bbbe2fd64e9f2a6f1bc34c083d020dfd3532ef92f8123117ddad50cb",
+          "public_output": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/dapt-intrusion-detection/7bd36d66f05b4716ab7100bb3cedca8d/files/root/network_stats.csv",
+            "sha256": "8e6d4d97e8577b6cbd37fd98b5eafe933dfb287ed09de9b333eb46c6de78b947",
+            "bytes": 1069
+          },
+          "observed_output": {
+            "src_port_entropy": "4.33961510324535",
+            "dst_port_entropy": "4.2811152557544",
+            "unique_src_ports": "1713",
+            "unique_dst_ports": "1675",
+            "bidirectional_flows": "1758",
+            "is_traffic_benign": "true",
+            "has_port_scan": "false",
+            "has_dos_pattern": "false",
+            "has_beaconing": "false"
+          }
+        },
+        {
+          "submission": 3,
+          "content_label": "S3",
+          "bundle_hash": "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02",
+          "parent_hash": "8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a",
+          "submission_kind": "model_task_complete",
+          "execution_id": "28f738e6fa6b4aac98954f0b7f7466ff",
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/private/author-controller/submission-3.json",
+            "sha256": "c5067a7af5a2417c9e346443d401600df2777a3b8c1f1629e3c85a243ffc228c",
+            "bytes": 63987
+          },
+          "submission_hash": "013e2aaa1ce1df1c44de9a82c3a8a6f8da1f3743d9c3da2244a40b6af30ad25f",
+          "public_trace_hash": "a7b3b1b8d1f9d747323c84c5fc362ffa641c0a5a57e29aec1a3fe7a8fbe5a8c7",
+          "public_artifacts_hash": "bdf9597eca49bc2fd2568e3a6758a7f981f164ea8ad23341c9ca1e6a137fe7d8",
+          "public_output": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/dapt-intrusion-detection/5071e5ceaea94530a737e1bd4b4eb174/files/root/network_stats.csv",
+            "sha256": "279b55c8d9ce381b82bf41be6ef270f6d6c6d63d9da3a9007c530fe32289203b",
+            "bytes": 1070
+          },
+          "observed_output": {
+            "src_port_entropy": "4.36143495255781",
+            "dst_port_entropy": "4.30318021615969",
+            "unique_src_ports": "1714",
+            "unique_dst_ports": "1676",
+            "bidirectional_flows": "1758",
+            "is_traffic_benign": "true",
+            "has_port_scan": "false",
+            "has_dos_pattern": "false",
+            "has_beaconing": "false"
+          }
+        },
+        {
+          "submission": 4,
+          "content_label": "S3",
+          "bundle_hash": "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02",
+          "parent_hash": "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02",
+          "submission_kind": "model_task_complete",
+          "execution_id": "28f738e6fa6b4aac98954f0b7f7466ff",
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/private/author-controller/submission-4.json",
+            "sha256": "5ea955d258bca3eca61871ce71e975cb6e10c140fcad27034bfcbdb5a3defd4a",
+            "bytes": 64550
+          },
+          "submission_hash": "0abb890ebc77e4d0add5a7870f97744fe6668198435f8c3e4cf5391e59620f25",
+          "public_trace_hash": "237e02457157266bfb6f6cd24a719886a8f60a9c2fca60c9de16c13af2f77c4e",
+          "public_artifacts_hash": "a8d588da8c8e9367a7fcb0cbf8badd990d7d74d11c622a6e514567811313b785",
+          "public_output": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/dapt-intrusion-detection/4d8f1164e557455e9c66192633967bb2/files/root/network_stats.csv",
+            "sha256": "279b55c8d9ce381b82bf41be6ef270f6d6c6d63d9da3a9007c530fe32289203b",
+            "bytes": 1070
+          },
+          "observed_output": {
+            "src_port_entropy": "4.36143495255781",
+            "dst_port_entropy": "4.30318021615969",
+            "unique_src_ports": "1714",
+            "unique_dst_ports": "1676",
+            "bidirectional_flows": "1758",
+            "is_traffic_benign": "true",
+            "has_port_scan": "false",
+            "has_dos_pattern": "false",
+            "has_beaconing": "false"
+          }
+        },
+        {
+          "submission": 5,
+          "content_label": "S4",
+          "bundle_hash": "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284",
+          "parent_hash": "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02",
+          "submission_kind": "model_task_complete",
+          "execution_id": "28f738e6fa6b4aac98954f0b7f7466ff",
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/private/author-controller/submission-5.json",
+            "sha256": "63d11bf042ae4b2ba2049194122e726b1b82e403ba35b1f108aec842da90b90f",
+            "bytes": 65123
+          },
+          "submission_hash": "9a4d1caaf9167581f062e2d5b0fe57daf0c25bd913c453131dfb7c74d350a951",
+          "public_trace_hash": "33795b076bb082b3db93b8b6c8f296822accc6449814b600bea9d248922fe115",
+          "public_artifacts_hash": "faacb4b13b1c325f0ba49a9f046f57ceaf4bbbb22b959826d8add4469a42a541",
+          "public_output": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/dapt-intrusion-detection/1764c4e550ce470aa2fea0037aa4d0c7/files/root/network_stats.csv",
+            "sha256": "624f9698e091b39300ed6efc98d5a00b28471e7ea6285b4161d31b4647f4c886",
+            "bytes": 1070
+          },
+          "observed_output": {
+            "src_port_entropy": "4.36143495255781",
+            "dst_port_entropy": "4.30318021615969",
+            "unique_src_ports": "1714",
+            "unique_dst_ports": "1676",
+            "bidirectional_flows": "1758",
+            "is_traffic_benign": "false",
+            "has_port_scan": "true",
+            "has_dos_pattern": "false",
+            "has_beaconing": "false"
+          }
+        },
+        {
+          "submission": 6,
+          "content_label": "S4",
+          "bundle_hash": "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284",
+          "parent_hash": "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284",
+          "submission_kind": "model_task_complete",
+          "execution_id": "28f738e6fa6b4aac98954f0b7f7466ff",
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/private/author-controller/submission-6.json",
+            "sha256": "3520136e16fa67f7b071c7ab80779631d9bc780ff2214b60bfedd3f9b2eccfab",
+            "bytes": 65291
+          },
+          "submission_hash": "233fba68d16605d158ae29637f01f2d3e76b845984bf7fcd435cef228e48d768",
+          "public_trace_hash": "ca52c8c63ac4d7c90aa73c7f681836531118c94ae88465b6f117fcece74f0458",
+          "public_artifacts_hash": "c0e8da429b7c23e6c34c8dda19dfef7c64b3e06db95b33371a1da95c71e55d72",
+          "public_output": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/dapt-intrusion-detection/99e3af26b7aa40b7af523710131c0911/files/root/network_stats.csv",
+            "sha256": "624f9698e091b39300ed6efc98d5a00b28471e7ea6285b4161d31b4647f4c886",
+            "bytes": 1070
+          },
+          "observed_output": {
+            "src_port_entropy": "4.36143495255781",
+            "dst_port_entropy": "4.30318021615969",
+            "unique_src_ports": "1714",
+            "unique_dst_ports": "1676",
+            "bidirectional_flows": "1758",
+            "is_traffic_benign": "false",
+            "has_port_scan": "true",
+            "has_dos_pattern": "false",
+            "has_beaconing": "false"
+          }
+        },
+        {
+          "submission": 7,
+          "content_label": "S5",
+          "bundle_hash": "07b104a9cbc820d350e77e53ace9c3294288578b0d3bf54ac16ea4ef9c1e3c9a",
+          "parent_hash": "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284",
+          "submission_kind": "model_task_complete",
+          "execution_id": "28f738e6fa6b4aac98954f0b7f7466ff",
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/private/author-controller/submission-7.json",
+            "sha256": "9f38289d84cd921a2efbf30147b28f2308117e5e243c35b32815d4073bdbb973",
+            "bytes": 68972
+          },
+          "submission_hash": "c895a4d5eaab83829b89eb6711e6c4812e18ae3c751baf0d9658be20a6cf1c63",
+          "public_trace_hash": "9dfe9af878a166afaf1c68efd03483458de3eb055829df3d84a3d57bb352edad",
+          "public_artifacts_hash": "ec605c7da528e916e205bc1a9f388306596ae5830e734c089e9328393b7c003f",
+          "public_output": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/dapt-intrusion-detection/fe539b8e6e4747a5b60b87bb3df17ffe/files/root/network_stats.csv",
+            "sha256": "3645bec9f140bcd365443d081379d8321141748eece77601a56df2794ec51c9e",
+            "bytes": 1069
+          },
+          "observed_output": {
+            "src_port_entropy": "4.36143495255781",
+            "dst_port_entropy": "4.30318021615969",
+            "unique_src_ports": "1714",
+            "unique_dst_ports": "1676",
+            "bidirectional_flows": "1758",
+            "is_traffic_benign": "false",
+            "has_port_scan": "true",
+            "has_dos_pattern": "false",
+            "has_beaconing": "true"
+          }
+        },
+        {
+          "submission": 8,
+          "content_label": "S6",
+          "bundle_hash": "225f6242c0f64c398164d23a12a734a93c305f3377412ee1809fdd2633eccfa0",
+          "parent_hash": "07b104a9cbc820d350e77e53ace9c3294288578b0d3bf54ac16ea4ef9c1e3c9a",
+          "submission_kind": "model_task_complete",
+          "execution_id": "28f738e6fa6b4aac98954f0b7f7466ff",
+          "submission_record": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/private/author-controller/submission-8.json",
+            "sha256": "a822f28dc1b3afae3ddbad20db5f3ead03059361ebfc85dfc55b0ce599137a37",
+            "bytes": 69730
+          },
+          "submission_hash": "bff3bfeabb13fac3cd8ae61078913db05fd3de376d4af91f16eb3d8775534799",
+          "public_trace_hash": "be84f2f2e388370fbbc597607cc91243ad144c19fdea1cfa9bb0581584dae970",
+          "public_artifacts_hash": "de4d6a632096578d32547093f5afb233b5a90bb4a8db2bf5c5a42d41a7d88d7a",
+          "public_output": {
+            "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/artifacts/dapt-intrusion-detection/1f8e09bf5b7c49c089056da933e83f4d/files/root/network_stats.csv",
+            "sha256": "624f9698e091b39300ed6efc98d5a00b28471e7ea6285b4161d31b4647f4c886",
+            "bytes": 1070
+          },
+          "observed_output": {
+            "src_port_entropy": "4.36143495255781",
+            "dst_port_entropy": "4.30318021615969",
+            "unique_src_ports": "1714",
+            "unique_dst_ports": "1676",
+            "bidirectional_flows": "1758",
+            "is_traffic_benign": "false",
+            "has_port_scan": "true",
+            "has_dos_pattern": "false",
+            "has_beaconing": "false"
+          }
+        }
+      ],
+      "completed_public_checks": [
+        {
+          "check": 1,
+          "content_label": "S1",
+          "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+          "suite_version": 1,
+          "suite_hash": "fe33e3ec2a157ba7f61b348a4e93d3bcb6ac20639fee9196deba617acc8661fb",
+          "passed_checks": 13,
+          "failed_checks": 0,
+          "total_checks": 13,
+          "pass_rate": 1.0,
+          "program_error": false,
+          "failed_public_checks": []
+        },
+        {
+          "check": 2,
+          "content_label": "S2",
+          "bundle_hash": "8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a",
+          "suite_version": 2,
+          "suite_hash": "0aa66ece1270598bd03be31d5f19e7158a8df75afd3ab1d830c10f44c00c07af",
+          "passed_checks": 43,
+          "failed_checks": 0,
+          "total_checks": 43,
+          "pass_rate": 1.0,
+          "program_error": false,
+          "failed_public_checks": []
+        },
+        {
+          "check": 3,
+          "content_label": "S3",
+          "bundle_hash": "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02",
+          "suite_version": 3,
+          "suite_hash": "2ff1fe8bc041cef3d9a2089ff6b41bddedff11aa846d7f777c8a83890c2810fc",
+          "passed_checks": 39,
+          "failed_checks": 5,
+          "total_checks": 44,
+          "pass_rate": 0.8863636363636364,
+          "program_error": false,
+          "failed_public_checks": [
+            {
+              "name": "test_unique_src_ports_exact",
+              "message": "unique_src_ports: expected 1713, got 1714.0"
+            },
+            {
+              "name": "test_unique_dst_ports_exact",
+              "message": "unique_dst_ports: expected 1675, got 1676.0"
+            },
+            {
+              "name": "test_src_port_entropy_exact",
+              "message": "src_port_entropy: expected 4.339615103245351, got 4.36143495255781"
+            },
+            {
+              "name": "test_dst_port_entropy_exact",
+              "message": "dst_port_entropy: expected 4.281115255754394, got 4.30318021615969"
+            },
+            {
+              "name": "test_port_metrics_exclude_non_port_protocols_semantically",
+              "message": "unique_src_ports must count only TCP/UDP source ports, excluding non-port protocols; expected 1713, got 1714.0, zero-inclusive alternative would be 1714"
+            }
+          ]
+        },
+        {
+          "check": 4,
+          "content_label": "S3",
+          "bundle_hash": "ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02",
+          "suite_version": 3,
+          "suite_hash": "2ff1fe8bc041cef3d9a2089ff6b41bddedff11aa846d7f777c8a83890c2810fc",
+          "passed_checks": 39,
+          "failed_checks": 5,
+          "total_checks": 44,
+          "pass_rate": 0.8863636363636364,
+          "program_error": false,
+          "failed_public_checks": [
+            {
+              "name": "test_unique_src_ports_exact",
+              "message": "unique_src_ports: expected 1713, got 1714.0"
+            },
+            {
+              "name": "test_unique_dst_ports_exact",
+              "message": "unique_dst_ports: expected 1675, got 1676.0"
+            },
+            {
+              "name": "test_src_port_entropy_exact",
+              "message": "src_port_entropy: expected 4.339615103245351, got 4.36143495255781"
+            },
+            {
+              "name": "test_dst_port_entropy_exact",
+              "message": "dst_port_entropy: expected 4.281115255754394, got 4.30318021615969"
+            },
+            {
+              "name": "test_port_metrics_exclude_non_port_protocols_semantically",
+              "message": "unique_src_ports must count only TCP/UDP source ports, excluding non-port protocols; expected 1713, got 1714.0, zero-inclusive alternative would be 1714"
+            }
+          ]
+        },
+        {
+          "check": 5,
+          "content_label": "S4",
+          "bundle_hash": "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284",
+          "suite_version": 3,
+          "suite_hash": "2ff1fe8bc041cef3d9a2089ff6b41bddedff11aa846d7f777c8a83890c2810fc",
+          "passed_checks": 38,
+          "failed_checks": 6,
+          "total_checks": 44,
+          "pass_rate": 0.8636363636363636,
+          "program_error": false,
+          "failed_public_checks": [
+            {
+              "name": "test_unique_src_ports_exact",
+              "message": "unique_src_ports: expected 1713, got 1714.0"
+            },
+            {
+              "name": "test_unique_dst_ports_exact",
+              "message": "unique_dst_ports: expected 1675, got 1676.0"
+            },
+            {
+              "name": "test_src_port_entropy_exact",
+              "message": "src_port_entropy: expected 4.339615103245351, got 4.36143495255781"
+            },
+            {
+              "name": "test_dst_port_entropy_exact",
+              "message": "dst_port_entropy: expected 4.281115255754394, got 4.30318021615969"
+            },
+            {
+              "name": "test_port_metrics_exclude_non_port_protocols_semantically",
+              "message": "unique_src_ports must count only TCP/UDP source ports, excluding non-port protocols; expected 1713, got 1714.0, zero-inclusive alternative would be 1714"
+            },
+            {
+              "name": "test_has_port_scan_matches_absence_of_converging_single_source_evidence",
+              "message": "Expected has_port_scan=false because no single source simultaneously shows the required converging evidence (many unique destination ports, high destination-port entropy, and high SYN-only ratio); candidates=[]"
+            }
+          ]
+        },
+        {
+          "check": 6,
+          "content_label": "S4",
+          "bundle_hash": "68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284",
+          "suite_version": 3,
+          "suite_hash": "2ff1fe8bc041cef3d9a2089ff6b41bddedff11aa846d7f777c8a83890c2810fc",
+          "passed_checks": 38,
+          "failed_checks": 6,
+          "total_checks": 44,
+          "pass_rate": 0.8636363636363636,
+          "program_error": false,
+          "failed_public_checks": [
+            {
+              "name": "test_unique_src_ports_exact",
+              "message": "unique_src_ports: expected 1713, got 1714.0"
+            },
+            {
+              "name": "test_unique_dst_ports_exact",
+              "message": "unique_dst_ports: expected 1675, got 1676.0"
+            },
+            {
+              "name": "test_src_port_entropy_exact",
+              "message": "src_port_entropy: expected 4.339615103245351, got 4.36143495255781"
+            },
+            {
+              "name": "test_dst_port_entropy_exact",
+              "message": "dst_port_entropy: expected 4.281115255754394, got 4.30318021615969"
+            },
+            {
+              "name": "test_port_metrics_exclude_non_port_protocols_semantically",
+              "message": "unique_src_ports must count only TCP/UDP source ports, excluding non-port protocols; expected 1713, got 1714.0, zero-inclusive alternative would be 1714"
+            },
+            {
+              "name": "test_has_port_scan_matches_absence_of_converging_single_source_evidence",
+              "message": "Expected has_port_scan=false because no single source simultaneously shows the required converging evidence (many unique destination ports, high destination-port entropy, and high SYN-only ratio); candidates=[]"
+            }
+          ]
+        },
+        {
+          "check": 7,
+          "content_label": "S5",
+          "bundle_hash": "07b104a9cbc820d350e77e53ace9c3294288578b0d3bf54ac16ea4ef9c1e3c9a",
+          "suite_version": 3,
+          "suite_hash": "2ff1fe8bc041cef3d9a2089ff6b41bddedff11aa846d7f777c8a83890c2810fc",
+          "passed_checks": 37,
+          "failed_checks": 7,
+          "total_checks": 44,
+          "pass_rate": 0.8409090909090909,
+          "program_error": false,
+          "failed_public_checks": [
+            {
+              "name": "test_unique_src_ports_exact",
+              "message": "unique_src_ports: expected 1713, got 1714.0"
+            },
+            {
+              "name": "test_unique_dst_ports_exact",
+              "message": "unique_dst_ports: expected 1675, got 1676.0"
+            },
+            {
+              "name": "test_src_port_entropy_exact",
+              "message": "src_port_entropy: expected 4.339615103245351, got 4.36143495255781"
+            },
+            {
+              "name": "test_dst_port_entropy_exact",
+              "message": "dst_port_entropy: expected 4.281115255754394, got 4.30318021615969"
+            },
+            {
+              "name": "test_port_metrics_exclude_non_port_protocols_semantically",
+              "message": "unique_src_ports must count only TCP/UDP source ports, excluding non-port protocols; expected 1713, got 1714.0, zero-inclusive alternative would be 1714"
+            },
+            {
+              "name": "test_has_port_scan_matches_absence_of_converging_single_source_evidence",
+              "message": "Expected has_port_scan=false because no single source simultaneously shows the required converging evidence (many unique destination ports, high destination-port entropy, and high SYN-only ratio); candidates=[]"
+            },
+            {
+              "name": "test_has_beaconing_matches_cv_guidance",
+              "message": "Expected has_beaconing=false because iat_cv=1.1026485193832714 is not in the low-CV periodic-beaconing regime"
+            }
+          ]
+        },
+        {
+          "check": 8,
+          "content_label": "S6",
+          "bundle_hash": "225f6242c0f64c398164d23a12a734a93c305f3377412ee1809fdd2633eccfa0",
+          "suite_version": 3,
+          "suite_hash": "2ff1fe8bc041cef3d9a2089ff6b41bddedff11aa846d7f777c8a83890c2810fc",
+          "passed_checks": 38,
+          "failed_checks": 6,
+          "total_checks": 44,
+          "pass_rate": 0.8636363636363636,
+          "program_error": false,
+          "failed_public_checks": [
+            {
+              "name": "test_unique_src_ports_exact",
+              "message": "unique_src_ports: expected 1713, got 1714.0"
+            },
+            {
+              "name": "test_unique_dst_ports_exact",
+              "message": "unique_dst_ports: expected 1675, got 1676.0"
+            },
+            {
+              "name": "test_src_port_entropy_exact",
+              "message": "src_port_entropy: expected 4.339615103245351, got 4.36143495255781"
+            },
+            {
+              "name": "test_dst_port_entropy_exact",
+              "message": "dst_port_entropy: expected 4.281115255754394, got 4.30318021615969"
+            },
+            {
+              "name": "test_port_metrics_exclude_non_port_protocols_semantically",
+              "message": "unique_src_ports must count only TCP/UDP source ports, excluding non-port protocols; expected 1713, got 1714.0, zero-inclusive alternative would be 1714"
+            },
+            {
+              "name": "test_has_port_scan_matches_absence_of_converging_single_source_evidence",
+              "message": "Expected has_port_scan=false because no single source simultaneously shows the required converging evidence (many unique destination ports, high destination-port entropy, and high SYN-only ratio); candidates=[]"
+            }
+          ]
+        }
+      ],
+      "suite_comparison_rule": "Rates can be compared directly only within the same suite hash. V1 has13, V2 has43 and V3 has44 collected pytest cases; these are not assertion counts.",
+      "suite_trajectory": [
+        {
+          "suite_version": 1,
+          "suite_hash": "fe33e3ec2a157ba7f61b348a4e93d3bcb6ac20639fee9196deba617acc8661fb",
+          "content": "S1",
+          "passed_checks": 13,
+          "total_checks": 13
+        },
+        {
+          "suite_version": 2,
+          "suite_hash": "0aa66ece1270598bd03be31d5f19e7158a8df75afd3ab1d830c10f44c00c07af",
+          "content": "S2",
+          "passed_checks": 43,
+          "total_checks": 43
+        },
+        {
+          "suite_version": 3,
+          "suite_hash": "2ff1fe8bc041cef3d9a2089ff6b41bddedff11aa846d7f777c8a83890c2810fc",
+          "sequence": [
+            {
+              "content": "S3",
+              "passed_checks": 39,
+              "total_checks": 44
+            },
+            {
+              "content": "S3",
+              "passed_checks": 39,
+              "total_checks": 44
+            },
+            {
+              "content": "S4",
+              "passed_checks": 38,
+              "total_checks": 44
+            },
+            {
+              "content": "S4",
+              "passed_checks": 38,
+              "total_checks": 44
+            },
+            {
+              "content": "S5",
+              "passed_checks": 37,
+              "total_checks": 44
+            },
+            {
+              "content": "S6",
+              "passed_checks": 38,
+              "total_checks": 44
+            }
+          ]
+        }
+      ],
+      "observed_content_changes": [
+        {
+          "from": "S0",
+          "to": "S1",
+          "finding": "SKILL.md adds an explicit importable Python invocation, and the writer/validator CLI bodies are extracted into reusable functions. The core packet metric implementation remains byte-identical.",
+          "sources": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/initial/scripts/pcap_metrics.py",
+              "sha256": "f7eba7d66e5e40beedb731658b2d4cc893f7957a70518a18afc7603739a2dcd6",
+              "bytes": 21448
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2/scripts/pcap_metrics.py",
+              "sha256": "f7eba7d66e5e40beedb731658b2d4cc893f7957a70518a18afc7603739a2dcd6",
+              "bytes": 21448
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2/scripts/write_network_stats.py",
+              "sha256": "127245337492b6b330b0fb2e51b6016c902664446d9f736cf75fa3e2ac4ec5e0",
+              "bytes": 2607,
+              "line": 12
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2/scripts/validate_network_stats.py",
+              "sha256": "d5392f8843304ae2ac87cf34d09ee9833c15bec65fd18077b6faebd9c7f99a7e",
+              "bytes": 3045,
+              "line": 18
+            }
+          ]
+        },
+        {
+          "from": "S1",
+          "to": "S2",
+          "finding": "The DoS classifier adds busy-minute IPv4 volume and single-target concentration conditions; public output DoS changes true to false and benign false to true. Normal official aggregate checks rise from11/14 to13/14, while valid official reward remains0. This observation does not identify a hidden test cause.",
+          "sources": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a/scripts/pcap_metrics.py",
+              "sha256": "5ca28d6ae2bb87bbd1936751cc91051db4c3d6501a848ca618e4468c60383b60",
+              "bytes": 24122,
+              "line": 99
+            }
+          ]
+        },
+        {
+          "from": "S2",
+          "to": "S3",
+          "finding": "Port collection is moved before the IPv4 guard, broadening collection to TCP/UDP layers from packets previously excluded from port metrics. On the submitted capture unique source and destination ports each rise by1 and port entropy increases. V3 recomputation uses IPv4-scoped TCP/UDP values and rejects these changes. The diff does not explicitly invent a missing port0 or add ICMP dummy ports; this review does not resolve the public wording/background scope ambiguity or hidden official expectations.",
+          "sources": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a/scripts/pcap_metrics.py",
+              "sha256": "5ca28d6ae2bb87bbd1936751cc91051db4c3d6501a848ca618e4468c60383b60",
+              "bytes": 24122,
+              "line": 432
+            },
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/ca8935cdb95124886c2605d453f8beee29d61c92f1f3f5c48aac0691221dca02/scripts/pcap_metrics.py",
+              "sha256": "53fd4a0afcb8a5dcf0ddc943f1150d329d49f8747519c8522d8161630b2c8b2d",
+              "bytes": 24575,
+              "line": 451
+            }
+          ],
+          "public_V3_failure_categories": [
+            "unique_port_counts",
+            "port_entropy",
+            "port_scope"
+          ]
+        },
+        {
+          "from": "S3",
+          "to": "S4",
+          "finding": "Port-scan detection switches to SYN-attempt destination distributions and same-direction ACK-without-SYN handshake completion tracking. The public scan check begins failing; this is a visible disagreement with V3 converging-evidence classification, not proof of transport failure.",
+          "sources": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/68230b55aa992f126b1856f8b38554f9b8eb437c0fe417a96949314cd24a4284/scripts/pcap_metrics.py",
+              "sha256": "9a31e997d048d46b1ce7a7488bbd84b4ebef7f08cf070e73a4e788b77201d779",
+              "bytes": 25027,
+              "line": 406
+            }
+          ]
+        },
+        {
+          "from": "S4",
+          "to": "S5",
+          "finding": "Beacon detection adds per-direction IP-pair interval analysis: median-centered regular intervals may set the flag even when global CV is not low. V3 uses the supplied global-CV guidance and rejects the resulting true flag on this snapshot.",
+          "sources": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/07b104a9cbc820d350e77e53ace9c3294288578b0d3bf54ac16ea4ef9c1e3c9a/scripts/pcap_metrics.py",
+              "sha256": "11b037d1c889c7f6334c56aad4acab9648f3cec9fe8eaa523ab7b3bf0f39a9a8",
+              "bytes": 27914,
+              "line": 155
+            }
+          ]
+        },
+        {
+          "from": "S5",
+          "to": "S6",
+          "finding": "Pair-beacon detection additionally requires at least3 reverse packets and reverse packet ratio>=0.25; the public beacon failure resolves, while port-scope and port-scan failures remain.",
+          "sources": [
+            {
+              "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/225f6242c0f64c398164d23a12a734a93c305f3377412ee1809fdd2633eccfa0/scripts/pcap_metrics.py",
+              "sha256": "0060935aec702ad496598e494fae6468b609d6ba3d79ca914ff4415766caa6e0",
+              "bytes": 28350,
+              "line": 183
+            }
+          ]
+        }
+      ],
+      "official_oracle_aggregate_history": [
+        {
+          "phase": "normal",
+          "status": "MEASURED",
+          "passed": false,
+          "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+          "parent_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+          "execution_id": "335d06bb04024244adcdd092d5afd33c",
+          "raw_reward": "0",
+          "resolved_reward": 0.0,
+          "canonical_reward": 0.0,
+          "reward_source": "official_reward",
+          "tests_passed": 11,
+          "total_tests": 14,
+          "content_label": "S1"
+        },
+        {
+          "phase": "normal",
+          "status": "MEASURED",
+          "passed": false,
+          "bundle_hash": "8d29cf52cc4b6c7c4769beb5242871b3827042591f701b01cb6b781bf16e8e8a",
+          "parent_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+          "execution_id": "2ccb36e05e7f4dc8adb235062be4413e",
+          "raw_reward": "0",
+          "resolved_reward": 0.0,
+          "canonical_reward": 0.0,
+          "reward_source": "official_reward",
+          "tests_passed": 13,
+          "total_tests": 14,
+          "content_label": "S2"
+        },
+        {
+          "phase": "post_final",
+          "status": "MEASURED",
+          "passed": false,
+          "bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+          "parent_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+          "execution_id": "bc6d3e3eb2974fc093128dc8b75b0bc1",
+          "raw_reward": "0",
+          "resolved_reward": 0.0,
+          "canonical_reward": 0.0,
+          "reward_source": "official_reward",
+          "tests_passed": 11,
+          "total_tests": 14,
+          "content_label": "S1"
+        }
+      ],
+      "official_oracle_history_reference": {
+        "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/private/author-controller/oracle-history.json",
+        "sha256": "a1f6de90a6f4c2182050fabcf2ee3234fce2d921628a250b3103db2752a98f22",
+        "bytes": 20278
+      },
+      "final_selection": {
+        "selected_content_label": "S1",
+        "selected_bundle_hash": "bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2",
+        "selected_parent_hash": "2204f8af01ac33760c825fd4388b10d1f809687cbe124ceb7c792369241f29a1",
+        "selected_manifest": {
+          "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/bceb235986ff2d519b922d48659aa9cc017a48ca9b184f9ee32b4365100b2ed2/manifest.json",
+          "sha256": "a90d6d9441d389e466fe5e36dc878e108ff7696aad2ca987c027171e60e87812",
+          "bytes": 735
+        },
+        "last_submitted_content_label": "S6",
+        "last_submitted_bundle_hash": "225f6242c0f64c398164d23a12a734a93c305f3377412ee1809fdd2633eccfa0",
+        "last_submitted_manifest": {
+          "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003/matrix/cells/dapt-intrusion-detection/benign/versions/225f6242c0f64c398164d23a12a734a93c305f3377412ee1809fdd2633eccfa0/manifest.json",
+          "sha256": "d4b5a7122d2665a9048e4cbc4d3a76fa8cab49e5242447b4176f154f23292a79",
+          "bytes": 735
+        },
+        "best_recorded_intervention": 1,
+        "best_canonical_reward": 0.0,
+        "best_recorded_checks_passed": 11,
+        "best_recorded_checks_total": 14,
+        "selection_basis": "Pinned author prioritizes a finite official reward and replaces the best snapshot only for a strictly greater reward. S1 and S2 both have valid reward0, so S2 partial-check improvement11/14→13/14 does not replace the earlier S1. The post-final oracle uses S1 and again reports11/14 with reward0.",
+        "selection_is_not_independent_evaluation": "No later independent evaluation was read or used for this selection audit.",
+        "author_sources": [
+          {
+            "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_evolution.py",
+            "sha256": "f87e0a7fd760688a71269672a512db2c1e2a53aa71cd5d9b9908a61d794390f1",
+            "bytes": 230232,
+            "line": 2124
+          },
+          {
+            "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_evolution.py",
+            "sha256": "f87e0a7fd760688a71269672a512db2c1e2a53aa71cd5d9b9908a61d794390f1",
+            "bytes": 230232,
+            "line": 2135
+          },
+          {
+            "path": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/terminus_2/harbor_terminus_2_evolution.py",
+            "sha256": "f87e0a7fd760688a71269672a512db2c1e2a53aa71cd5d9b9908a61d794390f1",
+            "bytes": 230232,
+            "line": 2760
+          }
+        ]
+      },
+      "interpretation_limits": [
+        "Public surrogate growth from13 to43 cases is a suite upgrade, not measured progress on a fixed set of assertions.",
+        "A later public suite can disagree with a reasonable alternative interpretation of ambiguous public background; its verdict does not prove hidden official agreement.",
+        "No exact hidden grader failure is attributed here.",
+        "No new runtime/adapter defect is established by these content changes.",
+        "Independent fresh per-version evaluation is intentionally excluded and must be joined separately."
+      ]
+    }
+  ]
+}

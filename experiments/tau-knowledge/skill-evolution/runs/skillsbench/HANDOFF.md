@@ -1,10 +1,48 @@
-# SkillsBench v6：直接作者控制器的实验交接
+# SkillsBench：输入自主发现与作者控制器
 
 当前入口直接调用 CoEvoSkills 固定 commit `4380d4b…` 的完整演化控制器，作者源码和 skill-creator 保存在 `src/tau_skill_evolution/author/coevo/`，文件与 hash 见 `author/VERIFIER_SOURCE.json`。本地不再复制 SkillsBench 状态机。只适配模型/Journal、持续任务环境、fresh Codex 评分、公开输入和完整封包。
 
-2026-10-08再次交叉复核后，补上了**学习环境关闭失败的持久派发门禁**：作者结果已完成但容器关闭失败时，保留原结果和失败记录，同一cell重新启动也不得继续create/evolve/evaluate/NoSkill。报告仍可读；仅新trial可明确导入安全包补评。当前源码回归为**1482 passed／57 skipped／0 failed**，两场免费真实Docker场景通过；身份与证据见[005交叉复核](../readiness-skillsbench-crosscheck-20261008-005/final-status.json)。本轮没有调用付费模型，下面004是此前冻结提交`4fbfeed6`、身份`0f39848a…`的真实结果，不冒充修复后新身份smoke。
+## 0. 当前 v7：五题 API 试跑
 
-当前同质五题真实补测 [codex-author-fix-20261008-004](codex-author-fix-20261008-004/public-summary.json) 已 **COMPLETED**，身份 `0f39848a…`。五题的 NoSkill、S0、全部实际内容版本及 Final 均有独立 fresh 官方评分：Task pass 为 **20% → 40% → 80%**。实际型号是本机 Codex 订阅可用的 **`gpt-6.1-sol`**，不是 GPT-5.4 或论文模型，也不是下方 GPT-5.6／Opus 两套85题矩阵的成绩。底层 HTTP 次数及 Codex 内部重试不可观察。五题重新测量，不复用旧试验分数；本次结果仅支持这五题的配对观察，不能外推全部85题。
+方法为 `skillsbench.skill-evolution.v7`。Analyzer 初始接收原始用户请求、工作目录和授权输入根，再通过 `list_input_directory` / `read_input_file` 自行发现当前题输入；不自动获得构建清单、COPY/ADD 映射、hash 或环境配置。目录列举与文件读取共用10次只读预算；搜索30次、Analyzer50轮、B*32,768 tokens与confidence0.1保持不变。输入观察封存在公开输入，Generator创建时能接收这些实际取得的观察，但不接收Analyzer推理或未选中的检索历史。
+
+获取工具提供原始公开输入的受限视图，不是完整运行容器的文件系统。学习阶段仍使用官方任务环境和原作者控制器；原始输入核对副本及 `/work/public-inputs/manifest.json` 仍可通过运行终端按需访问。独立Verifier、r15/正常K5、120有效episode、作者best/末端选择及fresh评分均不因输入发现改动。τ方法不变。
+
+本轮使用本机环境中的Bedrock凭据、`openai.gpt-5.4`、`us-east-1`，任务为Dialogue、3D、ACC、DAPT、PDDL。每题分别测NoSkill、S0、全部实际后续内容版本及Final；未执行阶段保持null，不复用下面v6成绩。
+
+- `input-discovery-five-gpt54-20261008-001/` 是已停止的诊断试跑，状态为 `STOPPED_DIAGNOSTIC_PROVIDER_PHASE_PROJECTION`，见 [terminal-stop.json](input-discovery-five-gpt54-20261008-001/terminal-stop.json)。实际API返回同时包含 `commentary` 和 `final_answer`，旧客户端把两者拼接导致角色JSON解析失败；获取审计见 [public-acquisition-review.json](input-discovery-five-gpt54-20261008-001/public-acquisition-review.json)。ACC/DAPT的学习容器已按原身份接管并正常关闭。已收到的请求与成绩保留，未知S0不重发；没有完成的演化或独评不能补造成Final。该目录只读，不续跑。
+- `input-discovery-five-gpt54-20261008-002/` 也是诊断记录，已停止为 `STOPPED_DIAGNOSTIC_COMMENTARY_ACTION_REJECTION`，见 [terminal-stop.json](input-discovery-five-gpt54-20261008-002/terminal-stop.json)。五题NoSkill已完成；Dialogue、3D和ACC在获取阶段遇到只有 `commentary`、没有 `final_answer` 的合法动作JSON，被此前过严的传输投影拒绝，尚未派发S0。PDDL的S0已派发但结果未知，禁止重发；DAPT及其它未完成阶段保持 `NOT_MEASURED`／null。具体证据见 [public-acquisition-review.json](input-discovery-five-gpt54-20261008-002/public-acquisition-review.json)。该目录只读，不把已有响应重新解析成补跑。
+- **当前实际试跑 `input-discovery-five-gpt54-20261008-003/` 已完成五题**，运行身份 `f03d8156342ac18c482be6ad02540e470ed9884bbdd5af62d3da473834b64229`。启动前五题Docker及模型鉴权均通过 [admission.json](input-discovery-five-gpt54-20261008-003/preflight/admission.json)；这证明本次五题可准入，不代表85题全部就绪。该批独立完成NoSkill、资料获取、S0、后续演化及22个实际内容版本的fresh评估；Final指向所选包的同一独评记录。源码固定为通用回复投影：有 `final_answer` 时优先采用；没有时保留原assistant正文，再由各角色既有JSON、权限及引用校验判断是否合法。原始phase、完整响应、usage和continuation保留，不提取最后一个JSON、不自动重发。离线二审及此前严格投影的历史范围见 [phase-projection-review.json](../readiness-skillsbench-input-discovery-20261008-001/phase-projection-review.json)。模型、数据、资料池、检索及预算与001/002相同，源码hash改变；结果不得混用。
+
+三次试跑的用量与结果分别记录，001/002诊断不并入003成功率。新身份不能续接v6或旧试跑checkpoint。修正传输正文不等于认可其中的证据：001的3D最终JSON仍虚构了未检索文档引用，host应继续拒绝。
+
+003冻结源码的共享回归为 **1522 passed／57 skipped／0 failed**，真实Docker模拟provider场景通过1项，见 [当前readiness](../readiness-skillsbench-input-discovery-20261008-001/final-status.json)。该代码验收与下面的真实模型成绩分别封存，不能用fixture通过代替模型成绩或utility提升。
+
+003的五题获取、一次创建、演化和逐内容独评均已封存，见 [最终公开结果](input-discovery-five-gpt54-20261008-003/public-summary.json)和[指标交叉审查](input-discovery-five-gpt54-20261008-003/public-summary-independent-review.json)。[获取审计](input-discovery-five-gpt54-20261008-003/public-acquisition-review.json)与[公开验证审查](input-discovery-five-gpt54-20261008-003/public-verification-review.json)保留过程证据。下表单元格为 **Task pass（0/1）；官方GT检查组通过数**，所有成绩均来自对应包的独立fresh评估，不是学习环境的surrogate成绩。
+
+| 任务 | NoSkill | S0 | 实际后续内容版本 | Final独评 |
+|---|---|---|---|---|
+| Dialogue | 0；5/6 | 0；5/6 | S1：1；6/6 | 1；6/6 |
+| 3D | 1；2/2 | 1；2/2 | S1：1；2/2 | 1；2/2 |
+| ACC | 0；10/12 | 1；12/12 | S1：0；10/12；S2–S8均0；11/12 | 0；11/12 |
+| PDDL | 0；1/2 | 1；2/2 | S1：1；2/2 | 1；2/2 |
+| DAPT | 0；7/14 | 0；11/14 | S1–S6均0；GT依次为11、13、12、10、9、10/14 | S1：0；11/14 |
+
+五题Task pass为 **NoSkill 1/5（20%）→ S0 3/5（60%）→ Final 3/5（60%）**。S0→Final救回Dialogue、退化ACC，其余三题的Task pass不变，**没有净总体演化增益**。平均官方reward为0.3666→0.7666→0.6000；先按题计算再取平均的GT检查组通过率为73.33%→92.38%→94.05%。这三种指标衡量不同结果，不能相互替代，也不能从五题外推全部85题。
+
+ACC在42个有效episode后因上下文门禁停止，累计r10、正常GT为0次，末端post-final实测11/12且未成功，Final为S8。DAPT同样在42个有效episode后因上下文门禁停止，累计r6、两次正常GT和一次post-final；Final为S1。DAPT的有效官方reward均为0，作者严格按reward提高才更新best，平分保留较早包；S2独评虽达到13/14，仍是任务失败，独评不回流或改变选择。Dialogue的5/6对应reward0.833；本批ACC、PDDL及DAPT的部分通过对应reward0，完整通过对应reward1。
+
+已证实的限制仍保留：ACC的TTC输出精度不一致未修复，公开检查采用的稳态距离窗口也有前提争议；DAPT的公开任务与背景存在术语冲突，后续修改改变了端口统计范围，部分版本成绩下降。3D、Dialogue、DAPT各搜索30次仍不能得到池中缺少的资料。Host只要还有任何只读预算就拒绝incomplete freeze；Dialogue/DAPT随后在无新增证据时撤销gaps并改判sufficient，3D则保持缺口直到预算耗尽。因此Analyzer判充分不保证资料完整，公开Verifier也不保证与官方评分一致。上述过程审查不据此推断具体隐藏GT失败项。这是检索冻结、单次S0和现有模型下的五题适配实验，不能称论文复现。
+
+本批记录700个完成的模型操作，provider usage为输入14,987,885 tokens（其中缓存输入11,443,512）、输出1,068,257；实际账单金额为 `NOT_MEASURED`。全部逐版本分数、包hash、计数及费用状态均以最终公开结果为准，诊断001/002的用量另记。
+
+下面第1–6节保留**冻结v6**的85题准备及命令；只能与对应v6源码使用，不能把旧配置或源码包当成v7交付。完整85题v7交接配置与两型号兼容性尚未重新准备/测量。本轮只启动上述五题GPT-5.4，不启动完整矩阵。
+
+## v6 已验收范围与历史试跑
+
+2026-10-08的v6交叉复核补上了**学习环境关闭失败的持久派发门禁**：作者结果已完成但容器关闭失败时，保留原结果和失败记录，同一cell重新启动也不得继续create/evolve/evaluate/NoSkill。报告仍可读；仅新trial可明确导入安全包补评。该冻结源码回归为**1482 passed／57 skipped／0 failed**，两场免费真实Docker场景通过；身份与证据见[005交叉复核](../readiness-skillsbench-crosscheck-20261008-005/final-status.json)。该次验收没有调用付费模型，下面004是此前冻结提交`4fbfeed6`、身份`0f39848a…`的真实结果，不冒充v7新身份smoke。
+
+v6五题真实补测 [codex-author-fix-20261008-004](codex-author-fix-20261008-004/public-summary.json) 已 **COMPLETED**，身份 `0f39848a…`。五题的 NoSkill、S0、全部实际内容版本及 Final 均有独立 fresh 官方评分：Task pass 为 **20% → 40% → 80%**。实际型号是本机 Codex 订阅可用的 **`gpt-6.1-sol`**，不是 GPT-5.4 或论文模型，也不是下方 GPT-5.6／Opus 两套85题矩阵的成绩。底层 HTTP 次数及 Codex 内部重试不可观察。五题重新测量，不复用旧试验分数；该批结果仅支持这五题的配对观察，不能外推全部85题。
 
 004的五题环境与本机Codex型号目录预检已 `READY`，其冻结源码通过 **1478 passed／57 skipped／0 failed**、真实Docker和第二名审查，见 [004 readiness](../readiness-skillsbench-native-controller-20261008-004/final-status.json)。该验收中`real_model_trial=NOT_STARTED`是启动前快照，随后五题完成不回写历史JSON。五题机器数据已由第二名审查者完成 [97项核对](codex-author-fix-20261008-004/public-summary-independent-review.json)，全部通过并保留方法限制。模型实测与源码验收分别封存；它们不代表85题环境全部就绪。
 
@@ -14,7 +52,7 @@
 
 真实Docker检查覆盖完整封包、持续环境、context停止、原作者末端GT及唯一清理责任。端到端fixture实际贯通原作者控制器→真实oracle→pinned Codex CLI→本机脚本Responses→官方grader→fresh独评；官方检查真实运行，模型为 `MODEL_SCRIPTED`，初始包为显式fixture。封包／回滚分支fixture的评分为 `MOCK_ONLY`。这些检查验证执行机制，不能充当真实模型成绩、85题准入或utility提升证据。003身份的1423项历史回归另保留在 [003 readiness](../readiness-skillsbench-native-controller-20261008-003/final-status.json)。
 
-## 1. 交给同事运行什么
+## 1. 冻结 v6 的85题交接
 
 分别运行 GPT-5.6 Terra、Claude Opus 4.8 两套实验，每套为作者发布的全部85题、benign、每题独立创建和演化一个 Skill。每题测 **NoSkill、S0、所有实际后续内容版本及 Final**，不能只交最终成功率。两套使用相同任务、资料池、源码和执行器，各自保留模型会话、Skill、运行身份及结果。
 
@@ -23,9 +61,9 @@
 | GPT-5.6 Terra | [config.yaml](full-85-gpt56-v6/config.yaml) | [manifest.json](full-85-gpt56-v6/manifest.json) | `full-85-gpt56-v6/matrix-author-v6-001/` |
 | Claude Opus 4.8 | [config.yaml](full-85-opus48-v6/config.yaml) | [manifest.json](full-85-opus48-v6/manifest.json) | `full-85-opus48-v6/matrix-author-v6-001/` |
 
-当前源码交付包为 `skillsbench-v6-crosschecked-20261008-005-source.tar.gz`，文件、来源及外置校验信息由 [transfer-manifest.json](transfer-manifest.json)绑定。004交付包`skillsbench-v6-final-20261008-004-source.tar.gz`与当时的descriptor/验收仍按原字节保留，解释004成绩时使用它；不能混用最新源码续接004。验收与公开结果的机器证据放在Git仓库，由 descriptor 引用；源码包只提供代码、公开资料和配置，不包含运行日志。旧 `skillsbench-v6-source.tar.gz` 是更早修复前快照，不用于新运行。使用最新交付 commit 或校验后的源码包，不混用另一分支的源码。包中不带凭据、模型权重、虚拟环境、Docker镜像或私有原始评分。`full-85-*-v4`、旧源码包和旧结果是历史记录，不能续接到 v6。
+v6源码交付包为 `skillsbench-v6-crosschecked-20261008-005-source.tar.gz`，文件、来源及外置校验信息由 [transfer-manifest.json](transfer-manifest.json)绑定。它不包含v7输入发现改动。004交付包`skillsbench-v6-final-20261008-004-source.tar.gz`与当时的descriptor/验收仍按原字节保留，解释004成绩时使用它；不能混用最新源码续接004。验收与公开结果的机器证据放在Git仓库，由 descriptor 引用；源码包只提供代码、公开资料和配置，不包含运行日志。旧 `skillsbench-v6-source.tar.gz` 是更早修复前快照。复现本节时使用校验后的对应v6源码，不混用当前v7或另一分支。包中不带凭据、模型权重、虚拟环境、Docker镜像或私有原始评分。`full-85-*-v4`、旧源码包和旧结果是历史记录，不能续接到 v6。
 
-交付的两套模型配置仍为原有型号。源码变更后需要新运行身份和新目录；旧 v4/v5 结果与源码包只读保留。尚无该新源码的全85题 fresh 准入或两套 Bedrock 模型 smoke，均为 `NOT_MEASURED`。PG 仍缺任务专用 OpenAI 凭据，不能称全部85题已就绪。
+这两套冻结模型配置仍为原有型号。源码变更后需要新运行身份和新目录；旧 v4/v5 结果与源码包只读保留。该v6源码的全85题 fresh 准入或两套 Bedrock 模型 smoke均为 `NOT_MEASURED`。PG 仍缺任务专用 OpenAI 凭据，不能称全部85题已就绪。
 
 ## 2. 方法、预算及作者来源
 
@@ -375,7 +413,7 @@ test "${#SB_TASK_ARGS[@]}" -eq 168
 
 S编号按包内容hash去重；A→B→A仅两个内容版本，但最终实际父版本指向B。invalid/unchanged不是新增独立内容，仍记录真实操作；缺测null不是实测失败0。相邻版本的增量只在同题双方均实测且GT单位/来源一致时计算。独立模型采样可能退化，不以“utility必须提升”替代机制验收。SkillsBench不报银行ASR或Action Recall。
 
-## 7. 本次五题实际结果与限制
+## 7. v6 五题历史实际结果与限制
 
 ### 7.1 已发生的流程
 
