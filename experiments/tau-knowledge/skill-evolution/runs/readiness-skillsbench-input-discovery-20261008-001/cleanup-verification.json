@@ -1,0 +1,59 @@
+{
+  "schema": "skill-evolution.active-runs-cleanup.v1",
+  "checked_at_utc": "2026-10-10T02:22:59.144806+00:00",
+  "status": "PASS",
+  "retained_trial": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/input-discovery-five-gpt54-20261008-003",
+  "retained_readiness": "experiments/tau-knowledge/skill-evolution/runs/readiness-skillsbench-input-discovery-20261008-001",
+  "deleted_targets": 35,
+  "deleted_directories": 29,
+  "deleted_standalone_files": 6,
+  "deleted_file_bytes": 11219779376,
+  "source_identity_hash": "f03d8156342ac18c482be6ad02540e470ed9884bbdd5af62d3da473834b64229",
+  "source_binding_count": 291,
+  "source_identity_unchanged": true,
+  "summary_sha256": "c229d461200137b738b873878d942ddf1d3267a469fdd05e70f4a20350ac1f42",
+  "summary_unchanged": true,
+  "independent_artifact_review": {
+    "status": "PASS",
+    "reviewer": "/root/runs_cleanup_review",
+    "bases": 5,
+    "skill_content_versions": 22,
+    "independent_measurements": 27,
+    "retained_acceptance_hashes_unchanged": true
+  },
+  "checks": {
+    "command": "make check",
+    "exit_code": 0,
+    "pytest_passed": 1522,
+    "pytest_skipped": 57,
+    "pytest_failed": 0,
+    "pytest_seconds": 400.12,
+    "ruff": "PASS",
+    "format": "PASS",
+    "compile": "PASS",
+    "config_validation": "PASS",
+    "log": "cleanup-check.log",
+    "log_sha256": "e94e822b4850753b4ba345edfb26f5aa062cdc1dd69e5a2012864ad507c88888"
+  },
+  "current_document_hashes": {
+    "README.md": "dc39c72e5664496e8b13fcb13b510dfec66ed16b9743af50900ca9f5e048d89e",
+    "experiments/tau-knowledge/skill-evolution/README.md": "69b2fe1a6912d741739e5ad3f91d0cd238c5ca95bcc4bc3a06d09ce6e10b03e5",
+    "experiments/tau-knowledge/skill-evolution/PROTOCOL.md": "3061d92d680ea6e191d5be550bc8e75db3a37d44f6142955ae1ecba421500b00",
+    "experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md": "b5b6ebff2de5eab5a791a01599842a162bb9a2be7052328591ba699f3e5015ed",
+    "experiments/tau-knowledge/skill-evolution/runs/tau/HANDOFF.md": "7d1c6a4285fc22a6f7453bfab96b4461772d789a16c075c9e2f1e2cd4bdde110",
+    "experiments/tau-knowledge/skill-evolution/archive/HISTORY.md": "85a12ff53896928d97785b6156801f00c034651b852f1dbecd27e83a9278afbf",
+    "docs/skill-evolution-method.md": "7a489ef3bf5fd799aca6866ba4dc9621c78e30436c5dd7affb3ff0e9c24c0802"
+  },
+  "preserved": [
+    "tau",
+    "existing archive",
+    "fixed datasets/runtime",
+    "embedding service",
+    "shared Docker engine",
+    "latest raw private results"
+  ],
+  "production_changes": [],
+  "workspace_key_env_read": false,
+  "paid_model_requests": 0,
+  "scope": "Active-run cleanup and offline regression. Existing acceptance reports retain their original historical document hashes. No new model experiment or new all-85 readiness claim."
+}

@@ -1,4 +1,0 @@
-.................................s                                       [100%]
-=========================== short test summary info ============================
-SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_author_verifier_docker.py:55: Real pinned Docker and localhost model fixture require explicit opt-in.
-33 passed, 1 skipped in 18.91s

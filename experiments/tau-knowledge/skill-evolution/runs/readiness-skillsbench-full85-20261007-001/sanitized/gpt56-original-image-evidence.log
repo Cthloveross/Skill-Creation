@@ -1,7 +1,0 @@
-Real Docker/native Codex CLI, local simulated GPT-5.6 Responses provider only.
-Original 512x512 PNG view_image -> provider POST; 114688 input limit preserved.
-Original file and provider inline image SHA256 match; admission records text/image/total.
-Code-mode yielded exec/wait and disabled spawn check retained; fresh official grader measured.
-No key read or paid inference; live model performance NOT_MEASURED.
-pytest: 1 passed in 41.98s
-Text admission counter basis: canonical_json_characters_div_4_mock_only; not pinned Qwen tokenizer measurements.

@@ -1,6 +1,0 @@
-...................sssss..................                               [100%]
-=========================== short test summary info ============================
-SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py:558: prepared SkillsBench workspace integration requires explicit opt-in
-SKIPPED [3] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py:681: prepared SkillsBench workspace integration requires explicit opt-in
-SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_integration.py:782: prepared SkillsBench workspace integration requires explicit opt-in
-37 passed, 5 skipped in 167.76s (0:02:47)

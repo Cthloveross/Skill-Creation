@@ -1,6 +1,0 @@
-.........................sssssss......................                   [100%]
-=========================== short test summary info ============================
-SKIPPED [1] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_codex_runtime.py:421: real MAIN image native Codex admission requires explicit opt-in
-SKIPPED [6] experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_codex_runtime.py:447: real prepared Docker and native Codex integration requires explicit opt-in
-47 passed, 7 skipped in 7.18s
-

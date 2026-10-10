@@ -4,9 +4,9 @@
 
 ## 2026-10-07 实际归档
 
-当前实验入口只有 [PROTOCOL](../PROTOCOL.md)、[τ HANDOFF](../runs/tau/HANDOFF.md) 和 [SkillsBench HANDOFF](../runs/skillsbench/HANDOFF.md)。旧运行与验收已实际移到 `archive/runs/`，由 [归档索引](index.json) 保存旧路径映射；它们不作为 v4 恢复入口，JSON、包和结果内容不变。当前两份 HANDOFF 位于 `runs/tau/` 和 `runs/skillsbench/`，旧配置与结果留在归档中。
+当前实验入口只有 [PROTOCOL](../PROTOCOL.md)、[τ HANDOFF](../runs/tau/HANDOFF.md) 和 [SkillsBench HANDOFF](../runs/skillsbench/HANDOFF.md)。2026-10-07归档的历史运行与验收位于 `archive/runs/`，由 [归档索引](index.json) 保存旧路径映射；它们不作为当前方法的恢复入口，JSON、包和结果内容不变。2026-10-09另行清理了活动 `runs/` 的过时目录，没有将它们再次移入归档。当前两份 HANDOFF 位于 `runs/tau/` 和 `runs/skillsbench/`。
 
-删除了重复的根目录 `EXPERIMENT_PLAN.md`；它及本次整理前的两份长 HANDOFF 原文和 hash 保存在 [文档快照](../runs/readiness-direct-evolution-v4-20261007-001/archived-documents.json)。旧说明中的运行命令与 READY 数字仅适用于对应历史身份。
+此前删除了重复的根目录 `EXPERIMENT_PLAN.md`。2026-10-09按最新结果清理时，旧readiness及其中的文档快照一并删除；原文仍可在Git历史中查询。旧说明中的运行命令与 READY 数字仅适用于对应历史身份。
 
 2026-10-05 旧 Terra 矩阵：τ 有效测得 288/291 链，ASR 全0，benign S0/final utility 均11.5%，poison-5/10 final10.4%（S0 8.3%/7.3%）；SkillsBench 环境可用78题、有效测得71链，S0/final utility 均32.4%（完整分母27.1%）。证据见两个 `20261005-terra-001/RESULTS-20261005.md`。2026-10-06 GPT-5.4 十题 NoSkill→S0→Final 成功率20%→40%→40%，GT宏平均65.03%→84.19%→80.86%，不是 v4 结果；完整机器记录留在 `skillsbench-gpt54-evolution-10-20261006-001/`。
 

@@ -1,6 +1,0 @@
-Real Docker, native Codex CLI 0.160.1, local simulated provider only.
-GPT-5.6 profile: code-mode exec, yielded cell, wait, disabled spawn dispatch, fresh grader.
-Opus profile: Messages translation, signed thinking, exec, view_image, fresh grader.
-No API key read; no paid inference; live model performance NOT_MEASURED.
-pytest: 2 passed in 84.03s
-Text admission counter basis: canonical_json_characters_div_4_mock_only; not pinned Qwen tokenizer measurements.

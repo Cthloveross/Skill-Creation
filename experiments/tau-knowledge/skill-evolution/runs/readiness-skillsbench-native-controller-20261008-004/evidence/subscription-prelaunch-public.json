@@ -1,9 +1,0 @@
-{
-  "checked_at": 1791452401.4884648,
-  "model": "gpt-6.1-sol",
-  "model_catalog_available": true,
-  "authentication_type": "chatgpt",
-  "provider_used_percent": 72,
-  "model_requests": 0,
-  "limit_source": "External Codex subscription; no experimental spending/output quota added."
-}

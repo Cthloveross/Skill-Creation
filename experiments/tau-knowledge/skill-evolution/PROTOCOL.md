@@ -158,7 +158,7 @@ SkillsBench 两套完整 benign 配置固定 Bedrock `openai.gpt-5.6-terra` 和 
 
 Codex 订阅诊断试跑单独封存。`codex-plan` 使用固定 CLI 的官方 app-server、已有 ChatGPT 登录及实际可访问的 `gpt-6.1-sol`，不读取 API key或将登录文件放入任务容器。角色会话独立，模型返回结构化决定，动作仍由现有控制器和任务内 Codex执行；仅任务产物的内联图片作为图像输入。此传输只能验证 S0 至多一次创建 turn，底层 HTTP 次数与内部重试记为 `NOT_OBSERVABLE`，不满足主实验的单 HTTP POST可观测合同。模型、传输和上下文包装均有差异，成绩不与 Bedrock矩阵合并；传输故障试跑明确排除，保留原始证据。app-server 的系统包装、重复表示和 opaque reasoning 不能由外部可见历史精确重建，故窗口与占用采用上述保守估算，实际 provider usage 单列。原生工具事件与 compaction 分开识别；两者均先私有封存已接收事件流、再停止为 `UNKNOWN`，不能自动重发。`codex-author-fix-20261008-003` 的具体事件类型不能由现有证据确证。该传输不采用请求seed，失败请求可能仍消耗订阅，恢复记账按turn ID去重。
 
-`codex-author-fix-20261008-004` 在冻结提交`4fbfeed6`、身份`0f39848a…`下完成五题的NoSkill、S0、实际内容版本及Final独评；它是gpt-6.1-sol订阅传输的小样本实测，结果及实际流程见SkillsBench HANDOFF。随后关闭失败门禁的源码修复另行验收，不改004结果，不将其冒充新身份smoke、上述两模型85题矩阵或论文复现成绩。
+历史Codex订阅试跑已从活动 `runs/` 删除，原公开记录可在Git历史中查询；它们不是当前v7的API结果。当前五题的配置、逐版本成绩及运行步骤统一见SkillsBench HANDOFF。
 
 以任务为单位报告配对收益、救回数、退化数和覆盖率；只在身份一致且两端实测时比较。单次或预选小样本不足以支持总体显著提升或因果结论，需要预先声明的重复评估。
 

@@ -4,10 +4,10 @@
   "archive_mode": "physical_relocation_preserve_artifact_bytes",
   "current_methods": [
     "tau.skill-evolution.v4",
-    "skillsbench.skill-evolution.v4"
+    "skillsbench.skill-evolution.v7"
   ],
-  "current_readiness": "../runs/readiness-direct-evolution-v4-20261007-001",
-  "document_snapshots": "../runs/readiness-direct-evolution-v4-20261007-001/archived-documents.json",
+  "current_readiness": "../runs/readiness-skillsbench-input-discovery-20261008-001",
+  "document_snapshots": null,
   "runs": [
     {
       "path": "runs/observation-smoke-2-20261006-001",
@@ -588,7 +588,54 @@
     "model_requests": 0
   },
   "current_readiness_by_experiment": {
-    "tau": "../runs/readiness-direct-evolution-v4-20261007-001",
-    "skillsbench": "../runs/readiness-skillsbench-full85-20261007-001"
+    "tau": null,
+    "skillsbench": "../runs/readiness-skillsbench-input-discovery-20261008-001"
+  },
+  "active_runs_cleanup": {
+    "date": "2026-10-09",
+    "reason": "User requested keeping only the current valid SkillsBench result and matching acceptance evidence. Existing archive is unchanged.",
+    "current_trial": "../runs/skillsbench/input-discovery-five-gpt54-20261008-003",
+    "deleted_paths": [
+      "runs/readiness-direct-evolution-v4-20261007-001",
+      "runs/readiness-skillsbench-author-v5-20261007-001",
+      "runs/readiness-skillsbench-crosscheck-20261008-005",
+      "runs/readiness-skillsbench-full85-20261007-001",
+      "runs/readiness-skillsbench-full85-20261007-002",
+      "runs/readiness-skillsbench-full85-20261007-003",
+      "runs/readiness-skillsbench-full85-20261007-004",
+      "runs/readiness-skillsbench-full85-20261007-005",
+      "runs/readiness-skillsbench-native-controller-20261008-001",
+      "runs/readiness-skillsbench-native-controller-20261008-002",
+      "runs/readiness-skillsbench-native-controller-20261008-003",
+      "runs/readiness-skillsbench-native-controller-20261008-004",
+      "runs/readiness-skillsbench-verifier-20261007-001",
+      "runs/skillsbench/codex-author-fix-20261008-001",
+      "runs/skillsbench/codex-author-fix-20261008-002",
+      "runs/skillsbench/codex-author-fix-20261008-003",
+      "runs/skillsbench/codex-author-fix-20261008-004",
+      "runs/skillsbench/codex-quota-five-20261007-001",
+      "runs/skillsbench/codex-quota-five-20261007-002",
+      "runs/skillsbench/codex-quota-five-20261007-003",
+      "runs/skillsbench/full-85-gpt56-v4",
+      "runs/skillsbench/full-85-gpt56-v5",
+      "runs/skillsbench/full-85-gpt56-v6",
+      "runs/skillsbench/full-85-opus48-v4",
+      "runs/skillsbench/full-85-opus48-v5",
+      "runs/skillsbench/full-85-opus48-v6",
+      "runs/skillsbench/gpt54-direct-10-20261007-001",
+      "runs/skillsbench/input-discovery-five-gpt54-20261008-001",
+      "runs/skillsbench/input-discovery-five-gpt54-20261008-002",
+      "runs/skillsbench/skillsbench-v4-source.tar.gz",
+      "runs/skillsbench/skillsbench-v5-source.tar.gz",
+      "runs/skillsbench/skillsbench-v6-crosschecked-20261008-005-source.tar.gz",
+      "runs/skillsbench/skillsbench-v6-final-20261008-004-source.tar.gz",
+      "runs/skillsbench/skillsbench-v6-source.tar.gz",
+      "runs/skillsbench/transfer-manifest.json"
+    ],
+    "deleted_file_count": 60547,
+    "deleted_file_bytes": 11219779376,
+    "current_summary_sha256": "c229d461200137b738b873878d942ddf1d3267a469fdd05e70f4a20350ac1f42",
+    "historical_validation_scope": "The 2026-10-07 validation below describes that archive operation, not the current active-runs cleanup.",
+    "verification": "../runs/readiness-skillsbench-input-discovery-20261008-001/cleanup-verification.json"
   }
 }

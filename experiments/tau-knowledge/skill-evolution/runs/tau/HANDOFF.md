@@ -25,8 +25,8 @@
 | 范围 | 本轮状态 |
 |---|---|
 | 固定数据、投毒清单与源代码 | 保留原路径与hash，进入新运行身份 |
-| 当前共享源码回归 | 2026-10-08交叉复核的回归与源码身份见[当前复验](../readiness-skillsbench-crosscheck-20261008-005/final-status.json)。此前1183／54为[历史验收](../readiness-skillsbench-full85-20261007-005/acceptance.json)，1478／57为[后续历史验收](../readiness-skillsbench-native-controller-20261008-004/final-status.json)；不能混称本轮银行真实模型成绩 |
-| 银行/helper直接执行边界 | 15 passed为上述历史银行/helper复验：helper真实Docker13项、银行driver真实Docker1项、pinned worker host/JSONL1项，均无付费模型调用。本轮关闭失败门禁仅修改SkillsBench，不把SkillsBench容器复验算作银行Docker重测 |
+| 当前共享源码回归 | [当前验收](../readiness-skillsbench-input-discovery-20261008-001/final-status.json)保留共享回归1522通过、57跳过、0失败；不是银行真实模型成绩 |
+| 银行/helper直接执行边界 | 历史银行/helper复验为15 passed，无付费模型调用；对应旧readiness已按最新结果清理，不作为当前验收入口。当前SkillsBench真实容器机制检查不能算作银行Docker重测 |
 | 新 v4 `task_019` smoke | `NOT_MEASURED`；本轮未读取key、未调用付费模型 |
 | 全97题／291链 | 未启动；须当前机器preflight及受控smoke通过后运行 |
 
@@ -70,4 +70,4 @@ uv sync --project "$TAU_CODE/data/upstream/tau2-bench" --python 3.12.12 --frozen
 
 `report.json/REPORT.md`报告逐版本官方utility、canary ASR、Action Recall、surrogate检查率、修订／oracle次数、提交与执行计数、停止原因及usage。Action Recall不是业务完成百分比；gold覆盖只作事后诊断。各内容hash独立fresh评估一次；污染冻结对照复用本链S0。未测为null／`NOT_MEASURED`；final按oracle成功或最后安全包选择，不利用独立评分挑版本。
 
-历史关键结果：[旧task_019指标](../../archive/runs/observation-smoke-2-20261006-001/metrics.json)的S0–S6 utility均0；[步骤审阅](../../archive/runs/observation-smoke-2-20261006-001/tau-step-audit.json)保留检索缺口、测试误判及局部脚本修复证据。这是旧方法结果，不能当v4成绩。原交接全文保存在 [archived-documents.json](../readiness-direct-evolution-v4-20261007-001/archived-documents.json)。公开资料充分性、surrogate语义误判及银行类别反馈信息损失仍是限制；容器通过不能保证utility提升。
+历史关键结果：[旧task_019指标](../../archive/runs/observation-smoke-2-20261006-001/metrics.json)的S0–S6 utility均0；[步骤审阅](../../archive/runs/observation-smoke-2-20261006-001/tau-step-audit.json)保留检索缺口、测试误判及局部脚本修复证据。这是旧方法结果，不能当v4成绩。公开资料充分性、surrogate语义误判及银行类别反馈信息损失仍是限制；容器通过不能保证utility提升。

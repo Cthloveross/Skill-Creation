@@ -1,475 +1,94 @@
-# SkillsBench：输入自主发现与作者控制器
+# SkillsBench：当前流程与结果
 
-当前入口直接调用 CoEvoSkills 固定 commit `4380d4b…` 的完整演化控制器，作者源码和 skill-creator 保存在 `src/tau_skill_evolution/author/coevo/`，文件与 hash 见 `author/VERIFIER_SOURCE.json`。本地不再复制 SkillsBench 状态机。只适配模型/Journal、持续任务环境、fresh Codex 评分、公开输入和完整封包。
+当前方法是 **`skillsbench.skill-evolution.v7`**。唯一保留的最新模型实验为 [input-discovery-five-gpt54-20261008-003](input-discovery-five-gpt54-20261008-003/public-summary.json)，2026-10-08完成，使用 Bedrock `openai.gpt-5.4`、`us-east-1`。它包含五题的 NoSkill、S0、全部实际后续内容版本和 Final，不是完整85题矩阵。
 
-## 0. 当前 v7：五题 API 试跑
+## 1. 最新结果在哪里
 
-方法为 `skillsbench.skill-evolution.v7`。Analyzer 初始接收原始用户请求、工作目录和授权输入根，再通过 `list_input_directory` / `read_input_file` 自行发现当前题输入；不自动获得构建清单、COPY/ADD 映射、hash 或环境配置。目录列举与文件读取共用10次只读预算；搜索30次、Analyzer50轮、B*32,768 tokens与confidence0.1保持不变。输入观察封存在公开输入，Generator创建时能接收这些实际取得的观察，但不接收Analyzer推理或未选中的检索历史。
-
-获取工具提供原始公开输入的受限视图，不是完整运行容器的文件系统。学习阶段仍使用官方任务环境和原作者控制器；原始输入核对副本及 `/work/public-inputs/manifest.json` 仍可通过运行终端按需访问。独立Verifier、r15/正常K5、120有效episode、作者best/末端选择及fresh评分均不因输入发现改动。τ方法不变。
-
-本轮使用本机环境中的Bedrock凭据、`openai.gpt-5.4`、`us-east-1`，任务为Dialogue、3D、ACC、DAPT、PDDL。每题分别测NoSkill、S0、全部实际后续内容版本及Final；未执行阶段保持null，不复用下面v6成绩。
-
-- `input-discovery-five-gpt54-20261008-001/` 是已停止的诊断试跑，状态为 `STOPPED_DIAGNOSTIC_PROVIDER_PHASE_PROJECTION`，见 [terminal-stop.json](input-discovery-five-gpt54-20261008-001/terminal-stop.json)。实际API返回同时包含 `commentary` 和 `final_answer`，旧客户端把两者拼接导致角色JSON解析失败；获取审计见 [public-acquisition-review.json](input-discovery-five-gpt54-20261008-001/public-acquisition-review.json)。ACC/DAPT的学习容器已按原身份接管并正常关闭。已收到的请求与成绩保留，未知S0不重发；没有完成的演化或独评不能补造成Final。该目录只读，不续跑。
-- `input-discovery-five-gpt54-20261008-002/` 也是诊断记录，已停止为 `STOPPED_DIAGNOSTIC_COMMENTARY_ACTION_REJECTION`，见 [terminal-stop.json](input-discovery-five-gpt54-20261008-002/terminal-stop.json)。五题NoSkill已完成；Dialogue、3D和ACC在获取阶段遇到只有 `commentary`、没有 `final_answer` 的合法动作JSON，被此前过严的传输投影拒绝，尚未派发S0。PDDL的S0已派发但结果未知，禁止重发；DAPT及其它未完成阶段保持 `NOT_MEASURED`／null。具体证据见 [public-acquisition-review.json](input-discovery-five-gpt54-20261008-002/public-acquisition-review.json)。该目录只读，不把已有响应重新解析成补跑。
-- **当前实际试跑 `input-discovery-five-gpt54-20261008-003/` 已完成五题**，运行身份 `f03d8156342ac18c482be6ad02540e470ed9884bbdd5af62d3da473834b64229`。启动前五题Docker及模型鉴权均通过 [admission.json](input-discovery-five-gpt54-20261008-003/preflight/admission.json)；这证明本次五题可准入，不代表85题全部就绪。该批独立完成NoSkill、资料获取、S0、后续演化及22个实际内容版本的fresh评估；Final指向所选包的同一独评记录。源码固定为通用回复投影：有 `final_answer` 时优先采用；没有时保留原assistant正文，再由各角色既有JSON、权限及引用校验判断是否合法。原始phase、完整响应、usage和continuation保留，不提取最后一个JSON、不自动重发。离线二审及此前严格投影的历史范围见 [phase-projection-review.json](../readiness-skillsbench-input-discovery-20261008-001/phase-projection-review.json)。模型、数据、资料池、检索及预算与001/002相同，源码hash改变；结果不得混用。
-
-三次试跑的用量与结果分别记录，001/002诊断不并入003成功率。新身份不能续接v6或旧试跑checkpoint。修正传输正文不等于认可其中的证据：001的3D最终JSON仍虚构了未检索文档引用，host应继续拒绝。
-
-003冻结源码的共享回归为 **1522 passed／57 skipped／0 failed**，真实Docker模拟provider场景通过1项，见 [当前readiness](../readiness-skillsbench-input-discovery-20261008-001/final-status.json)。该代码验收与下面的真实模型成绩分别封存，不能用fixture通过代替模型成绩或utility提升。
-
-003的五题获取、一次创建、演化和逐内容独评均已封存，见 [最终公开结果](input-discovery-five-gpt54-20261008-003/public-summary.json)和[指标交叉审查](input-discovery-five-gpt54-20261008-003/public-summary-independent-review.json)。[获取审计](input-discovery-five-gpt54-20261008-003/public-acquisition-review.json)与[公开验证审查](input-discovery-five-gpt54-20261008-003/public-verification-review.json)保留过程证据。下表单元格为 **Task pass（0/1）；官方GT检查组通过数**，所有成绩均来自对应包的独立fresh评估，不是学习环境的surrogate成绩。
-
-| 任务 | NoSkill | S0 | 实际后续内容版本 | Final独评 |
-|---|---|---|---|---|
-| Dialogue | 0；5/6 | 0；5/6 | S1：1；6/6 | 1；6/6 |
-| 3D | 1；2/2 | 1；2/2 | S1：1；2/2 | 1；2/2 |
-| ACC | 0；10/12 | 1；12/12 | S1：0；10/12；S2–S8均0；11/12 | 0；11/12 |
-| PDDL | 0；1/2 | 1；2/2 | S1：1；2/2 | 1；2/2 |
-| DAPT | 0；7/14 | 0；11/14 | S1–S6均0；GT依次为11、13、12、10、9、10/14 | S1：0；11/14 |
-
-五题Task pass为 **NoSkill 1/5（20%）→ S0 3/5（60%）→ Final 3/5（60%）**。S0→Final救回Dialogue、退化ACC，其余三题的Task pass不变，**没有净总体演化增益**。平均官方reward为0.3666→0.7666→0.6000；先按题计算再取平均的GT检查组通过率为73.33%→92.38%→94.05%。这三种指标衡量不同结果，不能相互替代，也不能从五题外推全部85题。
-
-ACC在42个有效episode后因上下文门禁停止，累计r10、正常GT为0次，末端post-final实测11/12且未成功，Final为S8。DAPT同样在42个有效episode后因上下文门禁停止，累计r6、两次正常GT和一次post-final；Final为S1。DAPT的有效官方reward均为0，作者严格按reward提高才更新best，平分保留较早包；S2独评虽达到13/14，仍是任务失败，独评不回流或改变选择。Dialogue的5/6对应reward0.833；本批ACC、PDDL及DAPT的部分通过对应reward0，完整通过对应reward1。
-
-已证实的限制仍保留：ACC的TTC输出精度不一致未修复，公开检查采用的稳态距离窗口也有前提争议；DAPT的公开任务与背景存在术语冲突，后续修改改变了端口统计范围，部分版本成绩下降。3D、Dialogue、DAPT各搜索30次仍不能得到池中缺少的资料。Host只要还有任何只读预算就拒绝incomplete freeze；Dialogue/DAPT随后在无新增证据时撤销gaps并改判sufficient，3D则保持缺口直到预算耗尽。因此Analyzer判充分不保证资料完整，公开Verifier也不保证与官方评分一致。上述过程审查不据此推断具体隐藏GT失败项。这是检索冻结、单次S0和现有模型下的五题适配实验，不能称论文复现。
-
-本批记录700个完成的模型操作，provider usage为输入14,987,885 tokens（其中缓存输入11,443,512）、输出1,068,257；实际账单金额为 `NOT_MEASURED`。全部逐版本分数、包hash、计数及费用状态均以最终公开结果为准，诊断001/002的用量另记。
-
-下面第1–6节保留**冻结v6**的85题准备及命令；只能与对应v6源码使用，不能把旧配置或源码包当成v7交付。完整85题v7交接配置与两型号兼容性尚未重新准备/测量。本轮只启动上述五题GPT-5.4，不启动完整矩阵。
-
-## v6 已验收范围与历史试跑
-
-2026-10-08的v6交叉复核补上了**学习环境关闭失败的持久派发门禁**：作者结果已完成但容器关闭失败时，保留原结果和失败记录，同一cell重新启动也不得继续create/evolve/evaluate/NoSkill。报告仍可读；仅新trial可明确导入安全包补评。该冻结源码回归为**1482 passed／57 skipped／0 failed**，两场免费真实Docker场景通过；身份与证据见[005交叉复核](../readiness-skillsbench-crosscheck-20261008-005/final-status.json)。该次验收没有调用付费模型，下面004是此前冻结提交`4fbfeed6`、身份`0f39848a…`的真实结果，不冒充v7新身份smoke。
-
-v6五题真实补测 [codex-author-fix-20261008-004](codex-author-fix-20261008-004/public-summary.json) 已 **COMPLETED**，身份 `0f39848a…`。五题的 NoSkill、S0、全部实际内容版本及 Final 均有独立 fresh 官方评分：Task pass 为 **20% → 40% → 80%**。实际型号是本机 Codex 订阅可用的 **`gpt-6.1-sol`**，不是 GPT-5.4 或论文模型，也不是下方 GPT-5.6／Opus 两套85题矩阵的成绩。底层 HTTP 次数及 Codex 内部重试不可观察。五题重新测量，不复用旧试验分数；该批结果仅支持这五题的配对观察，不能外推全部85题。
-
-004的五题环境与本机Codex型号目录预检已 `READY`，其冻结源码通过 **1478 passed／57 skipped／0 failed**、真实Docker和第二名审查，见 [004 readiness](../readiness-skillsbench-native-controller-20261008-004/final-status.json)。该验收中`real_model_trial=NOT_STARTED`是启动前快照，随后五题完成不回写历史JSON。五题机器数据已由第二名审查者完成 [97项核对](codex-author-fix-20261008-004/public-summary-independent-review.json)，全部通过并保留方法限制。模型实测与源码验收分别封存；它们不代表85题环境全部就绪。
-
-此前 `codex-author-fix-20261008-003` 为 **STOPPED_PARTIAL_TRANSPORT_GATE**、身份 `ce9c36a1…`：四题完整完成，DAPT 的 Generator 操作因 Codex 原生能力或 compaction 门禁中止，事件具体类型未能从留存证据确证。Journal 保留 `UNKNOWN`，不能重发或补造 Final；DAPT未执行的独评保持 null。已有四题只作该历史试验结果，停机与逐题容器清理见 [terminal-transport-stop.json](codex-author-fix-20261008-003/evidence/terminal-transport-stop.json)。
-
-前两次补测均只读保留，不续 checkpoint、不并入本次：`codex-author-fix-20261008-001` 的封包接口误拒合法 `evals/` 附件并丢失导出文件；`codex-author-fix-20261008-002` 在原作者 async 循环调用同步 oracle，导致 `asyncio.run()` 嵌套，fresh Codex 尚未请求模型即失败。001 的16次 invalid 和002的该次未测 GT 属于接口错误，不是官方任务失败；UNKNOWN 不重发。更早的 `codex-quota-five-20261007-003` 是另一历史试验。
-
-真实Docker检查覆盖完整封包、持续环境、context停止、原作者末端GT及唯一清理责任。端到端fixture实际贯通原作者控制器→真实oracle→pinned Codex CLI→本机脚本Responses→官方grader→fresh独评；官方检查真实运行，模型为 `MODEL_SCRIPTED`，初始包为显式fixture。封包／回滚分支fixture的评分为 `MOCK_ONLY`。这些检查验证执行机制，不能充当真实模型成绩、85题准入或utility提升证据。003身份的1423项历史回归另保留在 [003 readiness](../readiness-skillsbench-native-controller-20261008-003/final-status.json)。
-
-## 1. 冻结 v6 的85题交接
-
-分别运行 GPT-5.6 Terra、Claude Opus 4.8 两套实验，每套为作者发布的全部85题、benign、每题独立创建和演化一个 Skill。每题测 **NoSkill、S0、所有实际后续内容版本及 Final**，不能只交最终成功率。两套使用相同任务、资料池、源码和执行器，各自保留模型会话、Skill、运行身份及结果。
-
-| 实验 | 固定配置 | 任务清单 | 新结果目录 |
-|---|---|---|---|
-| GPT-5.6 Terra | [config.yaml](full-85-gpt56-v6/config.yaml) | [manifest.json](full-85-gpt56-v6/manifest.json) | `full-85-gpt56-v6/matrix-author-v6-001/` |
-| Claude Opus 4.8 | [config.yaml](full-85-opus48-v6/config.yaml) | [manifest.json](full-85-opus48-v6/manifest.json) | `full-85-opus48-v6/matrix-author-v6-001/` |
-
-v6源码交付包为 `skillsbench-v6-crosschecked-20261008-005-source.tar.gz`，文件、来源及外置校验信息由 [transfer-manifest.json](transfer-manifest.json)绑定。它不包含v7输入发现改动。004交付包`skillsbench-v6-final-20261008-004-source.tar.gz`与当时的descriptor/验收仍按原字节保留，解释004成绩时使用它；不能混用最新源码续接004。验收与公开结果的机器证据放在Git仓库，由 descriptor 引用；源码包只提供代码、公开资料和配置，不包含运行日志。旧 `skillsbench-v6-source.tar.gz` 是更早修复前快照。复现本节时使用校验后的对应v6源码，不混用当前v7或另一分支。包中不带凭据、模型权重、虚拟环境、Docker镜像或私有原始评分。`full-85-*-v4`、旧源码包和旧结果是历史记录，不能续接到 v6。
-
-这两套冻结模型配置仍为原有型号。源码变更后需要新运行身份和新目录；旧 v4/v5 结果与源码包只读保留。该v6源码的全85题 fresh 准入或两套 Bedrock 模型 smoke均为 `NOT_MEASURED`。PG 仍缺任务专用 OpenAI 凭据，不能称全部85题已就绪。
-
-## 2. 方法、预算及作者来源
-
-方法为 `skillsbench.skill-evolution.v6`：检索背景资料 → 冻结 B* → 一次生成 S0 → Generator 在持续任务环境执行、修改父包并提交 → 作者 Verifier → fresh 官方 oracle → 独立逐版本评估。
-
-完整包覆盖 `SKILL.md` 与所有安全 UTF8 文本附件，支持 `scripts/`、`references/`、`evals/`、`assets/`及其他合法相对路径，脚本不限定 Python 扩展名。保留路径穿越、特殊文件、非 UTF8、元数据保留名及内容 hash 校验；运行生成缓存只从候选包采集中排除，封存包校验不忽略篡改。作者普通导出经过薄适配补齐全部已提交文件，使 GT、best、回滚和独评使用同一完整内容；不把未提交草稿当版本。银行的 Python 脚本执行接口不随此修改放开。
-
-固定 CoEvoSkills commit `4380d4bff673dd6e1d58e5babeb2aaa0fe527119`，Harbor commit `3f28e5ce2acbff36d8b5df431e35e050ac13bef6`。完整演化控制器、Verifier、支持实现与提示按原字节封存，见 [VERIFIER_SOURCE.json](../../src/tau_skill_evolution/author/VERIFIER_SOURCE.json)；执行器使用固定作者 CodexSkillOnly，见 [SOURCE.json](../../src/tau_skill_evolution/author/SOURCE.json)。直接调用作者 `HarborTerminus2Evolution.setup/run`，由本项目 Journal、容器和包接口承接，不引入 Harbor 整套调度。
-
-本次仅改 SkillsBench。τ-Knowledge及历史 v4 的方法、预算和结果保持原合同。
-
-| 项目 | v6 固定设置及准确含义 |
+| 记录 | 内容 |
 |---|---|
-| 数据/检索 | 85题背景资料合池，仅 background 入池；当前题 instruction/environment 直接提供。隐藏测试、solution、作者 Skill 与其它题 environment 不入池 |
-| 检索参数 | BM25 Top10 + Qwen3-Embedding-4B Top10、RRF60；2048-token块、128重叠；confidence≥0.1；30次搜索、50轮Analyzer、B*≤32,768 tokens；不设文档篇数配额 |
-| S0 | API配置最多一次创建HTTP POST；Codex订阅只确认一次创建turn、HTTP不可观察。只做安全结构封装，不执行、自测或修复；未知结果不重发 |
-| 学习 | 同题 Generator 持续会话/MAIN环境；执行、观察、修改候选包、显式提交。终端每次新 shell；文件、安装和服务持续，单条命令的 cwd/export 不自动继承 |
-| Verifier | 作者独立会话在学习 MAIN 读取真实公开文件、生成/运行测试；普通修订固定 suite，官方拒绝后回到 Generator，下一次提交再升级测试 |
-| r15 | 最多15次 surrogate 失败/不可用等相应 host 干预；首个 checklist 未完成也计一次。**不是15次 Skill 修改上限** |
-| K5 | 最多5次正常 GT 干预；设施故障退款，连续5次设施故障停止。cap-final/post-final 单独记录；4次正常GT后触发r15时，实际GT可以到第6次 |
-| Generator | 120个有效 episode；解析成功进入执行/完成分支即计一次，即使命令列表为空；纯Skill工具及解析失败不算。物理POST数单独记录，没有额外120 POST或每次3600秒修订限制 |
-| 时间 | 学习外层7200秒绝对截止，恢复不重置；任务agent时限×5用于fresh oracle，命令受作者900秒边界及剩余时间约束。独评每次另开7200秒时限 |
-| Context | Generator high，其余medium；有效窗口 min(配置272,000, 已观测provider窗口)，β0.7、输入配置上限157,632、预留32,768；保留自己的历史与opaque continuation |
-| 输出/费用 | 不设实验输出token或费用额度；仍保留API必需字段、上下文/时限、终端64KiB捕获及8KiB模型预览。省略额度不意味着服务没有上限 |
-| Schema/checklist | 检查门禁后使用作者schema；目录固定为`/app/environment/skills/evo-current`，`SKILL.md`的`name: evo-current`须一致。创建不做该质量检查；`/root/progress.md`按作者规则检查/重置 |
-| 最终选择 | 正常/cap GT中官方reward严格提高才更新best，平分保留较早快照；按作者终止分支回滚。**不用独评结果挑版本** |
+| [public-summary.json](input-discovery-five-gpt54-20261008-003/public-summary.json) | 全部逐版本官方成绩、增减、包hash、选择来源和用量 |
+| [public-acquisition-review.json](input-discovery-five-gpt54-20261008-003/public-acquisition-review.json) | 实际读取、查询、资料选择、缺口及停止原因；各题S0只有一次创建POST |
+| [public-verification-review.json](input-discovery-five-gpt54-20261008-003/public-verification-review.json) | 公开测试、产物与修改过程的事后审查 |
+| [public-summary-independent-review.json](input-discovery-five-gpt54-20261008-003/public-summary-independent-review.json) | 最终指标交叉核对 |
+| [config.yaml](input-discovery-five-gpt54-20261008-003/config.yaml)、[source-identity.json](input-discovery-five-gpt54-20261008-003/source-identity.json) | 本批实际配置、源码和环境身份 |
+| [admission.json](input-discovery-five-gpt54-20261008-003/preflight/admission.json) | 本机这五题启动前的环境及鉴权检查 |
 
-上下文记录完整可见历史估算、最近provider input/output（含reasoning）及后续增量；累计计费tokens不是上下文占用。占用进入原作者的token_budget门禁。仅Generator派发前明确的InputTokenBudgetExceeded允许停止新的Generator请求、继续原schema/best/reuse/post-final收尾，并须有原日志token_budget证明；不能伪造响应或把已派发UNKNOWN改称预算停止。订阅传输的原生工具与compaction分别封存事件流并停止，003的具体事件类型仍未确证。
+`runs/readiness-skillsbench-input-discovery-20261008-001/` 保存**代码验收证据**，不是另一批Skill结果。[final-status.json](../readiness-skillsbench-input-discovery-20261008-001/final-status.json)记录共享回归1522通过、57跳过、0失败，以及真实Docker配合本地模拟provider的机制检查。模拟provider不产生真实模型成绩；该验收也不代表全部85题环境已就绪。
 
-GT先采用有限数值的官方 reward；缺失/非法 reward 在实际已完成且可验证的官方测试计数存在时回退 passed/total。明确的0/0按作者解析为0，GT检查率仍未测；缺少评分证据、损坏报告或真实驱动故障为 `NOT_MEASURED`。有限reward优先于检查率，不能把部分通过率冒充官方Task pass。
+旧目录已清理；[清理复验](../readiness-skillsbench-input-discovery-20261008-001/cleanup-verification.json)记录本次全量检查、结果完整性和更新后的文档hash。原验收记录及其历史文档hash保持原样。
 
-有限值优先规则仅用于v6私有oracle；独立评估仍采用现有官方reward在[0,1]内的准入合同。作者数据的正常reward均按官方值记录；若出现越界值，保留原文与两个阶段各自的解析状态，不将oracle展示分数伪装成独评成绩。
+下表为**官方检查组通过数**，不是Python断言数。Task pass要求官方完整成功，不能把部分检查率当任务成功率。
 
-报告分开 **历史 best oracle分数、实际post-final fresh分数、作者终态展示分数、独立评估分数**。历史best较高不代表新fresh执行也取得该分数。独立评估不回流Analyzer/Generator/Verifier。Generator只得到允许的失败类别、公开schema/checklist信息和oracle布尔结果；不提供GT原始断言、具体值或reward。
+| 任务 | NoSkill | S0 | 后续内容版本 | Final独评 |
+|---|---:|---:|---|---:|
+| dialogue-parser | 5/6 | 5/6 | S1：6/6 | S1：6/6 |
+| 3d-scan-calc | 2/2 | 2/2 | S1：2/2 | S1：2/2 |
+| adaptive-cruise-control | 10/12 | 12/12 | S1：10/12；S2–S8：11/12 | S8：11/12 |
+| dapt-intrusion-detection | 7/14 | 11/14 | S1–S6：11、13、12、10、9、10 /14 | S1：11/14 |
+| pddl-tpp-planning | 1/2 | 2/2 | S1：2/2 | S1：2/2 |
 
-`best_snapshot.record_available`表示历史评分记录存在，`author_record`保存作者快照记录，`rollback.status`记录实际回滚结果；封存包须另外通过 hash 校验。快照丢失时保留历史分数，不能声称已回滚；hash损坏与真实IO故障不伪装成可用快照。
+五题 **Task pass：NoSkill 1/5（20%）→ S0 3/5（60%）→ Final 3/5（60%）**。演化救回Dialogue、退化ACC，没有净Task pass提升。平均官方reward为0.3666→0.7666→0.6000；先按题计算再平均的GT检查组通过率为73.33%→92.38%→94.05%。三种指标分别报告，不互相替代。
 
-这是迁移作者交互修改、验证和终止机制的检索冻结/一次创建变体，非完整论文复现。初次创建禁止自测、B*冻结及独立逐版本测量仍是本实验适配。Verifier会话独立，但在学习MAIN执行：不等同旧版独立Verifier容器的文件系统隔离；host不注入Generator推理或官方评分。作者诊断路径未重复初建的Skill禁读提示及日志审查，历史`codex-quota-five-20261007-003`真实试跑已读到共享`SKILL.md`，所以不能宣称全阶段都不读取Skill源码；证据见该批`evidence/3d-author-diagnosis-access.json`。Generator终端直接使用作者的受保护评分路径命令检查，拒绝直接访问Verifier及隐藏答案路径；这是命令启发式检查，不能保证任意shell命令无法绕过。fresh评分时先关闭公开工具，再挂官方测试。后台进程同容器阶段切换的隔离局限保留。详细定义见 [PROTOCOL.md](../../PROTOCOL.md)。
+本批共22个内容版本、27次独立测量；Final引用被选包已有的独评。ACC、DAPT各在42个有效episode后因上下文门禁停止，均完成作者末端GT分支。ACC为r10、正常GT0次、post-final1次；DAPT为r6、正常GT2次、post-final1次。DAPT的选择阶段reward都为0，作者同分保留较早S1；S2事后独评13/14不会回流选择。全部计数、suite和包hash以机器汇总为准。
 
-模型使用作者的 `task_complete` 提交；保留作者3个idle/30个stale episode的强制门禁，记录 `host_forced_submission`，与模型主动提交分开。只有进入门禁且能安全封装的完整包才形成版本，非法草稿保留失败证据并交给作者schema修复；不能补造评分。
+仍存在语义限制：ACC的TTC输出精度问题未修复，公开稳态距离检查的前提有争议；DAPT任务说明与背景术语有冲突，后续修改改变了端口统计范围。池中缺少的资料不能通过重复搜索获得；获取控制流还可能让Analyzer在无新增证据时撤销缺口、改判充分。因此信息充分和公开测试通过都不保证官方成功；不从公开证据推断具体隐藏GT失败项。
 
-### 2.1 每题实际调用与封存位置
+## 2. 方法、角色与固定参数
 
-设运行目录为`SB_RUN`，cell为`$SB_RUN/cells/TASK_ID/benign/`。以下是执行顺序与证据入口，不要求同事手动调用内部函数。
+每题独立执行：**只读输入发现与背景检索 → 冻结B* → 一次创建S0 → Generator持续执行、修改并提交 → 作者Verifier → fresh官方GT → 全版本独立评估**。冻结的是共享资料池检索能力；SkillsBench终端遵守官方环境的网络配置。
 
-| 顺序 | 调用与责任 | 证据及控制流 |
-|---|---|---|
-| 1 | `preflight`：Host校验 | 逐题环境与模型传输必须准入；旧READY不替代本机检查 |
-| 2 | `evaluate --no-skill`：独立fresh Codex | cell Journal的`evaluation-no-skill`；不进入学习反馈。`run`不自动执行它 |
-| 3 | `create`：Analyzer收集，Generator一次创建 | `base/`保存B*、公开输入与停止原因；`initial/`保存S0；Journal保存`collect-base`、创建请求和`creation`。安全封装失败不进入学习 |
-| 4 | `evolve`：持续MAIN、原作者`setup/run` | cell的`learning/`管理当前环境；`private/author-controller/`保存原作者日志、提交、测试及评分引用；`versions/<hash>/`保存实际安全内容 |
-| 5 | 原作者验证门禁：独立Verifier会话 | 共用MAIN文件/依赖/服务；有效suite锁定，公开失败修包；GT失败后先执行修改，下一提交再升级。schema/checklist、r15与有效episode按原分支计数 |
-| 6 | 原作者正常／cap-final／post-final GT：Host | 各次fresh执行单列；官方原文私有，Generator仅获受限反馈。best严格按学习GT选包；末端实际成绩与历史保留成绩分开 |
-| 7 | 学习环境关闭：唯一生命周期持有者 | 原作者结果完成不代表关闭完成。关闭失败记录为`learning-environment-failure-*`，同cell持久阻止后续模型派发；不重跑、不偷偷清理或丢弃已完成结果 |
-| 8 | `evaluate`：独立fresh Codex | Journal的`evaluation-<hash>`；各实际内容只评一次，Final映射选包hash。不用独评分数改选包 |
-| 9 | `report`：Host | `report.json/REPORT.md`汇总固定分母、版本、父谱系、缺测、选择和独评分数、用量；公共导出不含模型推理或隐藏评分正文 |
+| 角色 | 能收到什么、做什么 |
+|---|---|
+| Analyzer | 原始instruction、工作目录、授权输入根；通过`list_input_directory`、`read_input_file`发现当前题原始输入，并搜索背景池。维护缺口、证据和相关性评分，选择B*；不自动获得COPY映射、文件清单或环境配置，不执行任务 |
+| Generator | 创建时收到冻结B*、公开请求、实际获取的输入观察及工具说明；不继承Analyzer推理或未选文档。S0封存后，在持续官方环境执行、观察公开结果、修改父包并显式提交；仅接收受限反馈，不接收隐藏评分正文或reward |
+| Verifier | 独立模型会话，在同一学习MAIN环境读取公开输入、产物和自己的测试；普通修改固定suite，GT失败后按作者顺序升级。会话独立不等于文件系统物理隔离，诊断阶段不能保证完全禁读Skill源码 |
 
-`run`对每条链执行create/evolve/evaluate（第3、4、8步），第5–7步位于演化内部；默认CLI随后生成报告，并发launcher可在全部结束后统一报告。本文第7节记录004的实际执行，不能把以上合同当作所有85题已发生的事实。来源记录中的未测模型smoke指交接的两套Bedrock配置；Codex订阅004的已测范围单列。
+直接调用CoEvoSkills commit `4380d4bff673dd6e1d58e5babeb2aaa0fe527119` 的完整演化控制器和Verifier，Harbor接口固定 `3f28e5ce2acbff36d8b5df431e35e050ac13bef6`。作者原文件及hash见 [VERIFIER_SOURCE.json](../../src/tau_skill_evolution/author/VERIFIER_SOURCE.json)，fresh执行器见 [SOURCE.json](../../src/tau_skill_evolution/author/SOURCE.json)。检索冻结、单次S0、模型传输及独立逐版本评估是实验适配，不能称完整论文复现。
 
-## 3. 从新机器准备环境
+| 参数 | 当前合同 |
+|---|---|
+| 数据 | 85题、benign；共享池只有背景资料122块。其它题输入、隐藏测试、solution和作者Skill不入池 |
+| 检索 | BM25 Top10＋Qwen3-Embedding-4B Top10、RRF60；2048-token块、128重叠；confidence≥0.1，无篇数配额 |
+| 获取预算 | 搜索30次、只读10次、澄清0次、Analyzer50轮；B*≤32,768 tokens，不截断原文 |
+| 创建 | S0最多一次HTTP POST；只做安全结构封装，不执行、自测或反馈重生成，UNKNOWN不重发 |
+| 作者预算 | r15计相应失败干预；正常K5；Generator120个有效episode。分别统计修订、提交、内容版本和请求，不能把r15当15次修改或把episode当POST |
+| GT末端 | normal、cap-final、post-final分别记录；实际GT执行总数可能超过5 |
+| 时间 | 学习7200秒墙钟上限，恢复不重置；任务执行时限按作者timeout multiplier 5计算，独评另开fresh环境 |
+| 上下文 | Generator high，其余medium；保守272K窗口、β=0.7、输出预留32,768。保留完整自身历史和opaque continuation，不通过重开会话绕过限制 |
+| 输出／费用 | 不设实验输出token或费用额度；实际模型和上下文仍有边界，累计计费tokens不是上下文占用 |
+| 最终选择 | 按作者GT分数严格提高更新best，同分保留较早快照，按原终止分支复验或回滚；独评不挑版本 |
 
-以下命令从仓库根运行，要求Linux x86_64、Python3.12、uv、git、curl、Docker CLI/daemon访问、Compose和CUDA GPU。先运行GPT套，再将 `SB_VARIANT` 改为 `full-85-opus48-v6` 重复付费阶段。两套共用环境和Dense，但不共用学习checkpoint。
+## 3. 怎样另开实验
+
+从仓库根运行。先准备本机Python环境、Docker/Compose访问、固定上游、官方逐题环境锁、Dense服务/索引及native Codex **0.160.1**。本批配置中的Codex二进制和companion路径是本机路径；其它机器需在**新配置**中填写实际路径、GPU和endpoint，并重新preflight，不能修改已完成试验的配置或身份。环境准备脚本为 `scripts/prepare_skillsbench.py`，只准备固定数据和官方环境，不替代正式准入。
+
+本机home Docker engine当前仍运行，本次未改动它或embedding服务。它的旧启动配置含两条已删除的v4交接目录挂载；将来重建engine时应去掉这两条挂载，保留原Docker数据和socket目录。项目目录清理不等于Docker镜像清理，也不能用此推断Docker磁盘余量。
+
+以下命令复用本机最新五题的配置另开trial；不在已完成目录中运行。`key.env`仅本机提供，CLI按字面读取，不能上传。preflight和执行入口会验证凭据，执行会调用付费API。
 
 ```bash
 set -e
-make setup PYTHON=python3.12
 SB_CODE=experiments/tau-knowledge/skill-evolution
-SB_VARIANT=full-85-gpt56-v6
-SB_PACK="$SB_CODE/runs/skillsbench/$SB_VARIANT"
-SB_CFG="$SB_PACK/config.yaml"
-SB_RUN="$SB_PACK/matrix-author-v6-001"
-export AWS_REGION=us-east-1
-docker version
-docker compose version
-.venv/bin/python "$SB_CODE/scripts/prepare_skillsbench.py" --source
-```
+SB_CFG="$SB_CODE/runs/skillsbench/input-discovery-five-gpt54-20261008-003/config.yaml"
+SB_RUN="$SB_CODE/runs/skillsbench/five-gpt54-$(date +%Y%m%d-%H%M%S)"
+test ! -e "$SB_RUN"
+SB_TASKS=(--task dialogue-parser --task 3d-scan-calc --task adaptive-cruise-control --task dapt-intrusion-detection --task pddl-tpp-planning)
+SB_ARGS=(--experiment skillsbench --runtime docker --config "$SB_CFG" --env-file key.env --arm benign)
 
-`--source`获取固定作者任务、recipe、输入及官方grader；正式学习不挂grader/其他题。已有固定数据必须校验复用，不reset或改上游来掩盖失败。
-
-新机器先为两套建立 `config.local.yaml`，使用独立本地环境锁目录。配置文件已存在时先检查，不覆盖。机器适配只改本地GPU UUID、embedding endpoint/vllm路径和本地lock模板；方法、任务、模型不随意改。以下操作须在付费前完成：
-
-```bash
-SB_LOCK_TEMPLATE='runtime/local/skillsbench-docker-{task_id}-v6-lock.json'
-.venv/bin/python - "$SB_CODE" "$SB_LOCK_TEMPLATE" <<'LOCAL'
-import sys
-from pathlib import Path
-import yaml
-root, template = Path(sys.argv[1]), sys.argv[2]
-for variant in ("full-85-gpt56-v6", "full-85-opus48-v6"):
-    directory = root / "runs/skillsbench" / variant
-    target = directory / "config.local.yaml"
-    if target.exists():
-        raise SystemExit(f"Inspect existing local config first: {target}")
-    config = yaml.safe_load((directory / "config.yaml").read_text())
-    config["source"]["runtime_lock"] = template
-    target.write_text(yaml.safe_dump(config, sort_keys=False))
-LOCAL
-SB_CFG="$SB_PACK/config.local.yaml"
-```
-
-### 3.1 固定 native Codex
-
-安装ELF二进制及同release code-mode companion，不使用npm JS launcher替代：
-
-```bash
-SB_BIN="$HOME/.local/skillsbench-codex-0.160.1"
-mkdir -p "$SB_BIN"
-curl --fail --location https://github.com/openai/codex/releases/download/rust-v0.160.1/codex-x86_64-unknown-linux-musl.tar.gz --output "$SB_BIN/codex.tar.gz"
-tar -xzf "$SB_BIN/codex.tar.gz" -C "$SB_BIN"
-echo 'f34a4d2301892ae96c90097786bfe5dc269f187b6f69faf42a7b357b8c081e35  '"$SB_BIN/codex-x86_64-unknown-linux-musl" | sha256sum --check
-ln -sfn "$SB_BIN/codex-x86_64-unknown-linux-musl" "$SB_BIN/codex"
-curl --fail --location https://github.com/openai/codex/releases/download/rust-v0.160.1/codex-code-mode-host-x86_64-unknown-linux-musl.tar.gz --output "$SB_BIN/code-mode-host.tar.gz"
-tar -xzf "$SB_BIN/code-mode-host.tar.gz" -C "$SB_BIN"
-echo 'b33e8a5283f3c65c2a0aca6d43a59cfe850f624d8fa16992e3cad4fcc27c14e1  '"$SB_BIN/codex-code-mode-host-x86_64-unknown-linux-musl" | sha256sum --check
-ln -sfn "$SB_BIN/codex-code-mode-host-x86_64-unknown-linux-musl" "$SB_BIN/codex-code-mode-host"
-export PATH="$SB_BIN:$PATH"
-```
-
-正式fresh执行使用同一个作者CodexSkillOnly：GPT-5.6 Terra经`bedrock-responses`，Opus经`bedrock-messages`转换。两个账户都要有准确型号的访问权限，均为us-east-1。GPT采用code mode，Opus采用普通终端工具；这是完整同型号pipeline比较，工具配置不完全相同，不称纯等计算量能力对照。Opus真实provider兼容性要单独smoke；本地mock不代表真实模型调用通过。
-
-| 配置 | 精确model ID | 传输 |
-|---|---|---|
-| GPT套 | `openai.gpt-5.6-terra` | `bedrock-responses` |
-| Opus套 | `anthropic.claude-opus-4-8` | `bedrock-messages` |
-
-### 3.2 Dense 与索引
-
-```bash
-uv venv --python python3.12 "$SB_CODE/data/embedding/.venv"
-uv pip install --python "$SB_CODE/data/embedding/.venv/bin/python" -e . -r "$SB_CODE/runtime/embedding-requirements.txt"
-"$SB_CODE/data/embedding/.venv/bin/python" -c 'from huggingface_hub import snapshot_download; snapshot_download("Qwen/Qwen3-Embedding-4B", revision="5cf2132abc99cad020ac570b19d031efec650f2b")'
-"$SB_CODE/data/embedding/.venv/bin/python" "$SB_CODE/scripts/prepare_skillsbench.py" --pool
-```
-
-把两份本地配置的GPU UUID/endpoint/vllm路径改成同事机器实际值。另一终端从仓库根启动Dense，显式使用SkillsBench配置：
-
-```bash
-SB_CFG=experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-gpt56-v6/config.local.yaml
-.venv/bin/python - "$SB_CFG" <<'DENSE'
-import os, sys
-from pathlib import Path
-from tau_skill_evolution.retrieval import embedding_argv
-from tau_skill_evolution.spec import load_spec
-s = load_spec(Path(sys.argv[1]))
-a = embedding_argv(s)
-os.execvpe(a[0], a, {**os.environ, "CUDA_VISIBLE_DEVICES": s.values["embedding"]["gpu_uuid"]})
-DENSE
-```
-
-服务就绪后，回原终端构建固定索引：
-
-```bash
-SB_EMBEDDING=$(.venv/bin/python - "$SB_CFG" <<'SETTINGS'
-import json, sys
-from pathlib import Path
-from tau_skill_evolution.spec import load_spec
-print(json.dumps(load_spec(Path(sys.argv[1])).values["embedding"]))
-SETTINGS
-)
-"$SB_CODE/data/embedding/.venv/bin/python" "$SB_CODE/scripts/prepare_skillsbench.py" --index-settings "$SB_EMBEDDING"
-```
-
-两模型可共用此服务和索引。embedding依赖范围已固定，尚非完整wheel hash锁；实际依赖和GPU准备仍需本机封存，不宣称复制配置即READY。
-
-### 3.3 Docker 与85题环境
-
-直接使用作者各题 Dockerfile 或精确 `docker-compose.yaml`，保留 USER/WORKDIR/ENTRYPOINT、网络、sidecar、健康检查及任务内安装能力。预检确认构建、启动、公开终端和官方grader可用，**不要求空工作区reward=1**；缺交付物的合法负成绩可以准入，真正评分驱动缺库不能准入。
-
-任务setup是执行环节；`DEFERRED_TASK_SETUP`只在公开要求、实际哈希绑定输入及合法负评分证据一致时准入。它不是官方grader通过，最终真实评分仍严格。镜像build成功、旧READY或文件夹存在，都不能替代新机器fresh检查。
-
-如机器已有足够容量的Docker daemon，直接选其endpoint。若沿用本项目home内DinD实例，必须核对其Mounts能看到 **v6结果目录及专用TMPDIR的相同绝对路径**。旧实例只挂两个v4目录时，不能直接拿它跑v6。停止全部任务/build后才能重建外层容器挂载；禁止两个daemon同时使用同一data-root。不要全局prune同事镜像。
-
-需要在home中新建实例时，可用以下一次性启动块；需现有Docker API允许privileged，但无需调用sudo。目录仍在可见项目内，不是rootless：
-
-```bash
-SB_ROOT=$(realpath "$SB_CODE")
-SB_OUTER_HOST=unix:///var/run/docker.sock
-SB_DOCKER_NAME=skill-evolution-author-v6-$(id -un)
-SB_DOCKER_DATA="$SB_ROOT/data/docker-author-v6"
-SB_DOCKER_RUN="$HOME/.local/share/skillsbench-docker/author-v6-run"
-SB_PREP_TMP="$HOME/.cache/skillsbench-author-v6-tmp"
-SB_DIND_IMAGE=docker@sha256:7613944c7bc318c7b97541bd0e65b8a18d033e37e204305f1ee2639fc9a03827
-unset DOCKER_CONTEXT DOCKER_TLS_VERIFY DOCKER_CERT_PATH
-install -d -m 700 "$SB_DOCKER_RUN" "$SB_PREP_TMP" "$SB_DOCKER_DATA"
-docker --host "$SB_OUTER_HOST" pull "$SB_DIND_IMAGE"
-docker --host "$SB_OUTER_HOST" run --detach --name "$SB_DOCKER_NAME" --privileged \
-    --label org.tau.purpose=skillsbench-author-v6 --env DOCKER_TLS_CERTDIR= \
-    --mount "type=bind,src=$SB_DOCKER_DATA,dst=/var/lib/docker" \
-    --mount "type=bind,src=$SB_DOCKER_RUN,dst=/run/skill-docker" \
-    --mount "type=bind,src=$SB_PREP_TMP,dst=$SB_PREP_TMP" \
-    --mount "type=bind,src=$SB_ROOT/runs/skillsbench,dst=$SB_ROOT/runs/skillsbench" \
-    --entrypoint /bin/sh "$SB_DIND_IMAGE" -c \
-    'SB_GROUP=
-    for SB_ENTRY in $(cut -d: -f1,3 /etc/group); do
-        if [ "${SB_ENTRY#*:}" = "$1" ]; then SB_GROUP=${SB_ENTRY%%:*}; break; fi
-    done
-    if [ -z "$SB_GROUP" ]; then addgroup -g "$1" skill-host || exit 1; SB_GROUP=skill-host; fi
-    exec dockerd-entrypoint.sh dockerd --host=unix:///run/skill-docker/docker.sock --group="$SB_GROUP" --data-root=/var/lib/docker --storage-driver=overlay2 --pidfile=/run/skill-docker/docker.pid' \
-    sh "$(id -g)"
-export DOCKER_HOST="unix://$SB_DOCKER_RUN/docker.sock"
-export TMPDIR="$SB_PREP_TMP"
-for SB_WAIT in $(seq 1 60); do
-    if docker info >/dev/null 2>&1; then break; fi
-    sleep 1
-done
-docker info >/dev/null
-docker --host "$SB_OUTER_HOST" inspect --format '{{.State.Status}} {{json .Mounts}}' "$SB_DOCKER_NAME"
-df -h "$SB_DOCKER_DATA"
-```
-
-这是可选的新空实例，会重新构建/载入镜像，不是默认再复制所有已准备环境。内层`DockerRootDir=/var/lib/docker`是容器路径；实际home空间看外层Mounts及上述df。Unix socket在项目外短路径，镜像/cache数据在项目内。外层看到结果父目录，不代表内层任务获得其它题目录；任务bind仍由逐题runner限定。不挂宿主Docker socket或整套宿主凭据。
-
-选好daemon后，在原终端准备环境；两模型共用同一lock模板。完整准备结束再冻结identity，运行中不改锁：
-
-```bash
-.venv/bin/python "$SB_CODE/scripts/prepare_skillsbench.py" --docker --all-tasks --jobs 8 --runtime-lock "$SB_LOCK_TEMPLATE"
-```
-
-`--jobs 8`为离线准备并发，可按资源改小。构建不套正式任务时限，不自动重试；失败保留其它题的结果，按日志逐题用`--task TASK_ID --docker --runtime-lock "$SB_LOCK_TEMPLATE"`补齐。实际digest写入本地锁，不填虚构值，不覆盖历史锁。新增实验必须在daemon可见挂载范围内。
-
-## 4. 凭据与实际 preflight
-
-模型凭据放项目外受保护目录。单次可通过CLI `--env-file 本机文件`加载；长矩阵推荐JSON token文件，形如`{"token":"本机真实token","expires_at":"实际UTC到期时间"}`，0600、原子替换，实际到期前更新。每次POST重读；程序不会自行续期。一小时key不保证跑完85题，不把签名URL表面期限当底层会话期限。
-
-```bash
-SB_TOKEN_DIR=/path/to/private/bedrock-tokens
-SB_ACCOUNT=123456789012
-export AWS_BEARER_TOKEN_BEDROCK_FILE="$SB_TOKEN_DIR/$SB_ACCOUNT.json"
-unset AWS_BEARER_TOKEN_BEDROCK
-```
-
-将占位路径/账号换为本机真实值，不在shell历史粘贴真实key。任务专用凭据独立加载；PG必需项为`SKILLSBENCH_TASK_PG_ESSAY_TO_AUDIOBOOK_OPENAI_API_KEY`。其它可选凭据按逐题声明提供；缺可选项如实记录，不回退宿主全局同名变量，不传全部环境。不要将task凭据写配置、Git、日志或Compose正文。
-
-```bash
-.venv/bin/python - "$SB_CFG" <<'CONFIG'
-import sys
-from pathlib import Path
-from tau_skill_evolution.spec import load_spec
-s = load_spec(Path(sys.argv[1]))
-assert s.namespace == "skillsbench.skill-evolution.v6"
-assert len(s.tasks) == len(s.cells) == 85 and s.arms == ("benign",)
-print(s.provider_settings["model"], s.provider_settings["transport"], len(s.cells))
-CONFIG
-.venv/bin/r2sp preflight --experiment skillsbench --runtime docker --config "$SB_CFG" > "$SB_PACK/preflight.json"
-```
-
-必须exit0且JSON`ready=true`。检查型号权限、Dense、pinned数据、逐题镜像锁、fresh环境/grader/native Codex。模型目录鉴权不等于真实生成兼容性；下节smoke须两模型各做一次。目前PG缺必需凭据，完整85题准入会被阻止。补凭据后重新fresh准入，或按5.1节明确只启动其余84题；不能忽略失败继续85矩阵。
-
-每个新终端重新设置`SB_CODE/SB_VARIANT/SB_PACK/SB_CFG/SB_RUN`、PATH、AWS Region、token文件和正确DOCKER_HOST/TMPDIR。变量不会自动继承其它终端；不要不知情地落回系统daemon或另一型号配置。
-
-## 5. 两模型各做一个 smoke，然后完整运行
-
-先以dialogue-parser验证机制；从这里开始收费。smoke与matrix目录隔离，不拿smoke checkpoint续正式矩阵，不根据smoke成绩删题或修改方法。
-
-```bash
-SB_SMOKE="$SB_PACK/smoke/author-v6-001"
-mkdir -p "$SB_PACK/smoke"
-.venv/bin/r2sp preflight --experiment skillsbench --runtime docker --config "$SB_CFG" --task dialogue-parser > "$SB_PACK/smoke/preflight.json"
-.venv/bin/r2sp evaluate --experiment skillsbench --runtime docker --config "$SB_CFG" --task dialogue-parser --arm benign --no-skill --run-dir "$SB_SMOKE"
-.venv/bin/r2sp run --experiment skillsbench --runtime docker --config "$SB_CFG" --task dialogue-parser --arm benign --run-dir "$SB_SMOKE"
-.venv/bin/r2sp report --experiment skillsbench --runtime docker --config "$SB_CFG" --run-dir "$SB_SMOKE"
-```
-
-确认真实检索、base、单次S0、Generator执行/提交、作者公开检查、fresh GT及独评有封存结果。utility0可以符合机制验收；S0成功早停允许没有S1。没有到达GT、UNKNOWN或未解决运行错误不能称完整smoke。这个配置的smoke覆盖为1/85，不称85题成绩。
-
-两模型分别通过smoke、全85题preflight通过后，在对应空matrix目录按顺序运行：
-
-```bash
-.venv/bin/r2sp evaluate --experiment skillsbench --runtime docker --config "$SB_CFG" --no-skill --run-dir "$SB_RUN"
-.venv/bin/python "$SB_CODE/scripts/launch_matrix.py" --experiment skillsbench --runtime docker --config "$SB_CFG" --run-dir "$SB_RUN" --token-dir "$SB_TOKEN_DIR" --accounts "$SB_ACCOUNT" --max-concurrent 2 --stagger-seconds 3 --r2sp "$PWD/.venv/bin/r2sp"
+.venv/bin/r2sp preflight "${SB_ARGS[@]}" "${SB_TASKS[@]}"
+.venv/bin/r2sp evaluate "${SB_ARGS[@]}" "${SB_TASKS[@]}" --no-skill --run-dir "$SB_RUN"
+.venv/bin/r2sp run "${SB_ARGS[@]}" "${SB_TASKS[@]}" --run-dir "$SB_RUN"
 .venv/bin/r2sp report --experiment skillsbench --runtime docker --config "$SB_CFG" --run-dir "$SB_RUN"
 ```
 
-NoSkill在同型号、同执行器fresh测量，不创建包或反馈学习。launcher只负责各题create/evolve/evaluate，不自动补NoSkill，第一条不可省；逐版本独评由pipeline完成。资源/限流不足将并发改1，或用`r2sp run ... --run-dir "$SB_RUN"`完全串行。两模型按同一预先任务列表比较，不用成绩选子集。
+`run`依次执行create、evolve、evaluate；**不自动运行NoSkill**。上面是顺序五题，时间和成绩不能照抄本批并发launcher。单题调试把 `SB_TASKS` 缩为一个任务；需观察阶段时，使用相同参数依次执行 `create`、`evolve`、`evaluate`，代替`run`，不要另开S0或回到检索。
 
-### 5.1 PG凭据缺失时，只启动预定义84题
+完整85题v7矩阵及其它型号兼容性目前为 **`NOT_MEASURED`**。当前配置包含85题，但现有准入只实测上述五题；全部85题须逐题准备并通过本机preflight，不能把五题READY解释成全量READY。`pg-essay-to-audiobook`仍缺官方任务专用OpenAI凭据，Bedrock key不能代替。任务环境或凭据缺失时保留未测状态和85题分母，不填失败0。
 
-此路径使用现有`--task`和launcher的`--cells-file`选择器，不改85题配置、任务清单或报告分母。先固定排除PG的同一子集；两模型分别通过smoke后，须各自取得其余84题的整体fresh preflight通过，才能启动以下评价与学习。此处尚未实际完成84题准入，不能称84题已就绪。使用单独结果目录，PG维持null／`NOT_MEASURED`，最终仍报告已测n与成功数÷85。
+## 4. 过程封存、恢复与交回内容
 
-```bash
-SB_RUN="$SB_PACK/matrix-ready84-author-v6-001"
-SB_READY_CELLS="$SB_PACK/ready-84-cells.json"
-.venv/bin/python - "$SB_CFG" "$SB_READY_CELLS" <<'SUBSET'
-import json, sys
-from pathlib import Path
-from tau_skill_evolution.spec import load_spec
-spec = load_spec(Path(sys.argv[1]))
-assert spec.namespace == "skillsbench.skill-evolution.v6" and len(spec.tasks) == 85
-cells = [f"{task}|benign" for task in spec.tasks if task != "pg-essay-to-audiobook"]
-assert len(cells) == 84
-path = Path(sys.argv[2])
-if path.exists():
-    assert json.loads(path.read_text()) == cells, "Existing cohort differs; inspect it before running"
-else:
-    with path.open("x") as handle:
-        handle.write(json.dumps(cells, indent=2) + "\n")
-    path.chmod(0o444)
-SUBSET
-SB_TASK_ARGS=()
-while IFS= read -r SB_READY_TASK; do
-    SB_TASK_ARGS+=(--task "$SB_READY_TASK")
-done < <(.venv/bin/python - "$SB_READY_CELLS" <<'TASKS'
-import json, sys
-from pathlib import Path
-cells = json.loads(Path(sys.argv[1]).read_text())
-assert len(cells) == len(set(cells)) == 84
-assert all(cell.endswith("|benign") and cell != "pg-essay-to-audiobook|benign" for cell in cells)
-print("\n".join(cell.removesuffix("|benign") for cell in cells))
-TASKS
-)
-test "${#SB_TASK_ARGS[@]}" -eq 168
-.venv/bin/r2sp preflight --experiment skillsbench --runtime docker --config "$SB_CFG" "${SB_TASK_ARGS[@]}" > "$SB_PACK/preflight-ready84.json"
-.venv/bin/r2sp evaluate --experiment skillsbench --runtime docker --config "$SB_CFG" "${SB_TASK_ARGS[@]}" --arm benign --no-skill --run-dir "$SB_RUN"
-.venv/bin/python "$SB_CODE/scripts/launch_matrix.py" --experiment skillsbench --runtime docker --config "$SB_CFG" --run-dir "$SB_RUN" --cells-file "$SB_READY_CELLS" --token-dir "$SB_TOKEN_DIR" --accounts "$SB_ACCOUNT" --max-concurrent 2 --stagger-seconds 3 --r2sp "$PWD/.venv/bin/r2sp"
-.venv/bin/r2sp report --experiment skillsbench --runtime docker --config "$SB_CFG" --run-dir "$SB_RUN"
-```
+运行产物位于 `RUN/cells/TASK_ID/benign/`：`base`是冻结资料JSON文件，`initial/`是S0，`versions/<hash>/`保存后续包；Journal记录稳定操作ID、请求状态和封存结果。`learning/`绑定持续环境，`private/author-controller/`保存作者提交、测试、日志和私有评分引用。汇总由`report`写入 `report.json`、`REPORT.md`；私有原始评分、模型记录和凭据不得作为公开资料或模型输入。
 
-任何剩余任务未就绪都应先解决，不再按成绩缩减这个预定义子集。该运行不是完整85题结果；未执行PG不是真实失败0，不能把报告分母改成84。
+恢复必须保持源码、提示、配置、数据、环境及trial身份一致。已完成且正常关闭的结果复用；`NOT_SENT`可首次派发，已收到响应仅确定性解析，`UNKNOWN`不重发。**未完成的作者学习循环不能通过重新run恢复**：原作者会重置内部状态，必须停止并另开trial；容器丢失也不能用文件快照冒充恢复服务或安装状态。关闭失败会持久阻止同cell后续模型派发，已有报告仍可读。
 
-可在`tmux new -s skillsbench-gpt56-v6`或`skillsbench-opus48-v6`中运行，再Ctrl-B、D离开；它只保留终端，不自动恢复或续key。不要用忽略exit码的shell把未就绪阶段串下去。
-
-## 6. 看结果、恢复与交回内容
-
-| 文件/目录 | 看什么 |
-|---|---|
-| `matrix-author-v6-001/launcher-status.json`与`logs/` | 逐题进程、退出/鉴权停止；exit0不是utility1 |
-| `report.json`、`REPORT.md` | NoSkill/S0/S1…/Final官方utility、reward、GT检查率、配对增量、覆盖/缺测 |
-| `journal/identity.json` | 源码/提示/配置/数据/环境身份；不手改hash |
-| cell的 base/initial/versions 与 private/author-controller 中封存的提交、测试、原生演化日志 | 原文/版本hash、实际父版本、公开轨迹/产物、suite、r15/GT/episode及停止原因 |
-| `private/`及私有grader evidence引用 | 原始provider/CTRF/reward/诊断/usage，单独受限保存，不放公开交接包或模型输入 |
-
-同一身份重跑原阶段命令会复用已完成封存；保存整个run、Journal、持续容器和Compose身份，不只复制REPORT。`NOT_SENT`可首次派发；原响应已落盘只解析；`UNKNOWN`不自动重发。原作者完整 run 会重置内部状态，因此尚未完成的学习链不支持重新调用 run 来恢复；即使容器仍在也必须停止并另开 trial。已完成且成功关闭的结果可直接复用，不重新执行；存在关闭失败记录时，同cell的create/evolve/evaluate/NoSkill及导入目标入口全部停止，报告与已测原文仍可读。学习容器丢失，不能用文件快照假装恢复后台进程/依赖。鉴权终止已封存的链不会因换key自动续演化。
-
-整链重新采样必须新trial、primary/extra分开报告，不覆盖旧链或算演化收益。只补评已封存包，用原配置/源码另开评价run，不重发S0：
-
-```bash
-.venv/bin/r2sp evaluate --experiment skillsbench --runtime docker --config ORIGINAL_CONFIG --task TASK_ID --arm benign --bundles-from ORIGINAL_RUN --run-dir NEW_EMPTY_RUN
-```
-
-同事交回两套config/manifest、preflight、identity、完整机器产物、REPORT.md/report.json、launcher状态及usage；私有原始评分证据单独传递权限，不上传凭据或模型私有聊天。必报：
-
-- **Task pass rate**：NoSkill/S0/Final官方reward==1题数÷85，另报实测n、覆盖率和缺测原因。
-- **GT test pass rate**：实际官方检查passed/total；无检查报告则null，不由reward反造检查数。
-- **Surrogate pass rate**：公开suite实际通过用例/收集用例；同suite才比较，升级后不把分母变化当改善。
-- **每题轨迹**：全部实际S内容版本的utility/reward/GT、相邻增量、NoSkill→S0和S0→Final配对救回/退化数；不补造早停的S1–S15。
-- **作者选择与成本**：历史best、真实post-final、作者终态展示、独评分别报；r15干预、正常GT、cap/post GT、设施错误、有效episode、物理POST、修订尝试、unique内容及submit/terminal各自计数，不合并成“演化轮数”。金额没有账单/报价时未测。
-
-S编号按包内容hash去重；A→B→A仅两个内容版本，但最终实际父版本指向B。invalid/unchanged不是新增独立内容，仍记录真实操作；缺测null不是实测失败0。相邻版本的增量只在同题双方均实测且GT单位/来源一致时计算。独立模型采样可能退化，不以“utility必须提升”替代机制验收。SkillsBench不报银行ASR或Action Recall。
-
-## 7. v6 五题历史实际结果与限制
-
-### 7.1 已发生的流程
-
-004使用冻结身份`0f39848a…`及其[config](codex-author-fix-20261008-004/config.yaml)，实际[launcher](codex-author-fix-20261008-004/launcher.py)为五题并发，每题先NoSkill，再`create → evolve → evaluate`，全部结束后汇总report。它不是让五题共享一个Skill或会话。[manifest](codex-author-fix-20261008-004/manifest.json)绑定源码、角色提示、配置和环境hash；B*与包分别在cell的base/initial/versions封存，B* hash见资料结构核对，包hash见公共汇总。不在已完成004目录重新试跑。
-
-| 已发生阶段 | 实际记录 |
-|---|---|
-| 预检 | 五题环境与本机gpt-6.1-sol目录通过；不是85题准入或两Bedrock型号smoke |
-| 资料获取 | 每题30次搜索、31次Analyzer决定，最后批次均已审阅；五题均以`budget_exhausted_incomplete`／`acquisition_actions_exhausted`冻结，`sufficient=false`，不能称资料已充分 |
-| S0 | 五题各一个已完成可观察创建操作，安全封装后进入学习；没有创建阶段执行或反馈重生成，底层HTTP未观测 |
-| 学习与公开验证 | 原作者在各自持续MAIN执行、编辑与检查；共12个实际内容包，测试suite及r/K/episode见下表 |
-| 选择阶段GT | 共7次实际fresh GT：6次normal、1次DAPT post-final；成功与失败均封存，不用独评挑包 |
-| 独立评价 | 12个内容包＋5个NoSkill，共17次fresh测量；Final引用已测内容。加上选择GT，共24份fresh执行记录 |
-| 停止与清理 | DAPT在派发前触发本地context准入，按作者末端分支完成；五个学习owner最终均CLOSED，实际容器均无残留。没有UNKNOWN或无效provider响应 |
-| 汇总与复核 | 664个完成逻辑turn、1个NOT_SENT；公共数据97项二审核对通过。旧试跑不合并，私有评分/原始模型记录不公开 |
-
-资料获取实测见[结构核对](codex-author-fix-20261008-004/evidence/acquisition-structural-review.json)：
-
-| 任务 | 返回过全文的不同材料数 | B*材料数／tokens |
-|---|---:|---:|
-| dialogue-parser | 87 | 3／3,461 |
-| 3d-scan-calc | 94 | 2／2,548 |
-| adaptive-cruise-control | 92 | 6／6,861 |
-| dapt-intrusion-detection | 85 | 3／5,822 |
-| pddl-tpp-planning | 85 | 2／968 |
-
-“返回过全文”包含不同任务背景的检索块，不能当作当前题必要文档召回率；B*远未满仍可能耗尽搜索预算。后续成功不反证Analyzer充分性成立，也不能把本批冻结不完整掩盖成已检索齐全。
-
-### 7.2 逐内容版本与选择结果
-
-以下每格为 **官方 reward；GT通过项/总项**，均来自独立 fresh 评估。官方逐项单位为 `reporter_group`，不是Python断言条数。`—`表示没有产生该内容版本，不补造S3–S15。Final与已有内容相同，复用对应独评，不另算一个样本。
-
-| 任务 | NoSkill | S0 | S1 | S2 | Final |
-|---|---|---|---|---|---|
-| dialogue-parser | 0.833；5/6 | 1；6/6 | 1；6/6 | — | S1：1；6/6 |
-| 3d-scan-calc | 1；2/2 | 0；0/2 | 1；2/2 | — | S1：1；2/2 |
-| adaptive-cruise-control | 0；10/12 | 0；5/12 | 0；5/12 | 1；12/12 | S2：1；12/12 |
-| dapt-intrusion-detection | 0；3/14 | 0；9/14 | 0；9/14 | 0；12/14 | S1：0；9/14 |
-| pddl-tpp-planning | 0；1/2 | 1；2/2 | 1；2/2 | — | S1：1；2/2 |
-
-五题Task pass为NoSkill **1/5**、S0 **2/5**、Final **4/5**；平均reward为0.3666、0.4、0.8。创建阶段救回Dialogue/PDDL、损害3D，净增20个百分点；S0→Final救回3D/ACC、没有完整成功退化，净增40个百分点。3D的演化恢复了S0失败，但没有超过其已成功的NoSkill。Dialogue/PDDL的S0本就成功，本次没有额外官方效用收益。每题仅一次独评，尚不能排除采样波动或建立统计显著性。
-
-| 任务 | 原生r / 正常K / 有效episode | 实际学习GT | Surrogate：suite版本、hash前缀与用例计数 |
-|---|---|---|---|
-| dialogue-parser | 1 / 1 / 26 | normal：1，6/6 | V1 `e0a5c480`：415/415 |
-| 3d-scan-calc | 0 / 1 / 25 | normal：1，2/2 | V1 `51c98369`：3/3 |
-| adaptive-cruise-control | 0 / 2 / 41 | S1 normal：0，5/12；S2 normal：1，12/12 | V1 `8884a586`：69/69；V2 `c7ee1a66`：36/36 |
-| dapt-intrusion-detection | 1 / 1 / 47 | S1 normal：0，11/14；S1 post-final：0，11/14 | V1 `9f6df6ce`：40/40；V2 `9fa1d7c0`：37/39 |
-| pddl-tpp-planning | 0 / 1 / 23 | normal：1，2/2 | V1 `1704d78a`：11/11 |
-
-这些公开测试各自为实际收集的pytest用例。同suite重复观测才能计算公开进步；ACC和DAPT的V1/V2是不同suite，不能将69→36或40→37直接解释为退化。公开测试全通过仍可能与官方评分不一致：ACC的S1公开69/69、fresh官方5/12，DAPT的S1公开40/40、学习官方11/14。已核对其学习与fresh交付物共有文件hash一致，不能把不一致自动归因于封包丢失。缺少能确定具体隐藏失败原因的证据，保留公开规范/测试覆盖的歧义，不向学习模型注入隐藏答案。
-
-DAPT同一S1包在学习GT为11/14、独评为9/14；事后核对PCAP、模板及数值统计不变，而该包允许qualitative flags覆盖，fresh agent把`has_port_scan`由false改为true、`is_traffic_benign`由true改为false。差异与fresh执行对公开旗标的解释一致，不是已发现的包或输入丢失；仍不据此断言具体隐藏检查的失败原因。 公开文件与参数核对见 [同包fresh差异](codex-author-fix-20261008-004/evidence/dapt-fresh-execution-public-comparison.json)。
-
-DAPT在Generator请求**派发前**触发本地上下文β准入，不是费用/输出额度，也不是provider实际拒绝。最后一次已观测窗口为258,400 tokens，β=0.7、预留32,768；预计输入148,724超过当时允许的148,112，超出612 tokens。该操作为 `NOT_SENT`，51次请求尝试、50个完成响应、47个有效episode。原作者 `token_budget` 分支完成schema、best回滚和真实post-final，之后S0/S1/S2全部独评。S2从未进入选择阶段GT；它按学习阶段有效官方reward选择较早的S1（reward0），不能因事后S2独评12/14而改选S2。**历史best0、真实post-final0（11/14）、Final独评0（9/14）分别保留**。这是完整测量的任务失败，不是UNKNOWN；没有重发未派发的Generator请求来绕过context合同。
-
-004的3D实际问题是S0要求先澄清未声明的坐标单位，fresh执行因此没有生成 `mass_report.json`。S1将条件化单位约定及交付流程写入包，`measure.py`未变，官方恢复2/2；不能套用003的Markdown解析诊断。NoSkill与S1采用不同单位假设，公开质量结果相差约1000倍但都获官方成功，因此官方2/2不能证明物理单位解释正确，详见[3D公开分析](codex-author-fix-20261008-004/evidence/posthoc-3d-public-analysis.json)。事后公开分析、封包hash、测试suite和选包来源见 [完整机器汇总](codex-author-fix-20261008-004/public-summary.json)及该目录的审批后公共证据。测试/评分/原始会话仍分区保存，不公开模型推理或隐藏断言。
-
-本次完成664个可观察模型响应，provider累计input为22,457,864、output为553,281、cached input为17,400,832 tokens；这些是累计用量，不能当上下文占用或收费账单。底层HTTP不可观察、订阅金额未测。源码包提供复跑代码；它不提供85题环境准入、两套Bedrock型号兼容性或完整矩阵的实测成绩。
+交回完整run和配置身份，以及逐题NoSkill/S0/各Si/Final的Task pass、官方reward、实际GT检查率；同suite的surrogate通过率、历史best、末端真实GT和Final独评分别报告。另报r、正常/末端GT、有效episode、修订、提交、内容版本及用量。S编号按内容hash去重，A→B→A不产生第三个内容版本，但保留实际父谱系；invalid/unchanged不是新版本，早停后不补造版本。费用无账单时为`NOT_MEASURED`。

@@ -1,8 +1,0 @@
-{
-  "image_lock": true,
-  "docker_cli": true,
-  "docker_daemon": true,
-  "image_present": true,
-  "dependencies": true,
-  "ready": true
-}

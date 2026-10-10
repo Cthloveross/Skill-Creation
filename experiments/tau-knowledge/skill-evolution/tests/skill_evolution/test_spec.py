@@ -123,22 +123,34 @@ def test_skillsbench_author_budgets_do_not_keep_extra_revision_or_post_caps():
 
 
 @pytest.mark.parametrize(
-    "folder,model",
+    "model",
     [
-        ("full-85-gpt56-v6", "openai.gpt-5.6-terra"),
-        ("full-85-opus48-v6", "anthropic.claude-opus-4-8"),
+        "openai.gpt-5.4",
+        "anthropic.claude-opus-4-8",
     ],
 )
-def test_new_author_handoff_configs_preserve_the_old_population_and_models(folder, model):
-    root = EXPERIMENT_ROOT / "runs/skillsbench"
-    old = load_spec(root / folder.replace("-v6", "-v4") / "config.yaml")
-    new = load_spec(root / folder / "config.yaml")
-    assert new.namespace == "skillsbench.skill-evolution.v6"
-    assert old.namespace == "skillsbench.skill-evolution.v4"
-    assert old.tasks == new.tasks and old.values["source"] == new.values["source"]
-    for name in ("provider", "retrieval", "embedding", "acquisition", "matrix_commitment"):
-        assert old.values[name] == new.values[name]
-    assert new.values["provider"]["model"] == model
+def test_legacy_skillsbench_config_preserves_population_and_model(tmp_path, model):
+    current = load_spec(SKILLSBENCH_CONFIG)
+
+    def legacy(values):
+        values["schema_version"] = "skillsbench.skill-evolution.v6"
+        values["acquisition"]["max_reads"] = 0
+        values["provider"]["model"] = model
+        values["provider"]["transport"] = (
+            "bedrock-messages" if model.startswith("anthropic.") else "bedrock-responses"
+        )
+
+    historical = load_spec(_copy_config(tmp_path, legacy, SKILLSBENCH_CONFIG))
+    assert current.namespace == "skillsbench.skill-evolution.v7"
+    assert historical.namespace == "skillsbench.skill-evolution.v6"
+    assert historical.tasks == current.tasks
+    for name in ("source", "retrieval", "embedding", "matrix_commitment"):
+        assert historical.values[name] == current.values[name]
+    assert historical.values["acquisition"] == {
+        **current.values["acquisition"],
+        "max_reads": 0,
+    }
+    assert historical.values["provider"]["model"] == model
 
 
 @pytest.mark.parametrize(
@@ -181,16 +193,27 @@ def test_v5_rejects_verifier_overrides_ignored_by_pinned_author(tmp_path, name, 
 
 @pytest.mark.parametrize(
     "source",
-    [DEFAULT_CONFIG, EXPERIMENT_ROOT / "runs/skillsbench/full-85-gpt56-v4/config.yaml"],
+    [DEFAULT_CONFIG, SKILLSBENCH_CONFIG],
 )
 def test_tau_and_v4_keep_their_configured_verifier_limits(tmp_path, source):
-    spec = load_spec(
-        _copy_config(
-            tmp_path,
-            lambda value: value["roles"]["verifier"].update(max_turns=29, diagnosis_turns=7),
-            source,
-        )
-    )
+    def historical_limits(values):
+        if source == SKILLSBENCH_CONFIG:
+            values["schema_version"] = "skillsbench.skill-evolution.v4"
+            values["acquisition"]["max_reads"] = 0
+            values["evolution"] = {
+                "max_revisions": 15,
+                "max_oracles": 5,
+                "max_oracle_errors": 5,
+                "revision_timeout_seconds": 3600,
+            }
+            generator = values["roles"]["generator"]
+            generator["max_turns"] = generator.pop("max_episodes")
+            values["roles"]["verifier"]["prompt"] = "verifier-skillsbench.md"
+            values["runtime"].update(max_turns=100, episode_timeout_seconds=3600)
+            values["runtime"]["codex"]["evolution_timeout_seconds"] = 3000
+        values["roles"]["verifier"].update(max_turns=29, diagnosis_turns=7)
+
+    spec = load_spec(_copy_config(tmp_path, historical_limits, source))
     assert spec.values["roles"]["verifier"]["max_turns"] == 29
     assert spec.values["roles"]["verifier"]["diagnosis_turns"] == 7
 

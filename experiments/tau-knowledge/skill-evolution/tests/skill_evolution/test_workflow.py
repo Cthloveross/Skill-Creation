@@ -383,7 +383,11 @@ def test_skillsbench_discovery_observations_reach_s0_and_resume_does_not_repeat_
 
 
 def test_previous_manifest_based_method_is_readable_but_cannot_start_or_resume(tmp_path):
-    path = SKILLSBENCH_CONFIG.parent.parent / "runs/skillsbench/full-85-gpt56-v6/config.yaml"
+    values = yaml.safe_load(SKILLSBENCH_CONFIG.read_text())
+    values["schema_version"] = "skillsbench.skill-evolution.v6"
+    values["acquisition"]["max_reads"] = 0
+    path = tmp_path / "historical-config.yaml"
+    path.write_text(yaml.safe_dump(values))
     old = load_spec(path)
     assert old.namespace == "skillsbench.skill-evolution.v6"
     assert old.values["acquisition"]["max_reads"] == 0
