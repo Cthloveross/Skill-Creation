@@ -1,14 +1,46 @@
 {
   "schema": "skill-evolution.archive.v2",
-  "date": "2026-10-07",
+  "date": "2026-10-10",
   "archive_mode": "physical_relocation_preserve_artifact_bytes",
   "current_methods": [
     "tau.skill-evolution.v4",
-    "skillsbench.skill-evolution.v7"
+    "skillsbench.skill-evolution.v8"
   ],
-  "current_readiness": "../runs/readiness-skillsbench-input-discovery-20261008-001",
+  "current_readiness": "../runs/skillsbench/readiness-dymal4-v8-20261010-001",
   "document_snapshots": null,
   "runs": [
+    {
+      "path": "runs/input-discovery-five-gpt54-20261008-003",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical v7 result or acceptance evidence; incompatible with SkillsBench v8",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/input-discovery-five-gpt54-20261008-003/public-summary.json",
+          "sha256": "c229d461200137b738b873878d942ddf1d3267a469fdd05e70f4a20350ac1f42",
+          "original_path": "runs/skillsbench/input-discovery-five-gpt54-20261008-003/public-summary.json"
+        },
+        {
+          "path": "runs/input-discovery-five-gpt54-20261008-003/public-acquisition-review.json",
+          "sha256": "354c1566462144d998f5f516ffb0d2fe61215a69712490c4948deb19cc5d1f2b",
+          "original_path": "runs/skillsbench/input-discovery-five-gpt54-20261008-003/public-acquisition-review.json"
+        },
+        {
+          "path": "runs/input-discovery-five-gpt54-20261008-003/public-verification-review.json",
+          "sha256": "a5be65afac34f78ea4d2b6643635a2448e7a1600894c6dda3c2780a9267bd977",
+          "original_path": "runs/skillsbench/input-discovery-five-gpt54-20261008-003/public-verification-review.json"
+        },
+        {
+          "path": "runs/input-discovery-five-gpt54-20261008-003/source-identity.json",
+          "sha256": "bdf44c0312615dc7f04e58245933c016bc6b4d24083f00bfd8b9d5aeafbcbfb5",
+          "original_path": "runs/skillsbench/input-discovery-five-gpt54-20261008-003/source-identity.json"
+        }
+      ],
+      "original_path": "runs/skillsbench/input-discovery-five-gpt54-20261008-003",
+      "relocated": true,
+      "directory_inode": 58700834
+    },
     {
       "path": "runs/observation-smoke-2-20261006-001",
       "status": "ARCHIVED_READ_ONLY",
@@ -47,6 +79,38 @@
       "original_path": "runs/readiness-evolution-observation-20261006-001",
       "relocated": true,
       "directory_inode": 47163527
+    },
+    {
+      "path": "runs/readiness-skillsbench-input-discovery-20261008-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "retain_reason": "historical v7 result or acceptance evidence; incompatible with SkillsBench v8",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/readiness-skillsbench-input-discovery-20261008-001/final-status.json",
+          "sha256": "5bcd4b5ad7946563ff54c5f89936b17d954c9b7d97fda2b5079e0a4b70b1ab33",
+          "original_path": "runs/readiness-skillsbench-input-discovery-20261008-001/final-status.json"
+        },
+        {
+          "path": "runs/readiness-skillsbench-input-discovery-20261008-001/cleanup-verification.json",
+          "sha256": "f66ca5aaaf319396aa9f7024d58a7e49ffcab5d0c9edc88283b797e61aa3edf2",
+          "original_path": "runs/readiness-skillsbench-input-discovery-20261008-001/cleanup-verification.json"
+        },
+        {
+          "path": "runs/readiness-skillsbench-input-discovery-20261008-001/independent-review.json",
+          "sha256": "10f43de0fc4f15f6167220a8b8b9c7cd06441e6302e25bc6c4379cfe3d574749",
+          "original_path": "runs/readiness-skillsbench-input-discovery-20261008-001/independent-review.json"
+        },
+        {
+          "path": "runs/readiness-skillsbench-input-discovery-20261008-001/static-checks.json",
+          "sha256": "aee8edb4a274b6d61c8872d9eb3da70cefdafe8669820519e112b10979396baf",
+          "original_path": "runs/readiness-skillsbench-input-discovery-20261008-001/static-checks.json"
+        }
+      ],
+      "original_path": "runs/readiness-skillsbench-input-discovery-20261008-001",
+      "relocated": true,
+      "directory_inode": 54342726
     },
     {
       "path": "runs/skillsbench-codex-control-10-20261006-001",
@@ -103,6 +167,36 @@
       "original_path": "runs/skillsbench-docker-smoke-20261006-001",
       "relocated": true,
       "directory_inode": 46049735
+    },
+    {
+      "path": "runs/skillsbench-full85-gpt54-preparation-20261007",
+      "original_path": "runs/skillsbench/full-85-gpt54-v4",
+      "status": "ARCHIVED_PREPARATION_SUPERSEDED",
+      "resume_current_method": false,
+      "relocated": true,
+      "retain_reason": "unstarted GPT-5.4 full85 preparation replaced by independent GPT-5.6 Terra and Opus4.8 handoffs; four original files preserved bytewise",
+      "evidence": [
+        {
+          "path": "runs/skillsbench-full85-gpt54-preparation-20261007/config.yaml",
+          "original_path": "runs/skillsbench/full-85-gpt54-v4/config.yaml",
+          "sha256": "ae3a69757b2fedeb10bd483423bf6f74c14a07409a64042ab6b1b6ff5310ca2c"
+        },
+        {
+          "path": "runs/skillsbench-full85-gpt54-preparation-20261007/manifest.json",
+          "original_path": "runs/skillsbench/full-85-gpt54-v4/manifest.json",
+          "sha256": "e88b70f8d58df523dfa7f322dc40b8acfcf6e8859c08dc4c0814a73b01c43b7b"
+        },
+        {
+          "path": "runs/skillsbench-full85-gpt54-preparation-20261007/skillsbench-v4-source.tar.gz",
+          "original_path": "runs/skillsbench/full-85-gpt54-v4/skillsbench-v4-source.tar.gz",
+          "sha256": "201c53e0c741e139d571c4e00a252fbeae2cce65c502e31eccd3eb095ea4d5e7"
+        },
+        {
+          "path": "runs/skillsbench-full85-gpt54-preparation-20261007/transfer-manifest.json",
+          "original_path": "runs/skillsbench/full-85-gpt54-v4/transfer-manifest.json",
+          "sha256": "5f3317930aabf5a9f2ebe3562108322da422f0dad946261181929c880fc9e841"
+        }
+      ]
     },
     {
       "path": "runs/skillsbench-gpt54-acc-20261006-001",
@@ -365,36 +459,6 @@
       "original_path": "runs/tau-workspace-benign-4-20261005-003",
       "relocated": true,
       "directory_inode": 45887134
-    },
-    {
-      "path": "runs/skillsbench-full85-gpt54-preparation-20261007",
-      "original_path": "runs/skillsbench/full-85-gpt54-v4",
-      "status": "ARCHIVED_PREPARATION_SUPERSEDED",
-      "resume_current_method": false,
-      "relocated": true,
-      "retain_reason": "unstarted GPT-5.4 full85 preparation replaced by independent GPT-5.6 Terra and Opus4.8 handoffs; four original files preserved bytewise",
-      "evidence": [
-        {
-          "path": "runs/skillsbench-full85-gpt54-preparation-20261007/config.yaml",
-          "original_path": "runs/skillsbench/full-85-gpt54-v4/config.yaml",
-          "sha256": "ae3a69757b2fedeb10bd483423bf6f74c14a07409a64042ab6b1b6ff5310ca2c"
-        },
-        {
-          "path": "runs/skillsbench-full85-gpt54-preparation-20261007/manifest.json",
-          "original_path": "runs/skillsbench/full-85-gpt54-v4/manifest.json",
-          "sha256": "e88b70f8d58df523dfa7f322dc40b8acfcf6e8859c08dc4c0814a73b01c43b7b"
-        },
-        {
-          "path": "runs/skillsbench-full85-gpt54-preparation-20261007/skillsbench-v4-source.tar.gz",
-          "original_path": "runs/skillsbench/full-85-gpt54-v4/skillsbench-v4-source.tar.gz",
-          "sha256": "201c53e0c741e139d571c4e00a252fbeae2cce65c502e31eccd3eb095ea4d5e7"
-        },
-        {
-          "path": "runs/skillsbench-full85-gpt54-preparation-20261007/transfer-manifest.json",
-          "original_path": "runs/skillsbench/full-85-gpt54-v4/transfer-manifest.json",
-          "sha256": "5f3317930aabf5a9f2ebe3562108322da422f0dad946261181929c880fc9e841"
-        }
-      ]
     }
   ],
   "relocated_at": "2026-10-07T05:36:06.173959+00:00",
@@ -589,12 +653,12 @@
   },
   "current_readiness_by_experiment": {
     "tau": null,
-    "skillsbench": "../runs/readiness-skillsbench-input-discovery-20261008-001"
+    "skillsbench": "../runs/skillsbench/readiness-dymal4-v8-20261010-001"
   },
   "active_runs_cleanup": {
     "date": "2026-10-09",
     "reason": "User requested keeping only the current valid SkillsBench result and matching acceptance evidence. Existing archive is unchanged.",
-    "current_trial": "../runs/skillsbench/input-discovery-five-gpt54-20261008-003",
+    "current_trial": "runs/input-discovery-five-gpt54-20261008-003",
     "deleted_paths": [
       "runs/readiness-direct-evolution-v4-20261007-001",
       "runs/readiness-skillsbench-author-v5-20261007-001",
@@ -636,6 +700,16 @@
     "deleted_file_bytes": 11219779376,
     "current_summary_sha256": "c229d461200137b738b873878d942ddf1d3267a469fdd05e70f4a20350ac1f42",
     "historical_validation_scope": "The 2026-10-07 validation below describes that archive operation, not the current active-runs cleanup.",
-    "verification": "../runs/readiness-skillsbench-input-discovery-20261008-001/cleanup-verification.json"
+    "verification": "runs/readiness-skillsbench-input-discovery-20261008-001/cleanup-verification.json"
+  },
+  "v8_transition": {
+    "date": "2026-10-10",
+    "current_trial": "../runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001",
+    "archived_v7_paths": [
+      "runs/input-discovery-five-gpt54-20261008-003",
+      "runs/readiness-skillsbench-input-discovery-20261008-001"
+    ],
+    "resume_v7_into_v8": false,
+    "reason": "SkillsBench v8 changes the corpus conditions, retrieval identity, and attack measurement contract."
   }
 }

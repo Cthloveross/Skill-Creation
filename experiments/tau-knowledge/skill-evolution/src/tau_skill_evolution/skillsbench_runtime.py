@@ -1171,6 +1171,7 @@ class SkillsBenchRunner:
         transport: Any = None,
         runtime: str | None = None,
         runtime_lock_path: Path | None = None,
+        attack_condition: str | None = None,
     ):
         self.root, self.task_id, self.demo = Path(root).resolve(), task_id, demo
         self.runtime = runtime or ("bubblewrap-demo" if demo else "docker")
@@ -1205,6 +1206,11 @@ class SkillsBenchRunner:
         self.learning_deadline: float | None = None
         self.execution_deadline: float | None = None
         self.timeout_multiplier: float = 5
+        self.attack_condition = attack_condition
+        self.attack_monitor: Any | None = None
+        self.last_attack_outcome: dict[str, Any] | None = None
+        self.attack_cleanup_verified = True
+        self.attack_private_contamination = False
 
     def _lock(self) -> SkillsBenchRuntimeLock:
         return SkillsBenchRuntimeLock.from_file(self.runtime_lock_path)
@@ -1478,6 +1484,247 @@ class SkillsBenchRunner:
             raise ContainerUnavailable("skillsbench_episode_not_started")
         return ["docker", "compose", "-p", self.container_name, "-f", str(self.compose_path), *args]
 
+    def _attack_monitor_for(self, episode: SkillEpisode, *, resume: bool = False) -> Any | None:
+        if self.attack_condition is None:
+            return None
+        from .skillsbench_attack_runtime import SkillsBenchAttackMonitor
+
+        monitor = SkillsBenchAttackMonitor(
+            self,
+            self.attack_condition,
+            episode.work.parent / "attack-private",
+            resume=resume,
+        )
+        monitor.bind_candidate_sources(getattr(episode, "files", None))
+        self.attack_monitor = monitor
+        self.last_attack_outcome = monitor.outcome
+        self.attack_cleanup_verified = monitor.cleanup_verified
+        self.attack_private_contamination = monitor.private_contamination
+        return monitor
+
+    def _mark_attack_cleanup_failure(self, failure: str) -> None:
+        self.attack_cleanup_verified = False
+        if self.attack_monitor is not None:
+            self.attack_monitor.mark_cleanup_failure(failure)
+
+    def _mark_attack_contamination(self) -> None:
+        self.attack_private_contamination = True
+        if self.attack_monitor is not None:
+            self.attack_monitor.mark_private_contamination()
+
+    def prepare_attack_fixtures(self, episode: SkillEpisode, *, reset: bool = False) -> None:
+        """Prepare all private v8 fixtures; no-op for historical protocols."""
+        if self.attack_condition is None:
+            return
+        monitor = self.attack_monitor or self._attack_monitor_for(episode)
+        if monitor.outcome is not None and monitor.outcome.get("asr_status") == "NOT_MEASURED":
+            return
+        try:
+            monitor.prepare(reset=reset)
+        except (ContainerUnavailable, OSError) as exc:
+            if str(exc) == "skillsbench_attack_fixture_path_conflict":
+                raise
+            monitor.fail(str(exc))
+            self.last_attack_outcome = monitor.outcome
+            try:
+                monitor.remove_fixtures()
+            except (ContainerUnavailable, OSError) as cleanup_exc:
+                self._mark_attack_cleanup_failure(str(cleanup_exc))
+
+    def begin_attack_measurement(self, files: Mapping[str, str] | None) -> None:
+        if self.attack_monitor is None:
+            return
+        if (
+            self.attack_monitor.outcome is not None
+            and self.attack_monitor.outcome.get("asr_status") == "NOT_MEASURED"
+        ):
+            return
+        self.attack_monitor.bind_candidate_sources(files)
+        if not self.attack_monitor.active:
+            try:
+                self._start_attack_collector()
+                self.attack_monitor.prepare(reset=True)
+                self._sync_learning_containers()
+            except (ContainerUnavailable, OSError) as exc:
+                self.last_attack_outcome = self.attack_monitor.fail(str(exc))
+                try:
+                    self.attack_monitor.remove_fixtures()
+                except (ContainerUnavailable, OSError) as cleanup_exc:
+                    self._mark_attack_cleanup_failure(str(cleanup_exc))
+
+    def finish_attack_measurement(
+        self, files: Mapping[str, str] | None = None
+    ) -> dict[str, Any] | None:
+        """Seal a value-free private measurement before public tools are closed."""
+        if self.attack_monitor is None:
+            return None
+        if files is not None:
+            self.attack_monitor.bind_candidate_sources(files)
+        try:
+            if self.attack_monitor.active:
+                if self.container_name is None:
+                    raise ContainerUnavailable("skillsbench_episode_not_started")
+                if self.attack_monitor.quiesce_candidate_processes():
+                    # The task state changed when a candidate descendant had to be
+                    # killed; do not claim a comparable official utility result.
+                    self._mark_attack_contamination()
+                changed = self.transport.run(
+                    ["docker", "diff", self.container_name],
+                    stdin=b"",
+                    timeout=30,
+                    output_limit=8 * 1024 * 1024,
+                    env=_host_environment(),
+                )
+                if changed.returncode or changed.failure:
+                    raise ContainerUnavailable("skillsbench_attack_private_copy_scan_failed")
+                changed_paths = []
+                for line in changed.stdout.decode("utf-8").splitlines():
+                    if len(line) >= 4 and line[:2] in {"A ", "C "} and line[2] == "/":
+                        changed_paths.append(line[2:])
+                # docker diff covers the writable container layer.  Explicitly
+                # scan writable tmpfs/bind mounts, which do not appear there.
+                scan_roots = [*self.workspace_roots, "/tmp", "/var/tmp", "/dev/shm", "/logs"]
+                if self.learning_workspace is not None:
+                    scan_roots += ["/work/candidate", "/work/scratch"]
+                removed = self.attack_monitor.remove_private_copies(
+                    tuple(dict.fromkeys(scan_roots)), tuple(dict.fromkeys(changed_paths))
+                )
+                if removed:
+                    self._mark_attack_contamination()
+        except (ContainerUnavailable, OSError, UnicodeError, ValueError) as exc:
+            self._mark_attack_cleanup_failure(str(exc))
+            self.last_attack_outcome = self.attack_monitor.fail(str(exc))
+        try:
+            self.last_attack_outcome = self.attack_monitor.finish()
+        except (ContainerUnavailable, OSError) as exc:
+            self.last_attack_outcome = self.attack_monitor.fail(str(exc))
+        try:
+            self.attack_monitor.remove_fixtures()
+        except (ContainerUnavailable, OSError) as exc:
+            self._mark_attack_cleanup_failure(str(exc))
+            self.last_attack_outcome = self.attack_monitor.fail(str(exc))
+        try:
+            self._stop_attack_collector()
+        except (ContainerUnavailable, OSError) as exc:
+            self._mark_attack_cleanup_failure(str(exc))
+            self.last_attack_outcome = self.attack_monitor.fail(str(exc))
+        self._sync_learning_containers()
+        return self.last_attack_outcome
+
+    def _start_attack_collector(self) -> None:
+        if self.attack_monitor is None:
+            return
+        self.attack_monitor.clear_collector_status()
+        result = self.transport.run(
+            ["docker", "start", self.attack_monitor.container_name],
+            stdin=b"",
+            timeout=30,
+            output_limit=self.output_limit,
+            env=_host_environment(),
+        )
+        if result.returncode or result.failure:
+            raise ContainerUnavailable("skillsbench_attack_collector_restart_failed")
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
+            health = self.transport.run(
+                [
+                    "docker",
+                    "inspect",
+                    "--format",
+                    '{{with .State.Health}}{{json .Status}}{{else}}"none"{{end}}',
+                    self.attack_monitor.container_name,
+                ],
+                stdin=b"",
+                timeout=10,
+                output_limit=self.output_limit,
+                env=_host_environment(),
+            )
+            if (
+                (self.attack_monitor.monitor / "ready").is_file()
+                and not (self.attack_monitor.monitor / "error").exists()
+                and self.attack_monitor.cpu_socket_file.is_socket()
+                and self.attack_monitor._collector_running()
+                and not health.returncode
+                and not health.failure
+                and health.stdout.strip() == b'"healthy"'
+            ):
+                return
+            time.sleep(0.05)
+        raise ContainerUnavailable("skillsbench_attack_collector_restart_failed")
+
+    def _stop_attack_collector(self) -> None:
+        if self.attack_monitor is None:
+            return
+
+        def remove_socket() -> None:
+            try:
+                self.attack_monitor.cpu_socket_file.unlink()
+            except FileNotFoundError:
+                pass
+            except OSError as exc:
+                raise ContainerUnavailable(
+                    "skillsbench_attack_collector_socket_cleanup_failed"
+                ) from exc
+
+        probe = self.transport.run(
+            [
+                "docker",
+                "inspect",
+                "--format",
+                "{{json .State.Running}}",
+                self.attack_monitor.container_name,
+            ],
+            stdin=b"",
+            timeout=10,
+            output_limit=self.output_limit,
+            env=_host_environment(),
+        )
+        if probe.returncode or probe.failure:
+            detail = (probe.stdout + probe.stderr).decode("utf-8", "replace").lower()
+            if "no such" in detail:
+                remove_socket()
+                return
+            raise ContainerUnavailable("skillsbench_attack_collector_state_failed")
+        if probe.stdout.strip() == b"false":
+            remove_socket()
+            return
+        if probe.stdout.strip() != b"true":
+            raise ContainerUnavailable("skillsbench_attack_collector_state_invalid")
+        stopped = self.transport.run(
+            ["docker", "stop", "--time", "5", self.attack_monitor.container_name],
+            stdin=b"",
+            timeout=15,
+            output_limit=self.output_limit,
+            env=_host_environment(),
+        )
+        if stopped.returncode or stopped.failure:
+            raise ContainerUnavailable("skillsbench_attack_collector_stop_failed")
+        remove_socket()
+
+    def _sync_learning_containers(self) -> None:
+        if self.learning_checkpoint is None or self.learning_state is None:
+            return
+        self.learning_state["containers"] = self._learning_containers()
+        atomic_json(self.learning_checkpoint, self.learning_state)
+
+    def record_attack_output(self, stdout: bytes | str, stderr: bytes | str = b"") -> None:
+        if self.attack_monitor is not None:
+            self.attack_monitor.record_output(stdout, stderr)
+
+    def redact_attack_output(self, value: bytes | str) -> bytes | str:
+        if self.attack_monitor is None:
+            return value
+        return self.attack_monitor.redact_output(value)
+
+    def attack_shell_command(self, command: str) -> str:
+        if self.attack_monitor is None or not self.attack_monitor.active:
+            return command
+        socket_path = shlex.quote(self.attack_monitor.cpu_socket_path)
+        return (
+            "export PYTHONPATH=/run/tau-attack-hook${PYTHONPATH:+:$PYTHONPATH} "
+            f"TAU_ATTACK_SOCKET={socket_path} TAU_ATTACK_EXECUTION=1; " + command
+        )
+
     def _start_episode(self, episode: SkillEpisode) -> None:
         lock = self._docker_lock()
         self.container_name = "tau-sb-" + uuid.uuid4().hex
@@ -1486,6 +1733,11 @@ class SkillsBenchRunner:
         logs.mkdir(mode=0o777)
         logs.chmod(0o777)
         definition = json.loads(json.dumps(lock["services"]))
+        attack_monitor = self._attack_monitor_for(episode)
+        self.attack_cleanup_verified = True
+        self.attack_private_contamination = False
+        if attack_monitor is not None:
+            attack_monitor.check_pristine_image(lock["service_images"]["main"]["digest"])
         resolved = {}
         for name, service in definition["services"].items():
             service.pop("build", None)
@@ -1589,6 +1841,13 @@ class SkillsBenchRunner:
                 networks.setdefault("default", {})
             for name, network in networks.items():
                 networks[name] = {**(network or {}), "internal": True}
+        official_services = tuple(definition["services"])
+        if attack_monitor is not None:
+            attack_monitor.configure_compose(
+                definition,
+                main_image=lock["service_images"]["main"]["digest"],
+                public_python=lock["service_images"]["main"].get("public_python", _NATIVE_PYTHON),
+            )
         self.compose_path.write_text(yaml.safe_dump(definition, sort_keys=True))
         self.compose_path.chmod(0o600)
         if self.learning_checkpoint is not None:
@@ -1599,7 +1858,7 @@ class SkillsBenchRunner:
             )
             atomic_json(self.learning_checkpoint, self.learning_state)
         result = self.transport.run(
-            self._compose_command("up", "--detach", "--wait", "--no-build"),
+            self._compose_command("up", "--detach", "--wait", "--no-build", *official_services),
             stdin=b"",
             timeout=(
                 min(resources["build_timeout_sec"], self.phase_remaining())
@@ -1611,6 +1870,29 @@ class SkillsBenchRunner:
         )
         if result.returncode or result.failure:
             raise ContainerUnavailable("skillsbench_task_services_not_ready")
+        if attack_monitor is not None:
+            monitor_result = self.transport.run(
+                self._compose_command(
+                    "up", "--detach", "--wait", "--no-build", attack_monitor.service_name
+                ),
+                stdin=b"",
+                timeout=30,
+                output_limit=self.output_limit,
+                env=_host_environment(resolved),
+            )
+            if monitor_result.returncode or monitor_result.failure:
+                detail = "skillsbench_attack_collector_not_ready"
+                error = attack_monitor.monitor / "error"
+                if error.is_file() and error.read_text().strip().endswith(":98"):
+                    raise ContainerUnavailable("skillsbench_attack_fixture_port_conflict")
+                self.last_attack_outcome = attack_monitor.fail(detail)
+                self.transport.run(
+                    self._compose_command("rm", "--force", "--stop", attack_monitor.service_name),
+                    stdin=b"",
+                    timeout=30,
+                    output_limit=self.output_limit,
+                    env=_host_environment(resolved),
+                )
         self.public_open = True
         self.private_grade_started = False
         self.episode_started = time.monotonic()
@@ -1642,6 +1924,7 @@ class SkillsBenchRunner:
             self.stage_frozen_documents(
                 json.loads((self.learning_workspace.package / "base.json").read_text())
             )
+        self.prepare_attack_fixtures(episode)
 
     def _prepare_frozen_documents(self, base: Mapping[str, Any]) -> None:
         directory = self.learning_workspace.work.parent / "frozen-documents"
@@ -1746,7 +2029,14 @@ class SkillsBenchRunner:
             setattr(episode, name, guarded)
 
     def _stop_episode(self) -> None:
+        monitor_error: Exception | None = None
+        compose_error: str | None = None
         try:
+            if self.attack_monitor is not None and self.attack_monitor.active:
+                try:
+                    self.finish_attack_measurement()
+                except Exception as exc:  # cleanup must still own the full Compose project
+                    monitor_error = exc
             if self.compose_path is not None and self.container_name is not None:
                 # Only grader logs are writable host mounts. Task files stay in the
                 # fresh image layer with their original ownership and permissions.
@@ -1766,21 +2056,35 @@ class SkillsBenchRunner:
                     output_limit=self.output_limit,
                     env=_host_environment(),
                 )
-                result = self.transport.run(
-                    self._compose_command("down", "--volumes", "--remove-orphans"),
-                    stdin=b"",
-                    timeout=30,
-                    output_limit=self.output_limit,
-                    env=_host_environment(),
-                )
-                if result.returncode or result.failure:
-                    raise ContainerUnavailable("skillsbench_episode_cleanup_failed")
+                try:
+                    result = self.transport.run(
+                        self._compose_command("down", "--volumes", "--remove-orphans"),
+                        stdin=b"",
+                        timeout=30,
+                        output_limit=self.output_limit,
+                        env=_host_environment(),
+                    )
+                    if result.returncode or result.failure:
+                        compose_error = str(result.failure or result.returncode)
+                except OSError as exc:
+                    compose_error = type(exc).__name__
         finally:
             self.public_open = False
             self.container_name = None
             self.compose_path = None
+            self.attack_monitor = None
+        if compose_error is not None:
+            monitor = type(monitor_error).__name__ if monitor_error is not None else "none"
+            raise ContainerUnavailable(
+                f"skillsbench_episode_cleanup_failed:compose={compose_error}:monitor={monitor}"
+            ) from monitor_error
+        if monitor_error is not None:
+            raise ContainerUnavailable(
+                f"skillsbench_attack_cleanup_failed:{type(monitor_error).__name__}"
+            ) from monitor_error
 
     def close_public(self, _episode: SkillEpisode) -> None:
+        self.finish_attack_measurement()
         self.public_open = False
 
     @contextmanager
@@ -1788,6 +2092,14 @@ class SkillsBenchRunner:
         """Copy the live public filesystem without changing the candidate's permissions."""
         if not self.public_open or self.container_name is None:
             raise PermissionError("skillsbench_public_episode_closed")
+        # A public snapshot is a disclosure boundary.  Seal and scrub an active
+        # private measurement before tar can observe either fixtures or copies.
+        if self.attack_monitor is not None and self.attack_monitor.active:
+            self.finish_attack_measurement()
+        if self.attack_private_contamination:
+            raise ContainerUnavailable("skillsbench_attack_private_value_copied")
+        if not self.attack_cleanup_verified:
+            raise ContainerUnavailable("skillsbench_attack_fixture_cleanup_unverified")
         with tempfile.TemporaryDirectory(prefix="sb-public-copy-") as staging:
             roots = {}
             for destination in self.workspace_roots:
@@ -1812,15 +2124,22 @@ class SkillsBenchRunner:
                     )
 
                 try:
+                    excludes = (
+                        self.attack_monitor.snapshot_excludes(destination)
+                        if self.attack_monitor is not None
+                        else ()
+                    )
                     result = run(
                         [
                             *prefix,
                             "/bin/bash",
                             "-c",
-                            'test -e "$1" || exit 44; tar --hard-dereference -cf "$2" -C "$1" .',
+                            'test -e "$1" || exit 44; root="$1"; archive="$2"; shift 2; '
+                            'tar --hard-dereference "$@" -cf "$archive" -C "$root" .',
                             "snapshot",
                             destination,
                             archive,
+                            *["--exclude=" + pattern for pattern in excludes],
                         ]
                     )
                     if result.returncode == 44 and not result.failure:
@@ -1975,6 +2294,19 @@ class SkillsBenchRunner:
                 str(timeout),
                 *command[-len(args) :],
             ]
+        if public and self.attack_monitor is not None and self.attack_monitor.active:
+            index = command.index(self.container_name)
+            payload = command[index + 1 :]
+            command = command[: index + 1] + [
+                "/bin/sh",
+                "-c",
+                "export PYTHONPATH=/run/tau-attack-hook${PYTHONPATH:+:$PYTHONPATH} "
+                f"TAU_ATTACK_SOCKET={shlex.quote(self.attack_monitor.cpu_socket_path)} "
+                "TAU_ATTACK_EXECUTION=1; "
+                'exec "$@"',
+                "tau-attack",
+                *payload,
+            ]
         result = self.transport.run(
             command,
             stdin=stdin,
@@ -1989,7 +2321,15 @@ class SkillsBenchRunner:
             env=_host_environment(environment),
         )
         if self.learning_workspace is not None and result.returncode in (124, 137):
-            return ProcessResult(result.returncode, result.stdout, result.stderr, "timeout")
+            result = ProcessResult(result.returncode, result.stdout, result.stderr, "timeout")
+        if public:
+            self.record_attack_output(result.stdout, result.stderr)
+            result = ProcessResult(
+                result.returncode,
+                self.redact_attack_output(result.stdout),
+                self.redact_attack_output(result.stderr),
+                result.failure,
+            )
         return result
 
     def _raw(
@@ -2098,6 +2438,7 @@ class SkillsBenchRunner:
         cwd: str | None = None,
         env: Mapping[str, str] | None = None,
         timeout_sec: float | None = None,
+        actor: str = "host",
     ) -> ProcessResult:
         """Author BaseEnvironment.exec semantics in the active learning MAIN."""
         if self.learning_workspace is None or not self.public_open or self.container_name is None:
@@ -2106,6 +2447,8 @@ class SkillsBenchRunner:
         if remaining <= 0:
             raise TimeoutError("learning_timeout")
         timeout = min(float(timeout_sec or 900), 900.0, remaining)
+        if actor == "generator":
+            command = self.attack_shell_command(command)
         arguments = ["docker", "exec", "--interactive"]
         if cwd is not None:
             arguments += ["--workdir", cwd]
@@ -2129,8 +2472,15 @@ class SkillsBenchRunner:
             env=_host_environment(),
         )
         if result.returncode in (124, 137):
-            return ProcessResult(result.returncode, result.stdout, result.stderr, "timeout")
-        return result
+            result = ProcessResult(result.returncode, result.stdout, result.stderr, "timeout")
+        if actor == "generator":
+            self.record_attack_output(result.stdout, result.stderr)
+        return ProcessResult(
+            result.returncode,
+            self.redact_attack_output(result.stdout),
+            self.redact_attack_output(result.stderr),
+            result.failure,
+        )
 
     @contextmanager
     def learning_episode(
@@ -2158,6 +2508,19 @@ class SkillsBenchRunner:
                 not self.compose_path.is_file() or _hash(self.compose_path) != state["compose_hash"]
             ):
                 raise ContainerUnavailable("skillsbench_evolution_compose_changed")
+            if self.attack_condition is not None:
+                from .skillsbench_attack_runtime import SkillsBenchAttackMonitor
+
+                self.attack_monitor = SkillsBenchAttackMonitor(
+                    self,
+                    self.attack_condition,
+                    session.work.parent / "attack-private",
+                    resume=True,
+                )
+                self.attack_monitor.bind_candidate_sources(session.files())
+                self.last_attack_outcome = self.attack_monitor.outcome
+                self.attack_cleanup_verified = self.attack_monitor.cleanup_verified
+                self.attack_private_contamination = self.attack_monitor.private_contamination
             fields = ("id", "name", "service", "started_at", "restart_count")
             current = [
                 tuple(item[field] for field in fields) for item in self._learning_containers()
@@ -2203,6 +2566,8 @@ class SkillsBenchRunner:
             else:
                 self.public_open, self.private_grade_started = True, False
                 self.episode_started = time.monotonic()
+                if self.attack_monitor is None:
+                    self._attack_monitor_for(episode, resume=True)
             probe = self._exec(["/bin/sh", "-c", "command -v timeout >/dev/null"], public=True)
             if probe.returncode or probe.failure:
                 raise ContainerUnavailable("skillsbench_learning_terminal_timeout_unavailable")
@@ -2225,7 +2590,26 @@ class SkillsBenchRunner:
                 self.workspace_roots = ()
 
     def _learning_containers(self) -> list[dict[str, Any]]:
-        services = self._docker_lock()["services"]["services"]
+        if self.compose_path is None:
+            raise ContainerUnavailable("skillsbench_evolution_environment_missing")
+        definition = (
+            yaml.safe_load(self.compose_path.read_text())
+            if self.compose_path.is_file()
+            else self._docker_lock()["services"]
+        )
+        services = definition.get("services", {}) if isinstance(definition, dict) else {}
+        if not isinstance(services, dict) or "main" not in services:
+            raise ContainerUnavailable("skillsbench_evolution_environment_missing")
+        expected_services = set(services)
+        if (
+            self.attack_monitor is not None
+            and self.attack_monitor.outcome is not None
+            and (
+                not self.attack_monitor.active
+                or self.attack_monitor.outcome.get("asr_status") == "NOT_MEASURED"
+            )
+        ):
+            expected_services.discard(self.attack_monitor.service_name)
         requirements: dict[str, set[str]] = {"main": {"service_started"}}
         for service in services.values():
             dependencies = service.get("depends_on", {})
@@ -2274,6 +2658,12 @@ class SkillsBenchRunner:
             except (ValueError, UnicodeError):
                 state = {}
             if (
+                self.attack_monitor is not None
+                and state.get("service") == self.attack_monitor.service_name
+                and state["service"] not in expected_services
+            ):
+                continue
+            if (
                 probe.returncode
                 or probe.failure
                 or state.get("id") != identifier
@@ -2302,15 +2692,17 @@ class SkillsBenchRunner:
                 }
                 if not valid.get(condition, False):
                     raise ContainerUnavailable("skillsbench_evolution_service_not_ready")
+            service_health = services[state["service"]].get("healthcheck")
             if (
-                state["service"] == "main"
-                and (service_health := services["main"].get("healthcheck"))
+                service_health
                 and not service_health.get("disable", False)
                 and state.get("health") != "healthy"
             ):
                 raise ContainerUnavailable("skillsbench_evolution_service_not_ready")
             states.append(state)
-        if {state["service"] for state in states} != set(services) or len(states) != len(services):
+        if {state["service"] for state in states} != expected_services or len(states) != len(
+            expected_services
+        ):
             raise ContainerUnavailable("skillsbench_evolution_environment_missing")
         return states
 
@@ -2556,7 +2948,16 @@ class SkillsBenchRunner:
         deliverables: list[str] = []
         self.grader_diagnostics = None
         self.grader_probe_context = None
-        if self.use_bwrap:
+        attack_gate = (
+            "skillsbench_attack_fixture_cleanup_unverified"
+            if self.attack_condition is not None and not self.attack_cleanup_verified
+            else "skillsbench_attack_private_value_copied"
+            if self.attack_condition is not None and self.attack_private_contamination
+            else None
+        )
+        if attack_gate is not None:
+            result = ProcessResult(-1, failure=attack_gate)
+        elif self.use_bwrap:
             if self.runtime == "workspace" and self.task_id in _WORKSPACE_TEST_SCRIPT_SHA256:
                 self._lock().validate(self.task_id)
                 _, bootstrap = _workspace_grader_script(self.root, self.task_id)

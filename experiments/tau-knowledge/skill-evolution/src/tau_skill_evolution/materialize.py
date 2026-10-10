@@ -478,10 +478,14 @@ class CorpusMaterializer:
             entries = tuple(self.injections_root.iterdir())
         except OSError as exc:
             raise MaterializationError("unable to inspect injections directory") from exc
-        if {entry.name for entry in entries} != expected_names or any(
-            entry.is_symlink() or not entry.is_file() for entry in entries
+        root_files = tuple(entry for entry in entries if entry.is_file() and not entry.is_symlink())
+        directories = tuple(entry for entry in entries if entry.is_dir() and not entry.is_symlink())
+        if (
+            {entry.name for entry in root_files} != expected_names
+            or {entry.name for entry in directories} - {"skillsbench"}
+            or len(root_files) + len(directories) != len(entries)
         ):
-            raise MaterializationError("injections directory must contain exactly three files")
+            raise MaterializationError("injections directory contains unexpected entries")
         attacks: dict[str, bytes] = {}
         for profile in PAYLOAD_PROFILES:
             attacks[profile] = read_payload_bytes(profile, self.payload_files)

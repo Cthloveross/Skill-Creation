@@ -92,11 +92,9 @@ def text_counter(spec: ExperimentSpec) -> VllmTextTokenCounter:
 
 def prepare_corpus(spec: ExperimentSpec, task: str, arm: str) -> FullDocumentHybridSession:
     if spec.experiment == "skillsbench":
-        if arm != "benign":
-            raise ValueError("SkillsBench supports only benign")
         from .skillsbench import prepare_corpus as prepare_skillsbench_corpus
 
-        return prepare_skillsbench_corpus(spec)
+        return prepare_skillsbench_corpus(spec, arm)
     embedding = spec.values["embedding"]
     materializer = CorpusMaterializer(
         source_documents=spec.upstream

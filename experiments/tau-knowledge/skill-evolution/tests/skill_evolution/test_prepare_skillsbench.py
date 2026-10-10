@@ -3,6 +3,7 @@ import json
 import subprocess
 import sys
 import threading
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -94,3 +95,86 @@ def test_invalid_parallelism_is_rejected_before_dispatch(preparation_cli, monkey
         preparation_cli.main()
     assert stopped.value.code == 2
     assert calls == []
+
+
+def test_non_dense_preparation_keeps_current_python(preparation_cli, monkeypatch):
+    calls = []
+    monkeypatch.setattr(preparation_cli.os, "execve", lambda *args: calls.append(args))
+    preparation_cli._ensure_dense_runtime(
+        SimpleNamespace(index_settings=None, all_indices=False, freeze_matrix=False),
+        SimpleNamespace(error=lambda message: pytest.fail(message)),
+    )
+    assert calls == []
+
+
+def test_dense_preparation_reexecs_in_pinned_embedding_python(
+    preparation_cli, monkeypatch, tmp_path
+):
+    target = tmp_path / "embedding/.venv/bin/python"
+    target.parent.mkdir(parents=True)
+    target.write_text("")
+    calls = []
+    settings = json.dumps({"vllm": "embedding/.venv/bin/vllm"})
+    monkeypatch.setattr(preparation_cli.importlib.util, "find_spec", lambda name: None)
+    monkeypatch.setattr(preparation_cli, "ROOT", tmp_path)
+    monkeypatch.setattr(preparation_cli.sys, "executable", "/usr/bin/python3")
+    monkeypatch.setattr(preparation_cli.sys, "argv", ["prepare", "--index-settings", settings])
+    monkeypatch.setattr(
+        preparation_cli.os,
+        "execve",
+        lambda executable, argv, env: calls.append((executable, argv, env)),
+    )
+    preparation_cli._ensure_dense_runtime(
+        SimpleNamespace(
+            index_settings=settings,
+            all_indices=False,
+            freeze_matrix=False,
+        ),
+        SimpleNamespace(error=lambda message: pytest.fail(message)),
+    )
+    assert calls == [
+        (
+            str(target.absolute()),
+            [
+                str(target.absolute()),
+                str(Path(preparation_cli.__file__).resolve()),
+                "--index-settings",
+                settings,
+            ],
+            preparation_cli.os.environ,
+        )
+    ]
+
+
+def test_parent_dispatches_only_dense_worker_to_embedding_python(
+    preparation_cli, monkeypatch, tmp_path
+):
+    target = tmp_path / "data/embedding/.venv/bin/python"
+    target.parent.mkdir(parents=True)
+    target.write_text("")
+    directory = tmp_path / "pool"
+    calls = []
+
+    def run(command, **options):
+        calls.append((command, options))
+        return SimpleNamespace(stdout='{"ready": true, "corpus_hash": "sealed"}\n')
+
+    monkeypatch.setattr(preparation_cli, "ROOT", tmp_path)
+    monkeypatch.setattr(preparation_cli.subprocess, "run", run)
+    result = preparation_cli._prepare_dense_in_pinned_runtime(
+        {"vllm": "data/embedding/.venv/bin/vllm", "model": "fixture"}, directory
+    )
+    assert result == {"ready": True, "corpus_hash": "sealed"}
+    command, options = calls[0]
+    assert command[:3] == [
+        str(target.absolute()),
+        str(Path(preparation_cli.__file__).resolve()),
+        "--index-settings",
+    ]
+    assert command[-2:] == ["--pool-directory", str(directory)]
+    assert options == {
+        "check": True,
+        "capture_output": True,
+        "text": True,
+        "timeout": 3600,
+    }

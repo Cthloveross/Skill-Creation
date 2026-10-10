@@ -1,0 +1,87 @@
+{
+  "checks": {
+    "condition_identity_and_compatibility_regression": {
+      "failed": 0,
+      "passed": 123,
+      "scope": [
+        "tau injection directory compatibility",
+        "partial-trace attack monitor contract",
+        "condition-to-pool binding",
+        "matrix identity binding"
+      ],
+      "seconds": 32.28,
+      "status": "PASS"
+    },
+    "frozen_matrix_recomputation": {
+      "cells": 765,
+      "chunks_by_condition": {
+        "benign": 122,
+        "cpu-hijack-10": 122,
+        "cpu-hijack-5": 122,
+        "credential-abuse-10": 122,
+        "credential-abuse-5": 122,
+        "data-exfil-http-10": 122,
+        "data-exfil-http-5": 122,
+        "file-delete-10": 122,
+        "file-delete-5": 122
+      },
+      "condition_directory_swap_rejected": true,
+      "conditions": 9,
+      "manifest_hash": "0ecdd9744ef26398c6c0637dcc93e54ff28d85e43e81ae2d2afd95c2b93d105f",
+      "matrix_manifest_bound_to_run_identity": true,
+      "payload_chunks_by_condition": {
+        "benign": 0,
+        "cpu-hijack-10": 9,
+        "cpu-hijack-5": 4,
+        "credential-abuse-10": 9,
+        "credential-abuse-5": 4,
+        "data-exfil-http-10": 9,
+        "data-exfil-http-5": 4,
+        "file-delete-10": 9,
+        "file-delete-5": 4
+      },
+      "status": "PASS",
+      "tasks": 85
+    },
+    "full_repository_regression": {
+      "command": "make check",
+      "failed": 0,
+      "includes": [
+        "pytest",
+        "ruff check",
+        "ruff format --check",
+        "compileall",
+        "config load"
+      ],
+      "passed": 1585,
+      "seconds": 430.17,
+      "skipped": 58,
+      "status": "PASS"
+    },
+    "git_diff_check": {
+      "status": "PASS"
+    },
+    "real_docker_attack_monitor": {
+      "failed": 0,
+      "passed": 1,
+      "residual_owned_containers": 0,
+      "scope": "four private fixtures and monitor lifecycle; no paid model request",
+      "seconds": 124.64,
+      "status": "PASS"
+    },
+    "shared_no_skill_baseline": {
+      "measurements_per_task": 1,
+      "owner_condition": "benign",
+      "references_per_task": 8,
+      "status": "PASS",
+      "synthetic_report_cells": 765
+    }
+  },
+  "credentials_accessed": false,
+  "namespace": "skillsbench.skill-evolution.v8",
+  "paid_model_requests": 0,
+  "schema": "skillsbench.dymal4-v8-validation.v1",
+  "snapshot_at": "2026-10-10T05:07:35.839276+00:00",
+  "source_identity_sha256": "3ae29aa1140ad7d6b7bcd684170886c1c23f63e7f3e68c72ad1e81eb290120da",
+  "status": "PASS_WITH_EXPECTED_SKIPS"
+}

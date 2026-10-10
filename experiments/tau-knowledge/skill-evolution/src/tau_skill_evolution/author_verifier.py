@@ -209,11 +209,19 @@ class _Environment:
 
         run, owner = self.run, self.run.owner
         run.check()
+        bridge = getattr(owner, "controller_bridge", None)
+        actor = getattr(bridge, "_command_role", None) or getattr(owner, "role", "host")
         operation_id = f"{run.operation_id}-exec-{run.exec_cursor}"
         run.exec_cursor += 1
 
         def execute() -> dict[str, Any]:
-            result = owner.runner.author_exec(command, cwd=cwd, env=env, timeout_sec=timeout_sec)
+            result = owner.runner.author_exec(
+                command,
+                cwd=cwd,
+                env=env,
+                timeout_sec=timeout_sec,
+                actor=actor,
+            )
             return {
                 "return_code": result.returncode,
                 "stdout": result.stdout.decode("utf-8", "replace"),
@@ -225,7 +233,13 @@ class _Environment:
             value = (
                 owner.journal.dispatch(
                     operation_id,
-                    {"command": command, "cwd": cwd, "env": env, "timeout_sec": timeout_sec},
+                    {
+                        "command": command,
+                        "cwd": cwd,
+                        "env": env,
+                        "timeout_sec": timeout_sec,
+                        "actor": actor,
+                    },
                     execute,
                 )
                 if owner.journal is not None

@@ -112,6 +112,12 @@ def run_author_evolution(
             )
             atomic_json(private / "attempts.json", attempts)
             return None
+        if hasattr(session.runner, "finish_attack_measurement"):
+            session.runner.finish_attack_measurement(files)
+            if session.runner.attack_private_contamination:
+                raise ValueError("skillsbench_attack_private_value_copied")
+            if not session.runner.attack_cleanup_verified:
+                raise ValueError("skillsbench_attack_fixture_cleanup_unverified")
         with session.runner.snapshot_workspace() as mounts:
             trace = {
                 "task_id": session.adapter.task_id,
@@ -228,6 +234,14 @@ def run_author_evolution(
                 checks[-1]["diagnosis"] = latest_verification.diagnosis
                 checks[-1]["author_result"] = latest_verification.to_dict()
                 atomic_json(private / "verifications.json", checks)
+            if (
+                hasattr(outcome, "should_exit")
+                and not outcome.should_exit
+                and hasattr(session.runner, "begin_attack_measurement")
+            ):
+                # Verifier/oracle must see the task state without private fixtures.
+                # Reinstall a fresh set only when control returns to Generator.
+                session.runner.begin_attack_measurement(session.files())
             return outcome
 
         async def _record_intervention(self, *args: Any, **kwargs: Any) -> Any:

@@ -1,0 +1,102 @@
+{
+  "credentials_accessed": false,
+  "digest_algorithm": "sha256(canonical-json-with-sorted-keys-and-compact-separators)",
+  "excluded_from_identity": [
+    "runs/skillsbench/readiness-dymal4-v8-20261010-001",
+    "key.env",
+    "experiments/tau-knowledge/skill-evolution/AUDIT-20261005.md",
+    "generated corpus bytes and vectors transitively bound by configs/skillsbench-dymal4-matrix.json"
+  ],
+  "identity": {
+    "base_repository_head": "2986d1f15d179f0df611a7c512dcf6284dfcefe8",
+    "critical_files_sha256": {
+      ".gitignore": "20c98ef13538506471bb0fafd276eca9455d0f28ee10c8bf6026a033df1cd328",
+      "README.md": "8ba5d5515c067db7dffaf5cae5f0293d0da31ee1ec21ff05942aa5560544d5af",
+      "docs/skillsbench-injection-design.md": "4904c30c10917999f6b33bc1a7a46ec9ca46b1c22dd80edb1af5fbf596e4d67e",
+      "experiments/tau-knowledge/skill-evolution/PROTOCOL.md": "52fbcc1bfedb113cf2fd8cd02bf1a23c029a314688d10b0cbdc14c87e9e4ff1c",
+      "experiments/tau-knowledge/skill-evolution/README.md": "8fa8041e4e728b610843850aed1f5f307430c64cdb054edcb46a8a8f89de7748",
+      "experiments/tau-knowledge/skill-evolution/archive/index.json": "5a9713854be82633b18ae9a853af410d44101b3b1dfd824f1458b220e8a144f5",
+      "experiments/tau-knowledge/skill-evolution/configs/skillsbench-dymal4-conditions.json": "f9a4e3999a5dc882aff8d581dee02d8990334482cc114ef6d0c91e7f10d0012e",
+      "experiments/tau-knowledge/skill-evolution/configs/skillsbench-dymal4-matrix.json": "b8187a0ab254ea7216151b4e94a168a19e622ca0d4aae18459175ab3683d5246",
+      "experiments/tau-knowledge/skill-evolution/configs/skillsbench.yaml": "70c8f1ead976f2a12d5e155fb5eb8f68e9384117edca091ee7bd97c545fd68b4",
+      "experiments/tau-knowledge/skill-evolution/data/skillsbench/public-manifest.json": "5d2962b63552d0c042699c399e3102fd8589b44124381a44b0f989e43882c6da",
+      "experiments/tau-knowledge/skill-evolution/data/skillsbench/source-manifest.json": "33aff5fe6a4a0a9b0bc0c0a1741eec3b9f0000918d521ffc58ba62c50e6df1f3",
+      "experiments/tau-knowledge/skill-evolution/data/skillsbench/source-tree.json": "3ec7804fbc3c45e3886a8368a327176ce195a5544cf494e976841e68964d0804",
+      "experiments/tau-knowledge/skill-evolution/injections/skillsbench/cpu-hijack.txt": "fed8f2c9cfe838f77843f629c9b5c2c4ce7c9f2e274b3c2d66329e65c705fad0",
+      "experiments/tau-knowledge/skill-evolution/injections/skillsbench/credential-abuse.txt": "04068ebfa3012a86a0785cb96a1ecd03826f8e9c3c4311b4402b9eb483d42fc2",
+      "experiments/tau-knowledge/skill-evolution/injections/skillsbench/data-exfil-http.txt": "dd9f7f24b76dd11ed6b8276f055fcf53a6bd58450527c6d35b352d7901bd8871",
+      "experiments/tau-knowledge/skill-evolution/injections/skillsbench/file-delete.txt": "b3abf755a1a132fcbc5cf9566d08b0c5d86d0bf514e4119dfa12ac948211ad9a",
+      "experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md": "c5582cb0d1cfc4aa4a893d8c72b134ac386449e27c4533d37901b941f78685e3"
+    },
+    "frozen_design": {
+      "cells": 765,
+      "condition_manifest_hash": "6a0dc4abdf95c367012114aa50228f8787cc34019bb6e8233090f27b0f9f460c",
+      "conditions": 9,
+      "matrix_manifest_hash": "0ecdd9744ef26398c6c0637dcc93e54ff28d85e43e81ae2d2afd95c2b93d105f",
+      "retries": 0,
+      "seed": 20260904,
+      "tasks": 85
+    },
+    "groups": {
+      "implementation": {
+        "file_count": 80,
+        "manifest_sha256": "ee659a511472e6e8ca0d0559055af130f7cde2db91ac25ebbbaed05a836ff8f0",
+        "patterns": [
+          "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/**/*.py"
+        ]
+      },
+      "model_prompts": {
+        "file_count": 8,
+        "manifest_sha256": "18ce745fb0fdd68560f3970f22aa1d7bf57de996c323a3dfc22221b20db75cd7",
+        "patterns": [
+          "experiments/tau-knowledge/skill-evolution/prompts/*"
+        ]
+      },
+      "operator_scripts": {
+        "file_count": 10,
+        "manifest_sha256": "7ed508e43a3cc08a77b86bc619e3b73ac257d2803960cfffb91ddb9c5a9dfccd",
+        "patterns": [
+          "experiments/tau-knowledge/skill-evolution/scripts/*.py"
+        ]
+      },
+      "runtime_locks": {
+        "file_count": 85,
+        "manifest_sha256": "a837f67be6f0c803d611aa388e608b84652cbb47d3f1f43ce628d987ac36ec85",
+        "patterns": [
+          "experiments/tau-knowledge/skill-evolution/runtime/skillsbench-docker-*-v4-lock.json"
+        ]
+      },
+      "v8_acceptance_tests": {
+        "file_count": 9,
+        "manifest_sha256": "eeea1149055b5f83285c2bc38b02915f7b24cb354b592d41c546d7d4c7bc8ea4",
+        "patterns": [
+          "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_poison.py",
+          "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_attack_runtime.py",
+          "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_acquisition_probe.py",
+          "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_prepare_skillsbench.py",
+          "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_evaluation.py",
+          "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_spec.py",
+          "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_workflow.py",
+          "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_data.py",
+          "experiments/tau-knowledge/skill-evolution/tests/skill_evolution/test_skillsbench_partial_trace.py"
+        ]
+      }
+    },
+    "namespace": "skillsbench.skill-evolution.v8",
+    "upstream_skillsbench": {
+      "expected_commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+      "git_metadata_present": false,
+      "path": "experiments/tau-knowledge/skill-evolution/data/upstream/coevo-skills",
+      "source_manifest_commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+      "source_manifest_sha256": "33aff5fe6a4a0a9b0bc0c0a1741eec3b9f0000918d521ffc58ba62c50e6df1f3",
+      "source_tree_sha": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+      "source_tree_sha256": "3ec7804fbc3c45e3886a8368a327176ce195a5544cf494e976841e68964d0804",
+      "verification": "tracked source-manifest and source-tree projection"
+    }
+  },
+  "identity_sha256": "3ae29aa1140ad7d6b7bcd684170886c1c23f63e7f3e68c72ad1e81eb290120da",
+  "paid_model_requests": 0,
+  "schema": "skillsbench.dymal4-v8-source-identity.v1",
+  "snapshot_at": "2026-10-10T05:07:35.839276+00:00",
+  "working_tree": "REVIEWED_CANDIDATE"
+}

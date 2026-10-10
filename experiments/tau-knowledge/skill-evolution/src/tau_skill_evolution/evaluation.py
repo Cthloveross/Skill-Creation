@@ -137,20 +137,38 @@ def evaluate_no_skill(evaluate: Callable[[], Mapping[str, Any]], *, journal: Any
 
 
 def _measurement(metrics: Any, bundle_hash: str | None) -> dict[str, Any]:
-    if not isinstance(metrics, Mapping) or not _valid_metric(metrics.get("utility")):
+    if not isinstance(metrics, Mapping):
         raise ValueError("evaluation_missing_utility")
-    asr_unavailable = metrics.get("asr") is None and metrics.get("asr_status") == "NOT_APPLICABLE"
+    utility = metrics.get("utility")
+    utility_status = (
+        "MEASURED"
+        if _valid_metric(utility)
+        else metrics.get("utility_status", metrics.get("status"))
+    )
+    if utility_status != "MEASURED" and not (utility is None and utility_status == NOT_MEASURED):
+        raise ValueError("evaluation_missing_utility")
+    asr_status = metrics.get("asr_status")
+    asr_unavailable = metrics.get("asr") is None and asr_status in {
+        "NOT_APPLICABLE",
+        NOT_MEASURED,
+    }
     if not _valid_metric(metrics.get("asr")) and not asr_unavailable:
         raise ValueError("evaluation_missing_asr")
-    return {
-        "status": "MEASURED",
+    measurement = {
+        # ``status`` remains the historical utility-status alias.  ASR can be
+        # measured even when the independent official grader is unavailable.
+        "status": utility_status,
+        "utility_status": utility_status,
         "bundle_hash": bundle_hash,
-        "utility": metrics["utility"],
+        "utility": utility,
         "asr": metrics["asr"],
-        "asr_status": "NOT_APPLICABLE" if asr_unavailable else "MEASURED",
+        "asr_status": asr_status if asr_unavailable else "MEASURED",
         "completion_steps": completion_steps(metrics),
         "metrics": dict(metrics),
     }
+    if utility_status == NOT_MEASURED:
+        measurement["reason"] = str(metrics.get("failure") or "utility_not_measured")
+    return measurement
 
 
 def _valid_metric(value: Any) -> bool:
@@ -162,11 +180,25 @@ def not_measured(
 ) -> dict[str, Any]:
     return {
         "status": NOT_MEASURED,
+        "utility_status": NOT_MEASURED,
         "bundle_hash": bundle_hash,
         "utility": None,
         "asr": None,
+        "asr_status": NOT_MEASURED,
         "reason": reason,
     }
+
+
+def _metric_status(measurement: Mapping[str, Any], name: str) -> str:
+    """Resolve new per-metric status while accepting historical measurements."""
+    if _valid_metric(measurement.get(name)):
+        return "MEASURED"
+    status = measurement.get(f"{name}_status")
+    if name == "utility" and status is None:
+        status = measurement.get("status")
+    if status == "NOT_APPLICABLE" and name == "asr":
+        return status
+    return NOT_MEASURED
 
 
 def case_views(case: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
@@ -188,6 +220,38 @@ def case_views(case: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
     }
 
 
+def _resolve_no_skill_evaluations(
+    cases: Sequence[Mapping[str, Any]],
+) -> dict[tuple[str, Any], Mapping[str, Any]]:
+    """Resolve per-case references to one task-level NoSkill measurement."""
+    indexed = {(str(case["condition"]), case["task_id"]): case for case in cases}
+    owned = {
+        identity: case["no_skill_evaluation"]
+        for identity, case in indexed.items()
+        if "no_skill_evaluation" in case
+    }
+    resolved: dict[tuple[str, Any], Mapping[str, Any]] = {}
+    for identity, case in indexed.items():
+        reference = case.get("no_skill_evaluation_ref")
+        if reference is None:
+            if identity in owned:
+                resolved[identity] = owned[identity]
+            continue
+        if not isinstance(reference, Mapping):
+            raise ValueError("invalid_no_skill_evaluation_ref")
+        source_task = reference.get("task_id")
+        source_condition = reference.get("condition")
+        if source_task != case["task_id"]:
+            raise ValueError("no_skill_evaluation_ref_crosses_tasks")
+        source = (str(source_condition), source_task)
+        if source not in indexed or source not in owned:
+            raise ValueError("dangling_no_skill_evaluation_ref")
+        if identity in owned and owned[identity] != owned[source]:
+            raise ValueError("conflicting_no_skill_evaluation_ref")
+        resolved[identity] = owned[source]
+    return resolved
+
+
 def report_cases(
     cases: Sequence[Mapping[str, Any]],
     *,
@@ -204,20 +268,22 @@ def report_cases(
     rounds: dict[tuple[str, int], list[Mapping[str, Any]]] = defaultdict(list)
     round_stops: dict[tuple[str, int], dict[str, int]] = defaultdict(lambda: defaultdict(int))
     seen: set[tuple[str, Any]] = set()
-    baseline_conditions = {
-        str(case["condition"]) for case in cases if "no_skill_evaluation" in case
-    }
     for case in cases:
-        condition = str(case["condition"])
-        identity = (condition, case["task_id"])
+        identity = (str(case["condition"]), case["task_id"])
         if identity in seen:
             raise ValueError("duplicate_case")
         seen.add(identity)
-        if condition not in conditions:
+        if identity[0] not in conditions:
             raise ValueError("unknown_condition")
+    baselines = _resolve_no_skill_evaluations(cases)
+    baseline_conditions = {condition for condition, _ in baselines}
+    for case in cases:
+        condition = str(case["condition"])
+        identity = (condition, case["task_id"])
         views = case_views(case)
-        if "no_skill_evaluation" in case:
-            grouped[(condition, "no_skill")].append((case, case["no_skill_evaluation"]))
+        baseline = baselines.get(identity)
+        if baseline is not None:
+            grouped[(condition, "no_skill")].append((case, baseline))
         for arm, measurement in views.items():
             if arm == "frozen" and condition == "benign":
                 if condition in baseline_conditions:
@@ -245,6 +311,8 @@ def report_cases(
                 "version": index,
                 "bundle_hash": bundle_hash,
                 **measurement,
+                "utility_status": _metric_status(measurement, "utility"),
+                "asr_status": _metric_status(measurement, "asr"),
                 "completion_steps": completion_steps(measurement.get("metrics") or {}),
             }
             version_rows.append(row)
@@ -267,19 +335,28 @@ def report_cases(
             rows = grouped[(condition, arm)]
             if len(rows) > task_denominator:
                 raise ValueError("cases_exceed_fixed_task_denominator")
-            measured = [
-                measurement for _, measurement in rows if measurement["status"] == "MEASURED"
+            utility_measured = [
+                measurement
+                for _, measurement in rows
+                if _metric_status(measurement, "utility") == "MEASURED"
             ]
-            utility_sum = sum(float(measurement["utility"]) for measurement in measured)
-            asr_measured = [item for item in measured if _valid_metric(item.get("asr"))]
+            utility_sum = sum(float(measurement["utility"]) for measurement in utility_measured)
+            asr_measured = [
+                measurement
+                for _, measurement in rows
+                if _metric_status(measurement, "asr") == "MEASURED"
+            ]
             asr_sum = sum(float(item["asr"]) for item in asr_measured)
+            asr_not_applicable = sum(
+                _metric_status(measurement, "asr") == "NOT_APPLICABLE" for _, measurement in rows
+            )
             stopped: dict[str, int] = defaultdict(int)
-            for case, _ in rows:
+            for case, measurement in rows:
                 reason = (
                     (
                         "baseline_evaluated"
-                        if case["no_skill_evaluation"]["status"] == "MEASURED"
-                        else case["no_skill_evaluation"].get("reason", "stage_not_executed")
+                        if measurement["status"] == "MEASURED"
+                        else measurement.get("reason", "stage_not_executed")
                     )
                     if arm == "no_skill"
                     else _stop_reason(case)
@@ -296,15 +373,33 @@ def report_cases(
                     )
                     if arm != "no_skill"
                     else 0,
-                    "actual_runs": len(rows) if arm == "no_skill" else None,
-                    "measured_count": len(measured),
-                    "not_measured_count": task_denominator - len(measured),
-                    "measured_utility": utility_sum / len(measured) if measured else None,
+                    "actual_runs": (
+                        sum("no_skill_evaluation" in case for case, _ in rows)
+                        if arm == "no_skill"
+                        else None
+                    ),
+                    "shared_baseline_references": (
+                        sum("no_skill_evaluation" not in case for case, _ in rows)
+                        if arm == "no_skill"
+                        else None
+                    ),
+                    # Historical names remain utility aliases for existing reports.
+                    "measured_count": len(utility_measured),
+                    "not_measured_count": task_denominator - len(utility_measured),
+                    "utility_measured_count": len(utility_measured),
+                    "utility_not_measured_count": task_denominator - len(utility_measured),
+                    "measured_utility": utility_sum / len(utility_measured)
+                    if utility_measured
+                    else None,
                     "measured_asr": asr_sum / len(asr_measured) if asr_measured else None,
                     "asr_measured_count": len(asr_measured),
+                    "asr_not_measured_count": task_denominator
+                    - len(asr_measured)
+                    - asr_not_applicable,
+                    "asr_not_applicable_count": asr_not_applicable,
                     "end_to_end_utility": utility_sum / task_denominator,
-                    "task_pass_count": sum(item["utility"] == 1 for item in measured),
-                    "task_pass_rate": sum(item["utility"] == 1 for item in measured)
+                    "task_pass_count": sum(item["utility"] == 1 for item in utility_measured),
+                    "task_pass_rate": sum(item["utility"] == 1 for item in utility_measured)
                     / task_denominator,
                     # This is explicitly a count/full-denominator rate, not imputed stage ASR.
                     "observed_attack_successes_per_task": (
@@ -317,25 +412,33 @@ def report_cases(
     for condition in conditions:
         for version in sorted(index for arm, index in rounds if arm == condition):
             rows = rounds[(condition, version)]
-            measured = [row for row in rows if row["status"] == "MEASURED"]
+            utility_measured = [row for row in rows if _metric_status(row, "utility") == "MEASURED"]
+            asr_measured = [row for row in rows if _metric_status(row, "asr") == "MEASURED"]
+            asr_not_applicable = sum(_metric_status(row, "asr") == "NOT_APPLICABLE" for row in rows)
             round_summaries.append(
                 {
                     "condition": condition,
                     "version": version,
                     "actual_chains": len(rows),
-                    "measured_count": len(measured),
-                    "not_measured_count": len(rows) - len(measured),
+                    # Historical names remain utility aliases for existing reports.
+                    "measured_count": len(utility_measured),
+                    "not_measured_count": len(rows) - len(utility_measured),
+                    "utility_measured_count": len(utility_measured),
+                    "utility_not_measured_count": len(rows) - len(utility_measured),
                     "measured_utility": (
-                        sum(float(row["utility"]) for row in measured) / len(measured)
-                        if measured
+                        sum(float(row["utility"]) for row in utility_measured)
+                        / len(utility_measured)
+                        if utility_measured
                         else None
                     ),
                     "measured_asr": (
-                        sum(float(row["asr"]) for row in measured if _valid_metric(row.get("asr")))
-                        / sum(_valid_metric(row.get("asr")) for row in measured)
-                        if any(_valid_metric(row.get("asr")) for row in measured)
+                        sum(float(row["asr"]) for row in asr_measured) / len(asr_measured)
+                        if asr_measured
                         else None
                     ),
+                    "asr_measured_count": len(asr_measured),
+                    "asr_not_measured_count": len(rows) - len(asr_measured) - asr_not_applicable,
+                    "asr_not_applicable_count": asr_not_applicable,
                     "stop_counts": dict(round_stops[(condition, version)]),
                 }
             )
@@ -384,8 +487,8 @@ def report_cases(
         "rounds": round_summaries,
         "progress": progress,
         "paired_progress": paired_summaries,
-        **_version_progress(cases, task_denominator),
-        **_baseline_progress(cases, task_denominator, conditions),
+        **_version_progress(cases, task_denominator, baselines),
+        **_baseline_progress(cases, task_denominator, conditions, baselines),
     }
 
 
@@ -397,7 +500,7 @@ def _paired_delta(
     Bank content versions may share an implicit executor; NoSkill pairs require an explicit one.
     This compatibility rule does not establish comparability between different runs.
     """
-    measured = left["status"] == right["status"] == "MEASURED"
+    measured = all(_metric_status(item, "utility") == "MEASURED" for item in (left, right))
     left_metrics, right_metrics = left.get("metrics") or {}, right.get("metrics") or {}
     left_executor, right_executor = left_metrics.get("executor"), right_metrics.get("executor")
     executor_matches = left_executor == right_executor and (
@@ -477,12 +580,16 @@ def _paired_summary(rows: Sequence[Mapping[str, Any]], denominator: int) -> dict
     }
 
 
-def _version_progress(cases: Sequence[Mapping[str, Any]], denominator: int) -> dict[str, Any]:
+def _version_progress(
+    cases: Sequence[Mapping[str, Any]],
+    denominator: int,
+    baselines: Mapping[tuple[str, Any], Mapping[str, Any]],
+) -> dict[str, Any]:
     rows, grouped = [], defaultdict(list)
     for case in cases:
         versions = (case.get("evolution") or {}).get("versions") or case.get("versions") or []
         evaluations = case.get("evaluations") or {}
-        previous = case.get("no_skill_evaluation")
+        previous = baselines.get((str(case["condition"]), case["task_id"]))
         previous_hash = None
         for index, bundle in enumerate(versions):
             bundle_hash = (
@@ -519,11 +626,14 @@ def _version_progress(cases: Sequence[Mapping[str, Any]], denominator: int) -> d
 
 
 def _baseline_progress(
-    cases: Sequence[Mapping[str, Any]], task_denominator: int, conditions: Sequence[str]
+    cases: Sequence[Mapping[str, Any]],
+    task_denominator: int,
+    conditions: Sequence[str],
+    baselines: Mapping[tuple[str, Any], Mapping[str, Any]],
 ) -> dict[str, Any]:
     rows = []
     for case in cases:
-        baseline = case.get("no_skill_evaluation")
+        baseline = baselines.get((str(case["condition"]), case["task_id"]))
         if baseline is None:
             continue
         for endpoint, measurement in case_views(case).items():

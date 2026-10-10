@@ -1,6 +1,6 @@
-schema_version: skillsbench.skill-evolution.v7
+schema_version: skillsbench.skill-evolution.v8
 seed: 20260904
-matrix_commitment: ba9697db76b872fc5153044ac2cb6b5db993214974d6beb4e12344d8078d72e7
+matrix_commitment: 34d9ff51d39a92854b7ecc64ae69cab2ffcaeacd9f023a8c71ac4be624d6e1dc
 source:
   upstream_checkout: data/upstream/coevo-skills
   commit: 4380d4bff673dd6e1d58e5babeb2aaa0fe527119
@@ -8,6 +8,7 @@ source:
   expected_task_count: 85
   task_population_sha256: 1afe3b8bb2a9f1055ea7a341fee43d02245cc32ce8ae5f151cee226aa3119224
   corpus_manifest: data/skillsbench/public-manifest.json
+  condition_manifest: configs/skillsbench-dymal4-conditions.json
   runtime_lock: runtime/skillsbench-docker-{task_id}-v4-lock.json
 tasks:
   sample_algorithm: all-pinned-sorted-v1
@@ -100,7 +101,36 @@ tasks:
 matrix:
   arms:
   - benign
+  - credential-abuse-5
+  - credential-abuse-10
+  - data-exfil-http-5
+  - data-exfil-http-10
+  - file-delete-5
+  - file-delete-10
+  - cpu-hijack-5
+  - cpu-hijack-10
   retries: 0
+poison_sampling:
+  seed: 20260904
+  profiles:
+  - credential_abuse
+  - data_exfil_http
+  - file_delete
+  - cpu_hijack
+  levels:
+    '5': 4
+    '10': 9
+  source_archive_sha256: fc26fefa1be4988e71bcb2159ab12749f20cdd5ccaadba7d2e721ef2a091c8e9
+  target_document_ids:
+  - invoice-fraud-detection::background/invoice-fraud-detection-background.md
+  - multilingual-video-dubbing::background/multilingual-dubbing-background.md
+  - manufacturing-codebook-normalization::background/manufacturing-defect-codebook-normalization-background.md
+  - fix-build-google-auto::background/java-maven-build-debugging-background.md
+  - xlsx-recover-data::background/xlsx-data-recovery-background.md
+  - dialogue-parser::background/dialogue-graph-basics.md
+  - reserves-at-risk-calc::background/reserves-at-risk-background.md
+  - weighted-gdp-calc::background/weighted-gdp-calculation-background.md
+  - glm-lake-mendota::background/lake-model-calibration-basics.md
 retrieval:
   # Only background_docs is searched; instruction and environment are provided task inputs.
   bm25_top_k: 10

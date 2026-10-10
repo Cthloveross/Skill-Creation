@@ -1,0 +1,100 @@
+{
+  "archive_index": "archive/index.json",
+  "checks": {
+    "archive_evidence_hashes": {
+      "count": 39,
+      "mismatches": [],
+      "status": "PASS"
+    },
+    "archive_run_directories": {
+      "count": 22,
+      "missing": [],
+      "status": "PASS"
+    },
+    "current_readiness_pointer": {
+      "status": "PASS",
+      "value": "../runs/skillsbench/readiness-dymal4-v8-20261010-001"
+    },
+    "live_references": {
+      "references": [
+        {
+          "exists": true,
+          "key": "current_readiness",
+          "kind": "directory",
+          "value": "../runs/skillsbench/readiness-dymal4-v8-20261010-001"
+        },
+        {
+          "exists": true,
+          "key": "current_readiness_by_experiment.skillsbench",
+          "kind": "directory",
+          "value": "../runs/skillsbench/readiness-dymal4-v8-20261010-001"
+        },
+        {
+          "exists": true,
+          "key": "current_handoffs.tau",
+          "kind": "file",
+          "value": "../runs/tau/HANDOFF.md"
+        },
+        {
+          "exists": true,
+          "key": "current_handoffs.skillsbench",
+          "kind": "file",
+          "value": "../runs/skillsbench/HANDOFF.md"
+        },
+        {
+          "exists": true,
+          "key": "active_runs_cleanup.current_trial",
+          "kind": "directory",
+          "value": "runs/input-discovery-five-gpt54-20261008-003"
+        },
+        {
+          "exists": true,
+          "key": "active_runs_cleanup.verification",
+          "kind": "file",
+          "value": "runs/readiness-skillsbench-input-discovery-20261008-001/cleanup-verification.json"
+        },
+        {
+          "exists": true,
+          "key": "v8_transition.current_trial",
+          "kind": "directory",
+          "value": "../runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001"
+        },
+        {
+          "exists": true,
+          "key": "v8_transition.archived_v7_paths[0]",
+          "kind": "directory",
+          "value": "runs/input-discovery-five-gpt54-20261008-003"
+        },
+        {
+          "exists": true,
+          "key": "v8_transition.archived_v7_paths[1]",
+          "kind": "directory",
+          "value": "runs/readiness-skillsbench-input-discovery-20261008-001"
+        }
+      ],
+      "status": "PASS"
+    },
+    "readiness_package_shape": {
+      "files": [
+        "final-status.json",
+        "path-validation.json",
+        "source-identity.json",
+        "validation.json"
+      ],
+      "json_only": true,
+      "path": "runs/skillsbench/readiness-dymal4-v8-20261010-001",
+      "status": "PASS"
+    },
+    "v7_relocation": {
+      "archived_paths_present": true,
+      "old_live_paths_absent": true,
+      "status": "PASS"
+    }
+  },
+  "credentials_accessed": false,
+  "original_path_fields": "provenance_only_not_required_to_resolve",
+  "paid_model_requests": 0,
+  "schema": "skillsbench.dymal4-v8-path-validation.v1",
+  "snapshot_at": "2026-10-10T05:07:35.839276+00:00",
+  "status": "PASS"
+}

@@ -36,3 +36,6 @@ htmlcov/
 
 # Local paper/reference archives; keep reviews and commitments in Git
 DyMalSkill_*.zip
+
+# Internal working audit; public method and operator records live in Protocol/HANDOFF.
+experiments/tau-knowledge/skill-evolution/AUDIT-20261005.md

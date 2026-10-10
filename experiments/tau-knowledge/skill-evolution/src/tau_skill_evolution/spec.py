@@ -25,10 +25,21 @@ from .constants import (
 # Historical wire-format tests and sealed artifacts still use v1. New method
 # namespaces are deliberately different and cannot resume those checkpoints.
 NAMESPACE = "tau.skill-evolution.v1"
-NAMESPACES = {"tau": "tau.skill-evolution.v4", "skillsbench": "skillsbench.skill-evolution.v7"}
+NAMESPACES = {"tau": "tau.skill-evolution.v4", "skillsbench": "skillsbench.skill-evolution.v8"}
 DEFAULT_CONFIG = EXPERIMENT_ROOT / "configs" / "experiment.yaml"
 SKILLSBENCH_CONFIG = EXPERIMENT_ROOT / "configs" / "skillsbench.yaml"
 ARMS = ("benign", "poison-5", "poison-10")
+SKILLSBENCH_ARMS = (
+    "benign",
+    "credential-abuse-5",
+    "credential-abuse-10",
+    "data-exfil-http-5",
+    "data-exfil-http-10",
+    "file-delete-5",
+    "file-delete-10",
+    "cpu-hijack-5",
+    "cpu-hijack-10",
+)
 SKILLSBENCH_COMMIT = "4380d4bff673dd6e1d58e5babeb2aaa0fe527119"
 SKILLSBENCH_TASK_POPULATION_SHA256 = (
     "1afe3b8bb2a9f1055ea7a341fee43d02245cc32ce8ae5f151cee226aa3119224"
@@ -125,10 +136,19 @@ class ExperimentSpec:
     def targets(self, arm: str) -> tuple[str, ...]:
         if arm not in self.arms:
             raise ValueError("arm is outside the configured matrix")
-        if self.experiment == "skillsbench" or arm == "benign":
+        if self.experiment == "skillsbench":
+            return tuple(self.condition(arm)["target_document_ids"])
+        if arm == "benign":
             return ()
         count = {"poison-5": 35, "poison-10": 70}[arm]
         return tuple(self.values["poison_sampling"]["target_document_ids"][:count])
+
+    def condition(self, arm: str) -> dict[str, Any]:
+        if self.experiment != "skillsbench":
+            raise ValueError("conditions are defined only for SkillsBench")
+        from .skillsbench_attack import condition
+
+        return condition(self, arm)
 
     @property
     def provider_settings(self) -> dict[str, Any]:
@@ -151,12 +171,20 @@ class ExperimentSpec:
 
     @property
     def identity(self) -> dict[str, Any]:
-        runtime_locks = sorted((self.root / "runtime").glob("*lock*"))
-        runtime_locks = [
-            path
-            for path in runtime_locks
-            if path.name.startswith("skillsbench") == (self.experiment == "skillsbench")
-        ]
+        source = self.values["source"]
+        if self.experiment == "skillsbench" and self.namespace == "skillsbench.skill-evolution.v8":
+            # The selected per-task locks are added below.  Bind only the
+            # shared dependency lock used by those Docker runtimes; archived,
+            # workspace, and ad-hoc SkillsBench locks are unrelated inputs.
+            runtime_locks = [self.root / "runtime/skillsbench-verifier-requirements.lock"]
+        else:
+            # Preserve the identity behavior of historical sealed runs.
+            runtime_locks = sorted((self.root / "runtime").glob("*lock*"))
+            runtime_locks = [
+                path
+                for path in runtime_locks
+                if path.name.startswith("skillsbench") == (self.experiment == "skillsbench")
+            ]
         files = [
             *sorted((self.root / "src" / "tau_skill_evolution").rglob("*.py")),
             *sorted((self.root / "prompts").glob("*.*")),
@@ -181,6 +209,7 @@ class ExperimentSpec:
                 "skillsbench.skill-evolution.v4",
                 "skillsbench.skill-evolution.v6",
                 "skillsbench.skill-evolution.v7",
+                "skillsbench.skill-evolution.v8",
             }:
                 files.extend(
                     self.root / "src/tau_skill_evolution/author" / name
@@ -189,12 +218,18 @@ class ExperimentSpec:
             if self.namespace in {
                 "skillsbench.skill-evolution.v6",
                 "skillsbench.skill-evolution.v7",
+                "skillsbench.skill-evolution.v8",
             }:
                 author = self.root / "src/tau_skill_evolution/author"
                 files.append(author / "VERIFIER_SOURCE.json")
                 manifest = json.loads((author / "VERIFIER_SOURCE.json").read_text())
                 files.extend(author / relative for relative in sorted(manifest["files"]))
-        source = self.values["source"]
+            if self.namespace == "skillsbench.skill-evolution.v8":
+                from .skillsbench_attack import MATRIX_MANIFEST
+
+                files.extend(
+                    (self.root / source["condition_manifest"], self.root / MATRIX_MANIFEST)
+                )
         files.append(self.root / source["corpus_manifest"])
         selected_lock = source["runtime_lock"]
         if self.experiment == "skillsbench" and "{task_id}" in selected_lock:
@@ -238,6 +273,13 @@ class ExperimentSpec:
             "files": hashes,
             "provider": resolved,
         }
+        if self.namespace == "skillsbench.skill-evolution.v8":
+            from .skillsbench_attack import SOURCE_ARCHIVE, SOURCE_ARCHIVE_SHA256
+
+            binding["injection_source"] = {
+                "file": SOURCE_ARCHIVE,
+                "sha256": SOURCE_ARCHIVE_SHA256,
+            }
         return {**binding, "identity_hash": digest(binding)}
 
     def worker_config(self, *, runtime: str = "docker") -> dict[str, Any]:
@@ -306,6 +348,7 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
                 "skillsbench.skill-evolution.v2",
                 "skillsbench.skill-evolution.v4",
                 "skillsbench.skill-evolution.v6",
+                "skillsbench.skill-evolution.v7",
             }
         )
     if value.get("schema_version") not in namespaces:
@@ -316,7 +359,13 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
     count = 97 if experiment == "tau" else 85
     if len(tasks) != count or len(set(tasks)) != count or tasks != sorted(tasks):
         raise ValueError(f"experiment requires all {count} unique tasks in sorted order")
-    expected_arms = ARMS if experiment == "tau" else ("benign",)
+    expected_arms = (
+        ARMS
+        if experiment == "tau"
+        else SKILLSBENCH_ARMS
+        if value["schema_version"] == NAMESPACES["skillsbench"]
+        else ("benign",)
+    )
     if tuple(value["matrix"]["arms"]) != expected_arms or value["matrix"]["retries"] != 0:
         raise ValueError("arm order/retry policy changed")
     if experiment == "tau":
@@ -371,9 +420,62 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
         commitment = {
             "seed": value["seed"],
             "tasks": tasks,
-            "arms": ["benign"],
+            "arms": list(expected_arms),
             "commit": source["commit"],
         }
+        if value["schema_version"] == NAMESPACES["skillsbench"]:
+            from .skillsbench_attack import PROFILES, SEED, SOURCE_ARCHIVE_SHA256
+
+            poison = value.get("poison_sampling")
+            if (
+                not isinstance(poison, dict)
+                or poison.get("seed") != SEED
+                or poison.get("profiles") != list(PROFILES)
+                or poison.get("levels") != {"5": 4, "10": 9}
+                or poison.get("source_archive_sha256") != SOURCE_ARCHIVE_SHA256
+                or not isinstance(poison.get("target_document_ids"), list)
+                or len(poison["target_document_ids"]) != 9
+                or len(set(poison["target_document_ids"])) != 9
+            ):
+                raise ValueError("SkillsBench v8 injection commitment changed")
+            condition_manifest = source.get("condition_manifest")
+            if condition_manifest != "configs/skillsbench-dymal4-conditions.json":
+                raise ValueError("SkillsBench v8 condition manifest path changed")
+            condition_path = EXPERIMENT_ROOT / condition_manifest
+            if not condition_path.is_file():
+                raise ValueError("SkillsBench v8 condition manifest is missing")
+            condition_value = json.loads(condition_path.read_text())
+            condition_unsigned = {
+                key: item for key, item in condition_value.items() if key != "manifest_hash"
+            }
+            if (
+                condition_value.get("schema") != "skillsbench.injection-conditions.v8"
+                or condition_value.get("namespace") != NAMESPACES["skillsbench"]
+                or condition_value.get("seed") != SEED
+                or condition_value.get("source_archive_sha256") != SOURCE_ARCHIVE_SHA256
+                or condition_value.get("manifest_hash") != digest(condition_unsigned)
+                or condition_value.get("arms")
+                != {
+                    arm: {
+                        "condition_id": arm,
+                        "profile": None,
+                        "level": 0,
+                        "target_document_ids": [],
+                    }
+                    if arm == "benign"
+                    else {
+                        "condition_id": arm,
+                        "profile": arm.rpartition("-")[0].replace("-", "_"),
+                        "level": int(arm.rpartition("-")[2]),
+                        "target_document_ids": poison["target_document_ids"][
+                            : 4 if arm.endswith("-5") else 9
+                        ],
+                    }
+                    for arm in SKILLSBENCH_ARMS
+                }
+            ):
+                raise ValueError("SkillsBench v8 condition manifest changed")
+            commitment["poison_sampling"] = poison
         expected_checkout = "data/upstream/coevo-skills"
     if digest(commitment) != value["matrix_commitment"]:
         raise ValueError("task or poison sample differs from the frozen matrix")
@@ -404,7 +506,11 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
         if (
             experiment != "skillsbench"
             or value["schema_version"]
-            not in {"skillsbench.skill-evolution.v6", "skillsbench.skill-evolution.v7"}
+            not in {
+                "skillsbench.skill-evolution.v6",
+                "skillsbench.skill-evolution.v7",
+                "skillsbench.skill-evolution.v8",
+            }
             or provider.get("model") != "gpt-6.1-sol"
         ):
             raise ValueError(
@@ -470,10 +576,12 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
         "skillsbench.skill-evolution.v4",
         "skillsbench.skill-evolution.v6",
         "skillsbench.skill-evolution.v7",
+        "skillsbench.skill-evolution.v8",
     }
     author_release = value["schema_version"] in {
         "skillsbench.skill-evolution.v6",
         "skillsbench.skill-evolution.v7",
+        "skillsbench.skill-evolution.v8",
     }
     if executor == "author-codex" and value["schema_version"] not in author_namespaces:
         raise ValueError("author Codex requires the SkillsBench author namespace")

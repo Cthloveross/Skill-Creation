@@ -1,0 +1,110 @@
+{
+  "blocking_gates": [
+    {
+      "id": "configured_native_codex_identity",
+      "observed_on_path": {
+        "binary_sha256": "3b1015a94344ae22f8556b22ab86f22a2d66a436a36f493a1583088e0831efe1",
+        "version": "0.162.0-alpha.2"
+      },
+      "required": {
+        "binary_sha256": "f34a4d2301892ae96c90097786bfe5dc269f187b6f69faf42a7b357b8c081e35",
+        "version": "0.160.1"
+      },
+      "resolution": "Place the configured pinned binary first on PATH before preflight."
+    },
+    {
+      "id": "task_specific_credentials",
+      "reason": "pg-essay-to-audiobook requires local OPENAI_API_KEY and ELEVENLABS_API_KEY values; neither is currently available and Bedrock does not replace them."
+    },
+    {
+      "id": "fresh_all_task_preflight",
+      "reason": "No current-source preflight has authenticated and checked the pinned Codex binary, all 85 task environments, all required task credentials, and all nine retrieval contracts."
+    },
+    {
+      "id": "current_source_paid_end_to_end_cell",
+      "reason": "No current-source v8 cell has sealed S0, completed learning and verification, called a fresh oracle, independently evaluated versions, and produced a valid private attack measurement."
+    }
+  ],
+  "credentials_accessed": false,
+  "design": {
+    "cells": 765,
+    "conditions": 9,
+    "matrix_manifest_hash": "0ecdd9744ef26398c6c0637dcc93e54ff28d85e43e81ae2d2afd95c2b93d105f",
+    "retries": 0,
+    "seed": 20260904,
+    "tasks": 85
+  },
+  "evidence": {
+    "../retrieval-pilot-dymal4-gpt54-20261009-001/acquisition-admission.json": {
+      "bytes": 104,
+      "sha256": "56ba4cc77750640fdf7267d730d117d85be5f1c66ff50afb04e2dac7e3cc1945"
+    },
+    "../retrieval-pilot-dymal4-gpt54-20261009-001/acquisition-summary.json": {
+      "bytes": 1404657,
+      "sha256": "8a1604566dd51dac24ad9abfb0136320159bf10ca6c48235cad27b61e745e3f1"
+    },
+    "../retrieval-pilot-dymal4-gpt54-20261009-001/public-summary.json": {
+      "bytes": 17688,
+      "sha256": "6f4b00317ef4676474f77a2022309fbae465ccf3f14f971f69a4895beed35fa5"
+    },
+    "source-identity.json": {
+      "bytes": 6412,
+      "sha256": "af146fff2d9f526e71aaf36f5b9331cca92054eac52f9c39e7f44f253c1d8d59"
+    },
+    "validation.json": {
+      "bytes": 2509,
+      "sha256": "6709bf9af488002bfb88a9873e7150075ab7881b2613a4df5ed99860e5318291"
+    }
+  },
+  "gates": {
+    "archive_and_live_run_paths": "PASS",
+    "configured_native_codex_identity_on_current_path": "FAIL",
+    "current_credential_authentication": "NOT_CHECKED",
+    "current_source_paid_end_to_end_v8_cell": "NOT_RUN",
+    "fresh_all_task_current_source_preflight": "NOT_RUN",
+    "frozen_design_and_all_nine_retrieval_contracts": "PASS",
+    "full_repository_regression": "PASS",
+    "primary_765_cell_matrix": "NOT_STARTED",
+    "private_monitor_unit_and_real_docker_integration": "PASS",
+    "shared_no_skill_pairing": "PASS"
+  },
+  "historical_boundary": {
+    "resume_v7_into_v8": false,
+    "v7_result_and_readiness": "ARCHIVED_READ_ONLY"
+  },
+  "implementation_acceptance": "PASS_WITH_EXPLICIT_LIMITATIONS",
+  "limitations": [
+    "The real-Docker monitor check made no task-model request and does not measure utility or attack success.",
+    "The 15-cell retrieval pilot is one stochastic acquisition run over three tasks and two attack profiles.",
+    "No current-source paid v8 end-to-end cell or primary matrix has run."
+  ],
+  "measured_non_launch_evidence": {
+    "retrieval_pilot": {
+      "cells": 15,
+      "not_measured": [
+        "skill_creation",
+        "task_execution",
+        "verification",
+        "oracle",
+        "utility",
+        "attack_success"
+      ],
+      "path": "../retrieval-pilot-dymal4-gpt54-20261009-001",
+      "scope": "retrieval and frozen-base exposure only",
+      "status": "MEASURED"
+    }
+  },
+  "namespace": "skillsbench.skill-evolution.v8",
+  "paid_model_requests": 0,
+  "ready_to_launch_primary_matrix": false,
+  "required_before_primary_launch": [
+    "Resolve the configured Codex 0.160.1 binary and external credential source.",
+    "Supply the two task-specific audiobook credentials locally.",
+    "Run and audit the HANDOFF Section 4 end-to-end smoke cell.",
+    "Run and retain a fresh all-task v8 preflight whose result has ready=true."
+  ],
+  "schema": "skillsbench.dymal4-v8-readiness.v1",
+  "snapshot_at": "2026-10-10T05:07:35.839276+00:00",
+  "status": "NOT_READY",
+  "workspace_key_env_read": false
+}

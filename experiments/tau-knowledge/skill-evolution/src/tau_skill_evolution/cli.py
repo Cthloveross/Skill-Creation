@@ -13,7 +13,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 from .preflight import preflight
-from .spec import ARMS, DEFAULT_CONFIG, load_spec
+from .spec import ARMS, DEFAULT_CONFIG, SKILLSBENCH_ARMS, load_spec
 from .workflow import Workflow
 
 
@@ -121,7 +121,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--task", action="append", help="restrict to selected task IDs")
     parser.add_argument(
-        "--arm", choices=ARMS, action="append", help="restrict to selected conditions"
+        "--arm",
+        choices=tuple(dict.fromkeys((*ARMS, *SKILLSBENCH_ARMS))),
+        action="append",
+        help="restrict to selected conditions",
     )
     parser.add_argument(
         "--no-interim-report",

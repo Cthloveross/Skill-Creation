@@ -8,6 +8,7 @@ import json
 import shlex
 import shutil
 import subprocess
+import tempfile
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -155,6 +156,7 @@ class _EpisodeEnvironment:
         self.runner, self.logs_dir = runner, logs_dir
         self.executions: list[dict[str, Any]] = []
         self.last_agent_result: Any = None
+        self.relay_identity: tuple[int, int] | None = None
 
     def _run(
         self, command: list[str], *, timeout: float, stdin: bytes = b"", output_limit: int = 65536
@@ -192,8 +194,10 @@ class _EpisodeEnvironment:
             raise ValueError("codex_task_environment_credentials_forbidden")
         arguments = ["docker", "exec", "--interactive", "--workdir"]
         arguments += [cwd or self.runner.source.task(self.runner.task_id)["environment"]["workdir"]]
-        arguments += [self.runner.container_name, "/bin/bash", "-c", command]
         is_agent = "codex exec " in command
+        if is_agent and hasattr(self.runner, "attack_shell_command"):
+            command = self.runner.attack_shell_command(command)
+        arguments += [self.runner.container_name, "/bin/bash", "-c", command]
         budget = self.runner.agent_timeout_seconds or self.runner.config["agent"]["timeout_sec"]
         remaining = budget - (time.monotonic() - self.runner.episode_started)
         timeout = max(0.1, remaining) if is_agent else float(timeout_sec or 30)
@@ -202,6 +206,15 @@ class _EpisodeEnvironment:
             raise TimeoutError("skillsbench_execution_deadline_exhausted")
         timeout = min(timeout, phase_remaining)
         result = self._run(arguments, timeout=timeout, output_limit=_OUTPUT_LIMIT)
+        if is_agent and hasattr(self.runner, "record_attack_output"):
+            self.runner.record_attack_output(result.stdout, result.stderr)
+            if hasattr(self.runner, "redact_attack_output"):
+                result = type(result)(
+                    result.returncode,
+                    self.runner.redact_attack_output(result.stdout),
+                    self.runner.redact_attack_output(result.stderr),
+                    result.failure,
+                )
         self.executions.append(
             {
                 "phase": "agent" if is_agent else "setup_or_attestation",
@@ -228,36 +241,130 @@ class _EpisodeEnvironment:
             raise ContainerUnavailable("codex_file_staging_failed")
 
     def download_log(self) -> None:
-        result = self._run(
-            [
-                "docker",
-                "cp",
-                self.runner.container_name + ":" + _LOG,
-                str(self.logs_dir / "codex.txt"),
-            ],
-            timeout=60,
-        )
-        if result.returncode or result.failure:
-            raise ContainerUnavailable("codex_log_capture_failed")
-        (self.logs_dir / "codex.txt").chmod(0o600)
+        destination = self.logs_dir / "codex.txt"
+        with tempfile.TemporaryDirectory(prefix="codex-log-private-") as temporary:
+            raw_path = Path(temporary) / "codex.txt"
+            result = self._run(
+                [
+                    "docker",
+                    "cp",
+                    self.runner.container_name + ":" + _LOG,
+                    str(raw_path),
+                ],
+                timeout=60,
+            )
+            if result.returncode or result.failure:
+                raise ContainerUnavailable("codex_log_capture_failed")
+            raw = raw_path.read_bytes()
+            if hasattr(self.runner, "record_attack_output"):
+                self.runner.record_attack_output(raw)
+            if hasattr(self.runner, "redact_attack_output"):
+                raw = self.runner.redact_attack_output(raw)
+            rewrite = self._run(
+                [
+                    "docker",
+                    "exec",
+                    "--interactive",
+                    "--user",
+                    "root",
+                    self.runner.container_name,
+                    "/bin/sh",
+                    "-c",
+                    "cat > " + shlex.quote(_LOG) + " && chmod 0600 " + shlex.quote(_LOG),
+                ],
+                stdin=raw,
+                timeout=30,
+            )
+            if rewrite.returncode or rewrite.failure:
+                raise ContainerUnavailable("codex_log_sanitize_failed")
+            destination.write_bytes(raw)
+        destination.chmod(0o600)
 
     def stop_agent(self) -> None:
-        self.shell(
-            f"if test -s {_HOME}/agent.pid; then "
-            f'pid=$(cat {_HOME}/agent.pid); kill -TERM -- "-$pid" 2>/dev/null || true; '
-            f'kill -KILL -- "-$pid" 2>/dev/null || true; fi',
+        # Never trust a PID file in the candidate-writable Codex home.  Discover
+        # only the pinned executable, then kill and attest its process groups.
+        script = r"""import os,signal,time
+groups=set()
+for name in os.listdir('/proc'):
+    if not name.isdecimal(): continue
+    try:
+        if os.readlink('/proc/'+name+'/exe') == '/installed-agent/codex':
+            pid=int(name); group=os.getpgid(pid)
+            if pid > 1 and group > 1: groups.add(group)
+    except (FileNotFoundError,PermissionError,ProcessLookupError): pass
+for group in groups:
+    try: os.killpg(group,signal.SIGTERM)
+    except ProcessLookupError: pass
+time.sleep(.2)
+for group in groups:
+    try: os.killpg(group,signal.SIGKILL)
+    except ProcessLookupError: pass
+time.sleep(.05)
+for name in os.listdir('/proc'):
+    if not name.isdecimal(): continue
+    try:
+        if os.readlink('/proc/'+name+'/exe') == '/installed-agent/codex': raise SystemExit(45)
+    except (FileNotFoundError,PermissionError): pass
+"""
+        python = getattr(self.runner, "public_python", "python3")
+        result = self.shell(
+            "# identity-checked kill -TERM and kill -KILL\n"
+            + python
+            + " -I -c "
+            + shlex.quote(script),
             root=True,
         )
+        if result.returncode or result.failure:
+            raise ContainerUnavailable("codex_agent_process_cleanup_failed")
+
+    def capture_relay_identity(self) -> None:
+        script = (
+            r"""import json,os,pathlib
+raw=pathlib.Path('"""
+            + _HOME
+            + r"""/relay.pid').read_text()
+if not raw.isdecimal() or int(raw) <= 1: raise SystemExit(45)
+pid=int(raw); fields=pathlib.Path(f'/proc/{pid}/stat').read_text().rsplit(')',1)[1].split()
+print(json.dumps({'pid':pid,'starttime':int(fields[19])}))
+"""
+        )
+        python = getattr(self.runner, "public_python", "python3")
+        result = self.shell(python + " -I -c " + shlex.quote(script), root=True)
+        if result.returncode or result.failure:
+            raise ContainerUnavailable("codex_relay_process_identity_invalid")
+        try:
+            value = json.loads(result.stdout)
+            self.relay_identity = (int(value["pid"]), int(value["starttime"]))
+        except (UnicodeError, ValueError, KeyError, TypeError) as exc:
+            raise ContainerUnavailable("codex_relay_process_identity_invalid") from exc
+
+    def stop_relay(self) -> None:
+        if self.relay_identity is None:
+            return
+        pid, starttime = self.relay_identity
+        script = r"""import os,pathlib,signal,sys,time
+pid=int(sys.argv[1]); expected=int(sys.argv[2]); path=pathlib.Path(f'/proc/{pid}/stat')
+if path.exists():
+    fields=path.read_text().rsplit(')',1)[1].split()
+    if int(fields[19]) != expected: raise SystemExit(45)
+    os.kill(pid,signal.SIGTERM); time.sleep(.2)
+    try: os.kill(pid,signal.SIGKILL)
+    except ProcessLookupError: pass
+"""
+        python = getattr(self.runner, "public_python", "python3")
+        result = self.shell(
+            python + " -I -c " + shlex.quote(script) + " " + str(pid) + " " + str(starttime),
+            root=True,
+        )
+        if result.returncode or result.failure:
+            raise ContainerUnavailable("codex_relay_process_cleanup_failed")
+        self.relay_identity = None
 
     def cleanup(self) -> None:
         if self.last_agent_result is not None and self.last_agent_result.failure:
             self.stop_agent()
-        result = self.shell(
-            f"if test -s {_HOME}/relay.pid; then "
-            f'kill -TERM "$(cat {_HOME}/relay.pid)" 2>/dev/null || true; fi; '
-            f"rm -rf -- {_HOME}",
-            root=True,
-        )
+        self.stop_relay()
+        result = self.shell(f"rm -rf -- {_HOME}", root=True)
         if result.returncode or result.failure:
             raise ContainerUnavailable("codex_ephemeral_home_cleanup_failed")
 
@@ -335,6 +442,8 @@ def _agent_classes() -> tuple[type, type]:
                 )
                 if result.returncode or result.failure:
                     raise ContainerUnavailable("codex_episode_relay_not_started")
+                if hasattr(environment, "capture_relay_identity"):
+                    environment.capture_relay_identity()
                 probe = (
                     "import socket,time; "
                     "\nfor attempt in range(50):"
@@ -399,8 +508,7 @@ def _agent_classes() -> tuple[type, type]:
                 "--strict-config "
                 f"-c model_reasoning_effort={shlex.quote(self._reasoning_effort)} "
                 f"-- {shlex.quote(instruction)} >{_LOG} 2>&1 </dev/null & "
-                f"pid=$!; printf '%s' \"$pid\" >{_HOME}/agent.pid; "
-                f'wait "$pid"; status=$?; cat {_LOG}; exit "$status"'
+                f'pid=$!; wait "$pid"; status=$?; cat {_LOG}; exit "$status"'
             )
             return [ExecInput(command=command)]
 

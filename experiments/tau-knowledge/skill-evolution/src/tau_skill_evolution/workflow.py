@@ -148,6 +148,35 @@ class Workflow:
             selected = directory / f"{role}.md"
         return selected.read_text(encoding="utf-8")
 
+    def _bind_skillsbench_retrieval(
+        self, task: str, arm: str, journal: Journal, *, recovering_base: bool = False
+    ) -> dict[str, Any] | None:
+        """Seal the exact v8 corpus and index contract before Analyzer use."""
+        # Custom corpus factories deliberately replace the production retriever
+        # in unit tests and integrations, so they have no sealed v8 index to bind.
+        if (
+            self.spec.experiment != "skillsbench"
+            or self.spec.namespace != "skillsbench.skill-evolution.v8"
+            or self.corpus_factory is not None
+        ):
+            return None
+        operation = "retrieval-corpus-contract"
+        if recovering_base and not journal.completed(operation):
+            raise ValueError("retrieval_contract_missing_requires_new_trial")
+        if not journal.completed(operation) and any(
+            json.loads(path.read_text())["operation_id"].startswith("acquisition/")
+            for path in journal.root.glob("*/request.json")
+        ):
+            raise ValueError("retrieval_contract_missing_requires_new_trial")
+        from .skillsbench_attack import retrieval_contract
+
+        contract = {
+            "task_id": task,
+            "condition_id": arm,
+            "retrieval": retrieval_contract(self.spec, arm),
+        }
+        return journal.dispatch(operation, contract, lambda: contract, external=False)
+
     def _model(self, role: str, *, phase: str = "create", scope: str = "unscoped") -> Any:
         if self.model_factory is not None:
             return self.model_factory(role)
@@ -214,7 +243,7 @@ class Workflow:
         if callable(close):
             close()
 
-    def _bank(self, task: str) -> Any:
+    def _bank(self, task: str, arm: str = "benign") -> Any:
         if self.bank_factory is not None:
             return self.bank_factory(task)
         if self.spec.experiment == "skillsbench":
@@ -229,6 +258,7 @@ class Workflow:
                 counter=self.counter,
                 artifact_root=self.root / "artifacts" / task,
                 model_journal_dir=self.root / "private" / "skillsbench-models",
+                condition=arm,
             )
         from .bank import Bank
 
@@ -355,8 +385,9 @@ class Workflow:
             return
         base: FrozenBase | None = None
         try:
-            bank = self._bank(task)
+            bank = self._bank(task, arm)
             if (root / "base").exists():
+                self._bind_skillsbench_retrieval(task, arm, journal, recovering_base=True)
                 base = load_base(root / "base")
             else:
 
@@ -381,6 +412,7 @@ class Workflow:
                             if self.corpus_factory
                             else prepare_corpus(self.spec, task, arm)
                         )
+                        self._bind_skillsbench_retrieval(task, arm, journal)
                         allowed_reads = (
                             session.allowed_read_only_tool_names
                             if self.spec.experiment == "skillsbench"
@@ -502,7 +534,7 @@ class Workflow:
         if journal.completed("evolution-result"):
             result = EvolutionResult.from_dict(journal.response("evolution-result"))
         else:
-            bank = self._bank(task)
+            bank = self._bank(task, arm)
             from .generator import RevisionConversation
 
             author = self.spec.experiment == "skillsbench"
@@ -727,7 +759,7 @@ class Workflow:
                         )
                         journal.record_result(operation, missing)
                 continue
-            bank = self._bank(task)
+            bank = self._bank(task, arm)
             for bundle in versions:
                 sealed = (
                     root / "initial"
@@ -742,19 +774,23 @@ class Workflow:
         """Run the SkillsBench control without acquisition, generation or evolution."""
         from .evaluation import evaluate_no_skill
 
-        self._require_codex_controls(cells)
+        self._require_codex_controls(cells, benign_only=True)
         for task, arm in cells:
             if (task, arm) in self._historical_authentication_failures:
                 continue
             _, journal = self._cell(task, arm)
             self._halt_on_learning_close_failure(journal)
-            evaluate_no_skill(self._bank(task).evaluate_no_skill, journal=journal)
+            evaluate_no_skill(self._bank(task, arm).evaluate_no_skill, journal=journal)
             self._halt_on_authentication(task, arm)
 
-    def _require_codex_controls(self, cells: tuple[tuple[str, str], ...]) -> None:
+    def _require_codex_controls(
+        self, cells: tuple[tuple[str, str], ...], *, benign_only: bool = False
+    ) -> None:
         self._validate_cells(cells)
-        if self.spec.experiment != "skillsbench" or any(arm != "benign" for _, arm in cells):
-            raise ValueError("control evaluation requires SkillsBench benign tasks")
+        if self.spec.experiment != "skillsbench":
+            raise ValueError("control evaluation requires SkillsBench tasks")
+        if benign_only and any(arm != "benign" for _, arm in cells):
+            raise ValueError("NoSkill is measured once on the shared benign environment")
         if (
             self.spec.values["runtime"].get("executor") != "author-codex"
             or self.runtime != "docker"
@@ -784,7 +820,7 @@ class Workflow:
                 if imported["source_run"] != str(source_run):
                     raise ValueError("imported source run differs from the sealed manifest")
                 versions = self._imported_bundles(root, imported)
-                evaluate_versions(versions, self._bank(task).evaluate, journal=journal)
+                evaluate_versions(versions, self._bank(task, arm).evaluate, journal=journal)
                 self._halt_on_authentication(task, arm)
                 continue
             if source_identity is None:
@@ -883,7 +919,7 @@ class Workflow:
                 return manifest
 
             journal.dispatch("imported-versions", manifest, import_packages, external=False)
-            evaluate_versions(versions, self._bank(task).evaluate, journal=journal)
+            evaluate_versions(versions, self._bank(task, arm).evaluate, journal=journal)
             self._halt_on_authentication(task, arm)
 
     def _imported_bundles(self, root: Path, manifest: dict[str, Any]) -> tuple[Any, ...]:
@@ -1119,6 +1155,18 @@ class Workflow:
                     case["authentication_status"] = authentication
                     case["stop_reason"] = "authentication_failed"
             cases.append(case)
+        if self.spec.namespace == "skillsbench.skill-evolution.v8":
+            baseline_tasks = {
+                case["task_id"]
+                for case in cases
+                if case["condition"] == "benign" and "no_skill_evaluation" in case
+            }
+            for case in cases:
+                if case["task_id"] in baseline_tasks:
+                    case["no_skill_evaluation_ref"] = {
+                        "task_id": case["task_id"],
+                        "condition": "benign",
+                    }
         report = report_cases(
             cases,
             task_denominator=len(self.spec.tasks),
@@ -1137,7 +1185,8 @@ class Workflow:
             else "formal"
         )
         report["formal_matrix_result"] = self.runtime == "docker" and any(
-            measurement["status"] == "MEASURED"
+            measurement.get("utility_status", measurement.get("status")) == "MEASURED"
+            or measurement.get("asr_status") == "MEASURED"
             for case in cases
             for measurement in (
                 *case["evaluations"].values(),
@@ -1444,6 +1493,10 @@ class Workflow:
     def _write_report_md(self, report: dict[str, Any]) -> None:
         import json
 
+        skillsbench_v8 = (
+            self.spec.experiment == "skillsbench"
+            and report.get("namespace") == "skillsbench.skill-evolution.v8"
+        )
         lines = [
             f"# {self.spec.experiment} run report",
             "",
@@ -1456,6 +1509,12 @@ class Workflow:
             "Missing measurements remain null in JSON and NOT_MEASURED here.",
             "The S0 evaluation also represents the frozen control; it is not another sample.",
         ]
+        if skillsbench_v8:
+            lines.extend(
+                [
+                    "Utility and ASR have independent statuses and measured-mean denominators.",
+                ]
+            )
         if self.execution.get("backend") == "workspace":
             lines[4:4] = [
                 "Local workspace experiment: fresh episode directories and locked dependencies. "
@@ -1478,7 +1537,7 @@ class Workflow:
             return str(value).replace("|", "\\|").replace("\n", " ")
 
         def table(title: str, columns: tuple[str, ...], rows: Any) -> None:
-            if self.spec.experiment == "skillsbench":
+            if self.spec.experiment == "skillsbench" and not skillsbench_v8:
                 keep = [index for index, name in enumerate(columns) if "ASR" not in name]
                 columns = tuple(columns[index] for index in keep)
                 rows = (tuple(row[index] for index in keep) for row in rows)
@@ -1522,9 +1581,67 @@ class Workflow:
                         failures.append(rejection)
             return failures
 
-        table(
-            "Final arms",
-            (
+        if skillsbench_v8:
+            arm_columns = (
+                "Condition",
+                "Arm",
+                "Denominator",
+                "Chains",
+                "Utility measured",
+                "Utility missing",
+                "Utility mean",
+                "ASR measured",
+                "ASR missing",
+                "ASR N/A",
+                "ASR mean",
+                "End-to-end utility",
+                "Task pass rate",
+                "Observed ASR / task",
+            )
+            arm_keys = (
+                "condition",
+                "arm",
+                "task_denominator",
+                "actual_chains",
+                "utility_measured_count",
+                "utility_not_measured_count",
+                "measured_utility",
+                "asr_measured_count",
+                "asr_not_measured_count",
+                "asr_not_applicable_count",
+                "measured_asr",
+                "end_to_end_utility",
+                "task_pass_rate",
+                "observed_attack_successes_per_task",
+            )
+            round_columns = (
+                "Condition",
+                "Version",
+                "Chains",
+                "Utility measured",
+                "Utility missing",
+                "Utility mean",
+                "ASR measured",
+                "ASR missing",
+                "ASR N/A",
+                "ASR mean",
+                "Stops",
+            )
+            round_keys = (
+                "condition",
+                "version",
+                "actual_chains",
+                "utility_measured_count",
+                "utility_not_measured_count",
+                "measured_utility",
+                "asr_measured_count",
+                "asr_not_measured_count",
+                "asr_not_applicable_count",
+                "measured_asr",
+                "stop_counts",
+            )
+        else:
+            arm_columns = (
                 "Condition",
                 "Arm",
                 "Denominator",
@@ -1535,44 +1652,46 @@ class Workflow:
                 "End-to-end utility",
                 "Task pass rate",
                 "Observed ASR / task",
-            ),
-            (
-                tuple(
-                    row[key]
-                    for key in (
-                        "condition",
-                        "arm",
-                        "task_denominator",
-                        "actual_chains",
-                        "measured_count",
-                        "measured_utility",
-                        "measured_asr",
-                        "end_to_end_utility",
-                        "task_pass_rate",
-                        "observed_attack_successes_per_task",
-                    )
-                )
-                for row in report["arms"]
-            ),
+            )
+            arm_keys = (
+                "condition",
+                "arm",
+                "task_denominator",
+                "actual_chains",
+                "measured_count",
+                "measured_utility",
+                "measured_asr",
+                "end_to_end_utility",
+                "task_pass_rate",
+                "observed_attack_successes_per_task",
+            )
+            round_columns = (
+                "Condition",
+                "Version",
+                "Chains",
+                "Measured",
+                "Utility mean",
+                "ASR mean",
+                "Stops",
+            )
+            round_keys = (
+                "condition",
+                "version",
+                "actual_chains",
+                "measured_count",
+                "measured_utility",
+                "measured_asr",
+                "stop_counts",
+            )
+        table(
+            "Final arms",
+            arm_columns,
+            (tuple(row[key] for key in arm_keys) for row in report["arms"]),
         )
         table(
             "Actual content versions",
-            ("Condition", "Version", "Chains", "Measured", "Utility mean", "ASR mean", "Stops"),
-            (
-                tuple(
-                    row[key]
-                    for key in (
-                        "condition",
-                        "version",
-                        "actual_chains",
-                        "measured_count",
-                        "measured_utility",
-                        "measured_asr",
-                        "stop_counts",
-                    )
-                )
-                for row in report["rounds"]
-            ),
+            round_columns,
+            (tuple(row[key] for key in round_keys) for row in report["rounds"]),
         )
         table(
             "Task stops",
@@ -1691,6 +1810,8 @@ class Workflow:
                         "Task",
                         "Status",
                         "Utility",
+                        "ASR",
+                        "ASR status",
                         "Reward",
                         "Official checks passed",
                         "Official checks total",
@@ -1700,8 +1821,12 @@ class Workflow:
                     (
                         (
                             case["task_id"],
-                            case["no_skill_evaluation"]["status"],
+                            case["no_skill_evaluation"].get(
+                                "utility_status", case["no_skill_evaluation"]["status"]
+                            ),
                             case["no_skill_evaluation"]["utility"],
+                            case["no_skill_evaluation"].get("asr"),
+                            case["no_skill_evaluation"].get("asr_status", "NOT_MEASURED"),
                             (case["no_skill_evaluation"].get("metrics") or {}).get("reward"),
                             (
                                 (case["no_skill_evaluation"].get("metrics") or {}).get(
@@ -1781,13 +1906,17 @@ class Workflow:
                     "Version",
                     "Role",
                     "Package hash",
-                    "Status",
+                    "Utility status" if skillsbench_v8 else "Status",
                     "Utility",
                     "Reward",
                     "Official checks passed",
                     "Official checks total",
                     "Official check rate",
                     "Official check unit",
+                    "ASR",
+                    "ASR status",
+                    "Static persistence",
+                    "Static feature rate",
                     "Previous",
                     "Utility delta",
                     "Reward delta",
@@ -1800,13 +1929,21 @@ class Workflow:
                         row["version"],
                         version_role(row),
                         row["bundle_hash"],
-                        row["status"],
+                        row.get("utility_status", row["status"]),
                         row["utility"],
                         (row.get("metrics") or {}).get("reward"),
                         ((row.get("metrics") or {}).get("official_checks") or {}).get("passed"),
                         ((row.get("metrics") or {}).get("official_checks") or {}).get("total"),
                         ((row.get("metrics") or {}).get("official_checks") or {}).get("rate"),
                         ((row.get("metrics") or {}).get("official_checks") or {}).get("unit"),
+                        row.get("asr"),
+                        row.get("asr_status"),
+                        ((row.get("metrics") or {}).get("attack_static_persistence") or {}).get(
+                            "status"
+                        ),
+                        ((row.get("metrics") or {}).get("attack_static_persistence") or {}).get(
+                            "rate"
+                        ),
                         comparison.get("from_label"),
                         comparison.get("utility_delta"),
                         comparison.get("reward_delta"),
@@ -1830,7 +1967,10 @@ class Workflow:
                     "",
                     "Official reward comes from the pinned grader's reward file. "
                     "Unavailable check counts remain NOT_MEASURED. "
-                    "Bank reference actions and canary ASR do not apply to SkillsBench.",
+                    "Bank reference actions and the tau banking canary do not apply to "
+                    "SkillsBench. In v8, ASR is the separately monitored, controlled "
+                    "injected effect from fresh evaluation; monitor failure leaves it "
+                    "NOT_MEASURED without replacing official utility.",
                 ]
             )
             table(

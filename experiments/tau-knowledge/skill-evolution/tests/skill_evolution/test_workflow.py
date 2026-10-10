@@ -26,7 +26,13 @@ from tau_skill_evolution.evolution import EvolutionResult
 from tau_skill_evolution.generator import SKILL_BUNDLE_RESPONSE_FORMAT
 from tau_skill_evolution.journal import Journal, UnknownOperation
 from tau_skill_evolution.model import CredentialError, ModelClientError
-from tau_skill_evolution.spec import DEFAULT_CONFIG, SKILLSBENCH_CONFIG, ExperimentSpec, load_spec
+from tau_skill_evolution.spec import (
+    DEFAULT_CONFIG,
+    SKILLSBENCH_CONFIG,
+    ExperimentSpec,
+    digest,
+    load_spec,
+)
 from tau_skill_evolution.workflow import Workflow
 
 DOCUMENT = {"page_id": "policy", "title": "Public Policy", "content": "Use the current user ID."}
@@ -299,14 +305,14 @@ def test_skillsbench_uses_shared_creation_and_domain_specific_reports(tmp_path):
     workflow.evaluate(cells)
     workflow.evaluate(cells)
     report = workflow.report()
-    assert len(report["cases"]) == 85 and len(report["versions"]) == 1
+    assert len(report["cases"]) == 765 and len(report["versions"]) == 1
     assert report["arms"][0]["task_denominator"] == 85
     assert report["arms"][0]["measured_asr"] is None
     assert [role for role, _ in requests].count("generator") == 1
     assert requests == learning_requests
     text = (workflow.root / "REPORT.md").read_text()
     assert "Official check rate" in text and "Reference matched" not in text
-    assert "ASR mean" not in text and "Reference action checks" not in text
+    assert "ASR mean" in text and "Reference action checks" not in text
     assert len([event for event in log if event[0] == "evaluate"]) == 1
 
 
@@ -385,6 +391,17 @@ def test_skillsbench_discovery_observations_reach_s0_and_resume_does_not_repeat_
 def test_previous_manifest_based_method_is_readable_but_cannot_start_or_resume(tmp_path):
     values = yaml.safe_load(SKILLSBENCH_CONFIG.read_text())
     values["schema_version"] = "skillsbench.skill-evolution.v6"
+    values["matrix"]["arms"] = ["benign"]
+    values.pop("poison_sampling")
+    values["source"].pop("condition_manifest")
+    values["matrix_commitment"] = digest(
+        {
+            "seed": values["seed"],
+            "tasks": values["tasks"]["selected"],
+            "arms": ["benign"],
+            "commit": values["source"]["commit"],
+        }
+    )
     values["acquisition"]["max_reads"] = 0
     path = tmp_path / "historical-config.yaml"
     path.write_text(yaml.safe_dump(values))
@@ -435,19 +452,35 @@ def test_no_skill_workflow_skips_learning_and_keeps_fixed_population(tmp_path):
     workflow.evaluate_no_skill((cell,))
     report = workflow.report()
     assert calls == ["fresh_no_skill"]
-    assert len(report["cases"]) == 85
-    case = next(case for case in report["cases"] if case["task_id"] == cell[0])
+    assert len(report["cases"]) == 765
+    task_cases = [case for case in report["cases"] if case["task_id"] == cell[0]]
+    assert len(task_cases) == 9
+    case = next(case for case in task_cases if case["condition"] == "benign")
     assert case["versions"] == [] and case["evaluations"] == {}
     assert case["no_skill_evaluation"]["utility"] is True
+    assert sum("no_skill_evaluation" in item for item in task_cases) == 1
+    assert all(
+        item["no_skill_evaluation_ref"] == {"task_id": cell[0], "condition": "benign"}
+        for item in task_cases
+    )
     assert report["versions"] == [] and report["rounds"] == []
-    baseline = next(arm for arm in report["arms"] if arm["arm"] == "no_skill")
-    assert baseline["task_denominator"] == 85 and baseline["measured_count"] == 1
-    assert baseline["not_measured_count"] == 84 and baseline["actual_chains"] == 0
+    baselines = [arm for arm in report["arms"] if arm["arm"] == "no_skill"]
+    assert [arm["condition"] for arm in baselines] == list(spec.values["matrix"]["arms"])
+    assert all(arm["task_denominator"] == 85 for arm in baselines)
+    assert all(arm["measured_count"] == 1 for arm in baselines)
+    assert all(arm["not_measured_count"] == 84 for arm in baselines)
+    assert all(arm["actual_chains"] == 0 for arm in baselines)
+    assert baselines[0]["actual_runs"] == 1
+    assert all(arm["actual_runs"] == 0 for arm in baselines[1:])
+    assert all(arm["shared_baseline_references"] == 1 for arm in baselines[1:])
+    assert len(report["baseline_progress"]) == 18
     assert report["formal_matrix_result"]
     assert "No-Skill independent measurements" in (workflow.root / "REPORT.md").read_text()
     root, journal = workflow._cell(*cell)
     assert not journal.dispatched("creation") and not journal.dispatched("generate_initial")
     assert not (root / "base").exists() and not (root / "initial").exists()
+    for condition in spec.values["matrix"]["arms"][1:]:
+        assert not (workflow.root / "cells" / cell[0] / condition / "journal").exists()
 
 
 @pytest.mark.parametrize("runtime, executor", [("docker", "local"), ("workspace", "author-codex")])
@@ -488,8 +521,9 @@ def test_no_skill_new_authenticated_invocation_preserves_unknown_and_continues(t
     resumed.evaluate_no_skill(cells)
     assert calls == ["rejected", "accepted"]
     report = resumed.report()
-    assert report["cases"][0]["no_skill_evaluation"]["status"] == "NOT_MEASURED"
-    assert report["cases"][1]["no_skill_evaluation"]["status"] == "MEASURED"
+    cases = {(case["task_id"], case["condition"]): case for case in report["cases"]}
+    assert cases[cells[0]]["no_skill_evaluation"]["status"] == "NOT_MEASURED"
+    assert cases[cells[1]]["no_skill_evaluation"]["status"] == "MEASURED"
 
 
 def test_no_skill_cli_routes_evaluation_without_creation(tmp_path, monkeypatch, capsys):
@@ -2161,6 +2195,55 @@ def test_skillsbench_report_renders_native_deltas_without_imputed_versions(tmp_p
     assert report["version_paired_progress"][-1]["mean_utility_delta"] is None
     assert report["progress"][0]["same_content"] is True
     assert report["progress"][0]["utility_delta"] == 0
+
+
+def test_skillsbench_v8_markdown_shows_independent_utility_and_asr_missingness(tmp_path):
+    initial = SkillBundle({"SKILL.md": "poisoned"})
+    measurement = {
+        "status": "NOT_MEASURED",
+        "utility_status": "NOT_MEASURED",
+        "bundle_hash": initial.bundle_hash,
+        "utility": None,
+        "asr": True,
+        "asr_status": "MEASURED",
+        "reason": "official_grader_program_error",
+        "metrics": {
+            "status": "NOT_MEASURED",
+            "utility": None,
+            "asr": True,
+            "asr_status": "MEASURED",
+            "attack_measurement": {"asr": True, "asr_status": "MEASURED"},
+        },
+    }
+    case = {
+        "task_id": "one",
+        "condition": "poison-5",
+        "versions": [initial.to_dict()],
+        "final_bundle_hash": initial.bundle_hash,
+        "stop_reason": "revision_budget_exhausted",
+        "evaluations": {initial.bundle_hash: measurement},
+    }
+    report = {
+        **report_cases([case], task_denominator=85, conditions=("poison-5",)),
+        "namespace": "skillsbench.skill-evolution.v8",
+        "cases": [case],
+        "usage": {"roles": {}},
+    }
+    workflow = object.__new__(Workflow)
+    workflow.spec = SimpleNamespace(experiment="skillsbench", tasks=tuple(range(85)))
+    workflow.root, workflow.execution, workflow.demo = tmp_path, {}, False
+    workflow._write_report_md(report)
+
+    markdown = (tmp_path / "REPORT.md").read_text()
+    final_arms = markdown.split("## Final arms", 1)[1].split("## Actual content versions", 1)[0]
+    measurements = markdown.split("## Independent measurements", 1)[1].split(
+        "## Surrogate checks", 1
+    )[0]
+    assert "Utility measured" in final_arms and "Utility missing" in final_arms
+    assert "ASR measured" in final_arms and "ASR missing" in final_arms
+    assert "| Utility status | Utility |" in measurements
+    assert "| NOT_MEASURED | NOT_MEASURED |" in measurements
+    assert "| True | MEASURED |" in measurements
 
 
 @pytest.mark.parametrize("authentication", [True, False])

@@ -138,6 +138,11 @@ def partial_executor(tmp_path):
         episode=fresh_episode,
         close_public=close_public,
         grade=grade,
+        finish_attack_measurement=lambda _files=None: None,
+        attack_private_contamination=False,
+        attack_cleanup_verified=True,
+        attack_condition=None,
+        last_attack_outcome=None,
         phase_remaining=lambda: 300,
         _official_report_name=lambda: "ctrf.json",
     )

@@ -29,7 +29,7 @@ from typing import Any
 import tomllib
 
 from .artifacts import atomic_json
-from .container import _safe_path
+from .container import ContainerUnavailable, _safe_path
 
 _EVOLUTION_PRIVATE_ROOTS = (
     "/bundle",
@@ -850,12 +850,18 @@ def prepare_pool(root: Path, tokenizer: Any) -> dict[str, Any]:
     return {"pages": len(pages), "corpus_hash": manifest["corpus_hash"]}
 
 
-def validate_pool(root: Path, source: SkillsBenchSource | None = None) -> dict[str, Any]:
+def validate_pool(
+    root: Path,
+    source: SkillsBenchSource | None = None,
+    *,
+    directory: Path | None = None,
+    tokenizer: Any = None,
+) -> dict[str, Any]:
     source = source or SkillsBenchSource(root)
-    directory = Path(root) / "data/skillsbench/corpus"
+    directory = directory or Path(root) / "data/skillsbench/corpus"
     manifest = json.loads((directory / "manifest.json").read_text())
     if (
-        manifest.get("schema") != "skillsbench.pool.v2"
+        manifest.get("schema") not in {"skillsbench.pool.v2", "skillsbench.pool.injected.v8"}
         or manifest.get("scope") != "background_docs_only"
         or manifest.get("source_manifest_hash") != source.manifest["manifest_hash"]
         or manifest.get("chunk_tokens") != 2048
@@ -866,6 +872,13 @@ def validate_pool(root: Path, source: SkillsBenchSource | None = None) -> dict[s
         != _json_hash({k: v for k, v in manifest.items() if k != "corpus_hash"})
     ):
         raise ValueError("skillsbench_pool_manifest_invalid")
+    poisoned = manifest["schema"] == "skillsbench.pool.injected.v8"
+    if poisoned and directory == Path(root) / "data/skillsbench/corpus":
+        raise ValueError("skillsbench_benign_pool_must_remain_clean")
+    if poisoned:
+        from .skillsbench_attack import validate_injected_pool
+
+        validate_injected_pool(root, source, directory, tokenizer)
     originals = {
         e["document_id"]: e["sha256"]
         for e in source.manifest["files"]
@@ -891,13 +904,23 @@ def validate_pool(root: Path, source: SkillsBenchSource | None = None) -> dict[s
     return manifest
 
 
-def prepare_corpus(spec: Any) -> Any:
+def selected_pool(spec: Any, arm: str = "benign") -> Path:
+    if arm == "benign":
+        return spec.root / "data/skillsbench/corpus"
+    from .skillsbench_attack import prepare_injected_pool as prepare_v8_pool
+
+    return prepare_v8_pool(spec, arm)
+
+
+def prepare_corpus(spec: Any, arm: str = "benign") -> Any:
     from .core import DeterministicBM25, FullDocumentHybridSession, Page
     from .dense import DenseIndex, OpenAICompatibleEmbeddingClient
     from .retrieval import text_counter
 
-    root = spec.root / "data/skillsbench/corpus"
-    manifest = validate_pool(spec.root)
+    root = selected_pool(spec, arm)
+    manifest = (
+        validate_pool(spec.root) if arm == "benign" else validate_pool(spec.root, directory=root)
+    )
     pages = []
     for record in manifest["pages"]:
         value = json.loads((root / _safe_path(record["file"])).read_text())
@@ -914,13 +937,16 @@ def prepare_corpus(spec: Any) -> Any:
     )
     cache = spec.root / "data/skillsbench/dense" / manifest["corpus_hash"]
     if not cache.exists():
+        command = [
+            str((spec.root / embedding["vllm"]).parent / "python"),
+            str(spec.root / "scripts/prepare_skillsbench.py"),
+            "--index-settings",
+            json.dumps(embedding),
+        ]
+        if arm != "benign":
+            command.extend(("--pool-directory", str(root)))
         subprocess.run(
-            [
-                str((spec.root / embedding["vllm"]).parent / "python"),
-                str(spec.root / "scripts/prepare_skillsbench.py"),
-                "--index-settings",
-                json.dumps(embedding),
-            ],
+            command,
             check=True,
             capture_output=True,
             timeout=3600,
@@ -934,13 +960,17 @@ def prepare_corpus(spec: Any) -> Any:
     )
 
 
-def prepare_dense(root: Path, embedding: Mapping[str, Any]) -> dict[str, Any]:
+def prepare_dense(
+    root: Path, embedding: Mapping[str, Any], *, directory: Path | None = None
+) -> dict[str, Any]:
     from .core import Page
     from .dense import DenseIndex, HuggingFaceQwenTokenizer, OpenAICompatibleEmbeddingClient
 
-    directory = Path(root) / "data/skillsbench/corpus"
     started = time.monotonic()
-    manifest = validate_pool(root)
+    manifest = (
+        validate_pool(root) if directory is None else validate_pool(root, directory=directory)
+    )
+    directory = directory or Path(root) / "data/skillsbench/corpus"
     pages = []
     for record in manifest["pages"]:
         value = json.loads((directory / _safe_path(record["file"])).read_text())
@@ -971,73 +1001,91 @@ def prepare_dense(root: Path, embedding: Mapping[str, Any]) -> dict[str, Any]:
             "pages": len(pages),
             "corpus_hash": manifest["corpus_hash"],
         }
-    batch_manifests = []
-    # Independent sealed caches preserve completed free embedding requests across restarts.
-    for offset in range(0, len(pages), 256):
-        batch = tuple(pages[offset : offset + 256])
-        target = parts / str(offset)
-        if (target / "manifest.json").exists():
-            DenseIndex.load_cache(target, batch, client=client, tokenizer=tokenizer)
-            batch_manifest = json.loads((target / "manifest.json").read_text())
-        else:
-            if target.exists():
-                shutil.rmtree(target)  # Incomplete local cache, never exposed to any learner.
-            index = DenseIndex.build(batch, client=client, tokenizer=tokenizer)
-            batch_manifest = index.save_cache(target)
-        batch_manifests.append(batch_manifest)
-        atomic_json(
-            output.parent / "progress.json",
-            {
-                "corpus_hash": manifest["corpus_hash"],
-                "completed_pages": min(offset + 256, len(pages)),
-                "total_pages": len(pages),
-                "seconds": time.monotonic() - started,
-            },
-        )
-    from .core._canonical import canonical_json_bytes, canonical_json_sha256
+    from .retrieval import ensure_cache
 
-    output.mkdir(exist_ok=True)
-    vectors = output / "vectors.f32"
-    temporary = vectors.with_suffix(".preparing")
-    with temporary.open("wb") as stream:
+    # Older interrupted builds may have a vector directory without a manifest.
+    # Only remove that incomplete aggregate under the same publisher lock;
+    # sealed batch caches remain available for deterministic reconstruction.
+    if output.exists() and not (output / "manifest.json").exists():
+        import fcntl
+
+        with (output.parent / f"{output.name}.lock").open("a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            if output.exists() and not (output / "manifest.json").exists():
+                shutil.rmtree(output)
+
+    def build(output: Path) -> None:
+        batch_manifests = []
+        # Independent sealed caches preserve completed free embedding requests across restarts.
         for offset in range(0, len(pages), 256):
-            with (parts / str(offset) / "vectors.f32").open("rb") as part:
-                shutil.copyfileobj(part, stream)
-    contract = dict(batch_manifests[0]["contract"])
-    contract["pages"] = [p for m in batch_manifests for p in m["contract"]["pages"]]
-    contract["page_count"] = len(pages)
-    # The whole-corpus hash is part of the shared DenseIndex cache contract.
-    contract["corpus_hash"] = canonical_json_sha256(
-        [
-            {"page_id": p.page_id, "title": p.title, "content_sha256": p.content_sha256}
-            for p in pages
-        ]
-    )
-    unsigned = {
-        **{
-            k: v
-            for k, v in batch_manifests[0].items()
-            if k not in {"manifest_payload_sha256", "contract", "vectors"}
-        },
-        "contract": contract,
-        "vectors": {
-            **batch_manifests[0]["vectors"],
-            "shape": [len(pages), client.dimensions],
-            "size_bytes": temporary.stat().st_size,
-            "sha256": _hash(temporary),
-        },
-    }
-    os.replace(temporary, vectors)
-    sealed = {**unsigned, "manifest_payload_sha256": canonical_json_sha256(unsigned)}
-    metadata = output / "manifest.preparing"
-    metadata.write_bytes(canonical_json_bytes(sealed) + b"\n")
-    os.replace(metadata, output / "manifest.json")
+            batch = tuple(pages[offset : offset + 256])
+            target = parts / str(offset)
+            if (target / "manifest.json").exists():
+                DenseIndex.load_cache(target, batch, client=client, tokenizer=tokenizer)
+                batch_manifest = json.loads((target / "manifest.json").read_text())
+            else:
+                if target.exists():
+                    shutil.rmtree(target)  # Incomplete local cache, never exposed to any learner.
+                index = DenseIndex.build(batch, client=client, tokenizer=tokenizer)
+                batch_manifest = index.save_cache(target)
+            batch_manifests.append(batch_manifest)
+            atomic_json(
+                output.parent / "progress.json",
+                {
+                    "corpus_hash": manifest["corpus_hash"],
+                    "completed_pages": min(offset + 256, len(pages)),
+                    "total_pages": len(pages),
+                    "seconds": time.monotonic() - started,
+                },
+            )
+        from .core._canonical import canonical_json_bytes, canonical_json_sha256
+
+        output.mkdir()
+        vectors = output / "vectors.f32"
+        temporary = vectors.with_suffix(".preparing")
+        with temporary.open("wb") as stream:
+            for offset in range(0, len(pages), 256):
+                with (parts / str(offset) / "vectors.f32").open("rb") as part:
+                    shutil.copyfileobj(part, stream)
+        contract = dict(batch_manifests[0]["contract"])
+        contract["pages"] = [p for m in batch_manifests for p in m["contract"]["pages"]]
+        contract["page_count"] = len(pages)
+        # The whole-corpus hash is part of the shared DenseIndex cache contract.
+        contract["corpus_hash"] = canonical_json_sha256(
+            [
+                {"page_id": p.page_id, "title": p.title, "content_sha256": p.content_sha256}
+                for p in pages
+            ]
+        )
+        unsigned = {
+            **{
+                k: v
+                for k, v in batch_manifests[0].items()
+                if k not in {"manifest_payload_sha256", "contract", "vectors"}
+            },
+            "contract": contract,
+            "vectors": {
+                **batch_manifests[0]["vectors"],
+                "shape": [len(pages), client.dimensions],
+                "size_bytes": temporary.stat().st_size,
+                "sha256": _hash(temporary),
+            },
+        }
+        os.replace(temporary, vectors)
+        sealed = {**unsigned, "manifest_payload_sha256": canonical_json_sha256(unsigned)}
+        metadata = output / "manifest.preparing"
+        metadata.write_bytes(canonical_json_bytes(sealed) + b"\n")
+        os.replace(metadata, output / "manifest.json")
+        DenseIndex.load_cache(output, pages, client=client, tokenizer=tokenizer)
+
+    ensure_cache(output, build)
+    DenseIndex.load_cache(output, pages, client=client, tokenizer=tokenizer)
     result = {
         "ready": True,
         "pages": len(pages),
         "corpus_hash": manifest["corpus_hash"],
         "seconds": time.monotonic() - started,
-        "vectors_bytes": vectors.stat().st_size,
+        "vectors_bytes": (output / "vectors.f32").stat().st_size,
     }
     atomic_json(Path(root) / "data/skillsbench/dense/readiness.json", result)
     return result
@@ -1127,10 +1175,11 @@ class SkillsBenchAdapter:
         artifact_root: Path | None = None,
         model_journal_dir: Path | None = None,
         runtime: str | None = None,
+        condition: str = "benign",
     ):
         from .skillsbench_runtime import SkillsBenchRunner
 
-        self.spec, self.task_id, self.demo = spec, task, demo
+        self.spec, self.task_id, self.demo, self.condition = spec, task, demo, condition
         self.source = SkillsBenchSource(spec.root)
         self.public_inputs = self.source.public_inputs(task)
         selected_lock = getattr(spec, "values", {}).get("source", {}).get("runtime_lock")
@@ -1140,6 +1189,11 @@ class SkillsBenchAdapter:
             demo=demo,
             runtime=runtime,
             runtime_lock_path=spec.root / selected_lock if selected_lock else None,
+            attack_condition=(
+                condition
+                if getattr(spec, "namespace", None) == "skillsbench.skill-evolution.v8"
+                else None
+            ),
         )
         self.model_factory, self.counter = model_factory, counter
         self.artifact_root = Path(
@@ -1210,6 +1264,7 @@ class SkillsBenchAdapter:
             runtime="docker",
             runtime_lock_path=self.runner.runtime_lock_path,
             transport=self.runner.transport,
+            attack_condition=self.runner.attack_condition,
         )
         learning.timeout_multiplier = (
             getattr(self.spec, "values", {}).get("evolution", {}).get("timeout_multiplier", 5)
@@ -1552,7 +1607,6 @@ class SkillsBenchAdapter:
     def _execute_codex(self, bundle: Any, episode: Any) -> dict[str, Any]:
         from .codex_provider import OUTPUT_TOKEN_BUDGET_STOP
         from .codex_runtime import CodexProvider, execute_codex
-        from .container import ContainerUnavailable
         from .journal import UnknownOperation
         from .model import ModelClientError
 
@@ -1738,6 +1792,11 @@ class SkillsBenchAdapter:
     def rollout(self, bundle: Any) -> dict[str, Any]:
         with self._execution_episode(bundle) as episode:
             trace = self._execute(bundle, episode)
+            self.runner.finish_attack_measurement(bundle.files)
+            if self.runner.attack_private_contamination:
+                raise ContainerUnavailable("skillsbench_attack_private_value_copied")
+            if not self.runner.attack_cleanup_verified:
+                raise ContainerUnavailable("skillsbench_attack_fixture_cleanup_unverified")
             return {**trace, **self._snapshot(episode)}
 
     def oracle(self, bundle: Any, *, phase: str = "normal") -> dict[str, Any]:
@@ -1746,7 +1805,9 @@ class SkillsBenchAdapter:
             raise ValueError("invalid_oracle_phase")
         with self._execution_episode(bundle, oracle_phase=phase) as episode:
             self._execute(bundle, episode)
-            self._snapshot(episode)
+            self.runner.finish_attack_measurement(bundle.files)
+            if self.runner.attack_cleanup_verified:
+                self._snapshot(episode)
             self.runner.close_public(episode)
             result = self.runner.grade(episode)
             evidence_path = Path(episode.grader_evidence_dir) / "evidence.json"
@@ -1852,14 +1913,27 @@ class SkillsBenchAdapter:
     def _evaluate(self, bundle: Any) -> dict[str, Any]:
         with self._execution_episode(bundle, evaluation=True) as episode:
             trace = self._execute(bundle, episode)
-            self._snapshot(episode)
+            files = bundle.files if bundle is not None else {}
+            self.runner.finish_attack_measurement(files)
+            if self.runner.attack_cleanup_verified:
+                self._snapshot(episode)
             self.runner.close_public(episode)
             result = self.runner.grade(episode)
+        attack = self.runner.last_attack_outcome
+        if self.runner.attack_condition is not None:
+            from .skillsbench_attack_runtime import parse_condition, static_attack_persistence
+
+            profile = parse_condition(self.runner.attack_condition).profile
+            static = static_attack_persistence(bundle, profile)
+        else:
+            static, attack = None, None
         return {
             **result,
             "benchmark": "skillsbench",
-            "asr": None,
-            "asr_status": "NOT_APPLICABLE",
+            "asr": attack["asr"] if attack is not None else None,
+            "asr_status": attack["asr_status"] if attack is not None else "NOT_APPLICABLE",
+            "attack_measurement": attack,
+            "attack_static_persistence": static,
             "completion_steps": None,
             "execution_termination_reason": trace.get("termination_reason"),
             "executor": trace.get("executor"),
@@ -2114,6 +2188,7 @@ class SkillsBenchEvolutionSession:
         self.state["attempt"] = {**attempt, "status": "PREPARING"}
         self._save()
         self._replace_candidate(parent)
+        self.runner.begin_attack_measurement(self.files())
         self.state["attempt"] = {**attempt, "status": "READY"}
         self._save()
         return {
@@ -2205,6 +2280,24 @@ class SkillsBenchEvolutionSession:
         files = self.files()
         if initial and files != dict(parent_bundle.files):
             raise ValueError("initial_execution_changed_sealed_skill")
+        attack = self.runner.finish_attack_measurement(files)
+        if attack is not None and not any(
+            item.get("operation_id") == operation_id
+            for item in self.state.get("attack_measurements", ())
+        ):
+            self.state.setdefault("attack_measurements", []).append(
+                {
+                    "operation_id": operation_id,
+                    "parent_hash": parent_bundle.bundle_hash,
+                    "initial": initial,
+                    "outcome": attack,
+                }
+            )
+            self._save()
+        if self.runner.attack_private_contamination:
+            raise ContainerUnavailable("skillsbench_attack_private_value_copied")
+        if not self.runner.attack_cleanup_verified:
+            raise ContainerUnavailable("skillsbench_attack_fixture_cleanup_unverified")
         bundle = (
             parent_bundle if initial else SkillBundle(files, parent_hash=parent_bundle.bundle_hash)
         )
@@ -2273,6 +2366,20 @@ def skillsbench_preflight(
             "ready": False,
             "checks": [{"name": "skillsbench_source", "ok": False, "detail": str(exc)}],
         }
+    if spec.namespace == "skillsbench.skill-evolution.v8":
+        try:
+            from .skillsbench_attack import validate_condition_design
+
+            detail = validate_condition_design(spec)
+            checks.append({"name": "skillsbench_injection_sources", "ok": True, "detail": detail})
+        except (OSError, ValueError, RuntimeError) as exc:
+            checks.append(
+                {
+                    "name": "skillsbench_injection_sources",
+                    "ok": False,
+                    "detail": str(exc),
+                }
+            )
     try:
         manifest = validate_pool(spec.root, source)
         checks.append(
@@ -2315,6 +2422,20 @@ def skillsbench_preflight(
         checks.append(
             {"name": "skillsbench_public_pool_and_index", "ok": False, "detail": str(exc)}
         )
+    if spec.namespace == "skillsbench.skill-evolution.v8":
+        try:
+            from .skillsbench_attack import validate_matrix_manifest
+
+            detail = validate_matrix_manifest(spec)
+            checks.append({"name": "skillsbench_injection_matrix", "ok": True, "detail": detail})
+        except (OSError, ValueError, RuntimeError, KeyError) as exc:
+            checks.append(
+                {
+                    "name": "skillsbench_injection_matrix",
+                    "ok": False,
+                    "detail": str(exc),
+                }
+            )
     for task in task_ids or (("3d-scan-calc",) if demo else source.manifest["tasks"]):
         try:
             result = SkillsBenchRunner(

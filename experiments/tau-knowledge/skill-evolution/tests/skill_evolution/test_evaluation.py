@@ -70,6 +70,67 @@ def test_no_skill_unknown_operation_does_not_resend_or_become_zero(tmp_path):
     assert first["reason"] == "result_unknown"
 
 
+def test_measured_utility_keeps_monitor_failure_as_unmeasured_asr():
+    bundle = SkillBundle({"SKILL.md": "s0"})
+    result = evaluate_versions(
+        [bundle],
+        lambda _: {
+            "utility": 1.0,
+            "asr": None,
+            "asr_status": "NOT_MEASURED",
+            "attack_measurement": {"failure": "collector_unavailable"},
+        },
+    )[bundle.bundle_hash]
+    assert result["status"] == "MEASURED"
+    assert result["utility"] == 1.0
+    assert result["asr"] is None
+    assert result["asr_status"] == "NOT_MEASURED"
+
+
+def test_unmeasured_official_utility_keeps_measured_asr_and_its_denominator():
+    bundle = SkillBundle({"SKILL.md": "s0"})
+    evaluations = evaluate_versions(
+        [bundle],
+        lambda _: {
+            "status": "NOT_MEASURED",
+            "utility": None,
+            "reward": None,
+            "failure": "official_grader_program_error",
+            "asr": True,
+            "asr_status": "MEASURED",
+            "attack_measurement": {"asr": True, "asr_status": "MEASURED"},
+        },
+    )
+    measurement = evaluations[bundle.bundle_hash]
+    assert measurement["status"] == measurement["utility_status"] == "NOT_MEASURED"
+    assert measurement["utility"] is None
+    assert measurement["asr"] is True and measurement["asr_status"] == "MEASURED"
+    assert measurement["metrics"]["attack_measurement"]["asr"] is True
+
+    report = report_cases(
+        [
+            {
+                "task_id": "one",
+                "condition": "poison-5",
+                "versions": [bundle],
+                "evaluations": evaluations,
+            }
+        ]
+    )
+    arm = next(
+        row for row in report["arms"] if row["condition"] == "poison-5" and row["arm"] == "evolved"
+    )
+    assert arm["utility_measured_count"] == 0
+    assert arm["utility_not_measured_count"] == 97
+    assert arm["measured_utility"] is None
+    assert arm["asr_measured_count"] == 1
+    assert arm["asr_not_measured_count"] == 96
+    assert arm["measured_asr"] == 1.0
+    assert report["rounds"][0]["asr_measured_count"] == 1
+    assert report["versions"][0]["utility_status"] == "NOT_MEASURED"
+    assert report["versions"][0]["asr_status"] == "MEASURED"
+
+
 @pytest.mark.parametrize("executor", [None, "legacy-tool-loop", "author-codex"])
 def test_baseline_report_pairs_only_matching_explicit_executor(executor):
     bundle = SkillBundle({"SKILL.md": "s0"})
@@ -387,6 +448,57 @@ def _official_measurement(passed, total, *, executor="author-codex", unit="repor
             },
         },
     }
+
+
+def test_shared_no_skill_reference_pairs_all_nine_conditions_without_duplicate_runs():
+    conditions = (
+        "benign",
+        "credential-abuse-5",
+        "credential-abuse-10",
+        "data-exfil-http-5",
+        "data-exfil-http-10",
+        "file-delete-5",
+        "file-delete-10",
+        "cpu-hijack-5",
+        "cpu-hijack-10",
+    )
+    baseline = _official_measurement(0, 2)
+    reference = {"task_id": "one", "condition": "benign"}
+    cases = []
+    for condition in conditions:
+        bundle = SkillBundle({"SKILL.md": condition})
+        case = {
+            "task_id": "one",
+            "condition": condition,
+            "versions": [bundle],
+            "evaluations": {
+                bundle.bundle_hash: {
+                    **_official_measurement(2, 2),
+                    "bundle_hash": bundle.bundle_hash,
+                }
+            },
+            "no_skill_evaluation_ref": reference,
+        }
+        if condition == "benign":
+            case["no_skill_evaluation"] = baseline
+        cases.append(case)
+
+    report = report_cases(cases, task_denominator=85, conditions=conditions)
+
+    controls = [row for row in report["arms"] if row["arm"] == "no_skill"]
+    assert [row["condition"] for row in controls] == list(conditions)
+    assert all(row["measured_count"] == 1 for row in controls)
+    assert controls[0]["actual_runs"] == 1
+    assert controls[0]["shared_baseline_references"] == 0
+    assert all(row["actual_runs"] == 0 for row in controls[1:])
+    assert all(row["shared_baseline_references"] == 1 for row in controls[1:])
+    assert len(report["version_progress"]) == len(conditions)
+    assert all(row["from_label"] == "NoSkill" for row in report["version_progress"])
+    assert all(row["paired_measured"] for row in report["version_progress"])
+    assert len(report["baseline_progress"]) == 2 * len(conditions)
+    assert len(report["baseline_paired_progress"]) == 2 * len(conditions)
+    assert all(row["paired_count"] == 1 for row in report["baseline_paired_progress"])
+    assert sum("no_skill_evaluation" in case for case in cases) == 1
 
 
 def test_native_report_records_all_actual_content_deltas_and_separate_pair_counts():

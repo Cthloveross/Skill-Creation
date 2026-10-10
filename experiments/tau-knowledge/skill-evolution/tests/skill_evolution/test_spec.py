@@ -20,6 +20,7 @@ from tau_skill_evolution.spec import (
     LEGACY_ATTACK_PROFILES,
     NAMESPACE,
     POISON_SAMPLE_SHA256,
+    SKILLSBENCH_ARMS,
     SKILLSBENCH_COMMIT,
     SKILLSBENCH_CONFIG,
     digest,
@@ -45,6 +46,22 @@ def _codex_plan_provider(values):
         "version": pinned["version"],
         "binary_sha256": pinned["binary_sha256"],
     }
+
+
+def _historical_skillsbench(values, namespace):
+    """Turn the current v8 fixture into a coherent read-only historical snapshot."""
+    values["schema_version"] = namespace
+    values["matrix"]["arms"] = ["benign"]
+    values.pop("poison_sampling", None)
+    values["source"].pop("condition_manifest", None)
+    values["matrix_commitment"] = digest(
+        {
+            "seed": values["seed"],
+            "tasks": values["tasks"]["selected"],
+            "arms": ["benign"],
+            "commit": values["source"]["commit"],
+        }
+    )
 
 
 def test_full_tau_matrix_preserves_legacy_profiles_poison_sample_and_source():
@@ -82,14 +99,17 @@ def test_full_tau_matrix_preserves_legacy_profiles_poison_sample_and_source():
     }
 
 
-def test_skillsbench_configuration_has_the_fixed_matrix_and_only_benign_arm():
+def test_skillsbench_configuration_has_the_fixed_nine_condition_matrix():
     spec = load_spec(SKILLSBENCH_CONFIG)
     assert spec.values["source"]["commit"] == SKILLSBENCH_COMMIT
-    assert len(spec.tasks) == len(set(spec.tasks)) == len(spec.cells) == 85
+    assert len(spec.tasks) == len(set(spec.tasks)) == 85
+    assert len(spec.cells) == 765
     assert list(spec.tasks) == sorted(spec.tasks)
-    assert spec.experiment == "skillsbench" and spec.namespace == "skillsbench.skill-evolution.v7"
+    assert spec.experiment == "skillsbench" and spec.namespace == "skillsbench.skill-evolution.v8"
     assert spec.values["runtime"]["executor"] == "author-codex"
-    assert spec.arms == ("benign",) and spec.targets("benign") == ()
+    assert spec.arms == SKILLSBENCH_ARMS and spec.targets("benign") == ()
+    assert len(spec.targets("credential-abuse-5")) == 4
+    assert len(spec.targets("credential-abuse-10")) == 9
     assert spec.profile(spec.tasks[0]) == "benign"
     assert spec.values["acquisition"]["max_reads"] == 10
     assert spec.values["acquisition"]["max_clarifications"] == 0
@@ -105,7 +125,7 @@ def test_skillsbench_configuration_has_the_fixed_matrix_and_only_benign_arm():
 
 def test_skillsbench_author_budgets_do_not_keep_extra_revision_or_post_caps():
     spec = load_spec(SKILLSBENCH_CONFIG)
-    assert spec.namespace == "skillsbench.skill-evolution.v7"
+    assert spec.namespace == "skillsbench.skill-evolution.v8"
     assert spec.values["evolution"] == {
         "max_surrogate_retries": 15,
         "max_oracles": 5,
@@ -133,7 +153,7 @@ def test_legacy_skillsbench_config_preserves_population_and_model(tmp_path, mode
     current = load_spec(SKILLSBENCH_CONFIG)
 
     def legacy(values):
-        values["schema_version"] = "skillsbench.skill-evolution.v6"
+        _historical_skillsbench(values, "skillsbench.skill-evolution.v6")
         values["acquisition"]["max_reads"] = 0
         values["provider"]["model"] = model
         values["provider"]["transport"] = (
@@ -141,11 +161,14 @@ def test_legacy_skillsbench_config_preserves_population_and_model(tmp_path, mode
         )
 
     historical = load_spec(_copy_config(tmp_path, legacy, SKILLSBENCH_CONFIG))
-    assert current.namespace == "skillsbench.skill-evolution.v7"
+    assert current.namespace == "skillsbench.skill-evolution.v8"
     assert historical.namespace == "skillsbench.skill-evolution.v6"
     assert historical.tasks == current.tasks
-    for name in ("source", "retrieval", "embedding", "matrix_commitment"):
-        assert historical.values[name] == current.values[name]
+    assert historical.values["retrieval"] == current.values["retrieval"]
+    assert historical.values["embedding"] == current.values["embedding"]
+    assert historical.values["source"] == {
+        key: value for key, value in current.values["source"].items() if key != "condition_manifest"
+    }
     assert historical.values["acquisition"] == {
         **current.values["acquisition"],
         "max_reads": 0,
@@ -198,7 +221,7 @@ def test_v5_rejects_verifier_overrides_ignored_by_pinned_author(tmp_path, name, 
 def test_tau_and_v4_keep_their_configured_verifier_limits(tmp_path, source):
     def historical_limits(values):
         if source == SKILLSBENCH_CONFIG:
-            values["schema_version"] = "skillsbench.skill-evolution.v4"
+            _historical_skillsbench(values, "skillsbench.skill-evolution.v4")
             values["acquisition"]["max_reads"] = 0
             values["evolution"] = {
                 "max_revisions": 15,
@@ -240,7 +263,7 @@ def test_skillsbench_rejects_unsupported_runtime_lock_templates(tmp_path, path):
 
 def test_author_codex_cannot_use_a_historical_namespace(tmp_path):
     def configure(values):
-        values.update(schema_version="skillsbench.skill-evolution.v2")
+        _historical_skillsbench(values, "skillsbench.skill-evolution.v2")
         values["acquisition"].update(max_reads=0)
 
     with pytest.raises(ValueError, match="Codex requires.*namespace"):
@@ -448,7 +471,10 @@ def test_identity_binds_source_prompt_meta_manifest_lock_but_excludes_keys_and_r
     assert "prompts/analyzer-skillsbench.md" in initial["files"]
     assert "data/upstream/coevo-skills/meta_skills/skill-creator/SKILL.md" in initial["files"]
     assert "data/skillsbench/public-manifest.json" in initial["files"]
-    assert "runtime/skillsbench-bubblewrap-lock.json" in initial["files"]
+    selected_lock = spec.values["source"]["runtime_lock"].format(task_id=spec.tasks[0])
+    assert selected_lock in initial["files"]
+    assert "runtime/skillsbench-verifier-requirements.lock" in initial["files"]
+    assert "runtime/skillsbench-bubblewrap-lock.json" not in initial["files"]
     (root / "key.env").write_text("SECRET=never-hashed\n")
     (root / "runs").mkdir()
     (root / "runs/result.json").write_text('{"utility":1}\n')
@@ -466,6 +492,11 @@ def test_identity_binds_source_prompt_meta_manifest_lock_but_excludes_keys_and_r
 def test_v6_identity_binds_byte_preserved_verifier_sources_and_prompts(tmp_path, monkeypatch):
     root = tmp_path / "resources"
     root.mkdir()
+    (root / "configs").mkdir()
+    shutil.copy2(
+        EXPERIMENT_ROOT / "configs/skillsbench-dymal4-conditions.json",
+        root / "configs/skillsbench-dymal4-conditions.json",
+    )
     author = root / "src/tau_skill_evolution/author"
     prompt = (
         author / "coevo/libs/terminus_agent/evolution/prompt_templates/independent_verifier.txt"
@@ -560,7 +591,7 @@ def test_codex_plan_is_an_explicit_credential_free_skillsbench_trial(tmp_path, m
     provider = spec.provider_settings
     assert provider["api_base"] == "http://127.0.0.1/codex-plan"
     assert "api_key_env" not in provider and "region" not in provider
-    assert len(spec.tasks) == 85 and len(spec.cells) == 85
+    assert len(spec.tasks) == 85 and len(spec.cells) == 765
     identity = spec.identity["provider"]
     assert identity["model"] == "gpt-6.1-sol"
     assert identity["initial_creation"] == "one_codex_turn"
@@ -579,7 +610,7 @@ def test_codex_plan_is_an_explicit_credential_free_skillsbench_trial(tmp_path, m
         lambda v: v["provider"].update(binary_sha256="0" * 64),
         lambda v: v["provider"].update(api_key_env="AWS_BEARER_TOKEN_BEDROCK"),
         lambda v: (
-            v.update(schema_version="skillsbench.skill-evolution.v4"),
+            _historical_skillsbench(v, "skillsbench.skill-evolution.v4"),
             v["acquisition"].update(max_reads=0),
         ),
     ],
@@ -622,7 +653,9 @@ def test_role_prompts_match_domain_capabilities_and_omit_quotes_by_default():
     assert "/bundle/public_inputs.json" in verifier and "terminal" in verifier
 
 
-def test_preparing_another_domain_runtime_does_not_invalidate_a_checkpoint(tmp_path, monkeypatch):
+def test_v8_identity_binds_selected_locks_but_ignores_unrelated_runtime_locks(
+    tmp_path, monkeypatch
+):
     tau, sb = load_spec(), load_spec(SKILLSBENCH_CONFIG)
     shutil.copytree(
         EXPERIMENT_ROOT / "src/tau_skill_evolution/author",
@@ -632,16 +665,55 @@ def test_preparing_another_domain_runtime_does_not_invalidate_a_checkpoint(tmp_p
     monkeypatch.setattr(spec_module, "EXPERIMENT_ROOT", tmp_path)
     runtime = tmp_path / "runtime"
     runtime.mkdir()
+    matrix = tmp_path / "configs/skillsbench-dymal4-matrix.json"
+    matrix.parent.mkdir()
+    matrix.write_text('{"manifest_hash":"matrix-v1"}\n')
     tau_lock = runtime / "image-lock.json"
-    sb_lock = runtime / "skillsbench-bubblewrap-lock.json"
+    unrelated = runtime / "skillsbench-docker-archived-trial-lock.json"
+    selected = tmp_path / sb.values["source"]["runtime_lock"].format(task_id=sb.tasks[0])
+    dependency = runtime / "skillsbench-verifier-requirements.lock"
     tau_lock.write_text('{"revision": 1}')
-    sb_lock.write_text('{"revision": 1}')
+    unrelated.write_text('{"revision": 1}')
+    dependency.write_text("dependency-v1\n")
     tau_identity, sb_identity = tau.identity, sb.identity
-    sb_lock.write_text('{"revision": 2}')
-    assert tau.identity == tau_identity and sb.identity != sb_identity
+    unrelated.write_text('{"revision": 2}')
+    assert tau.identity == tau_identity and sb.identity == sb_identity
+    selected.write_text('{"revision": 1}')
+    assert sb.identity["identity_hash"] != sb_identity["identity_hash"]
+    sb_identity = sb.identity
+    dependency.write_text("dependency-v2\n")
+    assert sb.identity["identity_hash"] != sb_identity["identity_hash"]
+    sb_identity = sb.identity
+    matrix.write_text('{"manifest_hash":"matrix-v2"}\n')
+    assert sb.identity["identity_hash"] != sb_identity["identity_hash"]
     sb_identity = sb.identity
     tau_lock.write_text('{"revision": 2}')
     assert sb.identity == sb_identity and tau.identity != tau_identity
+
+
+def test_historical_skillsbench_identity_keeps_runtime_lock_glob_behavior(tmp_path, monkeypatch):
+    def historical(values):
+        _historical_skillsbench(values, "skillsbench.skill-evolution.v7")
+        values["acquisition"]["max_reads"] = 0
+
+    spec = load_spec(_copy_config(tmp_path, historical, SKILLSBENCH_CONFIG))
+    root = tmp_path / "historical-resources"
+    author = root / "src/tau_skill_evolution/author"
+    shutil.copytree(
+        EXPERIMENT_ROOT / "src/tau_skill_evolution/author",
+        author,
+        ignore=shutil.ignore_patterns("__pycache__"),
+    )
+    runtime = root / "runtime"
+    runtime.mkdir(parents=True)
+    unrelated = runtime / "skillsbench-archived-lock.json"
+    unrelated.write_text('{"revision": 1}')
+    monkeypatch.setattr(spec_module, "EXPERIMENT_ROOT", root)
+
+    initial = spec.identity
+    unrelated.write_text('{"revision": 2}')
+
+    assert spec.identity["identity_hash"] != initial["identity_hash"]
 
 
 def test_workspace_worker_config_does_not_require_a_docker_image_lock(tmp_path, monkeypatch):
