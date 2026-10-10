@@ -1652,6 +1652,27 @@ def test_direct_generator_submits_actual_same_environment_and_keeps_parent(evolu
     assert sum("up" in c for c, _ in docker.calls if c[:2] == ["docker", "compose"]) == 1
 
 
+def test_learning_compose_resolves_bind_sources_from_relative_workspace(evolution_adapter):
+    adapter, _docker, journal, workspace = evolution_adapter
+    relative_workspace = Path(os.path.relpath(workspace))
+    parent = SkillBundle({"SKILL.md": "sealed S0"})
+
+    with adapter.evolution_session(
+        parent,
+        adapter.public_inputs,
+        {},
+        journal=journal,
+        workspace=relative_workspace,
+    ) as session:
+        definition = yaml.safe_load(session.runner.compose_path.read_text())
+        mounts = definition["services"]["main"]["volumes"]
+        sources = {mount["target"]: Path(mount["source"]) for mount in mounts}
+
+        assert sources["/bundle"] == (relative_workspace / "bundle").resolve()
+        assert sources["/work"] == (relative_workspace / "work").resolve()
+        assert all(source.is_absolute() and source.exists() for source in sources.values())
+
+
 def test_direct_generator_raw_results_are_readonly_and_snapshot_ignores_live_outputs(
     evolution_adapter,
 ):

@@ -39,3 +39,8 @@ DyMalSkill_*.zip
 
 # Internal working audit; public method and operator records live in Protocol/HANDOFF.
 experiments/tau-knowledge/skill-evolution/AUDIT-20261005.md
+# Public, credential-free SkillsBench v8 colleague operator package.
+!experiments/tau-knowledge/skill-evolution/runs/skillsbench/
+experiments/tau-knowledge/skill-evolution/runs/skillsbench/*
+!experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff/
+!experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff/**

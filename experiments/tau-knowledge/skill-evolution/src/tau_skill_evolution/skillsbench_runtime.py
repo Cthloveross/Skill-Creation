@@ -1848,6 +1848,12 @@ class SkillsBenchRunner:
                 main_image=lock["service_images"]["main"]["digest"],
                 public_python=lock["service_images"]["main"].get("public_python", _NATIVE_PYTHON),
             )
+        # Compose resolves relative bind sources from the compose file's directory,
+        # while callers may provide a workspace relative to the process directory.
+        for service in definition["services"].values():
+            for volume in service.get("volumes", ()):
+                if isinstance(volume, dict) and volume.get("type") == "bind":
+                    volume["source"] = str(Path(volume["source"]).resolve())
         self.compose_path.write_text(yaml.safe_dump(definition, sort_keys=True))
         self.compose_path.chmod(0o600)
         if self.learning_checkpoint is not None:

@@ -1,0 +1,136 @@
+{
+  "schema": "skillsbench.full-85-v8-handoff.v1",
+  "namespace": "skillsbench.skill-evolution.v8",
+  "created_on": "2026-10-10",
+  "author_coevoskills_commit": "4380d4bff673dd6e1d58e5babeb2aaa0fe527119",
+  "runtime_rule": "Snapshots are review copies. Commands execute canonical repository sources, and operator.sh verify requires byte-identical canonical files before a run.",
+  "entries": [
+    {
+      "kind": "config",
+      "role": "experiment",
+      "phase": "runtime_config",
+      "snapshot": "snapshots/skillsbench.yaml",
+      "canonical_source": "experiments/tau-knowledge/skill-evolution/configs/skillsbench.yaml",
+      "sha256": "70c8f1ead976f2a12d5e155fb5eb8f68e9384117edca091ee7bd97c545fd68b4",
+      "runtime_status": "authoritative",
+      "note": "Runtime reads the canonical YAML; snapshot is an audit copy."
+    },
+    {
+      "kind": "config",
+      "role": "experiment",
+      "phase": "condition_commitment",
+      "snapshot": "snapshots/skillsbench-dymal4-conditions.json",
+      "canonical_source": "experiments/tau-knowledge/skill-evolution/configs/skillsbench-dymal4-conditions.json",
+      "sha256": "f9a4e3999a5dc882aff8d581dee02d8990334482cc114ef6d0c91e7f10d0012e",
+      "runtime_status": "authoritative",
+      "note": "Frozen nine-condition design and target-document commitment."
+    },
+    {
+      "kind": "config",
+      "role": "experiment",
+      "phase": "matrix_commitment",
+      "snapshot": "snapshots/skillsbench-dymal4-matrix.json",
+      "canonical_source": "experiments/tau-knowledge/skill-evolution/configs/skillsbench-dymal4-matrix.json",
+      "sha256": "b8187a0ab254ea7216151b4e94a168a19e622ca0d4aae18459175ab3683d5246",
+      "runtime_status": "authoritative",
+      "note": "Frozen 85 x 9 cell and corpus/index commitment."
+    },
+    {
+      "kind": "prompt",
+      "role": "analyzer",
+      "phase": "acquisition_system",
+      "snapshot": "prompts/analyzer-system.md",
+      "canonical_source": "experiments/tau-knowledge/skill-evolution/prompts/analyzer-skillsbench.md",
+      "sha256": "d094559fd208f98a3111a452fa5509a3d2449ba0079e54825f7e91170bb88c46",
+      "runtime_status": "active",
+      "note": "Active Analyzer system prompt selected by roles.analyzer.prompt."
+    },
+    {
+      "kind": "prompt",
+      "role": "generator",
+      "phase": "s0_creation_system",
+      "snapshot": "prompts/s0-generator-system.md",
+      "canonical_source": "experiments/tau-knowledge/skill-evolution/prompts/generator.md",
+      "sha256": "8675aca3df263e5956ee058fded721f95d9db4f9c1ad0be27bbe63e3cda64715",
+      "runtime_status": "active",
+      "note": "Active one-shot S0 Generator system prompt."
+    },
+    {
+      "kind": "prompt",
+      "role": "generator",
+      "phase": "evolution_agent_template",
+      "snapshot": "prompts/evolution-agent-template.txt",
+      "canonical_source": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/agents/prompt-templates/terminus-evolution-json.txt",
+      "sha256": "6cb4f07c90204e30633e7e52a0d1a0e6209e3bdd327cb1871298203fe62429ed",
+      "runtime_status": "active",
+      "note": "Active published evolution agent template; runtime formats dynamic instruction, terminal state, and loaded-skill metadata."
+    },
+    {
+      "kind": "prompt",
+      "role": "generator_and_verifier",
+      "phase": "evolution_task_adapter",
+      "snapshot": "prompts/evolution-task-adapter.txt",
+      "canonical_source": "experiments/tau-knowledge/skill-evolution/prompts/skillsbench-verifier-adapter.txt",
+      "sha256": "b09d8ac888623e4f1f0ee424fd2f5af92eaf5b60543c0786e17c9bd316b7c765",
+      "runtime_status": "active",
+      "note": "Active public experiment adapter appended to the task instruction passed to the evolution agent."
+    },
+    {
+      "kind": "prompt",
+      "role": "generator",
+      "phase": "evolution_skill_creator",
+      "snapshot": "prompts/evolution-skill-creator.md",
+      "canonical_source": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/meta_skills/skill-creator/SKILL.md",
+      "sha256": "6588e4080dda84ddc50359541a80831a0ec47d99291e6195aa3d8aa8aa9955ee",
+      "runtime_status": "active",
+      "note": "Active available meta-skill injected into the learning environment; content enters context when the agent loads skill-creator."
+    },
+    {
+      "kind": "prompt",
+      "role": "verifier",
+      "phase": "initial_and_upgrade",
+      "snapshot": "prompts/verifier-initial-and-upgrade.txt",
+      "canonical_source": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/prompt_templates/independent_verifier.txt",
+      "sha256": "8f31ad07fc4d9b619938a7bac81f137a4d999e2617ca5679c26b8dd276dcd9b2",
+      "runtime_status": "active",
+      "note": "Active published IndependentVerifier prompt for initial generation and later upgrade."
+    },
+    {
+      "kind": "prompt",
+      "role": "verifier",
+      "phase": "diagnosis",
+      "snapshot": "prompts/verifier-diagnosis.txt",
+      "canonical_source": "experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/author/coevo/libs/terminus_agent/evolution/prompt_templates/diagnosis_only.txt",
+      "sha256": "831d9eeb0b2ffc3a7c8cc4517a678f1dd742f514b4512e3a9ce2c59dfa4ff461",
+      "runtime_status": "active",
+      "note": "Active published diagnosis-only prompt for locked-suite failures."
+    }
+  ],
+  "not_static_files": [
+    {
+      "role": "analyzer",
+      "phase": "request_body",
+      "reason": "The host builds task-specific public inputs, retrieved chunks, observations, budgets, and tool schemas at runtime."
+    },
+    {
+      "role": "generator",
+      "phase": "s0_user_payload",
+      "reason": "The host builds the task-specific FrozenBase, public inputs, and tool/runtime schemas at runtime."
+    },
+    {
+      "role": "generator",
+      "phase": "evolution_dynamic_turns",
+      "reason": "The published controller formats the task instruction, loaded Skill metadata, terminal observations, progress, and bounded intervention feedback per episode."
+    },
+    {
+      "role": "verifier",
+      "phase": "dynamic_context",
+      "reason": "The published verifier formats task instruction, public files and test results into the copied templates at runtime."
+    },
+    {
+      "role": "execution",
+      "phase": "no_skill_and_fresh_oracle",
+      "reason": "The configured author-codex path invokes pinned Codex 0.160.1 through Harbor; prompts are generated by that pinned CLI/agent and are not the repository generic execution-skillsbench.md file."
+    }
+  ]
+}
