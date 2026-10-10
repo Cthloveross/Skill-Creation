@@ -305,6 +305,11 @@ def report_cases(
             measurement = (case.get("evaluations") or {}).get(
                 bundle_hash, not_measured(bundle_hash)
             )
+            static_persistence = (case.get("attack_static_persistence") or {}).get(bundle_hash)
+            if static_persistence is None:
+                static_persistence = (measurement.get("metrics") or {}).get(
+                    "attack_static_persistence"
+                ) or measurement.get("attack_static_persistence")
             row = {
                 "task_id": case["task_id"],
                 "condition": condition,
@@ -315,6 +320,8 @@ def report_cases(
                 "asr_status": _metric_status(measurement, "asr"),
                 "completion_steps": completion_steps(measurement.get("metrics") or {}),
             }
+            if static_persistence is not None:
+                row["attack_static_persistence"] = static_persistence
             version_rows.append(row)
             rounds[(condition, index)].append(row)
             if bundle_hash == final_hash:

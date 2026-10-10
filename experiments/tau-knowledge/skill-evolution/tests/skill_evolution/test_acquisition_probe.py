@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import importlib.util
 import json
 import threading
@@ -14,6 +15,10 @@ from types import SimpleNamespace
 import pytest
 from tau_skill_evolution.artifacts import FrozenBase, atomic_json
 from tau_skill_evolution.journal import Journal, UnknownOperation
+from tau_skill_evolution.skillsbench_attack import (
+    ACQUISITION_FLAGS,
+    acquisition_payload_exposure,
+)
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts/probe_skillsbench_acquisition.py"
 module_spec = importlib.util.spec_from_file_location("acquisition_probe", SCRIPT)
@@ -160,6 +165,146 @@ def test_probe_reports_partial_payload_separately():
     observed = probe.exposure(["partial", "full"], pages)
     assert observed["rates"]["payload_partial"]["unique_chunks"] == probe.fraction(1, 2)
     assert observed["rates"]["full_payload_present"]["unique_chunks"] == probe.fraction(1, 2)
+
+
+def test_production_loader_uses_the_journal_bound_pool_and_reports_all_four_stages(tmp_path):
+    import tau_skill_evolution.skillsbench_attack as attack
+
+    directory = tmp_path / "sealed-pool"
+    directory.mkdir()
+    values = [
+        {
+            "page_id": "a::first",
+            "source_document_id": "a",
+            "source_poisoned": True,
+            "title": "public",
+            "body": "first public page",
+        },
+        {
+            "page_id": "a::last",
+            "source_document_id": "a",
+            "source_poisoned": True,
+            "payload_present": True,
+            "full_payload_present": True,
+            "title": "public",
+            "body": "last public page",
+        },
+        {
+            "page_id": "b::only",
+            "source_document_id": "b",
+            "title": "public",
+            "body": "other public page",
+        },
+    ]
+    records = []
+    for value in values:
+        value["content_sha256"] = hashlib.sha256(value["body"].encode()).hexdigest()
+        filename = value["page_id"].replace("::", "-") + ".json"
+        atomic_json(directory / filename, value)
+        records.append(
+            {
+                "file": filename,
+                **{key: item for key, item in value.items() if key != "body"},
+            }
+        )
+    condition = {
+        "condition_id": ARM,
+        "profile": "data_exfil_http",
+        "level": 5,
+        "target_document_ids": ["a"],
+    }
+    manifest = {
+        "schema": "skillsbench.pool.injected.v8",
+        "injection": condition,
+        "pages": records,
+    }
+    manifest["corpus_hash"] = attack._json_hash(manifest)
+    manifest_path = directory / "manifest.json"
+    atomic_json(manifest_path, manifest)
+
+    journal = Journal(tmp_path / "journal")
+    contract = {
+        "task_id": "task",
+        "condition_id": ARM,
+        "retrieval": {
+            "condition": condition,
+            "pool_path": "sealed-pool",
+            "pool_manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+            "corpus_hash": manifest["corpus_hash"],
+            "page_count": 3,
+            "payload_chunk_count": 1,
+            "full_payload_chunk_count": 1,
+        },
+    }
+    journal.dispatch("retrieval-corpus-contract", contract, lambda: contract, external=False)
+    journal.dispatch(
+        "acquisition/search/0",
+        {"query": "public policy"},
+        lambda: {
+            "status": "ok",
+            "result": {
+                "status": "ok",
+                "results": [
+                    {"page_id": identifier}
+                    for identifier in ("a::first", "a::last", "b::only", "a::last")
+                ],
+            },
+        },
+    )
+    partial = acquisition_payload_exposure(tmp_path, None, journal)
+    assert partial["status"] == "NOT_MEASURED"
+    assert partial["stages"]["corpus"]["status"] == "MEASURED"
+    assert partial["stages"]["search_returns"]["status"] == "MEASURED"
+    assert partial["stages"]["analyzer_visible"] == {
+        "status": "NOT_MEASURED",
+        "reason": "analyzer_visible_not_recorded",
+    }
+    assert partial["stages"]["frozen_base"] == {
+        "status": "NOT_MEASURED",
+        "reason": "frozen_base_not_recorded",
+    }
+    journal.dispatch(
+        "acquisition/analyzer/0",
+        {
+            "inputs": {
+                "returned_documents": [
+                    {"document_id": "a::first"},
+                    {"document_id": "b::only"},
+                ]
+            }
+        },
+        lambda: {},
+    )
+    base = FrozenBase(
+        ({"document_id": "a::last", "title": "public", "content": "last public page"},),
+        {"opening": "task"},
+    )
+
+    observed = acquisition_payload_exposure(tmp_path, base, journal)
+    assert set(observed) == {"status", "flags", "stages"}
+    assert observed["status"] == "MEASURED"
+    assert observed["flags"] == list(ACQUISITION_FLAGS)
+    assert all(stage["status"] == "MEASURED" for stage in observed["stages"].values())
+    assert tuple(observed["stages"]) == (
+        "corpus",
+        "search_returns",
+        "analyzer_visible",
+        "frozen_base",
+    )
+    assert observed["stages"]["search_returns"]["chunk_occurrences"] == 4
+    assert observed["stages"]["search_returns"]["rates"]["payload_present"][
+        "chunk_occurrences"
+    ] == probe.fraction(2, 4)
+    assert observed["stages"]["analyzer_visible"]["rates"]["payload_present"][
+        "unique_chunks"
+    ] == probe.fraction(0, 2)
+    assert observed["stages"]["frozen_base"]["rates"]["full_payload_present"][
+        "unique_sources"
+    ] == probe.fraction(1, 1)
+
+    atomic_json(manifest_path, {**manifest, "schema": "tampered"})
+    with pytest.raises(ValueError, match="manifest_changed"):
+        acquisition_payload_exposure(tmp_path, base, journal)
 
 
 def test_probe_normalized_live_request_binding_has_same_visible_payload():

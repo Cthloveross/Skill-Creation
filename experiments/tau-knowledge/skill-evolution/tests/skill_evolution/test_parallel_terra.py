@@ -5,6 +5,11 @@ from __future__ import annotations
 import importlib.util
 import io
 import json
+import os
+import signal
+import sys
+import threading
+import time
 import types
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -42,6 +47,7 @@ def _future(seconds: int = 3600) -> str:
 
 def _write_token(path: Path, token: str, expires_at: str | None = None) -> Path:
     path.write_text(json.dumps({"token": token, "expires_at": expires_at or _future()}))
+    path.chmod(0o600)
     return path
 
 
@@ -562,6 +568,671 @@ def test_launcher_pure_helpers(tmp_path):
     assert status["experiment"] == "tau" and status["config"] == "/c"
 
 
+def test_launcher_token_admission_requires_valid_json_expiry_mode_and_file_type(
+    tmp_path, monkeypatch
+):
+    launcher = _load_script("launch_matrix")
+    valid = _write_token(tmp_path / "valid.json", "secret")
+    assert "expires_at" in launcher.validate_token_file(valid)
+
+    permissive = _write_token(tmp_path / "permissive.json", "secret")
+    permissive.chmod(0o640)
+    with pytest.raises(launcher.TokenValidationError, match="exactly 0600") as info:
+        launcher.validate_token_file(permissive)
+    assert info.value.code == "credential_unavailable" and "secret" not in str(info.value)
+
+    expired = _write_token(tmp_path / "expired.json", "secret", _future(-1))
+    with pytest.raises(launcher.TokenValidationError) as info:
+        launcher.validate_token_file(expired)
+    assert info.value.code == "credential_expired" and "secret" not in str(info.value)
+
+    malformed = tmp_path / "malformed.json"
+    malformed.write_text("not json")
+    malformed.chmod(0o600)
+    with pytest.raises(launcher.TokenValidationError) as info:
+        launcher.validate_token_file(malformed)
+    assert info.value.code == "credential_unavailable"
+
+    link = tmp_path / "link.json"
+    link.symlink_to(valid)
+    with pytest.raises(launcher.TokenValidationError, match="symlink"):
+        launcher.validate_token_file(link)
+    directory = tmp_path / "directory.json"
+    directory.mkdir(mode=0o700)
+    with pytest.raises(launcher.TokenValidationError, match="regular file"):
+        launcher.validate_token_file(directory)
+
+    real_fstat = launcher.os.fstat
+
+    def foreign_owner(descriptor):
+        observed = real_fstat(descriptor)
+        return types.SimpleNamespace(
+            st_mode=observed.st_mode,
+            st_size=observed.st_size,
+            st_uid=os.geteuid() + 1,
+            st_dev=observed.st_dev,
+            st_ino=observed.st_ino,
+        )
+
+    monkeypatch.setattr(launcher.os, "fstat", foreign_owner)
+    with pytest.raises(launcher.TokenValidationError, match="current user"):
+        launcher.validate_token_file(valid)
+
+
+def test_launcher_token_admission_accepts_atomic_daemon_replacement(tmp_path, monkeypatch):
+    launcher = _load_script("launch_matrix")
+    token = _write_token(tmp_path / "111.json", "old")
+    real_open = launcher.os.open
+    replaced = False
+
+    def replacing_open(path, flags, mode=0o777):
+        nonlocal replaced
+        if Path(path) == token and not replaced:
+            replacement = _write_token(tmp_path / "replacement.json", "new")
+            os.replace(replacement, token)
+            replaced = True
+        return real_open(path, flags, mode)
+
+    monkeypatch.setattr(launcher.os, "open", replacing_open)
+    assert launcher.validate_token_file(token)["expires_at"]
+    assert replaced
+
+    stale = _write_token(tmp_path / "222.json", "expired", _future(-1))
+    replacement = _write_token(tmp_path / "fresh.json", "fresh")
+    real_read = launcher.os.read
+    swapped = False
+
+    def replacing_read(descriptor, size):
+        nonlocal swapped
+        raw = real_read(descriptor, size)
+        if not swapped:
+            os.replace(replacement, stale)
+            swapped = True
+        return raw
+
+    monkeypatch.setattr(launcher.os, "open", real_open)
+    monkeypatch.setattr(launcher.os, "read", replacing_read)
+    assert launcher.validate_token_file(stale)["expires_at"]
+    assert swapped
+
+
+def test_launcher_rejects_local_token_before_startup_and_before_cell_admission(
+    tmp_path, monkeypatch, capsys
+):
+    launcher = _load_script("launch_matrix")
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    token = _write_token(token_dir / "111.json", "secret")
+    token.chmod(0o644)
+    subprocess_calls = []
+    monkeypatch.setattr(
+        launcher.subprocess,
+        "run",
+        lambda *args, **kwargs: (
+            subprocess_calls.append(args)
+            or types.SimpleNamespace(returncode=0, stdout="", stderr="")
+        ),
+    )
+    with pytest.raises(SystemExit) as error:
+        launcher.main(
+            [
+                "--experiment",
+                "tau",
+                "--config",
+                str(DEFAULT_CONFIG),
+                "--run-dir",
+                str(tmp_path / "startup"),
+                "--token-dir",
+                str(token_dir),
+                "--accounts",
+                "111",
+                "--task",
+                load_spec().tasks[0],
+                "--arm",
+                "benign",
+            ]
+        )
+    assert error.value.code == 2 and not subprocess_calls
+    assert "exactly 0600" in capsys.readouterr().err
+    assert not (tmp_path / "startup").exists()
+
+    token.chmod(0o600)
+    args = types.SimpleNamespace(
+        r2sp=None,
+        experiment="tau",
+        config=DEFAULT_CONFIG,
+        run_dir=tmp_path / "admission",
+        token_dir=token_dir,
+        accounts=["111"],
+        max_concurrent=1,
+        stagger_seconds=0,
+        runtime="docker",
+    )
+    instance = launcher.Launcher(args, [("task_001", "benign")])
+    # The daemon can replace a valid startup token before the next admission.
+    _write_token(token, "replacement", _future(-1))
+    assert instance.run() == 2
+    status = json.loads((args.run_dir / "launcher-status.json").read_text())
+    assert status["credential_failure"] == {
+        "account": "111",
+        "code": "credential_expired",
+        "source": "local_token_admission",
+    }
+    attempt = status["cells"]["task_001|benign"]["attempts"][-1]
+    assert attempt["outcome"] == "CREDENTIAL_REJECTED" and attempt["exit_code"] == 2
+
+
+def test_launcher_detects_child_preflight_credential_failure_without_cell_journal(tmp_path):
+    launcher = _load_script("launch_matrix")
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    _write_token(token_dir / "111.json", "secret")
+    args = types.SimpleNamespace(
+        r2sp=None,
+        experiment="tau",
+        config=DEFAULT_CONFIG,
+        run_dir=tmp_path / "run",
+        token_dir=token_dir,
+        accounts=["111"],
+        max_concurrent=1,
+        stagger_seconds=0,
+        runtime="docker",
+    )
+    instance = launcher.Launcher(args, [("first", "benign"), ("next", "benign")])
+    first = instance.status_cells["first|benign"]
+    first.update(account="111", pid=12, started_at="s")
+    path = launcher.log_path(args.run_dir, "first", "benign")
+    path.parent.mkdir(parents=True)
+    path.write_text(
+        json.dumps(
+            {
+                "ready": False,
+                "checks": [
+                    {
+                        "name": "credential",
+                        "ok": False,
+                        "detail": "credential_expired: bearer token expired",
+                    }
+                ],
+            },
+            indent=2,
+        )
+    )
+    assert launcher.credential_failure_from_text(path.read_text()) == {
+        "code": "credential_expired",
+        "source": "child_preflight_log",
+    }
+    path.write_text(
+        json.dumps(
+            {
+                "ready": False,
+                "checks": [
+                    {
+                        "name": "bedrock_authentication",
+                        "ok": False,
+                        "detail": "Bedrock catalog returned HTTP 401",
+                    }
+                ],
+            }
+        )
+    )
+    assert launcher.credential_failure_from_text(path.read_text()) == {
+        "code": "authentication_failed",
+        "status": 401,
+        "source": "child_preflight_log",
+    }
+    # Restore the local expiry case used by the end-to-end launcher assertion below.
+    path.write_text(
+        json.dumps(
+            {
+                "ready": False,
+                "checks": [
+                    {
+                        "name": "credential",
+                        "ok": False,
+                        "detail": "credential_expired: bearer token expired",
+                    }
+                ],
+            }
+        )
+    )
+    process = types.SimpleNamespace(pid=12, poll=lambda: 2)
+    instance._new_attempt("first|benign", "111").update(pid=12, outcome="RUNNING")
+    instance.processes["first|benign"] = (
+        process,
+        path.open("a+b"),
+        {"log_start_offset": 0, "journal_baseline": {}},
+    )
+    started = []
+    instance.start = lambda *cell: started.append(cell)
+    assert instance.run() == 2
+    assert not started
+    assert instance.credential_failure == {
+        "account": "111",
+        "code": "credential_expired",
+        "source": "child_preflight_log",
+    }
+
+
+def test_launcher_uses_structured_cli_credential_error_despite_other_journal_failure(tmp_path):
+    launcher = _load_script("launch_matrix")
+    journal = tmp_path / "cells/task/benign/journal/old-operation"
+    journal.mkdir(parents=True)
+    (journal / "failure.json").write_text(json.dumps({"code": "runtime_failed"}))
+    log = launcher.log_path(tmp_path, "task", "benign")
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text(
+        json.dumps({"error": "bearer token file expired or expires within 60s: /redacted"})
+    )
+    assert launcher.cell_credential_failure(
+        tmp_path, "task", "benign", log_text=log.read_text()
+    ) == {
+        "code": "credential_expired",
+        "source": "child_cli_log",
+    }
+    # Free text from task output is not enough once a real cell journal exists.
+    log.write_text("task printed the phrase credential_expired as ordinary output")
+    assert (
+        launcher.cell_credential_failure(tmp_path, "task", "benign", log_text=log.read_text())
+        is None
+    )
+
+
+def test_launcher_scopes_credential_evidence_to_current_attempt(tmp_path):
+    launcher = _load_script("launch_matrix")
+    old = tmp_path / "cells/task/benign/journal/old-operation"
+    old.mkdir(parents=True)
+    (old / "failure.json").write_text(json.dumps({"code": "credential_expired"}))
+    log = launcher.log_path(tmp_path, "task", "benign")
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text(
+        json.dumps({"error": "bearer token file expired or expires within 60s: /redacted"}) + "\n"
+    )
+    baseline = launcher.journal_evidence_snapshot(tmp_path, "task", "benign")
+    offset = log.stat().st_size
+
+    current = tmp_path / "cells/task/benign/journal/current-operation"
+    current.mkdir(parents=True)
+    (current / "request.json").write_text(json.dumps({"operation": "current"}))
+    (current / "failure.json").write_text(json.dumps({"code": "runtime_failed"}))
+    with log.open("a") as stream:
+        stream.write(json.dumps({"error": "unrelated runtime failure"}) + "\n")
+    assert (
+        launcher.cell_credential_failure(
+            tmp_path,
+            "task",
+            "benign",
+            journal_baseline=baseline,
+            log_text=log.read_text()[offset:],
+        )
+        is None
+    )
+
+    (current / "failure.json").write_text(
+        json.dumps({"code": "authentication_failed", "status": 401})
+    )
+    assert launcher.cell_credential_failure(
+        tmp_path,
+        "task",
+        "benign",
+        journal_baseline=baseline,
+        log_text=log.read_text()[offset:],
+    ) == {"code": "authentication_failed", "status": 401, "source": "cell_journal"}
+
+
+def test_launcher_reap_uses_attempt_cursor_and_starts_new_process_session(tmp_path, monkeypatch):
+    launcher = _load_script("launch_matrix")
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    _write_token(token_dir / "111.json", "secret")
+    run_dir = tmp_path / "run"
+    old = run_dir / "cells/task/benign/journal/old"
+    old.mkdir(parents=True)
+    (old / "failure.json").write_text(json.dumps({"code": "credential_expired"}))
+    log = launcher.log_path(run_dir, "task", "benign")
+    log.parent.mkdir(parents=True)
+    log.write_text(json.dumps({"error": "credential_expired"}) + "\n")
+    observed = {}
+
+    class Process:
+        pid = 321
+
+        def poll(self):
+            return 2
+
+    def popen(*args, **kwargs):
+        observed.update(kwargs)
+        current = run_dir / "cells/task/benign/journal/current"
+        current.mkdir(parents=True)
+        (current / "request.json").write_text(json.dumps({"operation": "current"}))
+        (current / "failure.json").write_text(json.dumps({"code": "runtime_failed"}))
+        kwargs["stdout"].write(json.dumps({"error": "unrelated runtime failure"}).encode())
+        kwargs["stdout"].flush()
+        return Process()
+
+    monkeypatch.setattr(launcher.subprocess, "Popen", popen)
+    args = types.SimpleNamespace(
+        r2sp=None,
+        experiment="tau",
+        config=DEFAULT_CONFIG,
+        run_dir=run_dir,
+        token_dir=token_dir,
+        accounts=["111"],
+        max_concurrent=1,
+        stagger_seconds=0,
+        runtime="docker",
+    )
+    instance = launcher.Launcher(args, [("task", "benign")])
+    instance.start("task", "benign")
+    instance.reap()
+    assert observed["start_new_session"] is True
+    assert instance.credential_failure is None and not instance.processes
+    attempt = instance.status_cells["task|benign"]["attempts"][-1]
+    assert attempt["log_end_offset"] >= attempt["log_start_offset"]
+
+
+def test_launcher_reads_attempt_log_descriptor_when_path_is_replaced(tmp_path, monkeypatch):
+    launcher = _load_script("launch_matrix")
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    _write_token(token_dir / "111.json", "secret")
+    run_dir = tmp_path / "run"
+
+    class Process:
+        pid = 654
+
+        def poll(self):
+            return 2
+
+    def popen(*args, **kwargs):
+        stream = kwargs["stdout"]
+        stream.write(
+            json.dumps(
+                {"error": "bearer token file expired or expires within 60s: /redacted"}
+            ).encode()
+        )
+        stream.flush()
+        path = launcher.log_path(run_dir, "task", "benign")
+        path.rename(path.with_suffix(".attempt"))
+        path.write_text(json.dumps({"error": "unrelated later file"}))
+        return Process()
+
+    monkeypatch.setattr(launcher.subprocess, "Popen", popen)
+    args = types.SimpleNamespace(
+        r2sp=None,
+        experiment="tau",
+        config=DEFAULT_CONFIG,
+        run_dir=run_dir,
+        token_dir=token_dir,
+        accounts=["111"],
+        max_concurrent=1,
+        stagger_seconds=0,
+        runtime="docker",
+    )
+    instance = launcher.Launcher(args, [("task", "benign")])
+    instance.start("task", "benign")
+    instance.reap()
+    assert instance.credential_failure == {
+        "account": "111",
+        "code": "credential_expired",
+        "source": "child_cli_log",
+    }
+
+
+def test_launcher_run_lock_rejects_concurrent_writer_before_status_or_report(
+    tmp_path, monkeypatch, capsys
+):
+    launcher = _load_script("launch_matrix")
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    _write_token(token_dir / "111.json", "secret")
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    subprocess_calls = []
+    monkeypatch.setattr(
+        launcher.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess_calls.append((args, kwargs)),
+    )
+    argv = [
+        "--experiment",
+        "tau",
+        "--config",
+        str(DEFAULT_CONFIG),
+        "--run-dir",
+        str(run_dir),
+        "--token-dir",
+        str(token_dir),
+        "--accounts",
+        "111",
+        "--task",
+        load_spec().tasks[0],
+        "--arm",
+        "benign",
+    ]
+    with launcher.launcher_lock(run_dir), pytest.raises(SystemExit) as error:
+        launcher.main(argv)
+    assert error.value.code == 2
+    assert "another launcher is active" in capsys.readouterr().err
+    assert subprocess_calls == []
+    assert not (run_dir / "launcher-status.json").exists()
+    assert not (run_dir / "launcher-identity.json").exists()
+    with launcher.launcher_lock(run_dir):
+        pass
+
+
+def test_handoff_preflight_captures_and_rechecks_source_binding_before_stamping():
+    operator = (SCRIPTS.parent / "runs/skillsbench/full-85-v8-handoff/operator.sh").read_text(
+        encoding="utf-8"
+    )
+    before = 'handoff_binding > "$before_file"'
+    dispatch = '"$R2SP" preflight --experiment skillsbench --runtime docker'
+    after = 'handoff_binding > "$after_file"'
+    stamp = '"$PY" - "$output" "${binding_before[0]}" "${binding_before[1]}"'
+    assert operator.index(before) < operator.index(dispatch) < operator.index(after)
+    assert operator.index(after) < operator.index(stamp)
+    assert "handoff manifest or experiment identity changed while preflight was running" in operator
+    assert "unfinished_report" in operator and "--report-only" in operator
+
+
+def test_launcher_terminates_process_groups_and_reaps_terminal_attempts(tmp_path, monkeypatch):
+    launcher = _load_script("launch_matrix")
+    args = types.SimpleNamespace(
+        r2sp=None,
+        experiment="tau",
+        config=DEFAULT_CONFIG,
+        run_dir=tmp_path,
+        token_dir=tmp_path,
+        accounts=["111"],
+        max_concurrent=1,
+        stagger_seconds=0,
+        runtime="docker",
+    )
+    instance = launcher.Launcher(args, [("task", "benign")])
+    instance._new_attempt("task|benign", "111")
+
+    class Process:
+        pid = 4321
+        code = None
+
+        def poll(self):
+            return self.code
+
+        def wait(self, timeout):
+            self.code = -signal.SIGTERM
+            return self.code
+
+    process = Process()
+    signalled = []
+    monkeypatch.setattr(launcher.os, "killpg", lambda pid, sig: signalled.append((pid, sig)))
+    instance.processes["task|benign"] = (process, io.BytesIO(), {})
+    instance.terminate_children()
+    assert signalled == [(process.pid, signal.SIGTERM), (process.pid, signal.SIGKILL)]
+    assert not instance.processes
+    attempt = instance.status_cells["task|benign"]["attempts"][-1]
+    assert attempt["exit_code"] == -signal.SIGTERM and attempt["finished_at"]
+
+
+def test_launcher_preserves_first_global_credential_stop_cause(tmp_path):
+    launcher = _load_script("launch_matrix")
+    args = types.SimpleNamespace(
+        r2sp=None,
+        experiment="tau",
+        config=DEFAULT_CONFIG,
+        run_dir=tmp_path,
+        token_dir=tmp_path,
+        accounts=["111"],
+        max_concurrent=2,
+        stagger_seconds=0,
+        runtime="docker",
+    )
+    instance = launcher.Launcher(args, [("first", "benign"), ("second", "benign")])
+    instance._record_credential_stop(
+        account="111", source="child_preflight_log", code="authentication_failed", status=401
+    )
+    first = dict(instance.credential_failure)
+    instance._record_credential_stop(
+        account="111", source="terminated_sibling", code="credential_unavailable"
+    )
+    assert instance.credential_failure == first
+    assert instance.authentication_status == 401
+    assert instance._launch_record()["global_stop"] == first
+
+
+def test_launcher_resume_merges_population_attempts_and_launch_audit(tmp_path, monkeypatch):
+    launcher = _load_script("launch_matrix")
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    _write_token(token_dir / "111.json", "secret")
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    old = {
+        "started_at": "original-start",
+        "updated_at": "old-update",
+        "experiment": "tau",
+        "config": str(DEFAULT_CONFIG),
+        "runtime": "docker",
+        "cells": {
+            "first|benign": {
+                "account": "111",
+                "pid": 1,
+                "started_at": "a",
+                "finished_at": "b",
+                "exit_code": 0,
+            },
+            "retry|benign": {
+                "account": "111",
+                "pid": 2,
+                "started_at": "c",
+                "finished_at": "d",
+                "exit_code": 2,
+            },
+            "last|benign": {
+                "account": None,
+                "pid": None,
+                "started_at": None,
+                "finished_at": None,
+                "exit_code": None,
+            },
+        },
+        "launches": [{"invocation_id": "original", "status": "COMPLETED"}],
+    }
+    (run_dir / "launcher-status.json").write_text(json.dumps(old))
+    args = types.SimpleNamespace(
+        r2sp=None,
+        experiment="tau",
+        config=DEFAULT_CONFIG,
+        run_dir=run_dir,
+        token_dir=token_dir,
+        accounts=["111"],
+        max_concurrent=1,
+        stagger_seconds=0,
+        runtime="docker",
+    )
+
+    class Process:
+        pid = 99
+
+        def poll(self):
+            return 0
+
+    monkeypatch.setattr(launcher.subprocess, "Popen", lambda *args, **kwargs: Process())
+    instance = launcher.Launcher(args, [("retry", "benign")])
+    assert instance.run() == 0
+    assert instance._launch_record()["status"] == "REPORTING"
+    instance._finish_launch("COMPLETED", 0)
+    status = json.loads((run_dir / "launcher-status.json").read_text())
+    assert status["started_at"] == "original-start"
+    assert set(status["cells"]) == {"first|benign", "retry|benign", "last|benign"}
+    assert status["total"] == 3
+    assert status["cells"]["first|benign"]["exit_code"] == 0
+    attempts = status["cells"]["retry|benign"]["attempts"]
+    assert len(attempts) == 2 and attempts[0]["legacy"] is True
+    assert attempts[1]["exit_code"] == 0 and attempts[1]["outcome"] == "FINISHED"
+    assert len(status["launches"]) == 2
+    assert status["launches"][0]["invocation_id"] == "original"
+    assert status["launches"][1]["selected_cells"] == ["retry|benign"]
+    assert status["launches"][1]["status"] == "COMPLETED"
+
+
+def test_launcher_marks_legacy_unknown_closes_stale_launch_and_reports_cell_failure(tmp_path):
+    launcher = _load_script("launch_matrix")
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    _write_token(token_dir / "111.json", "secret")
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    old = {
+        "started_at": "old-start",
+        "updated_at": "old-update",
+        "experiment": "tau",
+        "config": str(DEFAULT_CONFIG),
+        "cells": {
+            "task|benign": {
+                "account": "111",
+                "pid": 1,
+                "started_at": "old-start",
+                "finished_at": None,
+                "exit_code": None,
+            }
+        },
+    }
+    (run_dir / "launcher-status.json").write_text(json.dumps(old))
+    args = types.SimpleNamespace(
+        r2sp=None,
+        experiment="tau",
+        config=DEFAULT_CONFIG,
+        run_dir=run_dir,
+        token_dir=token_dir,
+        accounts=["111"],
+        max_concurrent=1,
+        stagger_seconds=0,
+        runtime="docker",
+    )
+    migrated = launcher.Launcher(args, [("task", "benign")])
+    assert migrated.launches[0]["status"] == "UNKNOWN"
+    stale_attempt = migrated.status_cells["task|benign"]["attempts"][-1]
+    assert stale_attempt["outcome"] == "INTERRUPTED"
+    assert stale_attempt["finished_at"] and stale_attempt["exit_code"] is None
+    migrated.launches[-1].update(status="RUNNING", finished_at=None)
+    migrated.write_status()
+
+    resumed = launcher.Launcher(args, [("task", "benign")])
+    assert resumed.launches[-2]["status"] == "INTERRUPTED"
+    assert resumed.launches[-2]["finished_at"]
+    resumed._new_attempt("task|benign", "111").update(
+        finished_at="done", exit_code=3, outcome="FINISHED"
+    )
+    resumed.status_cells["task|benign"].update(started_at="now", finished_at="done", exit_code=3)
+    resumed.cells = []
+    assert resumed.run() == 1
+    assert resumed._launch_record()["status"] == "REPORTING"
+    resumed._finish_launch("FAILED", 1)
+    status = json.loads((run_dir / "launcher-status.json").read_text())
+    assert status["launches"][-1]["status"] == "FAILED"
+    assert status["launches"][-1]["exit_code"] == 1
+
+
 def test_launcher_dry_run_prints_plan_without_spawning(tmp_path, capsys):
     launcher = _load_script("launch_matrix")
     token_dir = tmp_path / "tokens"
@@ -922,8 +1593,13 @@ def test_launcher_stops_before_starting_next_cell_after_authentication_failure(t
     (journal / "failure.json").write_text(
         json.dumps({"code": "authentication_failed", "status": code})
     )
-    process = types.SimpleNamespace(poll=lambda: 2)
-    instance.processes["first|benign"] = (process, io.BytesIO())
+    process = types.SimpleNamespace(pid=12, poll=lambda: 2)
+    instance._new_attempt("first|benign", "111").update(pid=12, outcome="RUNNING")
+    instance.processes["first|benign"] = (
+        process,
+        io.BytesIO(),
+        {"log_start_offset": 0, "journal_baseline": {}},
+    )
     started = []
     instance.start = lambda *cell: started.append(cell)
     assert instance.run() == 2
@@ -999,11 +1675,28 @@ def test_unstarted_or_missing_trial_cell_is_rejected():
         )
 
 
+def test_report_process_is_cancelled_when_launcher_stop_is_requested():
+    launcher = _load_script("launch_matrix")
+    stopped = threading.Event()
+    timer = threading.Timer(0.2, stopped.set)
+    timer.start()
+    started = time.monotonic()
+    try:
+        result = launcher.run_report_process(
+            [sys.executable, "-c", "import time; time.sleep(30)"],
+            stop_requested=stopped.is_set,
+        )
+    finally:
+        timer.cancel()
+    assert result.returncode != 0
+    assert time.monotonic() - started < 3
+
+
 def test_launcher_binds_default_docker_and_rejects_runtime_change(tmp_path, monkeypatch):
     launcher = _load_script("launch_matrix")
     token_dir = tmp_path / "tokens"
     token_dir.mkdir()
-    (token_dir / "111.json").write_text("{}")
+    _write_token(token_dir / "111.json", "token")
     calls = []
 
     def report(command, **kwargs):
@@ -1016,7 +1709,7 @@ def test_launcher_binds_default_docker_and_rejects_runtime_change(tmp_path, monk
             item["exit_code"] = 0
         return 0
 
-    monkeypatch.setattr(launcher.subprocess, "run", report)
+    monkeypatch.setattr(launcher, "run_report_process", report)
     monkeypatch.setattr(launcher.Launcher, "run", run)
     argv = [
         "--experiment",
@@ -1040,6 +1733,306 @@ def test_launcher_binds_default_docker_and_rejects_runtime_change(tmp_path, monk
     with pytest.raises(SystemExit) as error:
         launcher.main([*argv, "--runtime", "workspace"])
     assert error.value.code == 2 and len(calls) == 1
+
+
+def test_launcher_records_final_report_failure_in_current_launch(tmp_path, monkeypatch):
+    launcher = _load_script("launch_matrix")
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    _write_token(token_dir / "111.json", "token")
+    report_calls = 0
+
+    def report(command, **kwargs):
+        nonlocal report_calls
+        report_calls += 1
+        return types.SimpleNamespace(
+            returncode=0 if report_calls == 1 else 2,
+            stdout="",
+            stderr="final report failed",
+        )
+
+    def run(instance):
+        for item in instance.status_cells.values():
+            item.update(started_at="s", finished_at="f", exit_code=0)
+        instance._launch_record().update(status="REPORTING", cell_exit_code=0)
+        instance.write_status()
+        return 0
+
+    monkeypatch.setattr(launcher, "run_report_process", report)
+    monkeypatch.setattr(launcher.Launcher, "run", run)
+    code = launcher.main(
+        [
+            "--experiment",
+            "tau",
+            "--config",
+            str(DEFAULT_CONFIG),
+            "--run-dir",
+            str(tmp_path / "run"),
+            "--token-dir",
+            str(token_dir),
+            "--accounts",
+            "111",
+            "--task",
+            load_spec().tasks[0],
+            "--arm",
+            "benign",
+        ]
+    )
+    assert code == 2
+    status = json.loads((tmp_path / "run/launcher-status.json").read_text())
+    assert status["launches"][-1]["status"] == "FAILED"
+    assert status["launches"][-1]["exit_code"] == 2
+
+
+def test_launcher_does_not_mark_complete_when_signal_arrives_during_final_report(
+    tmp_path, monkeypatch
+):
+    launcher = _load_script("launch_matrix")
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    _write_token(token_dir / "111.json", "token")
+    report_calls = 0
+
+    def report(command, **kwargs):
+        nonlocal report_calls
+        report_calls += 1
+        if report_calls == 2:
+            signal.raise_signal(signal.SIGTERM)
+        return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    def run(instance):
+        for item in instance.status_cells.values():
+            item.update(started_at="s", finished_at="f", exit_code=0)
+        instance._launch_record().update(status="REPORTING", cell_exit_code=0)
+        instance.write_status()
+        return 0
+
+    monkeypatch.setattr(launcher, "run_report_process", report)
+    monkeypatch.setattr(launcher.Launcher, "run", run)
+    code = launcher.main(
+        [
+            "--experiment",
+            "tau",
+            "--config",
+            str(DEFAULT_CONFIG),
+            "--run-dir",
+            str(tmp_path / "run"),
+            "--token-dir",
+            str(token_dir),
+            "--accounts",
+            "111",
+            "--task",
+            load_spec().tasks[0],
+            "--arm",
+            "benign",
+        ]
+    )
+    assert code == 130
+    status = json.loads((tmp_path / "run/launcher-status.json").read_text())
+    assert status["launches"][-1]["status"] == "STOPPED"
+    assert status["launches"][-1]["exit_code"] == 130
+
+
+@pytest.mark.parametrize("stale_status", ["RUNNING", "REPORTING"])
+def test_launcher_closes_stale_launch_and_current_invocation_when_initial_report_fails(
+    tmp_path, monkeypatch, stale_status
+):
+    launcher = _load_script("launch_matrix")
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    _write_token(token_dir / "111.json", "token")
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "launcher-status.json").write_text(
+        json.dumps(
+            {
+                "started_at": "old-start",
+                "experiment": "tau",
+                "config": str(DEFAULT_CONFIG),
+                "cells": {},
+                "launches": [
+                    {
+                        "invocation_id": "old",
+                        "status": stale_status,
+                        "started_at": "old-start",
+                        "finished_at": None,
+                    }
+                ],
+            }
+        )
+    )
+    monkeypatch.setattr(
+        launcher,
+        "run_report_process",
+        lambda *args, **kwargs: types.SimpleNamespace(
+            returncode=2, stdout="", stderr="initial report failed"
+        ),
+    )
+    code = launcher.main(
+        [
+            "--experiment",
+            "tau",
+            "--config",
+            str(DEFAULT_CONFIG),
+            "--run-dir",
+            str(run_dir),
+            "--token-dir",
+            str(token_dir),
+            "--accounts",
+            "111",
+            "--task",
+            load_spec().tasks[0],
+            "--arm",
+            "benign",
+        ]
+    )
+    assert code == 2
+    status = json.loads((run_dir / "launcher-status.json").read_text())
+    assert status["launches"][-2]["status"] == "INTERRUPTED"
+    assert status["launches"][-1]["status"] == "FAILED"
+    assert status["launches"][-1]["exit_code"] == 2
+    assert status["active_invocation_id"] is None
+
+
+def test_launcher_records_initial_report_spawn_error(tmp_path, monkeypatch):
+    launcher = _load_script("launch_matrix")
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    _write_token(token_dir / "111.json", "token")
+
+    def report_error(*args, **kwargs):
+        raise OSError("report executable unavailable")
+
+    monkeypatch.setattr(launcher, "run_report_process", report_error)
+    code = launcher.main(
+        [
+            "--experiment",
+            "tau",
+            "--config",
+            str(DEFAULT_CONFIG),
+            "--run-dir",
+            str(tmp_path / "run"),
+            "--token-dir",
+            str(token_dir),
+            "--accounts",
+            "111",
+            "--task",
+            load_spec().tasks[0],
+            "--arm",
+            "benign",
+        ]
+    )
+    assert code == 2
+    status = json.loads((tmp_path / "run/launcher-status.json").read_text())
+    assert status["launches"][-1]["status"] == "FAILED"
+    assert status["launches"][-1]["exit_code"] == 2
+    assert status["active_invocation_id"] is None
+
+
+def test_report_only_reconciles_interrupted_final_report_without_rerunning_cells(
+    tmp_path, monkeypatch
+):
+    launcher = _load_script("launch_matrix")
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    task = load_spec().tasks[0]
+    (run_dir / "launcher-status.json").write_text(
+        json.dumps(
+            {
+                "started_at": "old-start",
+                "experiment": "tau",
+                "config": str(DEFAULT_CONFIG.resolve()),
+                "cells": {
+                    f"{task}|benign": {
+                        "started_at": "s",
+                        "finished_at": "f",
+                        "exit_code": 0,
+                        "attempts": [],
+                    }
+                },
+                "launches": [
+                    {
+                        "invocation_id": "old",
+                        "status": "REPORTING",
+                        "started_at": "old-start",
+                        "finished_at": None,
+                        "selected_cells": [f"{task}|benign"],
+                    }
+                ],
+            }
+        )
+    )
+    reports = []
+
+    def report(command, **kwargs):
+        reports.append(command)
+        return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(launcher, "run_report_process", report)
+    code = launcher.main(
+        [
+            "--experiment",
+            "tau",
+            "--config",
+            str(DEFAULT_CONFIG),
+            "--run-dir",
+            str(run_dir),
+            "--token-dir",
+            str(tmp_path / "no-tokens-needed"),
+            "--report-only",
+        ]
+    )
+    assert code == 0 and len(reports) == 1
+    status = json.loads((run_dir / "launcher-status.json").read_text())
+    assert status["cells"][f"{task}|benign"]["exit_code"] == 0
+    assert status["launches"][-2]["status"] == "INTERRUPTED"
+    assert status["launches"][-1]["status"] == "COMPLETED"
+    assert status["launches"][-1]["selected_cells"] == []
+    assert status["active_invocation_id"] is None
+
+
+def test_launcher_still_builds_final_report_after_an_ordinary_cell_failure(tmp_path, monkeypatch):
+    launcher = _load_script("launch_matrix")
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    _write_token(token_dir / "111.json", "token")
+    reports = []
+
+    def report(command, **kwargs):
+        reports.append(command)
+        return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    def run(instance):
+        for item in instance.status_cells.values():
+            item.update(started_at="s", finished_at="f", exit_code=3)
+        instance._launch_record().update(status="REPORTING", cell_exit_code=1)
+        instance.write_status()
+        return 1
+
+    monkeypatch.setattr(launcher, "run_report_process", report)
+    monkeypatch.setattr(launcher.Launcher, "run", run)
+    code = launcher.main(
+        [
+            "--experiment",
+            "tau",
+            "--config",
+            str(DEFAULT_CONFIG),
+            "--run-dir",
+            str(tmp_path / "run"),
+            "--token-dir",
+            str(token_dir),
+            "--accounts",
+            "111",
+            "--task",
+            load_spec().tasks[0],
+            "--arm",
+            "benign",
+        ]
+    )
+    assert code == 1 and len(reports) == 2
+    status = json.loads((tmp_path / "run/launcher-status.json").read_text())
+    assert status["launches"][-1]["status"] == "FAILED"
+    assert status["launches"][-1]["exit_code"] == 1
 
 
 @pytest.mark.parametrize(

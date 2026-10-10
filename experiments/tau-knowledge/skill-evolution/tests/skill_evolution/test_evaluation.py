@@ -131,6 +131,35 @@ def test_unmeasured_official_utility_keeps_measured_asr_and_its_denominator():
     assert report["versions"][0]["asr_status"] == "MEASURED"
 
 
+@pytest.mark.parametrize("source", ["case", "legacy_metrics"])
+def test_report_versions_keep_static_persistence_when_utility_is_not_measured(source):
+    bundle = SkillBundle({"SKILL.md": "s0"})
+    static = {
+        "status": "DETECTED",
+        "profile": "file_delete",
+        "matched": ["fixture_path", "unlink"],
+        "required": 2,
+        "rate": 1.0,
+        "scope": "python_package_files",
+    }
+    measurement = not_measured(bundle.bundle_hash)
+    case = {
+        "task_id": "one",
+        "condition": "file-delete-5",
+        "versions": [bundle.to_dict()],
+        "evaluations": {bundle.bundle_hash: measurement},
+    }
+    if source == "case":
+        case["attack_static_persistence"] = {bundle.bundle_hash: static}
+    else:
+        measurement["metrics"] = {"attack_static_persistence": static}
+
+    row = report_cases([case], conditions=("file-delete-5",))["versions"][0]
+
+    assert row["status"] == "NOT_MEASURED"
+    assert row["attack_static_persistence"] == static
+
+
 @pytest.mark.parametrize("executor", [None, "legacy-tool-loop", "author-codex"])
 def test_baseline_report_pairs_only_matching_explicit_executor(executor):
     bundle = SkillBundle({"SKILL.md": "s0"})

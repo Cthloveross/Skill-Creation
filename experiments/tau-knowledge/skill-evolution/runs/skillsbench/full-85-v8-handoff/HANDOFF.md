@@ -64,9 +64,13 @@ experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff/
 `operator.sh` always calls the repository's canonical configuration, source, preparation code,
 and `r2sp`. The copies here are for review and handoff. Before any operation, `operator.sh
 verify` requires every copied file and canonical source to match the SHA-256 recorded in
-`MANIFEST.json`. Do not edit a snapshot and assume the runtime changed. A deliberate prompt,
-config, corpus, or source change requires a new namespace or trial identity, regenerated
-snapshots, and fresh preflight/smoke evidence.
+`MANIFEST.json`. It also verifies the frozen `ExperimentSpec.identity_hash`, which covers the
+runtime modules, prompts, source manifests, author components and all 85 runtime locks, plus the
+explicit operator/preparation dependencies listed under `source_commitment.canonical_files`.
+This is the source boundary enforced by the wrapper; unrelated repository files are outside it.
+Do not edit a snapshot and assume the runtime changed. A deliberate change inside this boundary
+requires a new method/trial identity as applicable, regenerated commitments, and fresh
+preflight/smoke evidence.
 
 The higher-level method is documented in
 [`../../../PROTOCOL.md`](../../../PROTOCOL.md). The injection design and four actual carrier
@@ -154,6 +158,18 @@ Two tasks have required task-scoped credentials, listed in section 7; Bedrock cr
 replace them. Do not silently drop either task or convert missing infrastructure into a failed
 score.
 
+The completed local run `smoke-payload-http-gpt54-20261010-002` is historical mechanism
+evidence for source identity
+`000fba8ea2b6029c9d948691c98d1ae05f68f349932cfde77d8da759c0d40e4a`: its one injected
+cell retained a complete HTTP payload in B*, sealed S0 plus four changed content versions,
+recorded four Verifier results and one fresh oracle, independently evaluated all five versions,
+and measured the controlled HTTP effect in every version. It stopped with the recorded reason
+`token_budget`; three versions had official utility 0 and two had utility 1. Its `report.json`
+SHA-256 is
+`02009c4078d7131da6d3dd7f81e02452bf02fd15a693c976eadc9a96f35d8043`. Because the current
+source identity differs, this run demonstrates that the stages can execute but **cannot satisfy
+the matrix smoke gate**. Run section 10 again under the committed identity.
+
 ## 5. Host prerequisites
 
 Run from a normal clone of the repository. Required host components are:
@@ -196,8 +212,23 @@ test "$(sha256sum DyMalSkill_300x12.zip | cut -d' ' -f1)" = \
   fc26fefa1be4988e71bcb2159ab12749f20cdd5ccaadba7d2e721ef2a091c8e9
 ```
 
-Start the configured embedding service in a separate long-lived terminal. On the current lab
-host the project command is:
+The embedding service has its own environment. On a fresh host, create it and download the exact
+model revision into the local Hugging Face cache:
+
+```bash
+ROOT="$PWD"
+PY="$ROOT/.venv/bin/python"
+SB="$ROOT/experiments/tau-knowledge/skill-evolution"
+EMBED_VENV="$SB/data/embedding/.venv"
+
+uv venv --python 3.12 "$EMBED_VENV"
+uv pip install --python "$EMBED_VENV/bin/python" \
+  -r "$SB/runtime/embedding-requirements.txt"
+"$EMBED_VENV/bin/python" -c \
+  "from huggingface_hub import snapshot_download; snapshot_download('Qwen/Qwen3-Embedding-4B', revision='5cf2132abc99cad020ac570b19d031efec650f2b')"
+```
+
+Then start the service in a separate long-lived terminal:
 
 ```bash
 ROOT="$PWD"
@@ -205,6 +236,14 @@ PY="$ROOT/.venv/bin/python"
 SB="$ROOT/experiments/tau-knowledge/skill-evolution"
 "$PY" "$SB/scripts/start_embedding.py"
 ```
+
+The pinned service is vLLM `0.28.0` at `http://127.0.0.1:18140/v1` and is used only for
+embedding/tokenization. The configuration currently pins GPU UUID
+`GPU-1c51e1d6-08ac-129f-38dc-1824c5ab9698`. A host without that device needs a reviewed config
+change, regenerated corpus/index and matrix commitments, a new experiment identity, and fresh
+gates. Keep the service running during data preparation and all preflight/run commands. The
+project preparation script must run with `$PY`; it dispatches only Dense index workers into the
+embedding environment.
 
 Then prepare the pinned source, benign pool, all eight injected pools, their BM25/Dense indices,
 and the frozen matrix:
@@ -245,7 +284,32 @@ export AWS_BEARER_TOKEN_BEDROCK_FILE=/absolute/private/path/bedrock-token.json
 For the parallel matrix, create a private directory containing one refreshed
 `<AWS-account-id>.json` file per authorized account. A refresh daemon or equivalent approved
 mechanism must replace each file atomically before expiration. The launcher reads paths and
-never copies token values into the run.
+never copies token values into the run. Each file must be a regular file owned by the current
+user with mode `0600`, contain valid JSON and a nonempty token, and have an ISO-8601
+`expires_at` more than 60 seconds in the future. The launcher validates the entire account set
+before it creates a run identity and validates the assigned file again before every cell is
+admitted. Any local credential failure or child preflight authentication failure stops admission
+globally; an initial account-set rejection happens before a run identity is created, while an
+admission-time or child failure is retained in `launcher-status.json`. None is treated as a task
+failure.
+
+On a Midway/`ada` host with `aws_bedrock_token_generator` installed for system Python, the
+repository daemon is the canonical producer. Keep it running in its own terminal and pass the
+host's real `ada` path explicitly:
+
+```bash
+SB="$ROOT/experiments/tau-knowledge/skill-evolution"
+export ACCOUNT_IDS=111111111111,222222222222
+export TOKEN_DIR=/absolute/private/path/bedrock-tokens
+mkdir -p "$TOKEN_DIR"
+chmod 700 "$TOKEN_DIR"
+/usr/bin/python3 "$SB/scripts/bedrock_token_daemon.py" \
+  --accounts "$ACCOUNT_IDS" --out-dir "$TOKEN_DIR" \
+  --ada /absolute/path/to/ada --region us-east-1 --interval-seconds 1200
+```
+
+Other credential systems may supply the same atomically replaced JSON contract. Do not use a
+background writer that edits a token file in place while the launcher can read it.
 
 The full population has two tasks with required variables in their published task definitions.
 Before all-task preflight, set their scoped credentials locally:
@@ -296,9 +360,18 @@ credentials available:
 "$BUNDLE/operator.sh" preflight-all
 ```
 
-The saved JSON must have `namespace=skillsbench.skill-evolution.v8`, `ready=true`, and 85
-successful `skillsbench_environment:*` checks. A task-scoped preflight cannot replace this
-gate.
+The saved JSON must have `namespace=skillsbench.skill-evolution.v8`, `ready=true`, and one
+successful `skillsbench_environment:<task>` check for each of the exact 85 frozen tasks. The
+wrapper adds `handoff_gate`, binding the record to Docker, the current
+`ExperimentSpec.identity_hash`, and the current handoff manifest hash. An old unbound v8 JSON or
+a record from a different source/config fails the gate. A task-scoped preflight cannot replace
+this gate.
+
+Recheck the saved record without starting containers or making model calls:
+
+```bash
+"$BUNDLE/operator.sh" check-preflight
+```
 
 ## 10. Run the injected end-to-end smoke gate
 
@@ -361,7 +434,14 @@ export MAX_CONCURRENT=16
 
 The launcher assigns each frozen cell to one account, calls the canonical command
 `r2sp run --task TASK --arm ARM --no-interim-report`, stops admitting new work after an
-authentication failure, writes one cell log, and produces one final report. Each cell performs:
+authentication or token-admission failure, writes one cell log, and produces one final report.
+It revalidates JSON structure, expiry, ownership, and mode at every admission, so an expired or
+malformed refreshed file cannot start another cell. Already running children are stopped when a
+global credential failure is observed. The launcher holds `$RUN_DIR/.launcher.lock` from run
+admission through final reporting, so `matrix` and `resume` must never be started concurrently.
+Each child runs in its own process group; global stop terminates and reaps those groups before the
+launcher writes a terminal status. Credential evidence is scoped to the current attempt, so a
+retained error from an earlier attempt cannot stop a later retry. Each cell performs:
 
 ```text
 public input discovery + fixed-pool retrieval
@@ -394,8 +474,15 @@ After a launcher interruption or nonzero cells:
 The wrapper builds `resume-cells.json` from unfinished/nonzero entries in
 `launcher-status.json` and sends only those cell IDs back to the canonical launcher. A completed
 operation is reused; `NOT_SENT` may be dispatched for the first time; `UNKNOWN` is never
-repeated. If an unsealed author loop lost its bound container/Compose state, preserve it as
-incomplete and start that cell under a new trial identity.
+repeated. Resume merges results into the original full-population audit: the top-level cell map
+continues to contain all 765 cells, every launcher invocation is appended under `launches`, and
+each selected cell appends an `attempts` entry. It does not replace the original 765-cell record
+with the resume subset. If every cell already exited successfully but the previous launcher was
+interrupted while writing its final report, `resume` uses the launcher's guarded `--report-only`
+reconciliation: it reruns deterministic reporting, closes the stale `RUNNING`/`REPORTING`
+invocation as interrupted, and appends a terminal empty reconciliation invocation without
+rerunning a cell. If an unsealed author loop lost its bound container/Compose state,
+preserve it as incomplete and start that cell under a new trial identity.
 
 Always inspect:
 

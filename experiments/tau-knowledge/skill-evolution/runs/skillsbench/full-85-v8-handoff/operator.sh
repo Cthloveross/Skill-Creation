@@ -26,6 +26,7 @@ Review/preparation:
 
 Required gates and controls:
   preflight-all          Save a fresh 85-task preflight at $ALL_PREFLIGHT.
+  check-preflight        Check the saved source-bound 85-task preflight without model calls.
   smoke                  Run the paid payload smoke at $SMOKE_RUN, then check its evidence.
   check-smoke            Check an already completed $SMOKE_RUN without model calls.
   noskill                Evaluate all 85 NoSkill controls in $RUN_DIR, then check coverage.
@@ -79,6 +80,18 @@ need_single_token() {
   test -n "${AWS_BEARER_TOKEN_BEDROCK_FILE:-}" || \
     fail "set AWS_BEARER_TOKEN_BEDROCK_FILE to a private refreshed token JSON"
   test -f "$AWS_BEARER_TOKEN_BEDROCK_FILE" || fail "Bedrock token file does not exist"
+  "$PY" - "$SB" "$AWS_BEARER_TOKEN_BEDROCK_FILE" <<'PY'
+import os, pathlib, stat, sys
+sb, path = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+info = path.lstat()
+if path.is_symlink() or not stat.S_ISREG(info.st_mode):
+    raise SystemExit("Bedrock token path must be a regular file, not a symlink")
+if stat.S_IMODE(info.st_mode) != 0o600 or info.st_uid != os.getuid():
+    raise SystemExit("Bedrock token file must be owned by the current user with mode 0600")
+sys.path.insert(0, str(sb / "src"))
+from tau_skill_evolution.credentials import read_token_file
+read_token_file(path)
+PY
 }
 
 verify_bundle() {
@@ -95,6 +108,8 @@ verify_bundle() {
 import hashlib, json, pathlib, sys
 root, bundle = map(pathlib.Path, sys.argv[1:])
 manifest = json.loads((bundle / "MANIFEST.json").read_text())
+if manifest.get("schema") != "skillsbench.full-85-v8-handoff.v2":
+    raise SystemExit("handoff manifest schema differs")
 if manifest.get("namespace") != "skillsbench.skill-evolution.v8":
     raise SystemExit("handoff namespace differs")
 for item in manifest["entries"]:
@@ -106,6 +121,20 @@ for item in manifest["entries"]:
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         if digest != item["sha256"]:
             raise SystemExit(f"{label} hash differs: {path}")
+commitment = manifest.get("source_commitment") or {}
+if commitment.get("schema") != "skillsbench.runtime-source-commitment.v1" or not commitment.get(
+    "canonical_files"
+):
+    raise SystemExit("handoff source commitment is missing or invalid")
+sys.path.insert(0, str(root / "experiments/tau-knowledge/skill-evolution/src"))
+from tau_skill_evolution.spec import load_spec
+spec = load_spec(root / "experiments/tau-knowledge/skill-evolution/configs/skillsbench.yaml")
+if spec.identity["identity_hash"] != commitment.get("spec_identity_hash"):
+    raise SystemExit("canonical runtime/spec identity differs from the handoff commitment")
+for item in commitment.get("canonical_files", []):
+    path = root / item["path"]
+    if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != item["sha256"]:
+        raise SystemExit(f"canonical operator dependency differs: {path}")
 matrix = json.loads((bundle / "snapshots/skillsbench-dymal4-matrix.json").read_text())
 conditions = json.loads((bundle / "snapshots/skillsbench-dymal4-conditions.json").read_text())
 if matrix.get("namespace") != "skillsbench.skill-evolution.v8":
@@ -127,24 +156,58 @@ PY
   printf 'pinned Codex: %s\n' "$(codex --version)"
 }
 
+handoff_binding() {
+  "$PY" - "$SB" "$HERE" <<'PY'
+import hashlib, pathlib, sys
+sb, bundle = map(pathlib.Path, sys.argv[1:])
+sys.path.insert(0, str(sb / "src"))
+from tau_skill_evolution.spec import load_spec
+spec = load_spec(sb / "configs/skillsbench.yaml")
+print(spec.identity["identity_hash"])
+print(hashlib.sha256((bundle / "MANIFEST.json").read_bytes()).hexdigest())
+PY
+}
+
 save_preflight() {
   local output=$1
   shift
   mkdir -p "$(dirname "$output")"
   local temporary="${output}.tmp.$$"
+  local before_file="${temporary}.binding-before"
+  local after_file="${temporary}.binding-after"
+  local -a binding_before binding_after
+  handoff_binding > "$before_file"
+  mapfile -t binding_before < "$before_file"
   set +e
   "$R2SP" preflight --experiment skillsbench --runtime docker --config "$CFG" "$@" \
     > "$temporary"
   local status=$?
   set -e
+  handoff_binding > "$after_file"
+  mapfile -t binding_after < "$after_file"
+  rm -f "$before_file" "$after_file"
+  if test "${#binding_before[@]}" -ne 2 || test "${#binding_after[@]}" -ne 2 || \
+     test "${binding_before[0]}" != "${binding_after[0]}" || \
+     test "${binding_before[1]}" != "${binding_after[1]}"; then
+    rm -f "$temporary"
+    fail "handoff manifest or experiment identity changed while preflight was running"
+  fi
   mv "$temporary" "$output"
-  "$PY" - "$output" <<'PY'
-import json, pathlib, sys
-p = pathlib.Path(sys.argv[1])
+  "$PY" - "$output" "${binding_before[0]}" "${binding_before[1]}" <<'PY'
+import datetime, json, pathlib, sys
+p, spec_identity, manifest_digest = pathlib.Path(sys.argv[1]), sys.argv[2], sys.argv[3]
 try:
     value = json.loads(p.read_text())
 except Exception as exc:
     raise SystemExit(f"invalid preflight JSON {p}: {exc}")
+value["handoff_gate"] = {
+    "schema": "skillsbench.full-85-v8-preflight.v1",
+    "runtime": "docker",
+    "spec_identity_hash": spec_identity,
+    "handoff_manifest_sha256": manifest_digest,
+    "recorded_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+}
+p.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
 print(f"preflight ready={value.get('ready')} record={p}")
 PY
   return "$status"
@@ -152,17 +215,35 @@ PY
 
 check_all_preflight() {
   need_run_dir
-  "$PY" - "$ALL_PREFLIGHT" <<'PY'
-import json, pathlib, sys
-p = pathlib.Path(sys.argv[1])
+  "$PY" - "$SB" "$HERE" "$ALL_PREFLIGHT" <<'PY'
+import hashlib, json, pathlib, sys
+sb, bundle, p = map(pathlib.Path, sys.argv[1:])
 if not p.is_file():
     raise SystemExit(f"missing all-task preflight: {p}")
 value = json.loads(p.read_text())
+sys.path.insert(0, str(sb / "src"))
+from tau_skill_evolution.spec import load_spec
+spec = load_spec(sb / "configs/skillsbench.yaml")
+expected_binding = {
+    "schema": "skillsbench.full-85-v8-preflight.v1",
+    "runtime": "docker",
+    "spec_identity_hash": spec.identity["identity_hash"],
+    "handoff_manifest_sha256": hashlib.sha256((bundle / "MANIFEST.json").read_bytes()).hexdigest(),
+}
+binding = value.get("handoff_gate") or {}
+if any(binding.get(name) != expected for name, expected in expected_binding.items()):
+    raise SystemExit("all-task preflight is not bound to the current handoff/spec/runtime")
 checks = value.get("checks", [])
 environments = [x for x in checks if str(x.get("name", "")).startswith("skillsbench_environment:")]
 if value.get("namespace") != "skillsbench.skill-evolution.v8" or value.get("ready") is not True:
     raise SystemExit("all-task preflight is not ready for v8")
-if len(environments) != 85 or not all(x.get("ok") is True for x in environments):
+expected_names = {f"skillsbench_environment:{task}" for task in spec.tasks}
+observed_names = [str(item.get("name")) for item in environments]
+if (
+    len(observed_names) != len(expected_names)
+    or set(observed_names) != expected_names
+    or not all(x.get("ok") is True for x in environments)
+):
     raise SystemExit(f"preflight covers {len(environments)}/85 task environments")
 print(f"all-task preflight gate: PASS ({len(environments)}/85 environments)")
 PY
@@ -280,6 +361,10 @@ case "$command" in
     save_preflight "$ALL_PREFLIGHT"
     check_all_preflight
     ;;
+  check-preflight)
+    verify_bundle
+    check_all_preflight
+    ;;
   smoke)
     verify_bundle
     need_run_dir
@@ -342,19 +427,22 @@ case "$command" in
     check_all_preflight
     check_smoke
     check_noskill
-    "$PY" - "$RUN_DIR/launcher-status.json" "$RUN_DIR/resume-cells.json" <<'PY'
+    resume_mode=$("$PY" - "$RUN_DIR/launcher-status.json" "$RUN_DIR/resume-cells.json" <<'PY'
 import json, pathlib, sys
 source, target = map(pathlib.Path, sys.argv[1:])
 status = json.loads(source.read_text())
 cells = [key for key, value in status.get("cells", {}).items() if value.get("exit_code") != 0]
 target.write_text(json.dumps(cells, indent=2) + "\n")
-print(f"resume cells: {len(cells)}")
+launches = status.get("launches") or []
+latest = launches[-1] if isinstance(launches, list) and launches else {}
+unfinished_report = (
+    latest.get("status") in {"RUNNING", "REPORTING"}
+    and latest.get("finished_at") is None
+)
+print("cells" if cells else "report-only" if unfinished_report else "none")
 PY
-    if "$PY" - "$RUN_DIR/resume-cells.json" <<'PY'
-import json, pathlib, sys
-raise SystemExit(0 if json.loads(pathlib.Path(sys.argv[1]).read_text()) else 1)
-PY
-    then
+    )
+    if test "$resume_mode" = cells; then
       args=(
         "$PY" "$SB/scripts/launch_matrix.py"
         --experiment skillsbench --runtime docker --config "$CFG"
@@ -364,6 +452,11 @@ PY
       )
       if test -n "${ACCOUNT_IDS:-}"; then args+=(--accounts "$ACCOUNT_IDS"); fi
       "${args[@]}"
+    elif test "$resume_mode" = report-only; then
+      "$PY" "$SB/scripts/launch_matrix.py" \
+        --experiment skillsbench --runtime docker --config "$CFG" \
+        --run-dir "$RUN_DIR" --token-dir "$TOKEN_DIR" --r2sp "$R2SP" \
+        --report-only
     else
       printf 'No nonzero or unfinished launcher cells.\n'
     fi

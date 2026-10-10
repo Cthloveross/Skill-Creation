@@ -308,6 +308,22 @@ class Workflow:
             raise ValueError("sealed creation artifacts differ from the creation record")
         return base, initial
 
+    def _collected_base(self, root: Path, journal: Journal) -> FrozenBase:
+        base = load_base(root / "base")
+        if base.to_dict() != journal.response("collect-base"):
+            raise ValueError("sealed frozen base differs from the acquisition record")
+        return base
+
+    def _static_persistence(self, arm: str, bundles: Any) -> dict[str, Any]:
+        if self.spec.namespace != "skillsbench.skill-evolution.v8":
+            return {}
+        from .skillsbench_attack_runtime import static_attack_persistence
+
+        profile = self.spec.condition(arm)["profile"]
+        return {
+            bundle.bundle_hash: static_attack_persistence(bundle, profile) for bundle in bundles
+        }
+
     def create(self, cells: tuple[tuple[str, str], ...]) -> None:
         self._validate_cells(cells)
         for task, arm in cells:
@@ -938,6 +954,14 @@ class Workflow:
         from .evaluation import not_measured, report_cases
         from .evolution import EvolutionResult
 
+        skillsbench_v8 = self.spec.namespace == "skillsbench.skill-evolution.v8"
+        if skillsbench_v8:
+            from .skillsbench_attack import (
+                ACQUISITION_STAGES,
+                acquisition_exposure_not_measured,
+                acquisition_payload_exposure,
+            )
+
         cases: list[dict[str, Any]] = []
         for task, arm in self.spec.cells:
             directory = self.root / "cells" / task / arm
@@ -949,8 +973,13 @@ class Workflow:
                 "evaluations": {},
                 "stop_reason": "not_started",
             }
+            if skillsbench_v8:
+                case["acquisition"] = {
+                    "payload_exposure": acquisition_exposure_not_measured("acquisition_not_started")
+                }
             if (directory / "journal").exists():
                 _, journal = self._cell(task, arm)
+                base = None
                 if journal.dispatched("evaluation-no-skill"):
                     case["no_skill_evaluation"] = journal.result("evaluation-no-skill") or {
                         **not_measured(
@@ -960,9 +989,37 @@ class Workflow:
                         ),
                         "baseline": "no_skill",
                     }
+                if journal.completed("collect-base"):
+                    base = self._collected_base(directory, journal)
+                    case["acquisition"] = {
+                        "base_hash": base.base_hash,
+                        "selected_documents": len(base.documents),
+                        "base_tokens": base.token_count,
+                        "stop_reason": base.stop_reason,
+                    }
+                    if journal.completed("acquisition-summary"):
+                        summary = journal.response("acquisition-summary")
+                        case["acquisition"].update(
+                            {
+                                name: summary[name]
+                                for name in (
+                                    "stop_detail",
+                                    "counters",
+                                    "unreviewed_document_ids",
+                                    "unreviewable_document_ids",
+                                )
+                            }
+                        )
+                if skillsbench_v8 and journal.dispatched("collect-base"):
+                    case["acquisition"]["payload_exposure"] = (
+                        acquisition_payload_exposure(self.spec.root, base, journal)
+                        if journal.completed("retrieval-corpus-contract")
+                        else acquisition_exposure_not_measured("retrieval_contract_not_recorded")
+                    )
                 if journal.completed("imported-versions"):
                     imported = journal.response("imported-versions")
-                    for bundle in self._imported_bundles(directory, imported):
+                    imported_bundles = self._imported_bundles(directory, imported)
+                    for bundle in imported_bundles:
                         operation = f"evaluation-{bundle.bundle_hash}"
                         case["evaluations"][bundle.bundle_hash] = journal.result(operation) or (
                             not_measured(
@@ -983,6 +1040,9 @@ class Workflow:
                         evaluation_source=imported["source"],
                         evaluation_import=imported,
                     )
+                    static_persistence = self._static_persistence(arm, imported_bundles)
+                    if static_persistence:
+                        case["attack_static_persistence"] = static_persistence
                 if journal.completed("creation"):
                     creation = journal.response("creation")
                     case["status"] = creation["status"]
@@ -1092,6 +1152,9 @@ class Workflow:
                             "final_bundle_ref": final_ref,
                             "stop_reason": case["stop_reason"],
                         }
+                        static_persistence = self._static_persistence(arm, versions)
+                        if static_persistence:
+                            case["attack_static_persistence"] = static_persistence
                         for bundle in versions:
                             operation = f"evaluation-{bundle.bundle_hash}"
                             pending = journal.dispatched(operation) and not journal.completed(
@@ -1108,25 +1171,6 @@ class Workflow:
                                 bundle.bundle_hash, reason
                             )
                             case["evaluations"][bundle.bundle_hash] = measurement
-                        case["acquisition"] = {
-                            "base_hash": base.base_hash,
-                            "selected_documents": len(base.documents),
-                            "base_tokens": base.token_count,
-                            "stop_reason": base.stop_reason,
-                        }
-                        if journal.completed("acquisition-summary"):
-                            summary = journal.response("acquisition-summary")
-                            case["acquisition"].update(
-                                {
-                                    name: summary[name]
-                                    for name in (
-                                        "stop_detail",
-                                        "counters",
-                                        "unreviewed_document_ids",
-                                        "unreviewable_document_ids",
-                                    )
-                                }
-                            )
                         evidence_path = self._public_audit(directory, journal, base)
                         case["public_audit"] = str(evidence_path.relative_to(self.root))
                         evidence = json.loads(evidence_path.read_text())
@@ -1199,6 +1243,30 @@ class Workflow:
             "formal_matrix_result": report["formal_matrix_result"],
         }
         report["cases"] = cases
+        if skillsbench_v8:
+            denominator = len(self.spec.tasks)
+            report["acquisition_exposure_coverage"] = [
+                {
+                    "arm": arm,
+                    "stage": stage,
+                    "measured": measured,
+                    "missing": denominator - measured,
+                    "denominator": denominator,
+                }
+                for arm in self.spec.values["matrix"]["arms"]
+                for stage in ACQUISITION_STAGES
+                for measured in (
+                    sum(
+                        ((case.get("acquisition") or {}).get("payload_exposure") or {})
+                        .get("stages", {})
+                        .get(stage, {})
+                        .get("status")
+                        == "MEASURED"
+                        for case in cases
+                        if case["condition"] == arm
+                    ),
+                )
+            ]
         report["usage"] = self._usage_summary()
         atomic_json(self.root / "report.json", report)
         self._write_report_md(report)
@@ -1556,6 +1624,12 @@ class Workflow:
 
         def official(row: dict[str, Any]) -> dict[str, Any]:
             value = (row.get("metrics") or {}).get("reward_info")
+            return value if isinstance(value, dict) else {}
+
+        def static_persistence(row: dict[str, Any]) -> dict[str, Any]:
+            value = row.get("attack_static_persistence")
+            if not isinstance(value, dict):
+                value = (row.get("metrics") or {}).get("attack_static_persistence")
             return value if isinstance(value, dict) else {}
 
         def check_count(value: Any) -> str | None:
@@ -1917,6 +1991,8 @@ class Workflow:
                     "ASR status",
                     "Static persistence",
                     "Static feature rate",
+                    "Static matched",
+                    "Static required",
                     "Previous",
                     "Utility delta",
                     "Reward delta",
@@ -1938,12 +2014,12 @@ class Workflow:
                         ((row.get("metrics") or {}).get("official_checks") or {}).get("unit"),
                         row.get("asr"),
                         row.get("asr_status"),
-                        ((row.get("metrics") or {}).get("attack_static_persistence") or {}).get(
-                            "status"
-                        ),
-                        ((row.get("metrics") or {}).get("attack_static_persistence") or {}).get(
-                            "rate"
-                        ),
+                        static.get("status"),
+                        static.get("rate"),
+                        (", ".join(static["matched"]) or "NONE")
+                        if isinstance(static.get("matched"), list)
+                        else None,
+                        static.get("required"),
                         comparison.get("from_label"),
                         comparison.get("utility_delta"),
                         comparison.get("reward_delta"),
@@ -1960,6 +2036,7 @@ class Workflow:
                             (row["task_id"], row["condition"], f"S{row['version']}"), {}
                         ),
                     )
+                    for static in (static_persistence(row),)
                 ),
             )
             lines.extend(
@@ -2179,6 +2256,32 @@ class Workflow:
         (self.root / "REPORT.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     def _write_report_tail(self, lines: list[str], report: dict[str, Any], table: Any) -> None:
+        skillsbench_v8 = (
+            self.spec.experiment == "skillsbench"
+            and report.get("namespace") == "skillsbench.skill-evolution.v8"
+        )
+
+        def exposure_population(stage: dict[str, Any]) -> str:
+            return "; ".join(
+                f"{label} {stage[name]}"
+                for label, name in (
+                    ("O", "chunk_occurrences"),
+                    ("C", "unique_chunks"),
+                    ("S", "unique_sources"),
+                )
+            )
+
+        def exposure_rate(stage: dict[str, Any], flag: str) -> str:
+            rates = stage["rates"][flag]
+            return "; ".join(
+                f"{label} {rates[name]['numerator']}/{rates[name]['denominator']}"
+                for label, name in (
+                    ("O", "chunk_occurrences"),
+                    ("C", "unique_chunks"),
+                    ("S", "unique_sources"),
+                )
+            )
+
         table(
             "Adjacent content paired coverage",
             (
@@ -2311,9 +2414,83 @@ class Workflow:
                 )
                 for case in report["cases"]
                 for base in (case.get("acquisition"),)
-                if base
+                if base and base.get("base_hash")
             ),
         )
+        if skillsbench_v8:
+            lines.extend(
+                [
+                    "",
+                    "Acquisition exposure uses O for chunk occurrences, C for unique chunks, "
+                    "and S for unique source documents. Join it to Independent measurements "
+                    "by task and condition: acquisition exposure records pre-package input "
+                    "visibility, package-static persistence records features in the sealed "
+                    "package, and fresh ASR records controlled behavior during independent "
+                    "evaluation. These are separate measurements.",
+                ]
+            )
+            table(
+                "Acquisition exposure coverage",
+                ("Arm", "Stage", "Measured", "Missing", "Denominator"),
+                (
+                    (
+                        row["arm"],
+                        row["stage"],
+                        row["measured"],
+                        row["missing"],
+                        row["denominator"],
+                    )
+                    for row in report.get("acquisition_exposure_coverage", ())
+                ),
+            )
+            table(
+                "Acquisition payload exposure",
+                (
+                    "Task",
+                    "Condition",
+                    "Stage",
+                    "Status",
+                    "Reason",
+                    "Population (O/C/S)",
+                    "Source poisoned (O/C/S)",
+                    "Payload present (O/C/S)",
+                    "Partial payload (O/C/S)",
+                    "Full payload (O/C/S)",
+                ),
+                (
+                    (
+                        case["task_id"],
+                        case["condition"],
+                        stage_name,
+                        stage.get("status"),
+                        stage.get("reason", "—"),
+                        exposure_population(stage) if stage.get("status") == "MEASURED" else None,
+                        exposure_rate(stage, "source_poisoned")
+                        if stage.get("status") == "MEASURED"
+                        else None,
+                        exposure_rate(stage, "payload_present")
+                        if stage.get("status") == "MEASURED"
+                        else None,
+                        exposure_rate(stage, "payload_partial")
+                        if stage.get("status") == "MEASURED"
+                        else None,
+                        exposure_rate(stage, "full_payload_present")
+                        if stage.get("status") == "MEASURED"
+                        else None,
+                    )
+                    for case in report["cases"]
+                    for acquisition in (case.get("acquisition") or {},)
+                    for payload in (acquisition.get("payload_exposure") or {},)
+                    for stage_name in (
+                        "corpus",
+                        "search_returns",
+                        "analyzer_visible",
+                        "frozen_base",
+                    )
+                    for stage in ((payload.get("stages") or {}).get(stage_name),)
+                    if stage
+                ),
+            )
         if self.spec.experiment == "tau":
             table(
                 "Post-evaluation gold coverage",
