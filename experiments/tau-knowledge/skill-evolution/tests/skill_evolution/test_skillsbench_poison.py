@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import shutil
 import struct
 from types import SimpleNamespace
 
@@ -193,14 +194,20 @@ def _seal_dense(spec, directory):
     return target
 
 
-def test_pinned_archive_and_four_source_records_are_exact():
-    archive = EXPERIMENT_ROOT.parents[2] / "DyMalSkill_300x12.zip"
-    assert (
-        hashlib.sha256(archive.read_bytes()).hexdigest() == skillsbench_attack.SOURCE_ARCHIVE_SHA256
-    )
+def test_frozen_source_records_preserve_archive_provenance():
     sources = skillsbench_attack.source_templates(EXPERIMENT_ROOT)
     assert tuple(sources) == skillsbench_attack.PROFILES
-    assert all(len(value["record_sha256"]) == 64 for value in sources.values())
+    conditions = json.loads(
+        (EXPERIMENT_ROOT / "configs/skillsbench-dymal4-conditions.json").read_text()
+    )
+    assert sources == conditions["source_records"]
+    directory = EXPERIMENT_ROOT / "injections/skillsbench/source"
+    assert {path.stem for path in directory.glob("*.json")} == set(skillsbench_attack.PROFILES)
+    for profile, provenance in sources.items():
+        raw = (directory / f"{profile}.json").read_bytes()
+        assert hashlib.sha256(raw).hexdigest() == provenance["record_sha256"]
+        text = json.loads(raw)["inserted_text"]
+        assert hashlib.sha256(text.encode()).hexdigest() == provenance["inserted_text_sha256"]
     rendered = "\n".join(
         skillsbench_attack.adapted_payload(profile, "A public reference")
         for profile in skillsbench_attack.PROFILES
@@ -212,6 +219,31 @@ def test_pinned_archive_and_four_source_records_are_exact():
     )
     assert detail["source_archive_sha256"] == skillsbench_attack.SOURCE_ARCHIVE_SHA256
     assert detail["conditions"] == 9
+
+
+def test_source_records_work_without_zip(tmp_path):
+    root = tmp_path / "experiments/tau-knowledge/skill-evolution"
+    shutil.copytree(EXPERIMENT_ROOT / "injections/skillsbench", root / "injections/skillsbench")
+    assert not (tmp_path / skillsbench_attack.SOURCE_ARCHIVE).exists()
+    assert skillsbench_attack.source_templates(root) == skillsbench_attack.source_templates(
+        EXPERIMENT_ROOT
+    )
+
+
+@pytest.mark.parametrize("change", ["missing", "tampered"])
+def test_source_records_fail_closed_without_archive_fallback(tmp_path, change):
+    root = tmp_path / "experiments/tau-knowledge/skill-evolution"
+    shutil.copytree(EXPERIMENT_ROOT / "injections/skillsbench", root / "injections/skillsbench")
+    target = root / "injections/skillsbench/source/credential_abuse.json"
+    if change == "missing":
+        target.unlink()
+    else:
+        target.write_bytes(target.read_bytes() + b"\n")
+    # Even an archive at the previous lookup location cannot bypass frozen records.
+    (tmp_path / skillsbench_attack.SOURCE_ARCHIVE).write_bytes(b"unused archive")
+    error = "source_missing" if change == "missing" else "source_changed"
+    with pytest.raises(ValueError, match=error):
+        skillsbench_attack.source_templates(root)
 
 
 def test_public_carrier_files_are_the_only_pinned_templates_and_tampering_fails(tmp_path):

@@ -1,4 +1,4 @@
-.PHONY: setup test lint check clean
+.PHONY: setup skillsbench-prepare test lint check clean
 
 PYTHON ?= python3
 UV ?= uv
@@ -7,6 +7,9 @@ EXPERIMENT := experiments/tau-knowledge/skill-evolution
 
 setup:
 	UV_PROJECT_ENVIRONMENT=$(VENV) $(UV) sync --frozen --all-extras --python $(PYTHON)
+
+skillsbench-prepare:
+	GPU="$(or $(GPU),0)" PREP_JOBS="$(or $(PREP_JOBS),8)" bash $(EXPERIMENT)/runs/skillsbench/full-85-v8-handoff/operator.sh bootstrap
 
 test:
 	$(VENV)/bin/python -m pytest -q

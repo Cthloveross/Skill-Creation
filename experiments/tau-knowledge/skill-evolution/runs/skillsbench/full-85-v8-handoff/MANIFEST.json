@@ -13,7 +13,7 @@
       "canonical_source": "experiments/tau-knowledge/skill-evolution/configs/skillsbench.yaml",
       "sha256": "70c8f1ead976f2a12d5e155fb5eb8f68e9384117edca091ee7bd97c545fd68b4",
       "runtime_status": "authoritative",
-      "note": "Runtime reads the canonical YAML; snapshot is an audit copy."
+      "note": "The canonical YAML defines the method. Bootstrap seals local GPU and image-lock paths in a separately bound runtime configuration; this snapshot is an audit copy."
     },
     {
       "kind": "config",
@@ -135,11 +135,11 @@
   ],
   "source_commitment": {
     "schema": "skillsbench.runtime-source-commitment.v1",
-    "spec_identity_hash": "55e11a5e3f39c2ade714c665fe1d3d16cb00fc2e214d77412558dd344c958008",
+    "spec_identity_hash": "94d5af089de760502722c5b39a9f2f3a3f957a73ba88854e8b76b0c81b0f2621",
     "canonical_files": [
       {
         "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff/operator.sh",
-        "sha256": "26282e3d5ab8b4bc792cd268dc60b7eaf728c141d9529f6138bdab7e5fa60875"
+        "sha256": "359674a93c77fb80c981a86caf6421c32a0feb7193676f65d71a5b652b4bd576"
       },
       {
         "path": "experiments/tau-knowledge/skill-evolution/scripts/launch_matrix.py",
@@ -151,7 +151,7 @@
       },
       {
         "path": "experiments/tau-knowledge/skill-evolution/scripts/start_embedding.py",
-        "sha256": "06771d5d45f95a1b1e487cf32f4521c4d6226a2fa62462c91f85f0a739d4c55f"
+        "sha256": "6396aa6218fd61cb96e14973152b0d8dcc89c038ef91b851df60d9a68c80acbe"
       },
       {
         "path": "experiments/tau-knowledge/skill-evolution/scripts/bedrock_token_daemon.py",
@@ -187,7 +187,31 @@
       },
       {
         "path": "Makefile",
-        "sha256": "ffd7243a12a60b528c20abb8460101a78c8d1a643b9a11092ba69f1f5d36da53"
+        "sha256": "1b917859218add7dff3ff368c775ff4d37dd68051f6ae8fb5dce3960b1821e5e"
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/scripts/install_codex.py",
+        "sha256": "886cef61bbfbfdfd41443c25b1db0e48b84b083f5322ecdf4dc03aee92fc65c1"
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/scripts/bootstrap_skillsbench.py",
+        "sha256": "63492aec7f779694084dee1922528bccab554e5089eb98633540b1b3c4c142a2"
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/injections/skillsbench/source/cpu_hijack.json",
+        "sha256": "38689e7a44bee9867a21fad4fd1d63bf525e28f1cfa4479d86c5ba07d46b91a8"
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/injections/skillsbench/source/credential_abuse.json",
+        "sha256": "b9a8d7d4d1f9e233990c06833f9a5957fad6e5a92e1cbed8629270cefc517d6a"
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/injections/skillsbench/source/data_exfil_http.json",
+        "sha256": "afac053b2f88ad3b902d87d2615bc34701a2bf0ac89d4dcb78ddb4c4fb62ae9c"
+      },
+      {
+        "path": "experiments/tau-knowledge/skill-evolution/injections/skillsbench/source/file_delete.json",
+        "sha256": "d5e2767e957c100f38668a7bfbd533cd17c8847370a47309052acbbe7370290d"
       }
     ],
     "note": "ExperimentSpec commits the canonical runtime, prompts, source/corpus manifests, author components and 85 task locks. This list adds the handoff wrapper, launch/preparation utilities, embedding setup, injection carrier files and project environment entry points used by the operator procedure."

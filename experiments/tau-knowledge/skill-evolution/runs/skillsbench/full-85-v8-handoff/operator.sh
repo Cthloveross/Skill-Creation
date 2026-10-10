@@ -4,11 +4,30 @@ set -euo pipefail
 HERE=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 ROOT=$(git -C "$HERE" rev-parse --show-toplevel)
 SB="$ROOT/experiments/tau-knowledge/skill-evolution"
-CFG="$SB/configs/skillsbench.yaml"
+CANONICAL_CFG="$SB/configs/skillsbench.yaml"
+LOCAL_SETUP="$SB/data/skillsbench/setup"
+CFG="$CANONICAL_CFG"
+if test -f "$LOCAL_SETUP/binding.json"; then
+  CFG=$(python3 - "$SB" "$LOCAL_SETUP/binding.json" <<'PY'
+import json, pathlib, sys
+root, binding = map(pathlib.Path, sys.argv[1:])
+relative = pathlib.Path(json.loads(binding.read_text())["config_path"])
+if (
+    relative.is_absolute() or ".." in relative.parts
+    or relative.parts[:4] != ("data", "skillsbench", "setup", "builds")
+    or relative.name != "skillsbench.yaml"
+):
+    raise SystemExit("invalid local SkillsBench config path")
+print(root / relative)
+PY
+)
+fi
 R2SP="$ROOT/.venv/bin/r2sp"
 PY="$ROOT/.venv/bin/python"
-PINNED_CODEX_DIR=${PINNED_CODEX_DIR:-/home/tc442/.local/skillsbench-codex-0.160.1}
+PINNED_CODEX_DIR=${PINNED_CODEX_DIR:-$ROOT/data/tools/codex-0.160.1}
+export PINNED_CODEX_DIR
 export PATH="$PINNED_CODEX_DIR:$PATH"
+export HF_HOME=${HF_HOME:-$ROOT/data/huggingface}
 
 fail() {
   printf 'ERROR: %s\n' "$*" >&2
@@ -20,6 +39,8 @@ usage() {
 Usage: operator.sh COMMAND
 
 Review/preparation:
+  bootstrap              Install pinned tools/model and build local data/images (GPU=0, PREP_JOBS=8).
+  embedding              Run the pinned embedding service in this terminal.
   verify                 Check audit snapshots, 85x9 matrix, tools, and pinned Codex.
   prepare-data           Prepare pinned source, nine corpora, all indices, and matrix.
   prepare-docker         Build/check all 85 task environments (PREP_JOBS defaults to 8).
@@ -94,16 +115,8 @@ read_token_file(path)
 PY
 }
 
-verify_bundle() {
+verify_sources() {
   need_project
-  command -v docker >/dev/null || fail "docker CLI is missing"
-  docker compose version >/dev/null || fail "docker compose is missing"
-  docker info >/dev/null || fail "Docker daemon is unavailable"
-  test "$(command -v codex || true)" = "$PINNED_CODEX_DIR/codex" || \
-    fail "pinned Codex is not first on PATH: $PINNED_CODEX_DIR/codex"
-  test "$(sha256sum "$PINNED_CODEX_DIR/codex" | cut -d' ' -f1)" = \
-    f34a4d2301892ae96c90097786bfe5dc269f187b6f69faf42a7b357b8c081e35 || \
-    fail "pinned Codex binary hash differs"
   "$PY" - "$ROOT" "$HERE" <<'PY'
 import hashlib, json, pathlib, sys
 root, bundle = map(pathlib.Path, sys.argv[1:])
@@ -153,16 +166,31 @@ if len(conditions.get("arms", {})) != 9:
     raise SystemExit("condition snapshot does not contain nine conditions")
 print("handoff snapshots: OK; tasks=85 arms=9 cells=765")
 PY
+}
+
+verify_bundle() {
+  verify_sources
+  if test "$CFG" != "$CANONICAL_CFG"; then
+    "$PY" "$SB/scripts/bootstrap_skillsbench.py" --check
+  fi
+  command -v docker >/dev/null || fail "docker CLI is missing"
+  docker compose version >/dev/null || fail "docker compose is missing"
+  docker info >/dev/null || fail "Docker daemon is unavailable"
+  test "$(command -v codex || true)" = "$PINNED_CODEX_DIR/codex" || \
+    fail "pinned Codex is not first on PATH: $PINNED_CODEX_DIR/codex"
+  test "$(sha256sum "$PINNED_CODEX_DIR/codex" | cut -d' ' -f1)" = \
+    f34a4d2301892ae96c90097786bfe5dc269f187b6f69faf42a7b357b8c081e35 || \
+    fail "pinned Codex binary hash differs"
   printf 'pinned Codex: %s\n' "$(codex --version)"
 }
 
 handoff_binding() {
-  "$PY" - "$SB" "$HERE" <<'PY'
+  "$PY" - "$SB" "$HERE" "$CFG" <<'PY'
 import hashlib, pathlib, sys
-sb, bundle = map(pathlib.Path, sys.argv[1:])
+sb, bundle, config = map(pathlib.Path, sys.argv[1:])
 sys.path.insert(0, str(sb / "src"))
 from tau_skill_evolution.spec import load_spec
-spec = load_spec(sb / "configs/skillsbench.yaml")
+spec = load_spec(config)
 print(spec.identity["identity_hash"])
 print(hashlib.sha256((bundle / "MANIFEST.json").read_bytes()).hexdigest())
 PY
@@ -215,15 +243,15 @@ PY
 
 check_all_preflight() {
   need_run_dir
-  "$PY" - "$SB" "$HERE" "$ALL_PREFLIGHT" <<'PY'
+  "$PY" - "$SB" "$HERE" "$ALL_PREFLIGHT" "$CFG" <<'PY'
 import hashlib, json, pathlib, sys
-sb, bundle, p = map(pathlib.Path, sys.argv[1:])
+sb, bundle, p, config = map(pathlib.Path, sys.argv[1:])
 if not p.is_file():
     raise SystemExit(f"missing all-task preflight: {p}")
 value = json.loads(p.read_text())
 sys.path.insert(0, str(sb / "src"))
 from tau_skill_evolution.spec import load_spec
-spec = load_spec(sb / "configs/skillsbench.yaml")
+spec = load_spec(config)
 expected_binding = {
     "schema": "skillsbench.full-85-v8-preflight.v1",
     "runtime": "docker",
@@ -338,6 +366,19 @@ PY
 
 command=${1:-}
 case "$command" in
+  bootstrap)
+    command -v uv >/dev/null || fail "uv is required; install it before bootstrap"
+    (cd "$ROOT" && uv sync --frozen --all-extras --python 3.12)
+    verify_sources
+    "$PY" "$SB/scripts/bootstrap_skillsbench.py" --gpu "${GPU:-0}" --jobs "${PREP_JOBS:-8}"
+    ;;
+  embedding)
+    verify_sources
+    if test "$CFG" != "$CANONICAL_CFG"; then
+      "$PY" "$SB/scripts/bootstrap_skillsbench.py" --check
+    fi
+    exec "$PY" "$SB/scripts/start_embedding.py" --config "$CFG"
+    ;;
   verify)
     verify_bundle
     ;;
@@ -345,14 +386,26 @@ case "$command" in
     verify_bundle
     "$PY" "$SB/scripts/prepare_skillsbench.py" --config "$CFG" --source --pool
     "$PY" "$SB/scripts/prepare_skillsbench.py" --config "$CFG" \
-      --injected-pools --all-indices --freeze-matrix
+      --injected-pools --all-indices
+    "$PY" - "$CFG" <<'PY'
+import sys
+from tau_skill_evolution.skillsbench_attack import validate_matrix_manifest
+from tau_skill_evolution.spec import load_spec
+validate_matrix_manifest(load_spec(sys.argv[1]))
+PY
     verify_bundle
     ;;
   prepare-docker)
     verify_bundle
+    runtime_lock=$("$PY" - "$CFG" <<'PY'
+import sys
+from tau_skill_evolution.spec import load_spec
+print(load_spec(sys.argv[1]).values["source"]["runtime_lock"])
+PY
+)
     "$PY" "$SB/scripts/prepare_skillsbench.py" --config "$CFG" \
       --docker --all-tasks --jobs "${PREP_JOBS:-8}" \
-      --runtime-lock "$SB/runtime/skillsbench-docker-{task_id}-v4-lock.json"
+      --runtime-lock "$SB/$runtime_lock"
     ;;
   preflight-all)
     verify_bundle

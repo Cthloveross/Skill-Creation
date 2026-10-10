@@ -230,6 +230,7 @@ class ExperimentSpec:
                 files.extend(
                     (self.root / source["condition_manifest"], self.root / MATRIX_MANIFEST)
                 )
+                files.extend(sorted((self.root / "injections/skillsbench/source").glob("*.json")))
         files.append(self.root / source["corpus_manifest"])
         selected_lock = source["runtime_lock"]
         if self.experiment == "skillsbench" and "{task_id}" in selected_lock:

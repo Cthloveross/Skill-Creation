@@ -13,6 +13,7 @@ experiments/*/*/runs/*
 # Archived raw runs remain local; previously tracked public records keep their Git history.
 experiments/*/*/archive/runs/
 artifacts/raw/
+artifacts/transfer/
 .experiments/
 
 # Credentials and local environments

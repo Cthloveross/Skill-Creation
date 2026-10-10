@@ -11,7 +11,15 @@ make setup
 make check
 ```
 
-运行前按对应交接准备数据、embedding、Docker及本地凭据：
+SkillsBench 同事交接直接使用 GitHub clone，首次在已具备 Docker/Compose 和 NVIDIA GPU 的机器上执行：
+
+```bash
+make skillsbench-prepare GPU=0 PREP_JOBS=8
+```
+
+此命令自动下载固定工具和模型、准备九条件资料池与索引、构建85题镜像并封存本机配置；不读取凭据或调用付费模型。后续操作见 [全量 SkillsBench 交接入口](experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff/HANDOFF.md)。ZIP仅是可选备份。
+
+运行前按对应交接准备本地凭据并通过环境预检：
 
 - [通用方法论：问题、威胁模型、演化与跨数据集实验设计](docs/skill-evolution-method.md)
 - [当前实验规范：τ／SkillsBench 的具体合同与参数](experiments/tau-knowledge/skill-evolution/PROTOCOL.md)

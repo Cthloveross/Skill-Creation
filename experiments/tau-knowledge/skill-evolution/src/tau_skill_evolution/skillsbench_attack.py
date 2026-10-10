@@ -1,8 +1,8 @@
 """Sealed four-profile retrieval conditions for SkillsBench v8.
 
-The behavior categories were inspired by DyMalSkill. The source ZIP is inert
-provenance: this module verifies four records without extracting or executing
-archive content, then renders our fixed carrier text and seals each corpus.
+The behavior categories were inspired by DyMalSkill. Four frozen source records
+provide inert provenance; the full archive is not a runtime dependency. This
+module verifies their bytes, then renders our fixed carrier text and seals each corpus.
 """
 
 # The injected prose keeps ordinary document paragraphs intact.  Reflowing those
@@ -15,7 +15,6 @@ import hashlib
 import json
 import os
 import re
-import zipfile
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -452,13 +451,6 @@ def acquisition_payload_exposure(root: Path, base: Any, journal: Any) -> dict[st
     return result
 
 
-def source_archive(root: Path) -> Path:
-    path = Path(root).resolve().parents[2] / SOURCE_ARCHIVE
-    if not path.is_file() or _sha256(path.read_bytes()) != SOURCE_ARCHIVE_SHA256:
-        raise ValueError("skillsbench_dymalskill_archive_changed")
-    return path
-
-
 def adapted_template(profile: str, root: Path | None = None) -> str:
     """Read one public, reviewable carrier template and verify its fixed bytes."""
     if profile not in PROFILES:
@@ -482,30 +474,30 @@ def adapted_template(profile: str, root: Path | None = None) -> str:
 def source_templates(root: Path) -> dict[str, dict[str, str]]:
     """Verify the source records and return only their immutable provenance."""
     result: dict[str, dict[str, str]] = {}
-    with zipfile.ZipFile(source_archive(root)) as archive:
-        for profile, expected in _SOURCE.items():
-            try:
-                raw = archive.read(expected["path"])
-            except KeyError as exc:
-                raise ValueError("skillsbench_dymalskill_source_missing") from exc
-            if _sha256(raw) != expected["record_sha256"]:
-                raise ValueError("skillsbench_dymalskill_source_changed")
-            source = json.loads(raw)
-            text = source.get("inserted_text")
-            if (
-                source.get("attack") != profile
-                or not isinstance(text, str)
-                or _sha256(text.encode()) != expected["text_sha256"]
-                or any(anchor not in text for anchor in expected["anchors"])
-            ):
-                raise ValueError("skillsbench_dymalskill_source_semantics_changed")
-            adapted = adapted_template(profile, root)
-            result[profile] = {
-                "archive_path": expected["path"],
-                "record_sha256": expected["record_sha256"],
-                "inserted_text_sha256": expected["text_sha256"],
-                "adapted_template_sha256": _sha256(adapted.encode()),
-            }
+    directory = Path(root) / "injections/skillsbench/source"
+    for profile, expected in _SOURCE.items():
+        try:
+            raw = (directory / f"{profile}.json").read_bytes()
+        except OSError as exc:
+            raise ValueError("skillsbench_dymalskill_source_missing") from exc
+        if _sha256(raw) != expected["record_sha256"]:
+            raise ValueError("skillsbench_dymalskill_source_changed")
+        source = json.loads(raw)
+        text = source.get("inserted_text")
+        if (
+            source.get("attack") != profile
+            or not isinstance(text, str)
+            or _sha256(text.encode()) != expected["text_sha256"]
+            or any(anchor not in text for anchor in expected["anchors"])
+        ):
+            raise ValueError("skillsbench_dymalskill_source_semantics_changed")
+        adapted = adapted_template(profile, root)
+        result[profile] = {
+            "archive_path": expected["path"],
+            "record_sha256": expected["record_sha256"],
+            "inserted_text_sha256": expected["text_sha256"],
+            "adapted_template_sha256": _sha256(adapted.encode()),
+        }
     return result
 
 
@@ -1172,7 +1164,7 @@ def freeze_condition_design(spec: Any) -> dict[str, Any]:
 
 
 def validate_condition_design(spec: Any) -> dict[str, Any]:
-    """Validate the physical ZIP, four source records, adaptations, and targets."""
+    """Validate the four frozen source records, adaptations, and targets."""
     relative = spec.values.get("source", {}).get("condition_manifest")
     if relative != "configs/skillsbench-dymal4-conditions.json":
         raise ValueError("skillsbench_injection_condition_manifest_path_invalid")

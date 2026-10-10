@@ -1,8 +1,8 @@
 # SkillsBench v8 full experiment handoff
 
 This folder is the operator package for the complete `skillsbench.skill-evolution.v8`
-experiment. It is intended to be handed to a colleague together with this repository. The
-actual pipeline remains the canonical `r2sp` implementation; this folder contains frozen
+experiment. The normal handoff is a GitHub clone of this repository; ZIP transfers are optional.
+The actual pipeline remains the canonical `r2sp` implementation; this folder contains frozen
 review snapshots, the active prompt texts, and one gate-enforcing wrapper. It contains no
 credentials, private grader data, raw model requests, or copied pipeline source.
 
@@ -40,7 +40,7 @@ and all 765 `(task, arm)` cells and corpus/index identities are in
 
 ## 2. Where everything is
 
-Give the colleague this directory:
+Give the colleague the repository URL and this entry directory:
 
 ```text
 experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff/
@@ -61,20 +61,27 @@ experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff/
     └── verifier-diagnosis.txt
 ```
 
-`operator.sh` always calls the repository's canonical configuration, source, preparation code,
-and `r2sp`. The copies here are for review and handoff. Before any operation, `operator.sh
+`operator.sh` calls the canonical repository implementation and preparation code. After bootstrap
+it uses the sealed local configuration; the canonical YAML remains the method reference. The
+copies here are for review and handoff. Before any operation, `operator.sh
 verify` requires every copied file and canonical source to match the SHA-256 recorded in
 `MANIFEST.json`. It also verifies the frozen `ExperimentSpec.identity_hash`, which covers the
-runtime modules, prompts, source manifests, author components and all 85 runtime locks, plus the
-explicit operator/preparation dependencies listed under `source_commitment.canonical_files`.
+runtime modules, prompts, source manifests, author components, frozen attack-source records and
+the committed reference runtime locks, plus the explicit operator/preparation dependencies listed under `source_commitment.canonical_files`.
 This is the source boundary enforced by the wrapper; unrelated repository files are outside it.
 Do not edit a snapshot and assume the runtime changed. A deliberate change inside this boundary
 requires a new method/trial identity as applicable, regenerated commitments, and fresh
 preflight/smoke evidence.
 
+`make skillsbench-prepare` creates a separate host configuration and 85 local image locks under
+`data/skillsbench/setup/builds/<source-identity>/` inside this experiment. It changes only GPU
+selection and the lock-file location, then seals their actual hashes in `binding.json`. The wrapper automatically selects
+that configuration and validates both the canonical source commitment and the local binding.
+It never overwrites the committed reference locks or labels locally built images as READY.
+
 The higher-level method is documented in
 [`../../../PROTOCOL.md`](../../../PROTOCOL.md). The injection design and four actual carrier
-texts are documented in [`../../../../../docs/skillsbench-injection-design.md`](../../../../../../docs/skillsbench-injection-design.md)
+texts are documented in [SkillsBench injection design](../../../../../../docs/skillsbench-injection-design.md)
 and live under `experiments/tau-knowledge/skill-evolution/injections/skillsbench/`.
 
 ## 3. Active model prompts and information flow
@@ -170,98 +177,99 @@ SHA-256 is
 source identity differs, this run demonstrates that the stages can execute but **cannot satisfy
 the matrix smoke gate**. Run section 10 again under the committed identity.
 
-## 5. Host prerequisites
+## 5. Clone and build on the colleague's machine
 
-Run from a normal clone of the repository. Required host components are:
+Required host components are Linux x86_64, Git, `uv`, Docker Engine with Compose and daemon
+access, an NVIDIA GPU supported by the pinned vLLM dependencies, and enough disk space for the
+embedding model and 85 official task images. These host facilities must already be available;
+the repository does not change Docker daemon settings or install system packages.
 
-- Python 3.12+, `uv`, Git, `jq`, Docker Engine, and Docker Compose;
-- access to enough Docker storage for all 85 official task images;
-- the pinned SkillsBench/CoEvoSkills checkout at commit
-  `4380d4bff673dd6e1d58e5babeb2aaa0fe527119`;
-- native Codex `0.160.1`, SHA-256
-  `f34a4d2301892ae96c90097786bfe5dc269f187b6f69faf42a7b357b8c081e35`;
-- the Qwen3-Embedding-4B service and pinned model revision configured in the YAML;
-- one or more Bedrock GPT-5.4 accounts/tokens for model requests;
-- task-specific credentials for tasks that officially require them.
-
-From the repository root:
+From a fresh clone:
 
 ```bash
-set -euo pipefail
+git clone https://github.com/Cthloveross/Skill-Creation.git
+cd Skill-Creation
+make skillsbench-prepare GPU=0 PREP_JOBS=8
+```
+
+This one preparation command makes no paid model request and does not read `key.env`. It:
+
+1. installs project dependencies from `uv.lock`;
+2. downloads Codex `0.160.1` and its code-mode companion from the official release, checking
+   both archive and executable hashes;
+3. installs the separate embedding environment and downloads Qwen3-Embedding-4B at revision
+   `5cf2132abc99cad020ac570b19d031efec650f2b`;
+4. obtains the pinned author task files, builds the benign and eight injected pools and indices,
+   and checks the resulting 765-cell matrix against the committed matrix;
+5. builds the 85 official task environments into local image locks and seals a local configuration
+   and binding only after all preparation stages succeed.
+
+The four exact DyMalSkill source records needed by this experiment are checked into
+`injections/skillsbench/source/` (about 8 KiB). The four adapted carrier texts remain next to them.
+The full `DyMalSkill_300x12.zip` is retained only as historical provenance and is no longer a
+runtime or transfer dependency.
+
+Choose `GPU` as a local device index or UUID. `PREP_JOBS` controls concurrent task builds;
+reduce it on a host with limited memory or disk throughput. Preparation reuses validated
+completed downloads and images. It requires Internet access for first-time downloads and task
+builds. It stops on an incompatible corpus/index or source identity instead of silently blessing
+changed inputs. Successful preparation reports `PREPARED`, not all-task `READY`.
+
+## 6. Local files and the embedding service
+
+All default generated files stay inside the clone:
+
+```text
+data/tools/codex-0.160.1/                              # fixed native tools
+data/huggingface/                                      # model cache
+experiments/tau-knowledge/skill-evolution/data/
+├── embedding/.venv/                                  # embedding dependencies
+├── upstream/coevo-skills/                             # pinned author files
+└── skillsbench/setup/
+    ├── binding.json                                  # atomic active-build selection
+    └── builds/<source-identity>/
+        ├── skillsbench.yaml                          # GPU + local lock paths
+        └── runtime/skillsbench-docker-*-v4-lock.json    # local image identities
+```
+
+The corpora and Dense indices are also under the experiment's `data/skillsbench/`.
+Docker's image storage remains managed by Docker; copying files into the clone does not change
+its daemon data-root. Credentials are supplied separately in section 7.
+
+Before preflight or running tasks, start the embedding service in a separate terminal:
+
+```bash
 ROOT="$PWD"
 BUNDLE="$ROOT/experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff"
-export PINNED_CODEX_DIR=/home/tc442/.local/skillsbench-codex-0.160.1
-export PATH="$PINNED_CODEX_DIR:$PATH"
+"$BUNDLE/operator.sh" embedding
+```
 
-make setup
-make check
+Leave it running. The service is vLLM `0.28.0` at `http://127.0.0.1:18140/v1` and is used only
+for embedding/tokenization. During preparation the bootstrap starts and stops its own temporary
+service, or reuses an already matching service without shutting it down.
+
+In the operator terminal:
+
+```bash
+ROOT="$PWD"
+BUNDLE="$ROOT/experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff"
 "$BUNDLE/operator.sh" verify
+make check
 ```
 
-A colleague may place the pinned Codex directory elsewhere and set `PINNED_CODEX_DIR` to that
-absolute path. The binary hash remains mandatory.
+Local verification on 2026-10-10: `make check` passed with 1,651 tests passed and 58 optional
+integration tests skipped; lint, formatting, compilation and both configurations passed. The
+native tools were downloaded and checked against the official release, and all nine existing
+corpora/indices matched the frozen 765-cell matrix under a local GPU configuration. Bootstrap
+and update/failure transactions were checked with offline fixtures and a second reviewer.
+This does not establish a fresh clone's complete 85-image build or its all-task readiness.
 
-## 6. Prepare source, corpora, indices, and Docker tasks
-
-The current preparation contract validates the inert source archive before constructing the
-four fixed carrier variants. Obtain `DyMalSkill_300x12.zip` from the experiment owner, put it at
-the repository root, and verify:
-
-```bash
-test "$(sha256sum DyMalSkill_300x12.zip | cut -d' ' -f1)" = \
-  fc26fefa1be4988e71bcb2159ab12749f20cdd5ccaadba7d2e721ef2a091c8e9
-```
-
-The embedding service has its own environment. On a fresh host, create it and download the exact
-model revision into the local Hugging Face cache:
-
-```bash
-ROOT="$PWD"
-PY="$ROOT/.venv/bin/python"
-SB="$ROOT/experiments/tau-knowledge/skill-evolution"
-EMBED_VENV="$SB/data/embedding/.venv"
-
-uv venv --python 3.12 "$EMBED_VENV"
-uv pip install --python "$EMBED_VENV/bin/python" \
-  -r "$SB/runtime/embedding-requirements.txt"
-"$EMBED_VENV/bin/python" -c \
-  "from huggingface_hub import snapshot_download; snapshot_download('Qwen/Qwen3-Embedding-4B', revision='5cf2132abc99cad020ac570b19d031efec650f2b')"
-```
-
-Then start the service in a separate long-lived terminal:
-
-```bash
-ROOT="$PWD"
-PY="$ROOT/.venv/bin/python"
-SB="$ROOT/experiments/tau-knowledge/skill-evolution"
-"$PY" "$SB/scripts/start_embedding.py"
-```
-
-The pinned service is vLLM `0.28.0` at `http://127.0.0.1:18140/v1` and is used only for
-embedding/tokenization. The configuration currently pins GPU UUID
-`GPU-1c51e1d6-08ac-129f-38dc-1824c5ab9698`. A host without that device needs a reviewed config
-change, regenerated corpus/index and matrix commitments, a new experiment identity, and fresh
-gates. Keep the service running during data preparation and all preflight/run commands. The
-project preparation script must run with `$PY`; it dispatches only Dense index workers into the
-embedding environment.
-
-Then prepare the pinned source, benign pool, all eight injected pools, their BM25/Dense indices,
-and the frozen matrix:
-
-```bash
-"$BUNDLE/operator.sh" prepare-data
-```
-
-Build/check all official task environments. Adjust `PREP_JOBS` to the host's CPU, network, and
-Docker storage capacity; a higher number is not automatically faster on one disk:
-
-```bash
-PREP_JOBS=8 "$BUNDLE/operator.sh" prepare-docker
-```
-
-The operation must produce and validate all 85 `*-v4-lock.json` files from real images. Lock
-files alone do not prove that images still exist or that task services start; preflight performs
-that check.
+The pinned tool directory is selected automatically. `PINNED_CODEX_DIR` and `HF_HOME` may point
+to existing local installations/cache; their pins and identities still apply. For later code
+updates, use `git pull --ff-only`, then `make skillsbench-prepare GPU=0 PREP_JOBS=8` and start a
+new trial. A changed source gets a new build directory; old configuration/lock paths and results
+are preserved. The active binding changes only after preparation succeeds. Same-source reruns
+reuse validated setup. Checkpoints from a different source identity are never resumed.
 
 ## 7. Credentials
 

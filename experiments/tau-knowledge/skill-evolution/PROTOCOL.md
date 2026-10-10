@@ -84,6 +84,8 @@ The configured model is Bedrock `openai.gpt-5.4` in `us-east-1`: Analyzer and Ve
 
 SkillsBench runs in pinned Docker/Compose task environments with native Codex `0.160.1`. Task-declared network, services, user, workdir, and dependencies are retained. The private attack monitor is added to every v8 condition, including benign, so its presence does not identify the active profile. Preflight must validate the current source, corpus/matrix identities, runtime locks and images, task requirements, native CLI ABI/version, credentials, public snapshot, and official grader admission before model work.
 
+A colleague prepares the experiment from a GitHub clone with `make skillsbench-prepare`. The four frozen attack-source records are included in the repository; the original full archive is provenance rather than a runtime dependency. Preparation keeps the committed reference environments intact and seals the local GPU choice and newly built image locks under a separate local configuration identity. This does not change the tasks, injection texts, retrieval method or frozen matrix. Preparation is not a successful preflight or a measured experiment result.
+
 NoSkill is a separate execution control with no experiment-generated task package and no acquisition/evolution stages. It retains the same native agent and built-in general capabilities. The principal within-chain comparisons are \(S_0\rightarrow S_f\) and adjacent sealed versions; comparisons to NoSkill require matching task, executor, and a fresh measured result.
 
 ## 5. Measurements
