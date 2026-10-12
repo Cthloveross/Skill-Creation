@@ -2,6 +2,9 @@
 
 This is the operational record for `skillsbench.skill-evolution.v8`. Run every command from the repository root. The primary matrix is fixed at 85 tasks × 9 conditions = 765 cells with `retries: 0`.
 
+All current defaults, effective budgets and adjustable settings are collected in
+[SkillsBench experiment parameters](../../../../../docs/skillsbench-experiment-parameters.md).
+
 ## 1. Current state
 
 Tracked in Git:

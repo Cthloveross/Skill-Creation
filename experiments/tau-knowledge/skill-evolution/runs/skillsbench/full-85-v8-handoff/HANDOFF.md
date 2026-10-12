@@ -83,6 +83,8 @@ The higher-level method is documented in
 [`../../../PROTOCOL.md`](../../../PROTOCOL.md). The injection design and four actual carrier
 texts are documented in [SkillsBench injection design](../../../../../../docs/skillsbench-injection-design.md)
 and live under `experiments/tau-knowledge/skill-evolution/injections/skillsbench/`.
+The complete defaults, counting semantics and adjustable settings are collected in
+[SkillsBench experiment parameters](../../../../../../docs/skillsbench-experiment-parameters.md).
 
 ## 3. Active model prompts and information flow
 
