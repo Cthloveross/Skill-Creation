@@ -639,20 +639,36 @@ def test_messages_cached_usage_counts_all_input_without_fabricated_reasoning_cou
 @pytest.mark.parametrize(
     "content,stop",
     [
-        ([], "end_turn"),
-        ([{"type": "text", "text": ""}], "end_turn"),
-        ([{"type": "thinking", "thinking": "private", "signature": "signed"}], "end_turn"),
         ([{"type": "thinking", "thinking": "unsigned"}], "max_tokens"),
         ([{"type": "server_tool_use", "name": "web_search"}], "tool_use"),
         ([{"type": []}], "end_turn"),
         ([{"type": "text", "text": "ok"}], []),
     ],
 )
-def test_messages_malformed_or_empty_completion_is_explicit_failure(content, stop):
+def test_messages_malformed_completion_is_explicit_failure(content, stop):
     from tau_skill_evolution.model import anthropic_to_responses
 
     with pytest.raises(ModelClientError):
         anthropic_to_responses(_anthropic_response(content, stop=stop))
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        [],
+        [{"type": "text", "text": ""}],
+        [{"type": "thinking", "thinking": "private", "signature": "signed"}],
+    ],
+)
+def test_messages_empty_end_turn_is_tolerated_as_empty_turn(content):
+    # Operator deviation: an empty end_turn becomes an empty assistant turn (mapped to a
+    # stop signal downstream) instead of a fatal invalid_response that would kill a worker.
+    from tau_skill_evolution.model import _assistant_response, anthropic_to_responses
+
+    converted = anthropic_to_responses(_anthropic_response(content, stop="end_turn"))
+    assert converted["status"] == "completed"
+    result = _assistant_response(converted)
+    assert result["content"] == "" and result.get("empty_output") is True
 
 
 def test_messages_duplicate_tool_ids_and_colliding_declarations_are_rejected():
@@ -1034,11 +1050,14 @@ def test_only_requested_bedrock_model_and_valid_settings(settings):
         ),
     ],
 )
-def test_unknown_or_invalid_response_is_never_retried(raw, code):
+def test_unknown_or_invalid_response_resends_only_transport(raw, code):
     client, requests = _client(raw=raw)
     with pytest.raises(ModelClientError) as error:
         client.complete([{"role": "user", "content": "hello"}])
-    assert error.value.code == code and len(requests) == 1
+    assert error.value.code == code
+    # A connection/timeout loss is re-sent to the transport budget (4 posts); a received
+    # invalid body is final after one post.
+    assert len(requests) == (4 if code == "transport_error" else 1)
     assert "private-api-secret" not in str(error.value)
     assert client.usage_history == ()
 

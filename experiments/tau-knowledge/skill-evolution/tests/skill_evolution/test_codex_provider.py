@@ -406,7 +406,9 @@ def test_messages_unknown_post_stops_without_retries(factory):
         assert resumed.statistics["unknown_operation"]
         with pytest.raises(ModelClientError, match="halted"):
             resumed.respond(json.dumps(payload()).encode())
-    assert len(calls) == 1
+    # The timeout is re-sent to the transport budget (4 posts) within one logical request,
+    # then sealed UNKNOWN; resume never resends it.
+    assert len(calls) == 4
 
 
 @pytest.mark.parametrize("output_tokens", [128000, 128001])
@@ -699,7 +701,8 @@ def test_unknown_post_halts_same_episode_and_recovery_never_dispatches(factory):
         with pytest.raises(ModelClientError, match="halted"):
             resumed.respond(json.dumps(payload()).encode())
         assert resumed.statistics["unknown_operation"] and resumed.statistics["requests"] == 1
-    assert len(calls) == 1
+    # One logical request on the first gateway, re-sent to the transport budget (4 posts).
+    assert len(calls) == 4
 
 
 def test_completed_recovery_reuses_native_response_and_usage(factory):

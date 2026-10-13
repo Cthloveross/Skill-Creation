@@ -372,13 +372,43 @@ def test_compose_down_runs_and_preserves_monitor_and_down_failures(tmp_path: Pat
     runner.public_open = True
     runner.transport = Transport()
     runner._compose_command = lambda *args: ["docker", "compose", *args]
+    # Attack-monitor cleanup failure stays fatal (isolation). A simultaneous
+    # compose-down failure is recorded for the reaper, not surfaced as the error.
     with pytest.raises(
         ContainerUnavailable,
-        match="skillsbench_episode_cleanup_failed:compose=down_failed:monitor=RuntimeError",
+        match="skillsbench_attack_cleanup_failed:RuntimeError",
     ):
         runner._stop_episode()
     assert any("down" in command for command in calls)
     assert runner.container_name is None and runner.attack_monitor is None
+
+
+def test_compose_down_failure_alone_is_non_fatal_and_recorded(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """A slow/failed `docker compose down` must NOT discard an already-measured
+    cell; it is recorded to $SKILLSBENCH_REAP_FILE for the out-of-band reaper."""
+    reap_file = tmp_path / "leaked.txt"
+    monkeypatch.setenv("SKILLSBENCH_REAP_FILE", str(reap_file))
+
+    class Transport:
+        def run(self, command, **_kwargs):
+            if "down" in command:
+                return ProcessResult(1, failure="timeout")
+            return ProcessResult(0)
+
+    runner = SkillsBenchRunner.__new__(SkillsBenchRunner)
+    runner.attack_monitor = None
+    runner.compose_path = tmp_path / "compose.yaml"
+    runner.compose_path.write_text("services: {}\n")
+    runner.container_name = "episode-xyz"
+    runner.output_limit = 65536
+    runner.public_open = True
+    runner.transport = Transport()
+    runner._compose_command = lambda *args: ["docker", "compose", *args]
+    runner._stop_episode()  # must not raise
+    assert runner.container_name is None
+    assert reap_file.read_text().strip() == "episode-xyz"
 
 
 def test_redirected_private_value_is_detected_without_entering_public_result(

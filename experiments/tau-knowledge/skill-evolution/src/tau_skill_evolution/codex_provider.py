@@ -27,10 +27,15 @@ from .core._canonical import canonical_json_sha256
 from .credentials import bearer_token_source
 from .journal import Journal, UnknownOperation
 from .model import (
+    RETRYABLE_MODEL_HTTP_STATUSES,
     CredentialError,
     InputTokenBudgetExceeded,
     ModelClientError,
+    _server_failure_status,
     anthropic_to_responses,
+    decode_quietly,
+    empty_completed_output,
+    pause_before_retry,
     responses_to_anthropic,
 )
 from .runtime_controls import RuntimeControls
@@ -248,7 +253,13 @@ class ProviderGateway:
         max_response_bytes: int,
         opener: Any = None,
         request_deadline: float | None = None,
+        retry_attempts: int = 6,
+        retry_backoff_seconds: float = 2.0,
+        transport_retry_attempts: int = 3,
     ) -> None:
+        self.retry_attempts = retry_attempts
+        self.retry_backoff_seconds = float(retry_backoff_seconds)
+        self.transport_retry_attempts = transport_retry_attempts
         self.base_url = f"http://127.0.0.1:{RELAY_PORT}/v1"
         self.socket_path = directory / "provider.sock"
         self.relay_path = directory / "relay.py"
@@ -286,6 +297,8 @@ class ProviderGateway:
             "underlying_http_posts": "NOT_OBSERVABLE" if self.plan_transport else None,
             "unknown_operation": False,
             "terminal_stop": None,
+            "request_attempts": 0,
+            "retries": [],
         }
         self._restore()
 
@@ -439,10 +452,68 @@ class ProviderGateway:
             raise ModelClientError("learning_timeout", "learning wall-clock deadline exhausted")
         return remaining
 
+    def _retry_reason(self, status: int, body: bytes) -> str | None:
+        if status in RETRYABLE_MODEL_HTTP_STATUSES:
+            return f"http_{status}"
+        if not 200 <= status < 300:
+            return None
+        if self.messages_transport:
+            decoded = decode_quietly(body)
+            failed = _server_failure_status(decoded)
+            if failed is not None:
+                return failed
+            return "empty_output" if empty_completed_output(decoded, "bedrock-messages") else None
+        try:
+            response, _streamed = _completed_response(body)
+        except ModelClientError as error:
+            return "provider_stream_failed" if error.code == "provider_stream_failed" else None
+        except (ValueError, KeyError, TypeError, UnicodeDecodeError):
+            return None
+        return "empty_output" if response.get("output") == [] else None
+
+    def _pause(self, attempt: int, reason: str) -> None:
+        self.statistics["retries"].append(
+            pause_before_retry(
+                attempt,
+                reason,
+                None,
+                base_seconds=self.retry_backoff_seconds,
+                context={"role": "codex-provider", "model": self.provider.get("model")},
+            )
+        )
+
     def _send(self, request: urllib.request.Request) -> tuple[int, bytes]:
+        """One logical request against the episode budget; bounded re-sends of rejections."""
+        self.statistics["requests"] += 1
+        attempt, transport = 1, 0
+        while True:
+            self.statistics["request_attempts"] += 1
+            try:
+                status, body = self._send_once(request)
+            except TimeoutError:
+                if transport < self.transport_retry_attempts:
+                    transport += 1
+                    self._pause(attempt, "timeout")
+                    attempt += 1
+                    continue
+                raise
+            except (OSError, urllib.error.URLError):
+                if transport < self.transport_retry_attempts:
+                    transport += 1
+                    self._pause(attempt, "transport_error")
+                    attempt += 1
+                    continue
+                raise
+            reason = self._retry_reason(status, body)
+            if reason is not None and attempt < self.retry_attempts:
+                self._pause(attempt, reason)
+                attempt += 1
+                continue
+            return status, body
+
+    def _send_once(self, request: urllib.request.Request) -> tuple[int, bytes]:
         timeout = self._request_timeout()
         started = time.monotonic()
-        self.statistics["requests"] += 1
         try:
             response = self._opener(request, timeout=timeout)
         except urllib.error.HTTPError as error:

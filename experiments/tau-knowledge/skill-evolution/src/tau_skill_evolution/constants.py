@@ -50,9 +50,10 @@ MODEL_SEED = 20260904
 # The historical default remains stable; configurations choose an explicit model
 # and its supported Mantle transport. Opus does not offer the Responses API.
 RESPONSES_MODELS = ("openai.gpt-5.5", "openai.gpt-5.6-terra", "openai.gpt-5.4")
-MESSAGES_MODEL = "anthropic.claude-opus-4-8"
+MESSAGES_MODELS = ("anthropic.claude-opus-4-8", "anthropic.claude-opus-5")
+MESSAGES_MODEL = MESSAGES_MODELS[0]
 MESSAGES_MAX_OUTPUT_TOKENS = 128000
-SUPPORTED_MODELS = (*RESPONSES_MODELS, MESSAGES_MODEL)
+SUPPORTED_MODELS = (*RESPONSES_MODELS, *MESSAGES_MODELS)
 DEFAULT_MODEL = RESPONSES_MODELS[0]
 
 # The official tau2 bank worker runs in data/upstream/tau2-bench/.venv. The

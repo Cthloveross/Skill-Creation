@@ -16,7 +16,7 @@ from .constants import (
     BANKING_TREE,
     DEFAULT_MODEL,
     EXPERIMENT_ROOT,
-    MESSAGES_MODEL,
+    MESSAGES_MODELS,
     RESPONSES_MODELS,
     UPSTREAM_COMMIT,
     UPSTREAM_ROOT_TREE,
@@ -161,7 +161,7 @@ class ExperimentSpec:
             raise ValueError(f"missing_region: set provider.region or {provider['region_env']}")
         if region not in BEDROCK_REGIONS:
             raise ValueError("unsupported_region: Bedrock Mantle requires us-east-1/us-east-2")
-        if provider["model"] == MESSAGES_MODEL and region != "us-east-1":
+        if provider["model"] in MESSAGES_MODELS and region != "us-east-1":
             raise ValueError("unsupported_region: Opus 4.8 Mantle requires us-east-1")
         route = "anthropic" if provider["transport"] == "bedrock-messages" else "openai"
         provider.update(
@@ -534,7 +534,7 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
             and provider.get("transport") == "bedrock-responses"
         )
         or (
-            provider.get("model") == MESSAGES_MODEL
+            provider.get("model") in MESSAGES_MODELS
             and provider.get("transport") == "bedrock-messages"
         )
     ):
@@ -544,7 +544,7 @@ def load_spec(path: Path = DEFAULT_CONFIG) -> ExperimentSpec:
             raise ValueError("provider fields must use the Bedrock Mantle configuration")
         if provider["region"] is not None and provider["region"] not in BEDROCK_REGIONS:
             raise ValueError("unsupported GPT-5.x Bedrock region")
-        if provider["model"] == MESSAGES_MODEL and provider["region"] not in {None, "us-east-1"}:
+        if provider["model"] in MESSAGES_MODELS and provider["region"] not in {None, "us-east-1"}:
             raise ValueError("unsupported_region: Opus 4.8 Mantle requires us-east-1")
         if not all(
             isinstance(provider[name], str) and provider[name]

@@ -60,7 +60,7 @@ def _http_error(code):
         urllib.error.URLError(ConnectionRefusedError("offline")),
     ],
 )
-def test_dispatched_transport_failure_is_unknown_and_never_resent(tmp_path, failure):
+def test_dispatched_transport_failure_is_unknown_after_bounded_resend(tmp_path, failure):
     calls = []
 
     def opener(request, timeout):
@@ -72,11 +72,13 @@ def test_dispatched_transport_failure_is_unknown_and_never_resent(tmp_path, fail
     for _ in range(2):
         with pytest.raises(UnknownOperation):
             client.complete_journaled(journal, "s0", {}, MESSAGES)
-    assert len(calls) == 1 and journal.status("s0") == "UNKNOWN"
+    # One logical dispatch: a connection/timeout loss is re-sent up to the transport
+    # budget (3) for 4 posts, then sealed UNKNOWN and never resent on resume.
+    assert len(calls) == 4 and journal.status("s0") == "UNKNOWN"
 
 
 @pytest.mark.parametrize("code", [400, 401, 403, 429, 500, 502, 503, 504])
-def test_received_http_error_is_preserved_and_not_retried(tmp_path, code):
+def test_received_http_error_is_preserved_after_bounded_resend(tmp_path, code):
     calls = []
 
     def opener(request, timeout):
@@ -85,38 +87,60 @@ def test_received_http_error_is_preserved_and_not_retried(tmp_path, code):
 
     client = OpenAICompatibleClient(ENDPOINT, api_key="offline", opener=opener)
     journal = Journal(tmp_path)
+    # 429/5xx carried no sample and are re-sent to the attempt budget (6); client errors
+    # (400/401/403) are final after one post.
+    posts = 1 if code in (400, 401, 403) else 6
     for _ in range(2):
         with pytest.raises(ModelClientError) as error:
             client.complete_journaled(journal, "s0", {}, MESSAGES)
         assert error.value.status == code
-    assert len(calls) == 1 and journal.status("s0") == "RECEIVED_INVALID"
+    assert len(calls) == posts and journal.status("s0") == "RECEIVED_INVALID"
     if code in (401, 403):
         assert journal.authentication_failure() == code
         with pytest.raises(ModelClientError):
             client.complete_journaled(journal, "next-cell", {}, MESSAGES)
-        assert len(calls) == 1 and journal.status("next-cell") == "NOT_SENT"
+        assert len(calls) == posts and journal.status("next-cell") == "NOT_SENT"
 
 
 @pytest.mark.parametrize(
-    "body,code",
+    "body,kind,code,posts",
     [
-        (b"not JSON", "invalid_json"),
-        (json.dumps({"status": "in_progress", "output": []}).encode(), "server_failed_response"),
-        (json.dumps({"status": "queued", "output": []}).encode(), "server_failed_response"),
-        (json.dumps({"status": "failed", "output": []}).encode(), "server_failed_response"),
+        (b"not JSON", "error", "invalid_json", 1),
+        (
+            json.dumps({"status": "in_progress", "output": []}).encode(),
+            "error",
+            "server_failed_response",
+            6,
+        ),
+        (
+            json.dumps({"status": "queued", "output": []}).encode(),
+            "error",
+            "server_failed_response",
+            6,
+        ),
+        (
+            json.dumps({"status": "failed", "output": []}).encode(),
+            "error",
+            "server_failed_response",
+            6,
+        ),
         (
             json.dumps({"status": "completed", "output": [], "usage": {}}).encode(),
-            "invalid_response",
+            "empty",
+            None,
+            6,
         ),
         (
             json.dumps(
                 {"status": "completed", "output": [{"type": "unexpected"}], "usage": {}}
             ).encode(),
+            "error",
             "invalid_response",
+            1,
         ),
     ],
 )
-def test_provider_bytes_survive_received_invalid_and_recovery(tmp_path, body, code):
+def test_provider_bytes_resend_then_seal_or_empty_turn(tmp_path, body, kind, code, posts):
     calls = []
 
     def opener(request, timeout):
@@ -125,13 +149,21 @@ def test_provider_bytes_survive_received_invalid_and_recovery(tmp_path, body, co
 
     journal = Journal(tmp_path)
     client = OpenAICompatibleClient(ENDPOINT, api_key="offline", opener=opener)
-    for _ in range(2):
-        with pytest.raises(ModelClientError) as error:
-            client.complete_journaled(journal, "s0", {}, MESSAGES)
-        assert error.value.code == code
-    raw = json.loads(next(tmp_path.glob("*/raw-response.json")).read_text())
-    assert base64.b64decode(raw["body_base64"]) == body
-    assert len(calls) == 1 and journal.status("s0") == "RECEIVED_INVALID"
+    if kind == "error":
+        # Server-failed bodies carry no sample and are re-sent up to the budget; a
+        # received-but-invalid body is sealed once. Either way the exact bytes survive.
+        for _ in range(2):
+            with pytest.raises(ModelClientError) as error:
+                client.complete_journaled(journal, "s0", {}, MESSAGES)
+            assert error.value.code == code
+        raw = json.loads(next(tmp_path.glob("*/raw-response.json")).read_text())
+        assert base64.b64decode(raw["body_base64"]) == body
+        assert len(calls) == posts and journal.status("s0") == "RECEIVED_INVALID"
+    else:
+        # A completed response with no output is re-sent, then returned as an empty turn.
+        result = client.complete_journaled(journal, "s0", {}, MESSAGES)
+        assert result["content"] == "" and result.get("empty_output") is True
+        assert len(calls) == posts and journal.status("s0") == "COMPLETED"
 
 
 def test_received_bytes_are_durable_before_normalization_and_resume(tmp_path):
@@ -241,7 +273,7 @@ def test_pre_admission_and_credential_errors_are_not_sent_and_can_resume(tmp_pat
     assert len(calls) == 1
 
 
-def test_response_read_reset_does_not_trigger_a_second_post(tmp_path):
+def test_response_read_reset_is_resent_within_transport_budget(tmp_path):
     class BrokenResponse(_Response):
         def read(self):
             raise ConnectionResetError("offline response interrupted")
@@ -255,7 +287,8 @@ def test_response_read_reset_does_not_trigger_a_second_post(tmp_path):
     client = OpenAICompatibleClient(ENDPOINT, api_key="offline", opener=opener)
     with pytest.raises(UnknownOperation):
         client.complete_journaled(Journal(tmp_path), "s0", {}, MESSAGES)
-    assert len(calls) == 1
+    # A read reset is an unobserved loss: re-sent to the transport budget, then UNKNOWN.
+    assert len(calls) == 4
 
 
 @pytest.mark.parametrize("timeout", [False, True])
@@ -292,7 +325,7 @@ def test_initial_generator_real_client_is_one_post_across_resume(tmp_path, timeo
                 generate_initial(client, base.public_inputs, base, journal=journal)
         else:
             bundles.append(generate_initial(client, base.public_inputs, base, journal=journal))
-    assert len(calls) == 1
+    assert len(calls) == (4 if timeout else 1)
     if bundles:
         assert bundles[0].bundle_hash == bundles[1].bundle_hash
 

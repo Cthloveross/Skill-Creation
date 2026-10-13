@@ -189,7 +189,10 @@ def _complete(
     usage = result.get("usage", getattr(client, "last_usage", None))
     content = result.get("content")
     if not calls and (content is None or not str(content).strip()):
-        raise OfficialRuntimeError("model response has neither public content nor tool calls")
+        # Operator deviation: a completed empty assistant turn ends the episode as the
+        # agent's stop signal (tau2 rejects empty turns) instead of failing evaluation.
+        content = "###STOP###"
+        raw["empty_output_as_stop"] = True
     return AssistantMessage(
         role="assistant",
         content=content,

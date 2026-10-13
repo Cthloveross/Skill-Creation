@@ -83,13 +83,14 @@ def test_supported_models_keep_the_historical_default_first():
         "openai.gpt-5.6-terra",
         "openai.gpt-5.4",
         "anthropic.claude-opus-4-8",
+        "anthropic.claude-opus-5",
     )
     assert BEDROCK_MODEL == "openai.gpt-5.5" == GenerationConfig().model
 
 
 @pytest.mark.parametrize("model", SUPPORTED_MODELS)
 def test_generation_config_accepts_every_supported_model(model):
-    transport = "bedrock-messages" if model == "anthropic.claude-opus-4-8" else "bedrock-responses"
+    transport = "bedrock-messages" if model.startswith("anthropic.") else "bedrock-responses"
     assert GenerationConfig(model=model, transport=transport).model == model
 
 

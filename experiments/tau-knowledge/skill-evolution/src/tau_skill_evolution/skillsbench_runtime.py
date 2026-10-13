@@ -64,6 +64,27 @@ _STANDALONE_PYTHON = _STANDALONE_PYTHON_DIR + "/python3"
 _NATIVE_PYTHON = "python3"
 _EPISODE_SCHEMA = "skillsbench.episode.v2"
 _WORKSPACE_SCHEMA = "skillsbench.workspace.v1"
+# Teardown (`docker compose down`) is bounded separately from build/start. dockerd
+# serializes per-project network/iptables teardown, so under high concurrency a
+# `down` can queue far past the old hardcoded 30 s even when the host is not CPU
+# bound. Give it headroom; a slow teardown must never discard an already-measured
+# cell (see _stop_episode).
+_TEARDOWN_TIMEOUT_SEC = 180
+
+
+def _record_leaked_container(name: str | None) -> None:
+    """Record a container whose ``compose down`` did not finish so an out-of-band
+    reaper can remove it. Appends the name to the file named by
+    ``$SKILLSBENCH_REAP_FILE``; a no-op when that env var is unset or the write
+    fails. Keeps teardown non-fatal without leaking containers unboundedly."""
+    path = os.environ.get("SKILLSBENCH_REAP_FILE")
+    if not path or not name:
+        return
+    try:
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write(name + "\n")
+    except OSError:
+        pass
 _WORKSPACE_DIRECTORIES = {
     "3d-scan-calc": "/root",
     "enterprise-information-search": "/root",
@@ -2037,6 +2058,7 @@ class SkillsBenchRunner:
     def _stop_episode(self) -> None:
         monitor_error: Exception | None = None
         compose_error: str | None = None
+        leaked_container = self.container_name
         try:
             if self.attack_monitor is not None and self.attack_monitor.active:
                 try:
@@ -2058,7 +2080,7 @@ class SkillsBenchRunner:
                         "chmod -R a+rwX -- /logs/verifier",
                     ],
                     stdin=b"",
-                    timeout=30,
+                    timeout=_TEARDOWN_TIMEOUT_SEC,
                     output_limit=self.output_limit,
                     env=_host_environment(),
                 )
@@ -2066,13 +2088,13 @@ class SkillsBenchRunner:
                     result = self.transport.run(
                         self._compose_command("down", "--volumes", "--remove-orphans"),
                         stdin=b"",
-                        timeout=30,
+                        timeout=_TEARDOWN_TIMEOUT_SEC,
                         output_limit=self.output_limit,
                         env=_host_environment(),
                     )
                     if result.returncode or result.failure:
                         compose_error = str(result.failure or result.returncode)
-                except OSError as exc:
+                except Exception as exc:  # noqa: BLE001 - any down error is handled below
                     compose_error = type(exc).__name__
         finally:
             self.public_open = False
@@ -2080,10 +2102,14 @@ class SkillsBenchRunner:
             self.compose_path = None
             self.attack_monitor = None
         if compose_error is not None:
-            monitor = type(monitor_error).__name__ if monitor_error is not None else "none"
-            raise ContainerUnavailable(
-                f"skillsbench_episode_cleanup_failed:compose={compose_error}:monitor={monitor}"
-            ) from monitor_error
+            # The grade, workspace snapshot and attack-isolation checks all run
+            # BEFORE this teardown. A slow or timed-out `docker compose down`
+            # (dockerd serializes per-project network teardown under high
+            # concurrency) must not discard an already-measured cell. Each cell
+            # owns uniquely named containers/networks, so a lingering project
+            # cannot contaminate another cell; record it for the out-of-band
+            # reaper and continue. Attack-monitor cleanup stays fatal below.
+            _record_leaked_container(leaked_container)
         if monitor_error is not None:
             raise ContainerUnavailable(
                 f"skillsbench_attack_cleanup_failed:{type(monitor_error).__name__}"
