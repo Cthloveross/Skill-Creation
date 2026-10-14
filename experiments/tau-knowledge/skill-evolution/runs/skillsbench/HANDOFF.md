@@ -5,6 +5,12 @@ This is the operational record for `skillsbench.skill-evolution.v8`. Run every c
 All current defaults, effective budgets and adjustable settings are collected in
 [SkillsBench experiment parameters](../../../../../docs/skillsbench-experiment-parameters.md).
 
+The collaborator's 2026-10-13 run-branch results are analyzed separately in
+[SkillsBench v8 results](../../../../../docs/skillsbench-v8-results-20261013.md): NoSkill is an
+independent baseline, GPT has paired progress, and Opus has insufficient coverage for a model
+comparison. That branch changes transport/cleanup behavior and does not establish this
+canonical handoff's readiness.
+
 ## 1. Current state
 
 Tracked in Git:

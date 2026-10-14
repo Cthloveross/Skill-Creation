@@ -24,6 +24,7 @@ make skillsbench-prepare GPU=0 PREP_JOBS=8
 - [通用方法论：问题、威胁模型、演化与跨数据集实验设计](docs/skill-evolution-method.md)
 - [当前实验规范：τ／SkillsBench 的具体合同与参数](experiments/tau-knowledge/skill-evolution/PROTOCOL.md)
 - [SkillsBench 实验参数：默认值、计数与可调范围](docs/skillsbench-experiment-parameters.md)
+- [SkillsBench v8 部分结果：NoSkill独立对照、GPT配对进步与注入分析](docs/skillsbench-v8-results-20261013.md)
 - [SkillsBench：四类注入的实际文本、抽样、暴露与ASR判定](docs/skillsbench-injection-design.md)
 - [τ：97题 × 三条件交接](experiments/tau-knowledge/skill-evolution/runs/tau/HANDOFF.md)
 - [SkillsBench：v8 注入设计、retrieval pilot 与 765-cell 运行交接](experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md)
