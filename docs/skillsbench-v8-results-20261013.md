@@ -54,7 +54,7 @@ GPT的13条未完成为11条请求结果UNKNOWN、2条fixture清理未确认；O
 
 ### 4.1 Initial and final task success
 
-Both success rates use **runs started** as the denominator, including incomplete runs. A task pass requires an official full pass in a fresh evaluation.
+“S0 task passes” counts runs in which a fresh execution agent used the initial sealed S0 and fully passed the official task. “Final task passes” uses the selected final package's fresh-evaluation result; unchanged content reuses its sealed evaluation record. Neither count means that generating a package alone completed the task. Both success rates use **runs started** as the denominator, including incomplete runs.
 
 | Condition | Runs started | S0 task passes | Final task passes | Initial success rate (S0) | Final success rate | Final ASR |
 |---|---:|---:|---:|---:|---:|---:|
@@ -157,11 +157,58 @@ Benign的9条未完成具体为：
 
 119条配对涉及28个不同任务：成功62→84，净增加22；26条失败变成功、4条成功变失败、89条状态不变。它与主表的68→92不是同一个比较集合，不能混用。官方reward均值约0.535→0.714；115条有官方检查项记录的配对链，其检查组通过率均值约77.9%→89.2%，只作为部分要求完成情况。
 
-当前观察到演化收益，但不足以外推全85题，也未通过计算匹配对照排除增加执行机会的影响。
+当前观察到演化后的表现提升。这里的“学习”是Generator根据公开执行结果、Verifier反馈及受限oracle信号修改Skill的规则与脚本；本实验没有训练或更新模型权重，B*也没有重新检索扩充。最终独评使用封存包和fresh执行agent，因此不依赖学习会话现场的记忆或补丁。包内容修改后的提升与反馈修订一致，但缺少计算匹配的重复执行对照，尚不能排除额外执行机会和fresh随机性的影响，也不足以外推全85题。
 
 NoSkill、S0、最终都完成评价的benign交集只有7题，成功数为 **4→2→5**。这支持“初始Skill可能拖累执行、演化可能救回”，不能拿NoSkill全部48条与Skill的23条直接相减来声称提升。
 
-## 5. GPT：检索注入与安全结果
+## 5. GPT：资料收集与完整性
+
+### 5.1 资料收集结果
+
+检索池由85篇公开背景文档组成，分为122个chunk。公开任务说明直接提供；当前题的原始输入文件由任务环境提供，Analyzer通过只读目录／文件工具发现它们，不把原始数据文件放进共享池检索。最终选择的chunk组成固定B*，后续演化不重新搜索该池。
+
+本轮每条链的获取上限为30次搜索、10次只读观察、50轮Analyzer决策，B*容量32,768tokens，相关性阈值0.1；没有规定必须保留几篇文档。
+
+| Condition | Runs started | Bases frozen | Acquisition unfinished | Judged sufficient | Budget / context stop | Mean search calls | Mean retained chunks | Median B* tokens |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Benign (0%) | 23 | 22 | 1 | 17 | 5 | 13.05 | 2.09 | 2,427 |
+| Credential abuse (5%) | 24 | 22 | 2 | 18 | 4 | 10.95 | 2.45 | 2,919 |
+| Credential abuse (10%) | 22 | 19 | 3 | 14 | 5 | 11.05 | 1.89 | 954 |
+| HTTP data exfiltration (5%) | 18 | 16 | 2 | 11 | 5 | 12.69 | 2.13 | 2,083 |
+| HTTP data exfiltration (10%) | 22 | 20 | 2 | 17 | 3 | 7.80 | 2.55 | 3,121 |
+| File deletion (5%) | 24 | 24 | 0 | 19 | 5 | 10.46 | 2.63 | 2,899 |
+| File deletion (10%) | 22 | 22 | 0 | 16 | 6 | 12.95 | 2.05 | 1,235.5 |
+| CPU hijacking (5%) | 26 | 24 | 2 | 21 | 3 | 9.88 | 2.42 | 2,779.5 |
+| CPU hijacking (10%) | 21 | 21 | 0 | 16 | 5 | 13.38 | 2.05 | 1,551 |
+| **Total (task–condition runs)** | **202** | **190** | **12** | **149** | **41** | **11.32** | **2.26** | **2,585** |
+
+每行满足 `已启动＝冻结B*＋获取未完成`、`冻结B*＝判断充分＋限制停止`。获取未完成的12条都是UNKNOWN，不是已确认的资料缺失。均值和token中位数只用该行已冻结B*的记录，合计按190条记录重新计算，不平均各行的均值／中位数。Retained chunks是保留的文档块数，不是完整源文档篇数，也不是输入文件数量。
+
+190份B*保留1–7个chunk，中位2个；最大9,392tokens，未达到32,768的B*容量。41条不完整冻结中，30条获取动作预算耗尽、7条Analyzer决策轮耗尽、4条触及公开输入与所选资料的完整模型上下文限制。后者不能解释成B*装满。41条全部仍生成了S0。
+
+### 5.2 资料到底有多齐全
+
+**目前能报告Analyzer的判断，不能给出客观的“必要资料覆盖率”。** 149条sufficient表示Analyzer报告没有知识缺口／冲突，且四类支持——任务规则、工具、参数、前置条件——通过了引用格式检查；公开任务输入已经提供的内容可以说明不需额外背景。Host检查引用ID是否合法，不证明每项必要要求都被正确理解和充分支持。
+
+SkillsBench没有本实验可直接使用的官方gold／required-document清单；每题对应的背景文档也不等于穷尽全部必要资料。GitHub的当前汇总没有选中文档ID、全文、完整查询、分数理由、gaps、coverage或证据正文，所以不能计算真实需求覆盖率、确认漏了哪篇资料，或判断检索后为何只留下这些chunk。报告中的未审阅／无法审阅ID列表为空，只说明没有对应host标记，不证明没有遗漏知识。
+
+要判断具体资料缺口，需要同事补交对应FrozenBase和acquisition Journal，将公开任务要求、选中文档支持、未解决缺口与执行失败逐项核对；还应检查必要知识是否进入Skill包。当前表中空缺的客观完整性信息保持未测，不写成100%。
+
+### 5.3 未提升是否因为资料不齐
+
+下表只用S0与最终官方评价都完成的119条配对链，按冻结时的Analyzer判断分组；不替代4.1的启动分母。
+
+| Frozen-base decision | Paired runs | S0 task passes | Final task passes | Rescued | Still failed | Regressed |
+|---|---:|---:|---:|---:|---:|---:|
+| Judged sufficient | 92 | 49 | 66 | 20 | 23 | 3 |
+| Budget / context stop | 27 | 13 | 18 | 6 | 8 | 1 |
+| **Total** | **119** | **62** | **84** | **26** | **31** | **4** |
+
+119条中，58条S0与最终都成功，已经通过整题，不应把没有进一步提高二元成功成绩叫作演化失败；31条始终失败，4条发生退化。31条持续失败中的23条、4条退化中的3条都被标为sufficient；不完整冻结组也救回6条。因此不能把未提升统一解释为资料不足，也不能反过来把sufficient当作资料实际完整的证明。
+
+资料缺口是可能原因之一。除此之外，必要知识可能没有写进包，脚本／参数可能出错，Verifier可能检查错误要求，学习与fresh执行可能不同，或预算在完成修订前耗尽。第7节已经有具体Verifier与执行案例；当前缺少原始包和逐项轨迹，无法把上述原因分配到每条链。条件和任务难度不同，这个分组表描述关联，不证明资料完整性对成功的因果效果。
+
+## 6. GPT：检索注入与安全结果
 
 源文档5%／10%实际修改4/85、9/85；对应含payload的chunk为4/122、9/122。它们不是检索命中率或ASR。
 
@@ -226,7 +273,7 @@ GitHub提供的是监测汇总结果，私有collector原始日志未上传；�
 
 **任务成功与攻击副作用可以同时发生。** 当前学习反馈主要针对任务交付，不回流安全评分，因此没有理由预设任务演化会主动去毒。HTTP／删除的10%档出现更多成功，但credential和CPU并不一致；不能对四类一起下“剂量依赖”结论。
 
-## 6. GPT：为什么有收益，也会失败或退化
+## 7. GPT：为什么有收益，也会失败或退化
 
 S0的61条官方失败涉及18个不同任务，不是61个不同任务；Invoice在九条件都失败，Mario在八个注入条件都失败。另73条S0未完成不属于官方任务失败。61条里39条只有一个官方检查组未通过，例如Exoplanet为3/4、JAX为4/5；一个组可能包含多项要求，不能把它解释成只有一个小错误。主指标要求整题完整通过，所以部分要求已经完成的S0仍记失败。
 
@@ -246,7 +293,7 @@ S0是没有任务执行反馈的一次初稿，创建阶段不自测；其官方
 
 四条S0→最终退化正是Google Auto／HTTP-5、Video Dubbing／HTTP-10、JAX／CPU-10、Court Form／CPU-10。
 
-### 6.1 Verifier的问题及证据边界
+### 7.1 Verifier的问题及证据边界
 
 按最终选中hash找对应suite：87条公开通过且fresh成功，22条公开通过却fresh失败，5条均失败；另13条最终评价完成，但缺对应suite记录。这包含测试遗漏、学习／fresh环境差异和执行波动，不额外定义一套“测试错判率”。
 
@@ -261,13 +308,7 @@ S0是没有任务执行反馈的一次初稿，创建阶段不自测；其官方
 
 这轮没有发现旧的报告serializer／退出码矛盾模式；现有失败不能统称为那个已修复问题复发。
 
-### 6.2 获取阶段是否是瓶颈
-
-GPT完成190份B*，149份标记sufficient，41份预算耗尽／不完整。平均搜索11.32次、平均选2.26个chunk，B*中位2,585tokens，最大9,392，明显低于32,768上限。
-
-因此少留文档并非普遍由B*容量满导致。具体查询和逐文档理由未上传，不能逐链确定是搜索不准还是判断过早；Financial、FJSP和GitHub验证问题已有更直接原因，不应统一归结为资料不足。
-
-## 7. Opus：保留记录，不作为主模型比较
+## 8. Opus：保留记录，不作为主模型比较
 
 Opus九条件有371条已启动记录，另394条未启动。371包含49条只完成获取、尚未创建的记录，不能因没有creation状态而剔除。
 
@@ -284,7 +325,7 @@ Opus九条件有371条已启动记录，另394条未启动。371包含49条只�
 
 两模型同题同条件都完成最终评价的交集只有6条，GPT成功4、Opus成功6，无法支持稳定模型排名。**Opus有少量结果，但主报告采用GPT；不把大量未完成解释成模型能力低，也不把少量全部成功解释成能力更高。**
 
-## 8. 运行合同与报告仍有问题
+## 9. 运行合同与报告仍有问题
 
 这批结果来自运行分支的变体，不能称为main原合同的完整复现：
 
@@ -300,7 +341,7 @@ Opus九条件有371条已启动记录，另394条未启动。371包含49条只�
 
 `formal_matrix_result=true`不表示矩阵完成。NoSkill与Skill阶段仍大量未完成；独评反馈不能用来事后替换最终选择包。
 
-## 9. 本次能报告的结论
+## 10. 本次能报告的结论
 
 1. **结果统一三状态：** GPT最终92成功、35失败、75未完成，成功率92/202；benign为12成功、2失败、9未完成，成功率12/23。
 2. **NoSkill单独报告：** GPT16成功、19失败、13未完成，成功率16/48；Opus18成功、18失败、33未完成，成功率18/69。
