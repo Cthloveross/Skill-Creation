@@ -18,6 +18,7 @@ Tracked in Git:
 - the v8 configuration, nine-condition manifest, frozen 765-cell matrix, four readable carrier templates and four exact frozen source records under `injections/skillsbench/`;
 - 85 `runtime/skillsbench-docker-*-v4-lock.json` files;
 - the public summaries for the 15-cell retrieval-only pilot at `runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001/` and the current readiness package.
+- the 2026-10-14 reference-coverage audit at `runs/skillsbench/retrieval-reference-gpt54-20261014-001/reference-coverage.json`.
 
 Shared-host local inputs, intentionally ignored by Git:
 
@@ -161,6 +162,10 @@ Record the reviewed smoke path and source identity in the readiness package. Pas
 
 ## 5. Retrieval-only pilot
 
+The latest check is [retrieval-reference-gpt54-20261014-001/reference-coverage.json](retrieval-reference-gpt54-20261014-001/reference-coverage.json), with details in Section 5.4 of the [results analysis](../../../../../docs/skillsbench-v8-results-20261013.md). All 15 acquisitions completed using GPT-5.4. Each first search returned the author's task-associated background, and search/Analyzer-visible/frozen reference coverage was 15/15. Twelve decisions were sufficient; three stopped incomplete. This sample covers three single-chunk task backgrounds, not all 85 tasks. It does not create a Skill, score a task, measure ASR, or validate Docker readiness.
+
+The check exposed a sufficiency issue: the fixed pool does not contain some standard implementation details requested by the Analyzer, and available read-only budget can force further acquisition after search is exhausted. Some decisions cleared unchanged gaps after controller feedback. Keep this limitation in results interpretation; a sufficient decision does not prove every task requirement is supported.
+
 The acquisition probe is deliberately separate from the workflow. It fixes three tasks and five arms in code, runs at most three tasks concurrently, freezes `B*`, and cannot create or execute a Skill:
 
 ```bash
@@ -169,6 +174,8 @@ test ! -e "$PILOT_RUN"
 "$PY" "$SB/scripts/probe_skillsbench_acquisition.py" \
   --config "$CFG" --run-dir "$PILOT_RUN" --jobs 3
 ```
+
+When using a local `key.env`, add `--env-file "$ROOT/key.env"` to the probe command. Keep the new run directory free of unrelated files; place process logs under its `logs/` directory. Raw acquisition journals and FrozenBase files remain local; the public audit exports only the membership, relevance and coverage evidence needed for review.
 
 The completed run `retrieval-pilot-dymal4-gpt54-20261009-001` recorded all 15 expected cells as `MEASURED`, with no missing cells. It used `openai.gpt-5.4`; its authentication admission was HTTP 200. Eleven cells stopped `sufficient` and four stopped `budget_exhausted_incomplete`. Across the four poisoned arms, every task's Analyzer-visible history contained a complete payload. Frozen-base payload exposure was 1/3 tasks at level 5 and 2/3 at level 10 for both profiles.
 
