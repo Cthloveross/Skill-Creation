@@ -1,12 +1,12 @@
 {
   "schema": "skill-evolution.archive.v2",
-  "date": "2026-10-10",
+  "date": "2026-10-14",
   "archive_mode": "physical_relocation_preserve_artifact_bytes",
   "current_methods": [
     "tau.skill-evolution.v4",
     "skillsbench.skill-evolution.v8"
   ],
-  "current_readiness": "../runs/skillsbench/readiness-dymal4-v8-20261010-001",
+  "current_readiness": null,
   "document_snapshots": null,
   "runs": [
     {
@@ -459,6 +459,190 @@
       "original_path": "runs/tau-workspace-benign-4-20261005-003",
       "relocated": true,
       "directory_inode": 45887134
+    },
+    {
+      "path": "runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001",
+      "original_path": "runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "relocated": true,
+      "retain_reason": "Historical retrieval-only acquisition and frozen-base evidence; retained for audit and explicit copying into the new retrieval study, never resumed in place.",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001/acquisition-admission.json",
+          "original_path": "runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001/acquisition-admission.json",
+          "sha256": "56ba4cc77750640fdf7267d730d117d85be5f1c66ff50afb04e2dac7e3cc1945"
+        },
+        {
+          "path": "runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001/acquisition-summary.json",
+          "original_path": "runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001/acquisition-summary.json",
+          "sha256": "8a1604566dd51dac24ad9abfb0136320159bf10ca6c48235cad27b61e745e3f1"
+        },
+        {
+          "path": "runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001/public-summary.json",
+          "original_path": "runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001/public-summary.json",
+          "sha256": "6f4b00317ef4676474f77a2022309fbae465ccf3f14f971f69a4895beed35fa5"
+        }
+      ],
+      "preservation": {
+        "regular_file_count": 2227,
+        "file_bytes": 76058793,
+        "tree_manifest_sha256": "c447c7ca551d3c132dc925ab22784010184e010b7ea6a0cd923ac54f823b9592"
+      }
+    },
+    {
+      "path": "runs/skillsbench/retrieval-reference-gpt54-20261014-001",
+      "original_path": "runs/skillsbench/retrieval-reference-gpt54-20261014-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "relocated": true,
+      "retain_reason": "Historical retrieval-only acquisition and frozen-base evidence; retained for audit and explicit copying into the new retrieval study, never resumed in place.",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/skillsbench/retrieval-reference-gpt54-20261014-001/reference-coverage.json",
+          "original_path": "runs/skillsbench/retrieval-reference-gpt54-20261014-001/reference-coverage.json",
+          "sha256": "f3d6c77339686230daae0d5f27162989e3dda415b2b7bba964c702ff4db4450e"
+        }
+      ],
+      "preservation": {
+        "regular_file_count": 2271,
+        "file_bytes": 78236675,
+        "tree_manifest_sha256": "26c7aa62b7bdeffb64e99184b36000b2d52d38bae46bd49b15c9b9cc8ba1fcde"
+      }
+    },
+    {
+      "path": "runs/skillsbench/retrieval-whole-document-gpt54-20261014-001",
+      "original_path": "runs/skillsbench/retrieval-whole-document-gpt54-20261014-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "relocated": true,
+      "retain_reason": "Historical retrieval-only acquisition and frozen-base evidence; retained for audit and explicit copying into the new retrieval study, never resumed in place.",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/skillsbench/retrieval-whole-document-gpt54-20261014-001/whole-document-coverage.json",
+          "original_path": "runs/skillsbench/retrieval-whole-document-gpt54-20261014-001/whole-document-coverage.json",
+          "sha256": "428ff370dd7b66751036bfc0f1639e2b945563e932f300549047c7d024aa00b1"
+        }
+      ],
+      "preservation": {
+        "regular_file_count": 2252,
+        "file_bytes": 95124913,
+        "tree_manifest_sha256": "b80a31992511f97d28f52b111302aa67e662e5f9962572f3bc8837cb602927f8"
+      }
+    },
+    {
+      "path": "runs/skillsbench/smoke-payload-delete-gpt54-20261010-001",
+      "original_path": "runs/skillsbench/smoke-payload-delete-gpt54-20261010-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "relocated": true,
+      "retain_reason": "Historical v8 smoke, preflight or code acceptance evidence; does not establish current source or task-environment readiness.",
+      "public_documentation": [],
+      "evidence": [],
+      "preservation": {
+        "regular_file_count": 120,
+        "file_bytes": 5185700,
+        "tree_manifest_sha256": "a8a55f0795ef189e9fb0d2ae333b51b6f84d09ad52d1a7645623caaa61a592a5"
+      }
+    },
+    {
+      "path": "runs/skillsbench/smoke-payload-http-gpt54-20261010-001",
+      "original_path": "runs/skillsbench/smoke-payload-http-gpt54-20261010-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "relocated": true,
+      "retain_reason": "Historical v8 smoke, preflight or code acceptance evidence; does not establish current source or task-environment readiness.",
+      "public_documentation": [],
+      "evidence": [],
+      "preservation": {
+        "regular_file_count": 116,
+        "file_bytes": 5821480,
+        "tree_manifest_sha256": "07bd57095364db173cbe2f15a9c4f21ce4d79b5019be9dba4e2ae09d0ec7fa6c"
+      }
+    },
+    {
+      "path": "runs/skillsbench/smoke-payload-http-gpt54-20261010-002",
+      "original_path": "runs/skillsbench/smoke-payload-http-gpt54-20261010-002",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "relocated": true,
+      "retain_reason": "Historical v8 smoke, preflight or code acceptance evidence; does not establish current source or task-environment readiness.",
+      "public_documentation": [],
+      "evidence": [],
+      "preservation": {
+        "regular_file_count": 8,
+        "file_bytes": 160130,
+        "tree_manifest_sha256": "36329bd36e9b9f85afca6c4c65afb19f95a1e28ad343f4cc14b72dc7eb2cbf02"
+      }
+    },
+    {
+      "path": "runs/skillsbench/readiness-dymal4-v8-20261010-001",
+      "original_path": "runs/skillsbench/readiness-dymal4-v8-20261010-001",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "relocated": true,
+      "retain_reason": "Historical v8 smoke, preflight or code acceptance evidence; does not establish current source or task-environment readiness.",
+      "public_documentation": [],
+      "evidence": [
+        {
+          "path": "runs/skillsbench/readiness-dymal4-v8-20261010-001/final-status.json",
+          "original_path": "runs/skillsbench/readiness-dymal4-v8-20261010-001/final-status.json",
+          "sha256": "43710fb5671248c9b102443b53bd82f3ba40bebbc3c32df02f8b833a2f923725"
+        },
+        {
+          "path": "runs/skillsbench/readiness-dymal4-v8-20261010-001/path-validation.json",
+          "original_path": "runs/skillsbench/readiness-dymal4-v8-20261010-001/path-validation.json",
+          "sha256": "c4a2c68338e5177288ba3362cc50b3c76229ef8adeab14ae6d6340fae32bb93b"
+        },
+        {
+          "path": "runs/skillsbench/readiness-dymal4-v8-20261010-001/source-identity.json",
+          "original_path": "runs/skillsbench/readiness-dymal4-v8-20261010-001/source-identity.json",
+          "sha256": "af146fff2d9f526e71aaf36f5b9331cca92054eac52f9c39e7f44f253c1d8d59"
+        },
+        {
+          "path": "runs/skillsbench/readiness-dymal4-v8-20261010-001/validation.json",
+          "original_path": "runs/skillsbench/readiness-dymal4-v8-20261010-001/validation.json",
+          "sha256": "6709bf9af488002bfb88a9873e7150075ab7881b2613a4df5ed99860e5318291"
+        }
+      ],
+      "preservation": {
+        "regular_file_count": 4,
+        "file_bytes": 16303,
+        "tree_manifest_sha256": "29f946b9c36900ec9c0ce4a85cee58a3ed77073e4ec8888f41588775f3cf2869"
+      }
+    },
+    {
+      "path": "runs/skillsbench/preflight-payload-smoke-gpt54-20261010-001.json",
+      "original_path": "runs/skillsbench/preflight-payload-smoke-gpt54-20261010-001.json",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "relocated": true,
+      "retain_reason": "Historical v8 smoke, preflight or code acceptance evidence; does not establish current source or task-environment readiness.",
+      "public_documentation": [],
+      "evidence": [],
+      "preservation": {
+        "regular_file_count": 1,
+        "file_bytes": 8499,
+        "tree_manifest_sha256": "d58f2b37fa65a282aad5cab98157f4dab1103e664d4b959689bdd837bba25202"
+      }
+    },
+    {
+      "path": "runs/skillsbench/preflight-payload-smoke-gpt54-20261010-002.json",
+      "original_path": "runs/skillsbench/preflight-payload-smoke-gpt54-20261010-002.json",
+      "status": "ARCHIVED_READ_ONLY",
+      "resume_current_method": false,
+      "relocated": true,
+      "retain_reason": "Historical v8 smoke, preflight or code acceptance evidence; does not establish current source or task-environment readiness.",
+      "public_documentation": [],
+      "evidence": [],
+      "preservation": {
+        "regular_file_count": 1,
+        "file_bytes": 8499,
+        "tree_manifest_sha256": "d58f2b37fa65a282aad5cab98157f4dab1103e664d4b959689bdd837bba25202"
+      }
     }
   ],
   "relocated_at": "2026-10-07T05:36:06.173959+00:00",
@@ -653,7 +837,7 @@
   },
   "current_readiness_by_experiment": {
     "tau": null,
-    "skillsbench": "../runs/skillsbench/readiness-dymal4-v8-20261010-001"
+    "skillsbench": null
   },
   "active_runs_cleanup": {
     "date": "2026-10-09",
@@ -704,12 +888,105 @@
   },
   "v8_transition": {
     "date": "2026-10-10",
-    "current_trial": "../runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001",
     "archived_v7_paths": [
       "runs/input-discovery-five-gpt54-20261008-003",
       "runs/readiness-skillsbench-input-discovery-20261008-001"
     ],
     "resume_v7_into_v8": false,
-    "reason": "SkillsBench v8 changes the corpus conditions, retrieval identity, and attack measurement contract."
+    "reason": "SkillsBench v8 changes the corpus conditions, retrieval identity, and attack measurement contract.",
+    "historical_trial": "../runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001",
+    "archived_trial": "runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001"
+  },
+  "historical_readiness": {
+    "path": "runs/skillsbench/readiness-dymal4-v8-20261010-001",
+    "original_path": "../runs/skillsbench/readiness-dymal4-v8-20261010-001",
+    "status": "ARCHIVED_READ_ONLY",
+    "scope": "Historical v8 code acceptance only; does not establish current source or task-environment readiness."
+  },
+  "current_retrieval": "../runs/skillsbench/retrieve",
+  "skillsbench_retrieval_cleanup": {
+    "date": "2026-10-14",
+    "archive_mode": "physical_relocation_preserve_artifact_bytes",
+    "active_root": "../runs/skillsbench",
+    "active_entries": [
+      "HANDOFF.md",
+      "full-85-v8-handoff",
+      "retrieve"
+    ],
+    "current_trial": "../runs/skillsbench/retrieve",
+    "current_trial_scope": {
+      "tasks": 85,
+      "conditions": [
+        "benign",
+        "data-exfil-http-5",
+        "data-exfil-http-10",
+        "file-delete-5",
+        "file-delete-10"
+      ],
+      "planned_acquisitions": 425,
+      "reuse_completed_whole_document_acquisitions": 15,
+      "new_acquisitions": 410,
+      "retrieval_model": "GPT-5.4",
+      "retrieval_unit": "whole source document",
+      "later_model_policy": "Reuse the same sealed B*; do not rerun acquisition per model."
+    },
+    "relocations": [
+      {
+        "original_path": "runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001",
+        "path": "runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001",
+        "archived_path": "archive/runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001"
+      },
+      {
+        "original_path": "runs/skillsbench/retrieval-reference-gpt54-20261014-001",
+        "path": "runs/skillsbench/retrieval-reference-gpt54-20261014-001",
+        "archived_path": "archive/runs/skillsbench/retrieval-reference-gpt54-20261014-001"
+      },
+      {
+        "original_path": "runs/skillsbench/retrieval-whole-document-gpt54-20261014-001",
+        "path": "runs/skillsbench/retrieval-whole-document-gpt54-20261014-001",
+        "archived_path": "archive/runs/skillsbench/retrieval-whole-document-gpt54-20261014-001"
+      },
+      {
+        "original_path": "runs/skillsbench/smoke-payload-delete-gpt54-20261010-001",
+        "path": "runs/skillsbench/smoke-payload-delete-gpt54-20261010-001",
+        "archived_path": "archive/runs/skillsbench/smoke-payload-delete-gpt54-20261010-001"
+      },
+      {
+        "original_path": "runs/skillsbench/smoke-payload-http-gpt54-20261010-001",
+        "path": "runs/skillsbench/smoke-payload-http-gpt54-20261010-001",
+        "archived_path": "archive/runs/skillsbench/smoke-payload-http-gpt54-20261010-001"
+      },
+      {
+        "original_path": "runs/skillsbench/smoke-payload-http-gpt54-20261010-002",
+        "path": "runs/skillsbench/smoke-payload-http-gpt54-20261010-002",
+        "archived_path": "archive/runs/skillsbench/smoke-payload-http-gpt54-20261010-002"
+      },
+      {
+        "original_path": "runs/skillsbench/readiness-dymal4-v8-20261010-001",
+        "path": "runs/skillsbench/readiness-dymal4-v8-20261010-001",
+        "archived_path": "archive/runs/skillsbench/readiness-dymal4-v8-20261010-001"
+      },
+      {
+        "original_path": "runs/skillsbench/preflight-payload-smoke-gpt54-20261010-001.json",
+        "path": "runs/skillsbench/preflight-payload-smoke-gpt54-20261010-001.json",
+        "archived_path": "archive/runs/skillsbench/preflight-payload-smoke-gpt54-20261010-001.json"
+      },
+      {
+        "original_path": "runs/skillsbench/preflight-payload-smoke-gpt54-20261010-002.json",
+        "path": "runs/skillsbench/preflight-payload-smoke-gpt54-20261010-002.json",
+        "archived_path": "archive/runs/skillsbench/preflight-payload-smoke-gpt54-20261010-002.json"
+      }
+    ],
+    "verification": {
+      "copied_then_verified_before_source_removal": true,
+      "regular_file_count": 7000,
+      "file_bytes": 260620992,
+      "tree_manifest_encoding": "SHA-256 of compact sorted-key JSON entries in root-then-sorted-path order; entries record relative path, kind, permission mode, and regular-file byte count and SHA-256.",
+      "artifact_contents_rewritten": false,
+      "immutable_full_85_v8_handoff_unchanged": true,
+      "credentials_read": false,
+      "model_requests": 0
+    },
+    "relocation_path_base": "experiment root; archive index run/evidence paths are relative to archive/"
   }
 }

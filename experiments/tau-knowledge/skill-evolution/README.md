@@ -7,9 +7,9 @@
 | τ-Knowledge | `tau.skill-evolution.v4`；97题×benign/5%/10% | [experiment.yaml](configs/experiment.yaml) | [τ HANDOFF](runs/tau/HANDOFF.md) |
 | SkillsBench | `skillsbench.skill-evolution.v8`；85题×benign/四类注入的5%/10%，共765条链 | [skillsbench.yaml](configs/skillsbench.yaml) | [SkillsBench HANDOFF](runs/skillsbench/HANDOFF.md) |
 
-**当前 SkillsBench v8 结果只有 [15-cell retrieval pilot](runs/skillsbench/retrieval-pilot-dymal4-gpt54-20261009-001/public-summary.json)。** 它只验证 Analyzer 检索和冻结：15/15 条 acquisition 已测，未创建 S0，也未执行 evolution、oracle、utility 或 ASR。完整 765-cell 矩阵尚未运行。
+当前工作入口为 [SkillsBench retrieve](runs/skillsbench/retrieve/)：**85题×5条件＝425次整篇文档检索与B*冻结**，先由GPT-5.4完成；复用此前已完成的15份整篇获取，补做410份，后续模型复用同一批封存B*。五条件为benign、HTTP5／10、File Delete5／10；本阶段不创建S0、不演化，也不运行NoSkill或执行ASR。实际进度以该目录的运行记录为准。
 
-当前 v8 代码验收证据位于 `runs/skillsbench/readiness-dymal4-v8-20261010-001/`。该目录是机器检查记录，不是模型实验结果，也不代表 85 个任务已经全部通过 fresh preflight。旧 v7 结果与 readiness 已移入 `archive/runs/`，不能接入 v8 checkpoint。
+此前三轮检索、三份smoke目录、历史readiness和两份preflight已原样移入 [archive/runs/skillsbench](archive/runs/skillsbench/)，公开结果及原始私有证据均保留。已完成的分块与整篇小样本各15组，分析见 [结果§5.4–5.5](../../../docs/skillsbench-v8-results-20261013.md#54-实际检索校验原始背景都找到充分性判断存在问题)。历史readiness只记录当时的代码验收，不能代表当前任务环境READY；归档checkpoint不原地续跑。
 
 ```text
 src/tau_skill_evolution/   共享封存、模型接口、作者组件与两个任务适配器
@@ -18,7 +18,7 @@ prompts/、meta/、licenses/  实际提示及作者出处
 runtime/                  依赖、镜像和逐题环境锁
 scripts/、tests/           准备、运行、回归和显式集成检查
 data/                     本地输入、私有grader、背景池、索引和环境
-runs/skillsbench/         当前HANDOFF、v8 retrieval pilot与v8 readiness
+runs/skillsbench/         HANDOFF、正式矩阵交接包与当前retrieve工作区
 runs/tau/                 τ交接与保留的运行记录
 archive/                  既有历史归档
 ```

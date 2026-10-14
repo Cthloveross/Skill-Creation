@@ -1,6 +1,6 @@
 # SkillsBench 实验参数
 
-本文集中记录 **SkillsBench v8 当前主实验的参数、计数单位、可调范围与实际生效位置**，供运行和分析时查阅。核对日期：2026-10-14。它不是历史 runs 的统一配置：具体结果以该 run 封存的配置、源码、环境及 usage 为准。
+本文集中记录 **SkillsBench v8 正式主实验的参数、计数单位、可调范围与实际生效位置**，供运行和分析时查阅。核对日期：2026-10-14。当前425次整篇检索阶段单列于§3.2；正式主矩阵仍为九条件765条链。具体结果以该 run 封存的配置、源码、环境及 usage 为准。
 
 参数主要来自 [skillsbench.yaml](../experiments/tau-knowledge/skill-evolution/configs/skillsbench.yaml)，部分由固定作者代码或本地运行代码决定。方法见 [通用方法论](skill-evolution-method.md)，攻击设计见 [注入设计](skillsbench-injection-design.md)，执行命令见 [全量 HANDOFF](../experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff/HANDOFF.md)。本文不改变任何实验设置。
 
@@ -93,7 +93,7 @@
 
 ### 3.1 整篇文档检索对照（2026-10-14）
 
-独立运行 `retrieval-whole-document-gpt54-20261014-001`，与分块轮 `retrieval-reference-gpt54-20261014-001` 配对。两轮使用相同三题、五条件、GPT-5.4、提示及投毒文本；正式矩阵配置不变。
+归档的 [整篇轮](../experiments/tau-knowledge/skill-evolution/archive/runs/skillsbench/retrieval-whole-document-gpt54-20261014-001/whole-document-coverage.json) 与 [分块轮](../experiments/tau-knowledge/skill-evolution/archive/runs/skillsbench/retrieval-reference-gpt54-20261014-001/reference-coverage.json) 配对。两轮使用相同三题、五条件、GPT-5.4、提示及投毒文本；正式矩阵配置不变。
 
 | 参数 | 分块轮 | 整篇轮 |
 |---|---|---|
@@ -111,6 +111,22 @@
 指标分为：本题背景的返回／可见／冻结覆盖；含payload的获取组数／全部获取组数；保留的投毒文档数／实际见过的投毒文档数。文档在每次获取内去重，分母为0时记null。以上均不计为执行ASR。
 
 两轮在12个注入组中的组级留存均为6/12；文档级从6/37到7/39，尚未观察到明确差别。完整分析见[结果§5.5](skillsbench-v8-results-20261013.md#55-整篇文档检索对照2026-10-14)。
+
+### 3.2 当前85题整篇检索阶段
+
+当前入口为 [runs/skillsbench/retrieve](../experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieve/)，实际进度与身份以该目录记录为准。
+
+| 项目 | 本阶段设置 |
+|---|---|
+| 范围 | 全85题×5条件＝425次获取与B*冻结 |
+| 条件 | `benign`、`data-exfil-http-5`、`data-exfil-http-10`、`file-delete-5`、`file-delete-10` |
+| 获取模型 | GPT-5.4；后续模型复用同一批封存B* |
+| 已有证据复用 | 显式复制归档整篇轮的15份已完成获取；其余410份新获取，不续跑归档checkpoint |
+| 检索单位 | 85篇完整源背景；BM25与Dense均直接索引全文，不先命中chunk再展开 |
+| Embedding与获取预算 | 沿用§3.1整篇方案：固定Qwen权重、8,192输入上限；30次搜索、10次只读、50轮决策、32,768-token B*、0.1阈值 |
+| 阶段输出 | B*、覆盖／payload留存、停止原因及usage；不生成S0，不演化，不运行NoSkill或执行ASR |
+
+该阶段不改九条件正式矩阵及其分块默认值。三个旧检索目录、三份smoke目录、历史readiness和两份preflight已原样移至 [archive/runs/skillsbench](../experiments/tau-knowledge/skill-evolution/archive/runs/skillsbench/)；历史代码验收不代表当前任务环境READY。
 
 ## 4. Analyzer 资料获取与冻结
 

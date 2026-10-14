@@ -515,6 +515,9 @@ def measured_row(task, arm, visible=0, frozen=0):
         "condition_id": arm,
         "arm": arm,
         "status": "MEASURED",
+        "stop_reason": "sufficient",
+        "search_call_count": 1,
+        "base_tokens": 10,
         "pool": {
             "source_injection": probe.fraction(4, 85),
             "payload_chunk_ratio": probe.fraction(4, 100),
@@ -664,3 +667,132 @@ def test_whole_document_summary_keeps_document_units(tmp_path):
     assert summary["retrieval_unit"] == "source_document"
     assert summary["conditions"][ARM]["payload_document_ratio"] == probe.fraction(4, 85)
     assert summary["conditions"][ARM]["frozen_full_payload_tasks"] == probe.fraction(1, 1)
+
+
+def test_full_dataset_schedules_425_cells_and_checkpoints_on_the_owner_thread():
+    tasks = tuple(f"task-{index}" for index in range(85))
+    owner = threading.get_ident()
+    updates = []
+    rows = probe.run_pilot_cells(
+        tasks,
+        probe.PILOT_ARMS,
+        lambda task, arm: (task, arm),
+        max_workers=6,
+        parallel_cells=True,
+        on_progress=lambda: updates.append(threading.get_ident()),
+    )
+    assert len(rows) == len(set(rows)) == 425
+    assert updates == [owner] * 425
+
+
+def test_reference_coverage_distinguishes_returned_visible_and_retained():
+    source = SimpleNamespace(
+        manifest={
+            "files": [
+                {"task_id": "a", "relative_path": "background/guide.md", "document_id": "a::guide"},
+                {"task_id": "a", "relative_path": "input.csv", "document_id": "a::input"},
+                {"task_id": "b", "relative_path": "background/guide.md", "document_id": "b::guide"},
+            ]
+        }
+    )
+    result = probe.reference_coverage(
+        source,
+        "a",
+        {
+            "searches": [{"results": [{"document_id": "a::guide"}, {"document_id": "b::guide"}]}],
+            "analyzer_requests": [{"visible_document_ids": ["b::guide"]}],
+            "selected_document_ids": [],
+        },
+    )
+    assert result["retrieved"] == probe.fraction(1, 1)
+    assert result["analyzer_visible"] == result["frozen"] == probe.fraction(0, 1)
+
+
+def test_reuse_seals_same_base_without_copying_or_dispatching_old_requests(tmp_path, monkeypatch):
+    from tau_skill_evolution import skillsbench, skillsbench_whole_documents
+    from tau_skill_evolution.artifacts import load_base, seal_base
+
+    root, old, destination = tmp_path, tmp_path / "archive/old", tmp_path / "new"
+    settings = {
+        name: {} for name in ("acquisition", "provider", "retrieval", "embedding", "source")
+    }
+    settings["roles"] = {"analyzer": {"reasoning_effort": "medium"}}
+    atomic_json(old / "logs/whole-document-config.json", settings)
+    files = {}
+    for relative in (
+        "src/tau_skill_evolution/acquisition.py",
+        "src/tau_skill_evolution/artifacts.py",
+        "src/tau_skill_evolution/model.py",
+        "src/tau_skill_evolution/journal.py",
+        "src/tau_skill_evolution/skillsbench.py",
+        "src/tau_skill_evolution/skillsbench_whole_documents.py",
+        "src/tau_skill_evolution/dense.py",
+        "prompts/analyzer.md",
+        "prompts/analyzer-skillsbench.md",
+    ):
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(relative)
+        files[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
+    source = SimpleNamespace(
+        manifest={
+            "files": [
+                {"task_id": "a", "relative_path": "background/guide.md", "document_id": "a::guide"}
+            ]
+        }
+    )
+    monkeypatch.setattr(skillsbench, "SkillsBenchSource", lambda _: source)
+    retrieval = {"document_unit": "source_document"}
+    monkeypatch.setattr(skillsbench_whole_documents, "retrieval_contract", lambda *_: retrieval)
+    previous = Journal(old / "cells/a/benign/journal", identity={"files": files, "provider": {}})
+    contract = {"task_id": "a", "condition_id": "benign", "retrieval": retrieval}
+    for operation, value in (("retrieval-corpus-contract", contract), ("acquisition-summary", {})):
+        previous.dispatch(operation, value, lambda value=value: value, external=False)
+    base = FrozenBase(
+        ({"document_id": "a::guide", "title": "Guide", "content": "body"},), {"opening": "task"}
+    )
+    seal_base(old / "cells/a/benign/base", base)
+    metrics = {
+        "status": "MEASURED",
+        "task_id": "a",
+        "arm": "benign",
+        "base_hash": base.base_hash,
+        "retrieval_unit": "source_document",
+        "retrieval_contract": contract,
+        "searches": [{"results": [{"document_id": "a::guide"}]}],
+        "analyzer_requests": [{"visible_document_ids": ["a::guide"]}],
+        "selected_document_ids": ["a::guide"],
+        "search_call_count": 1,
+    }
+    atomic_json(old / "cells/a/benign/probe-result.json", metrics)
+    journal = Journal(destination / "cells/a/benign/journal", identity={"trial": "new"})
+    workflow = SimpleNamespace(
+        spec=SimpleNamespace(root=root, values=settings),
+        _prompt=lambda _: "original prompt",
+        _cell=lambda *_: (destination / "cells/a/benign", journal),
+    )
+    assert probe.seed_completed(workflow, old, ["a"], ["benign"]) == 1
+    assert probe.seed_completed(workflow, old, ["a"], ["benign"]) == 1
+    assert load_base(destination / "cells/a/benign/base").base_hash == base.base_hash
+    assert journal.response("acquisition-seed")["producer_identity"]["files"] == files
+    imported = json.loads((destination / "cells/a/benign/probe-result.json").read_text())
+    assert imported["search_call_count"] == 1 and imported["origin"]["kind"] == "reused"
+    operations = [
+        json.loads(path.read_text())["operation_id"] for path in journal.root.glob("*/request.json")
+    ]
+    assert not any(operation.startswith("acquisition/") for operation in operations)
+    (root / "prompts/analyzer-skillsbench.md").write_text("changed")
+    with pytest.raises(ValueError, match="seed_source_changed"):
+        probe.seed_completed(workflow, old, ["a"], ["benign"])
+
+
+def test_usage_replayed_records_do_not_double_count(tmp_path):
+    record = {"response_id": "once", "usage": {"input_tokens": 11, "output_tokens": 3}}
+    path = tmp_path / "usage.jsonl"
+    path.write_text(json.dumps(record) + "\n" + json.dumps(record) + "\n")
+    assert probe.usage_totals(path) == {
+        "requests": 1,
+        "input_tokens": 11,
+        "output_tokens": 3,
+        "cached_input_tokens": 0,
+    }

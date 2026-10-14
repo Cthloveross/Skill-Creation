@@ -45,3 +45,11 @@ experiments/tau-knowledge/skill-evolution/AUDIT-20261005.md
 experiments/tau-knowledge/skill-evolution/runs/skillsbench/*
 !experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff/
 !experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff/**
+# Public catalog recipes and progress; raw bases/requests remain local.
+!experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieve/
+experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieve/*
+!experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieve/HANDOFF.md
+!experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieve/REPORT.md
+!experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieve/catalog.json
+!experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieve/acquisition-summary.json
+!experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieve/progress.json

@@ -27,6 +27,6 @@ make skillsbench-prepare GPU=0 PREP_JOBS=8
 - [SkillsBench v8 部分结果：NoSkill独立对照、GPT配对进步与注入分析](docs/skillsbench-v8-results-20261013.md)
 - [SkillsBench：四类注入的实际文本、抽样、暴露与ASR判定](docs/skillsbench-injection-design.md)
 - [τ：97题 × 三条件交接](experiments/tau-knowledge/skill-evolution/runs/tau/HANDOFF.md)
-- [SkillsBench：v8 注入设计、retrieval pilot 与 765-cell 运行交接](experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md)
+- [SkillsBench：当前85题检索与后续运行交接](experiments/tau-knowledge/skill-evolution/runs/skillsbench/HANDOFF.md)
 
 [历史实验索引](experiments/tau-knowledge/skill-evolution/archive/index.json)收纳旧结果、配置与证据，旧checkpoint不续接新源码身份；[历史分析](experiments/tau-knowledge/skill-evolution/archive/HISTORY.md)不代表当前方法成绩。凭据、私有评分及原始模型日志不进入公开交接。

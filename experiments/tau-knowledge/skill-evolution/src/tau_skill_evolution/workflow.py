@@ -68,6 +68,7 @@ class Workflow:
         demo_task: str | None = None,
         interim_report: bool = True,
         runtime: str | None = None,
+        bases_from: Any = None,
     ) -> None:
         if spec.namespace != NAMESPACES[spec.experiment]:
             raise ValueError("historical methods are read-only; start a new current-method trial")
@@ -91,6 +92,31 @@ class Workflow:
             raise ValueError("run directory has no compatible Skill evolution checkpoint identity")
         self.identity = spec.identity
         self.experiment_identity = dict(self.identity)
+        self.bases_from = None
+        identity_path = self.root / "journal/identity.json"
+        if bases_from is None and identity_path.is_file():
+            saved = json.loads(identity_path.read_text())["identity"].get("frozen_bases")
+            if saved is not None:
+                bases_from = saved["source_catalog"]
+        if bases_from is not None:
+            from .retrieval_dataset import RetrievalDataset, load_catalog
+
+            if spec.experiment != "skillsbench":
+                raise ValueError("--bases-from requires SkillsBench")
+            self.bases_from = (
+                bases_from if isinstance(bases_from, RetrievalDataset) else load_catalog(bases_from)
+            )
+            self.identity = {
+                **self.identity,
+                "frozen_bases": self.bases_from.identity,
+                "identity_hash": digest(
+                    {
+                        "base": self.identity["identity_hash"],
+                        "frozen_bases": self.bases_from.identity,
+                    }
+                ),
+            }
+            self.experiment_identity = dict(self.identity)
         self.execution: dict[str, Any] = {"backend": "docker", "formal_matrix_result": False}
         if self.runtime != "docker":
             lock_path = (
@@ -161,6 +187,10 @@ class Workflow:
         ):
             return None
         operation = "retrieval-corpus-contract"
+        if self.bases_from is not None:
+            entry = self.bases_from.entries[task, arm]
+            contract = entry["retrieval_contract"]
+            return journal.dispatch(operation, contract, lambda: contract, external=False)
         if recovering_base and not journal.completed(operation):
             raise ValueError("retrieval_contract_missing_requires_new_trial")
         if not journal.completed(operation) and any(
@@ -326,6 +356,8 @@ class Workflow:
 
     def create(self, cells: tuple[tuple[str, str], ...]) -> None:
         self._validate_cells(cells)
+        if self.bases_from is not None:
+            self.bases_from.validate(self.spec, cells)
         for task, arm in cells:
             self._create_cell(task, arm)
             self._halt_on_authentication(task, arm)
@@ -364,6 +396,8 @@ class Workflow:
 
     def run(self, cells: tuple[tuple[str, str], ...]) -> dict[str, Any]:
         self._validate_cells(cells)
+        if self.bases_from is not None:
+            self.bases_from.validate(self.spec, cells)
         for cell in cells:
             # A new CLI invocation has passed authentication preflight. Preserve
             # prior failed chains without retrying their unknown requests, then
@@ -402,7 +436,9 @@ class Workflow:
         base: FrozenBase | None = None
         try:
             bank = self._bank(task, arm)
-            if (root / "base").exists():
+            if self.bases_from is not None:
+                base = self.bases_from.import_base(self.spec, task, arm, root / "base", journal)
+            elif (root / "base").exists():
                 self._bind_skillsbench_retrieval(task, arm, journal, recovering_base=True)
                 base = load_base(root / "base")
             else:
@@ -997,6 +1033,28 @@ class Workflow:
                         "base_tokens": base.token_count,
                         "stop_reason": base.stop_reason,
                     }
+                    if journal.completed("import-acquisition"):
+                        imported_acquisition = journal.response("import-acquisition")
+                        case["acquisition"].update(
+                            provenance={
+                                name: imported_acquisition[name]
+                                for name in (
+                                    "catalog_hash",
+                                    "entry_hash",
+                                    "source_catalog",
+                                    "producer",
+                                )
+                            },
+                            calls_performed_here=imported_acquisition["calls_performed_here"],
+                            producer_usage={
+                                name: imported_acquisition["source_metrics"].get(name)
+                                for name in (
+                                    "analyzer_request_count",
+                                    "search_call_count",
+                                    "budgets",
+                                )
+                            },
+                        )
                     if journal.completed("acquisition-summary"):
                         summary = journal.response("acquisition-summary")
                         case["acquisition"].update(
@@ -2260,24 +2318,32 @@ class Workflow:
             self.spec.experiment == "skillsbench"
             and report.get("namespace") == "skillsbench.skill-evolution.v8"
         )
+        whole_exposure = any(
+            ((case.get("acquisition") or {}).get("payload_exposure") or {}).get("document_unit")
+            == "source_document"
+            for case in report["cases"]
+        )
+        exposure_labels = "O/D/S" if whole_exposure else "O/C/S"
 
         def exposure_population(stage: dict[str, Any]) -> str:
+            whole = "document_occurrences" in stage
             return "; ".join(
                 f"{label} {stage[name]}"
                 for label, name in (
-                    ("O", "chunk_occurrences"),
-                    ("C", "unique_chunks"),
+                    ("O", "document_occurrences" if whole else "chunk_occurrences"),
+                    ("D" if whole else "C", "unique_documents" if whole else "unique_chunks"),
                     ("S", "unique_sources"),
                 )
             )
 
         def exposure_rate(stage: dict[str, Any], flag: str) -> str:
             rates = stage["rates"][flag]
+            whole = "document_occurrences" in rates
             return "; ".join(
                 f"{label} {rates[name]['numerator']}/{rates[name]['denominator']}"
                 for label, name in (
-                    ("O", "chunk_occurrences"),
-                    ("C", "unique_chunks"),
+                    ("O", "document_occurrences" if whole else "chunk_occurrences"),
+                    ("D" if whole else "C", "unique_documents" if whole else "unique_chunks"),
                     ("S", "unique_sources"),
                 )
             )
@@ -2421,8 +2487,14 @@ class Workflow:
             lines.extend(
                 [
                     "",
-                    "Acquisition exposure uses O for chunk occurrences, C for unique chunks, "
-                    "and S for unique source documents. Join it to Independent measurements "
+                    (
+                        "Acquisition exposure uses O for document occurrences, D for unique "
+                        "documents, and S for unique source documents. "
+                        if whole_exposure
+                        else "Acquisition exposure uses O for chunk occurrences, C for unique "
+                        "chunks, and S for unique source documents. "
+                    )
+                    + "Join it to Independent measurements "
                     "by task and condition: acquisition exposure records pre-package input "
                     "visibility, package-static persistence records features in the sealed "
                     "package, and fresh ASR records controlled behavior during independent "
@@ -2451,11 +2523,11 @@ class Workflow:
                     "Stage",
                     "Status",
                     "Reason",
-                    "Population (O/C/S)",
-                    "Source poisoned (O/C/S)",
-                    "Payload present (O/C/S)",
-                    "Partial payload (O/C/S)",
-                    "Full payload (O/C/S)",
+                    f"Population ({exposure_labels})",
+                    f"Source poisoned ({exposure_labels})",
+                    f"Payload present ({exposure_labels})",
+                    f"Partial payload ({exposure_labels})",
+                    f"Full payload ({exposure_labels})",
                 ),
                 (
                     (

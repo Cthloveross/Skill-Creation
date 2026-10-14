@@ -217,8 +217,9 @@ def build_command(
     task: str,
     arm: str,
     runtime: str = "docker",
+    bases_from: Path | None = None,
 ) -> list[str]:
-    return [
+    command = [
         *entrypoint(r2sp),
         "run",
         "--runtime",
@@ -235,6 +236,9 @@ def build_command(
         str(run_dir),
         "--no-interim-report",
     ]
+    if bases_from is not None:
+        command.extend(["--bases-from", str(bases_from)])
+    return command
 
 
 def build_env(base: dict[str, str], token_file: Path) -> dict[str, str]:
@@ -244,9 +248,14 @@ def build_env(base: dict[str, str], token_file: Path) -> dict[str, str]:
 
 
 def report_command(
-    r2sp: str | None, experiment: str, config: Path, run_dir: Path, runtime: str = "docker"
+    r2sp: str | None,
+    experiment: str,
+    config: Path,
+    run_dir: Path,
+    runtime: str = "docker",
+    bases_from: Path | None = None,
 ) -> list[str]:
-    return [
+    command = [
         *entrypoint(r2sp),
         "report",
         "--runtime",
@@ -258,6 +267,9 @@ def report_command(
         "--run-dir",
         str(run_dir),
     ]
+    if bases_from is not None:
+        command.extend(["--bases-from", str(bases_from)])
+    return command
 
 
 def run_report_process(
@@ -780,6 +792,7 @@ class Launcher:
             task,
             arm,
             runtime=self.runtime,
+            bases_from=getattr(self.args, "bases_from", None),
         )
         env = build_env(dict(os.environ), token_path(self.args.token_dir, account))
         log_file = log_path(self.args.run_dir, task, arm)
@@ -928,7 +941,14 @@ def _dry_run(args: argparse.Namespace, cells: list[tuple[str, str]]) -> None:
     for task, arm in cells:
         account = accounts[cell_key(task, arm)]
         command = build_command(
-            args.r2sp, args.experiment, args.config, args.run_dir, task, arm, runtime=args.runtime
+            args.r2sp,
+            args.experiment,
+            args.config,
+            args.run_dir,
+            task,
+            arm,
+            runtime=args.runtime,
+            bases_from=getattr(args, "bases_from", None),
         )
         print(
             f"{TOKEN_FILE_ENV}={token_path(args.token_dir, account)} "
@@ -944,6 +964,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--runtime", choices=("workspace", "docker"), default="docker")
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--run-dir", type=Path, required=True)
+    parser.add_argument(
+        "--bases-from",
+        type=Path,
+        help="reuse sealed SkillsBench acquisitions from a retrieval catalog",
+    )
     parser.add_argument("--token-dir", type=Path, required=True)
     parser.add_argument("--accounts", help="comma-separated; default: all <ID>.json in token-dir")
     parser.add_argument("--max-concurrent", type=int)
@@ -1016,6 +1041,25 @@ def main(argv: list[str] | None = None) -> int:
     if not cells and not args.report_only:
         parser.error("no cells selected")
 
+    frozen_bases = None
+    if args.bases_from is not None:
+        if args.experiment != "skillsbench":
+            parser.error("--bases-from requires --experiment skillsbench")
+        from tau_skill_evolution.retrieval_dataset import load_catalog
+
+        try:
+            dataset = load_catalog(args.bases_from)
+            missing = set(cells) - set(dataset.entries)
+            if missing:
+                raise ValueError(
+                    "retrieval catalog is missing selected cells: "
+                    + ", ".join(cell_key(task, arm) for task, arm in sorted(missing))
+                )
+            args.bases_from = dataset.path
+            frozen_bases = dataset.identity
+        except (OSError, ValueError) as exc:
+            parser.error(str(exc))
+
     if args.dry_run:
         _dry_run(args, cells)
         return 0
@@ -1042,10 +1086,14 @@ def main(argv: list[str] | None = None) -> int:
     previous_signals: tuple[Any, Any] | None = None
     try:
         launcher_identity = {"identity": spec.identity, "runtime": args.runtime}
+        if frozen_bases is not None:
+            launcher_identity["frozen_bases"] = frozen_bases
         identity_path = args.run_dir / "launcher-identity.json"
         _create_identity_exclusive(identity_path, launcher_identity)
         if json.loads(identity_path.read_text()) != launcher_identity:
-            parser.error("launcher configuration or runtime differs from the existing run")
+            parser.error(
+                "launcher configuration, runtime or frozen bases differs from the existing run"
+            )
         if args.report_only:
             previous = load_launcher_status(
                 args.run_dir / "launcher-status.json",
@@ -1073,7 +1121,12 @@ def main(argv: list[str] | None = None) -> int:
         signal.signal(signal.SIGINT, _stop)
         signal.signal(signal.SIGTERM, _stop)
         report = report_command(
-            args.r2sp, args.experiment, args.config, args.run_dir, runtime=args.runtime
+            args.r2sp,
+            args.experiment,
+            args.config,
+            args.run_dir,
+            runtime=args.runtime,
+            bases_from=args.bases_from,
         )
         try:
             initial = run_report_process(report, stop_requested=lambda: launcher.stop)

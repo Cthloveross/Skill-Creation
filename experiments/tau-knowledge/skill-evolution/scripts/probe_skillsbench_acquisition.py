@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the fixed SkillsBench v8 retrieval-only pilot and freeze B*.
+"""Collect reusable SkillsBench v8 FrozenBases without creating Skills.
 
 This entry point never creates, executes, verifies, or grades a Skill. The
 default reproduces the chunk pilot. The whole-document comparison rebuilds
@@ -18,6 +18,7 @@ import threading
 from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from statistics import median
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -163,18 +164,134 @@ def cell_metrics(
 
 
 def source_document_metrics(value: Any) -> Any:
-    """Use document units when the same exposure counter receives whole sources."""
-    names = {
-        "unique_chunks": "unique_documents",
-        "chunk_occurrences": "document_occurrences",
-        "rechunked": "indexed_documents",
-        "payload_chunk_ratio": "payload_document_ratio",
+    return _attack.source_document_metrics(value)
+
+
+def reference_coverage(source: Any, task: str, metrics: Mapping[str, Any]) -> dict[str, Any]:
+    """Host-only recall of the background originally associated with this task."""
+    reference = {
+        entry["document_id"]
+        for entry in source.manifest["files"]
+        if entry["task_id"] == task and entry["relative_path"].startswith("background/")
     }
-    if isinstance(value, Mapping):
-        return {names.get(key, key): source_document_metrics(item) for key, item in value.items()}
-    if isinstance(value, list):
-        return [source_document_metrics(item) for item in value]
-    return value
+    returned = {
+        result["document_id"] for search in metrics["searches"] for result in search["results"]
+    }
+    visible = {
+        identifier
+        for request in metrics["analyzer_requests"]
+        for identifier in request["visible_document_ids"]
+    }
+    selected = set(metrics["selected_document_ids"])
+    return {
+        "reference_document_ids": sorted(reference),
+        "retrieved": fraction(len(reference & returned), len(reference)),
+        "analyzer_visible": fraction(len(reference & visible), len(reference)),
+        "frozen": fraction(len(reference & selected), len(reference)),
+    }
+
+
+def seed_completed(
+    workflow: Any, source_run: Path, tasks: Sequence[str], arms: Sequence[str]
+) -> int:
+    """Import completed compatible acquisitions, never their operational journals."""
+    from tau_skill_evolution.artifacts import atomic_json, load_base, seal_base
+    from tau_skill_evolution.journal import Journal
+    from tau_skill_evolution.skillsbench import SkillsBenchSource
+    from tau_skill_evolution.skillsbench_whole_documents import retrieval_contract
+
+    source_run = source_run.resolve()
+    source = SkillsBenchSource(workflow.spec.root)
+    previous = json.loads((source_run / "logs/whole-document-config.json").read_text())
+    for name in ("acquisition", "provider", "retrieval", "embedding", "source"):
+        if previous[name] != workflow.spec.values[name]:
+            raise ValueError(f"acquisition_seed_{name}_changed")
+    if previous["roles"]["analyzer"] != workflow.spec.values["roles"]["analyzer"]:
+        raise ValueError("acquisition_seed_analyzer_changed")
+    count = 0
+    for task in tasks:
+        for arm in arms:
+            old = source_run / "cells" / task / arm
+            if not (old / "probe-result.json").is_file():
+                continue
+            metrics = json.loads((old / "probe-result.json").read_text())
+            if metrics.get("status") != "MEASURED":
+                continue
+            identity = json.loads((old / "journal/identity.json").read_text())["identity"]
+            prior = Journal(old / "journal", identity=identity)
+            protected = (
+                "src/tau_skill_evolution/acquisition.py",
+                "src/tau_skill_evolution/artifacts.py",
+                "src/tau_skill_evolution/model.py",
+                "src/tau_skill_evolution/journal.py",
+                "src/tau_skill_evolution/skillsbench.py",
+                "src/tau_skill_evolution/skillsbench_whole_documents.py",
+                "src/tau_skill_evolution/dense.py",
+                "prompts/analyzer.md",
+                "prompts/analyzer-skillsbench.md",
+            )
+            if any(
+                hashlib.sha256((workflow.spec.root / name).read_bytes()).hexdigest()
+                != identity["files"].get(name)
+                for name in protected
+            ):
+                raise ValueError("acquisition_seed_source_changed")
+            requests = [json.loads(path.read_text()) for path in prior.root.glob("*/request.json")]
+            if any(
+                item["operation_id"] in {"generate_initial", "creation"}
+                or prior.status(item["operation_id"]) != "COMPLETED"
+                for item in requests
+            ):
+                raise ValueError("acquisition_seed_incomplete_or_not_retrieval_only")
+            contract = {
+                "task_id": task,
+                "condition_id": arm,
+                "retrieval": retrieval_contract(workflow.spec, arm),
+            }
+            base = load_base(old / "base")
+            if (
+                prior.response("retrieval-corpus-contract") != contract
+                or metrics.get("retrieval_contract") != contract
+                or metrics.get("base_hash") != base.base_hash
+                or metrics.get("task_id") != task
+                or metrics.get("arm") != arm
+                or metrics.get("retrieval_unit") != "source_document"
+            ):
+                raise ValueError("acquisition_seed_artifact_mismatch")
+            producer = {
+                "provider": identity["provider"],
+                "analyzer": previous["roles"]["analyzer"],
+                "prompt_sha256": hashlib.sha256(workflow._prompt("analyzer").encode()).hexdigest(),
+                "budgets": previous["acquisition"],
+                "retrieval": previous["retrieval"],
+            }
+            seed = {
+                "producer_identity": identity,
+                "producer_acquisition": producer,
+                "source_run": str(source_run.relative_to(workflow.spec.root)),
+                "source_base_hash": base.base_hash,
+            }
+            root, journal = workflow._cell(task, arm)
+            if (root / "base").exists() and load_base(root / "base").base_hash != base.base_hash:
+                raise ValueError("acquisition_seed_destination_changed")
+            for operation, value in (
+                ("retrieval-corpus-contract", contract),
+                ("collect-base", base.to_dict()),
+                ("acquisition-summary", prior.response("acquisition-summary")),
+                ("acquisition-seed", seed),
+            ):
+                journal.dispatch(operation, value, lambda value=value: value, external=False)
+            seal_base(root / "base", base)
+            atomic_json(
+                root / "probe-result.json",
+                {
+                    **metrics,
+                    "reference_coverage": reference_coverage(source, task, metrics),
+                    "origin": {"kind": "reused", **seed},
+                },
+            )
+            count += 1
+    return count
 
 
 def collect_cell(
@@ -211,6 +328,11 @@ def collect_cell(
         }
         journal.dispatch("retrieval-corpus-contract", contract, lambda: contract, external=False)
         base = load_base(root / "base")
+        if journal.completed("acquisition-seed"):
+            result = json.loads((root / "probe-result.json").read_text())
+            if result["base_hash"] != base.base_hash or result["retrieval_contract"] != contract:
+                raise ValueError("acquisition_seed_result_changed")
+            return result
     else:
         view = SkillsBenchInputView(source, task)
         corpus = prepare_corpus(workflow.spec, task, arm)
@@ -274,8 +396,10 @@ def collect_cell(
     }
     result = cell_metrics(task, arm, base, journal, manifest, directory, condition, limits)
     result["retrieval_unit"] = "source_document" if whole_documents else "chunk"
+    result["origin"] = {"kind": "new"}
     if whole_documents:
         result = source_document_metrics(result)
+        result["reference_coverage"] = reference_coverage(source, task, result)
     atomic_json(root / "probe-result.json", result)
     return result
 
@@ -306,6 +430,7 @@ def write_summary(
     *,
     tasks: Sequence[str] | None = None,
     arms: Sequence[str] | None = None,
+    compact: bool = False,
 ) -> dict[str, Any]:
     from tau_skill_evolution.artifacts import atomic_json
 
@@ -342,7 +467,34 @@ def write_summary(
         "pilot_status": "COMPLETE" if len(measured) == len(expected) else "INCOMPLETE",
         "missing_cells": [list(cell) for cell in sorted(expected - observed)],
         "cells": sorted(
-            cells,
+            [
+                {
+                    **{
+                        key: cell.get(key)
+                        for key in (
+                            "task_id",
+                            "condition_id",
+                            "arm",
+                            "status",
+                            "base_hash",
+                            "stop_reason",
+                            "stop_detail",
+                            "base_tokens",
+                            "search_call_count",
+                            "analyzer_request_count",
+                            "reference_coverage",
+                            "error_type",
+                            "error_code",
+                            "authentication_status",
+                        )
+                    },
+                    "origin": cell.get("origin", {}).get("kind", "new"),
+                    "details": f"cells/{cell['task_id']}/{cell['arm']}/probe-result.json",
+                }
+                if compact
+                else cell
+                for cell in cells
+            ],
             key=lambda cell: (tasks.index(cell["task_id"]), arms.index(cell["arm"])),
         ),
         "conditions": {
@@ -350,6 +502,32 @@ def write_summary(
                 "measured_tasks": len(
                     selected := [cell for cell in measured if cell["arm"] == arm]
                 ),
+                "planned_tasks": len(tasks),
+                "unfinished_tasks": len(tasks) - len(selected),
+                "judged_sufficient": sum(cell["stop_reason"] == "sufficient" for cell in selected),
+                "reference_coverage": {
+                    stage: fraction(
+                        sum(
+                            cell["reference_coverage"][stage]["numerator"]
+                            for cell in selected
+                            if "reference_coverage" in cell
+                        ),
+                        sum(
+                            cell["reference_coverage"][stage]["denominator"]
+                            for cell in selected
+                            if "reference_coverage" in cell
+                        ),
+                    )
+                    for stage in ("retrieved", "analyzer_visible", "frozen")
+                },
+                "mean_search_calls": (
+                    sum(cell["search_call_count"] for cell in selected) / len(selected)
+                    if selected
+                    else None
+                ),
+                "median_base_tokens": median(cell["base_tokens"] for cell in selected)
+                if selected
+                else None,
                 "source_injection": _constant_metric(selected, "pool", "source_injection"),
                 ratio: _constant_metric(selected, "pool", ratio),
                 "analyzer_payload_exposed_tasks": fraction(
@@ -390,6 +568,106 @@ def write_summary(
     return result
 
 
+def write_progress(workflow: Any, tasks: Sequence[str], arms: Sequence[str]) -> None:
+    from tau_skill_evolution.artifacts import atomic_json
+    from tau_skill_evolution.retrieval_dataset import write_catalog
+
+    summary = write_summary(workflow, tasks=tasks, arms=arms, compact=True)
+    catalog = write_catalog(workflow, tasks, arms)
+    reused = sum(
+        cell["origin"] == "reused" for cell in summary["cells"] if cell["status"] == "MEASURED"
+    )
+    usage = usage_totals(workflow.root / "usage.jsonl")
+    reused_runs = {
+        json.loads(path.read_text()).get("origin", {}).get("source_run")
+        for path in workflow.root.glob("cells/*/*/probe-result.json")
+    } - {None}
+    producer_usage = [usage_totals(workflow.spec.root / run / "usage.jsonl") for run in reused_runs]
+    summary["usage"] = {
+        "new_collection": usage,
+        "reused_source_runs": sorted(reused_runs),
+        "reused_source_usage": {key: sum(item[key] for item in producer_usage) for key in usage},
+    }
+    atomic_json(workflow.root / "acquisition-summary.json", summary)
+    atomic_json(
+        workflow.root / "progress.json",
+        {
+            "status": summary["pilot_status"],
+            "expected": len(tasks) * len(arms),
+            "frozen": catalog["sealed_cell_count"],
+            "reused": reused,
+            "newly_frozen": catalog["sealed_cell_count"] - reused,
+            "not_completed": len(tasks) * len(arms) - catalog["sealed_cell_count"],
+            "catalog_hash": catalog["catalog_hash"],
+            "later_stages": "NOT_MEASURED",
+        },
+    )
+    rows = [
+        "# SkillsBench retrieval results",
+        "",
+        f"{catalog['sealed_cell_count']}/{len(tasks) * len(arms)} bases frozen; "
+        f"{reused} reused, {catalog['sealed_cell_count'] - reused} newly collected. "
+        "This is retrieval only; Skill creation, utility and execution ASR are NOT_MEASURED.",
+        "",
+        "| Condition | Planned | Frozen | Unfinished | Sufficient | Reference found | "
+        "Reference retained | Payload seen | Payload retained |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+
+    def ratio(value: Any) -> str:
+        return f"{value['numerator']}/{value['denominator']}" if value else "—"
+
+    for arm, value in summary["conditions"].items():
+        rows.append(
+            f"| {arm} | {len(tasks)} | {value['measured_tasks']} | {value['unfinished_tasks']} | "
+            f"{value['judged_sufficient']} | {ratio(value['reference_coverage']['retrieved'])} | "
+            f"{ratio(value['reference_coverage']['frozen'])} | "
+            f"{ratio(value['analyzer_full_payload_exposed_tasks'])} | "
+            f"{ratio(value['frozen_full_payload_tasks'])} |"
+        )
+    rows.extend(
+        [
+            "",
+            "Reference and payload ratios use completed acquisitions only; the Unfinished column "
+            "preserves the full planned denominator. Reference coverage is host-side and is never "
+            "supplied to the Analyzer.",
+            "",
+            "Full queries, scores, selection reasons and stopping budgets are in catalog.json "
+            "entries.source_metrics. Each recipe reconstructs exactly the sealed base from pinned "
+            "public data without new Analyzer calls. Insufficient frozen bases remain reusable "
+            "and keep their original stop reason.",
+            "",
+            "Input discovery reads public files supplied in the pinned task source. It is not a "
+            "snapshot of every file produced by building the official task container. General "
+            "syntax/algorithm gaps and Analyzer sufficiency judgments remain semantic limitations.",
+            "",
+        ]
+    )
+    temporary = workflow.root / ".REPORT.md.tmp"
+    temporary.write_text("\n".join(rows), encoding="utf-8")
+    temporary.replace(workflow.root / "REPORT.md")
+
+
+def usage_totals(path: Path) -> dict[str, int]:
+    counts = {"requests": 0, "input_tokens": 0, "output_tokens": 0, "cached_input_tokens": 0}
+    if not path.exists():
+        return counts
+    seen = set()
+    for line in path.read_text().splitlines():
+        record = json.loads(line)
+        if record.get("response_id") in seen:
+            continue
+        seen.add(record.get("response_id"))
+        counts["requests"] += 1
+        usage = record["usage"]
+        counts["input_tokens"] += usage.get("input_tokens", usage.get("prompt_tokens", 0))
+        counts["output_tokens"] += usage.get("output_tokens", usage.get("completion_tokens", 0))
+        counts["cached_input_tokens"] += usage.get("input_tokens_details", {}).get(
+            "cached_tokens", 0
+        )
+    return counts
+
+
 def run_pilot_cells(
     tasks: Sequence[str],
     arms: Sequence[str],
@@ -397,6 +675,7 @@ def run_pilot_cells(
     *,
     max_workers: int = 3,
     parallel_cells: bool = False,
+    on_progress: Callable[[], None] | None = None,
 ) -> list[Any]:
     """Keep the old serial contract or schedule fully isolated comparison cells."""
     if not 1 <= max_workers <= (6 if parallel_cells else 3):
@@ -434,6 +713,8 @@ def run_pilot_cells(
         try:
             for future in as_completed(futures):
                 results.extend(future.result())
+                if on_progress is not None:
+                    on_progress()
         except BaseException:
             stop.set()
             for future in futures:
@@ -459,6 +740,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--jobs", type=int, default=3)
     parser.add_argument("--whole-documents", action="store_true")
     parser.add_argument(
+        "--all-tasks", action="store_true", help="collect all 85 tasks in five conditions"
+    )
+    parser.add_argument(
+        "--reuse-from", type=Path, help="reuse compatible completed whole-document acquisitions"
+    )
+    parser.add_argument(
         "--embedding-endpoint", help="separate pinned Qwen service with an 8192-token limit"
     )
     args = parser.parse_args(argv)
@@ -471,7 +758,9 @@ def main(argv: list[str] | None = None) -> int:
         or spec.provider_settings["transport"] != "bedrock-responses"
     ):
         parser.error("probe requires a SkillsBench v8 Bedrock Responses configuration")
-    tasks, arms = DEFAULT_TASKS, PILOT_ARMS
+    tasks, arms = tuple(spec.tasks) if args.all_tasks else DEFAULT_TASKS, PILOT_ARMS
+    if (args.all_tasks or args.reuse_from) and not args.whole_documents:
+        parser.error("--all-tasks and --reuse-from require --whole-documents")
     if set(tasks) - set(spec.tasks) or set(arms) - set(spec.arms):
         parser.error("selected tasks and conditions must belong to the frozen v8 matrix")
     if not 1 <= args.jobs <= (6 if args.whole_documents else 3):
@@ -515,7 +804,6 @@ def main(argv: list[str] | None = None) -> int:
                 validate_pool(spec.root, source, directory=directory)
             corpus = prepare_corpus(spec, tasks[0], arm)
             corpus.close()
-        admission = bedrock_authentication(spec)
         workflow = Workflow(spec, args.run_dir, runtime="docker", interim_report=False)
         workflow.journal.dispatch(
             "acquisition-probe-contract",
@@ -527,10 +815,16 @@ def main(argv: list[str] | None = None) -> int:
                 "max_parallel_cells" if args.whole_documents else "max_parallel_tasks": args.jobs,
                 "serial_conditions_within_task": not args.whole_documents,
                 "retrieval_unit": "source_document" if args.whole_documents else "chunk",
+                "reuse_from": str(args.reuse_from.resolve()) if args.reuse_from else None,
             },
             lambda: {"stage": "acquisition-only", "expected_acquisitions": len(cells)},
             external=False,
         )
+        if args.reuse_from:
+            seed_completed(workflow, args.reuse_from, tasks, arms)
+        if args.all_tasks:
+            write_progress(workflow, tasks, arms)
+        admission = bedrock_authentication(spec)
         atomic_json(
             workflow.root / "acquisition-admission.json",
             {"catalog": admission, "docker_required": False},
@@ -578,10 +872,20 @@ def main(argv: list[str] | None = None) -> int:
 
         try:
             run_pilot_cells(
-                tasks, arms, collect, max_workers=args.jobs, parallel_cells=args.whole_documents
+                tasks,
+                arms,
+                collect,
+                max_workers=args.jobs,
+                parallel_cells=args.whole_documents,
+                on_progress=(lambda: write_progress(workflow, tasks, arms))
+                if args.all_tasks
+                else None,
             )
         finally:
-            write_summary(workflow, tasks=tasks, arms=arms)
+            if args.all_tasks:
+                write_progress(workflow, tasks, arms)
+            else:
+                write_summary(workflow, tasks=tasks, arms=arms)
     return 0
 
 

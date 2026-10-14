@@ -50,6 +50,7 @@ ACQUISITION_STAGES = (
     "analyzer_visible",
     "frozen_base",
 )
+WHOLE_DOCUMENT_SCHEMA = "skillsbench.pool.whole-documents.research.v1"
 ACQUISITION_HOST_ONLY_MODEL_KEYS = frozenset(
     {
         "condition_id",
@@ -66,6 +67,8 @@ ACQUISITION_HOST_ONLY_MODEL_KEYS = frozenset(
         "source_record_sha256",
         "source_inserted_text_sha256",
         "adapted_template_sha256",
+        "source_sha256",
+        "insertion",
     }
 )
 
@@ -195,6 +198,29 @@ def acquisition_exposure(
     }
 
 
+def source_document_metrics(value: Any) -> Any:
+    """Name whole-source counters in document units without changing their algorithm."""
+    names = {
+        "unique_chunks": "unique_documents",
+        "chunk_occurrences": "document_occurrences",
+        "rechunked": "indexed_documents",
+        "payload_chunk_ratio": "payload_document_ratio",
+    }
+    if isinstance(value, Mapping):
+        return {names.get(key, key): source_document_metrics(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [source_document_metrics(item) for item in value]
+    return value
+
+
+def _acquisition_whole_documents(manifest: Mapping[str, Any]) -> bool:
+    whole_schema = manifest.get("schema") == WHOLE_DOCUMENT_SCHEMA
+    whole_unit = manifest.get("document_unit") == "source_document"
+    if whole_schema != whole_unit or (whole_schema and manifest.get("chunking") is not False):
+        raise ValueError("skillsbench_acquisition_manifest_invalid")
+    return whole_schema
+
+
 def acquisition_journal_records(journal: Any) -> list[dict[str, Any]]:
     return [
         json.loads(path.read_text(encoding="utf-8")) for path in journal.root.glob("*/request.json")
@@ -231,6 +257,7 @@ def load_acquisition_pages(
     entries = manifest.get("pages")
     if not isinstance(entries, list):
         raise ValueError("skillsbench_acquisition_manifest_invalid")
+    whole_documents = _acquisition_whole_documents(manifest) if verify else False
     directory = Path(directory)
     sealed_directory = directory.resolve()
     result: dict[str, dict[str, Any]] = {}
@@ -260,7 +287,11 @@ def load_acquisition_pages(
             content_sha256 = value.get("content_sha256")
             if (
                 entry.get("page_id") != identifier
-                or not identifier.startswith(source + "::")
+                or (
+                    identifier != source
+                    if whole_documents
+                    else not identifier.startswith(source + "::")
+                )
                 or not isinstance(body, str)
                 or not isinstance(content_sha256, str)
                 or _sha256(body.encode()) != content_sha256
@@ -276,6 +307,31 @@ def load_acquisition_pages(
                 )
             ):
                 raise ValueError("skillsbench_acquisition_page_changed")
+            if whole_documents and (
+                any(
+                    type(value.get(flag)) is not bool
+                    for flag in ("source_poisoned", "payload_present", "full_payload_present")
+                )
+                or value["source_poisoned"] != value["payload_present"]
+                or value["payload_present"] != value["full_payload_present"]
+            ):
+                raise ValueError("skillsbench_acquisition_page_changed")
+            if whole_documents and acquisition_page_flag(value, "payload_present"):
+                span = value.get("insertion")
+                raw = body.encode()
+                if (
+                    not isinstance(span, Mapping)
+                    or type(span.get("payload_byte_start")) is not int
+                    or type(span.get("payload_byte_end")) is not int
+                    or not 0 <= span["payload_byte_start"] < span["payload_byte_end"] <= len(raw)
+                    or not isinstance(value.get("payload_sha256"), str)
+                    or span.get("payload_sha256") != value["payload_sha256"]
+                    or _sha256(raw[span["payload_byte_start"] : span["payload_byte_end"]])
+                    != value["payload_sha256"]
+                    or not acquisition_page_flag(value, "full_payload_present")
+                    or not acquisition_page_flag(value, "source_poisoned")
+                ):
+                    raise ValueError("skillsbench_acquisition_page_changed")
         result[identifier] = value
     return result
 
@@ -363,6 +419,96 @@ def collect_acquisition_exposure(
     }
 
 
+def _imported_acquisition_exposure(
+    base: Any, journal: Any, pages: Mapping[str, Mapping[str, Any]], binding: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Verify producer observations while keeping consumer call counts explicit."""
+    if any(
+        request["operation_id"].startswith("acquisition/")
+        for request in acquisition_journal_records(journal)
+    ):
+        raise ValueError("skillsbench_acquisition_import_invalid")
+    return validate_imported_acquisition(
+        base, journal.response("import-acquisition"), pages, binding
+    )
+
+
+def validate_imported_acquisition(
+    base: Any,
+    imported: Mapping[str, Any],
+    pages: Mapping[str, Mapping[str, Any]],
+    binding: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Validate portable producer exposure before any consumer model is dispatched."""
+    metrics = imported.get("source_metrics") if isinstance(imported, Mapping) else None
+    selected = [item["document_id"] for item in base.documents] if base is not None else None
+    if (
+        not isinstance(metrics, Mapping)
+        or base is None
+        or imported.get("document_unit") != "source_document"
+        or imported.get("task_id") != binding.get("task_id")
+        or imported.get("condition_id") != binding.get("condition_id")
+        or imported.get("base_hash") != base.base_hash
+        or metrics.get("task_id") != binding.get("task_id")
+        or metrics.get("condition_id") != binding.get("condition_id")
+        or metrics.get("base_hash") != base.base_hash
+        or metrics.get("pool_hash") != binding["retrieval"]["corpus_hash"]
+        or metrics.get("retrieval_contract") != binding
+        or metrics.get("retrieval_unit") != "source_document"
+        or metrics.get("status") != "MEASURED"
+        or metrics.get("model_input_host_metadata_absent") is not True
+        or metrics.get("selected_document_ids") != selected
+        or imported.get("calls_performed_here")
+        != {"analyzer": 0, "search": 0, "read_only": 0, "clarify": 0}
+        or any(
+            key not in imported
+            for key in ("catalog_hash", "entry_hash", "source_catalog", "producer")
+        )
+    ):
+        raise ValueError("skillsbench_acquisition_import_invalid")
+    try:
+        returned = [
+            result["document_id"] for search in metrics["searches"] for result in search["results"]
+        ]
+        visible = [
+            identifier
+            for request in metrics["analyzer_requests"]
+            for identifier in request["visible_document_ids"]
+        ]
+        expected = {
+            "corpus": source_document_metrics(acquisition_exposure(tuple(pages), pages)),
+            "search_returns": source_document_metrics(acquisition_exposure(returned, pages)),
+            "analyzer_visible": source_document_metrics(acquisition_exposure(visible, pages)),
+            "frozen_base": source_document_metrics(acquisition_exposure(selected, pages)),
+        }
+        recorded = source_document_metrics(
+            {
+                "corpus": metrics["pool"]["indexed_documents"],
+                "search_returns": metrics["retrieval_return_occurrences"],
+                "analyzer_visible": metrics["analyzer_visible_occurrences"],
+                "frozen_base": metrics["frozen_base"],
+            }
+        )
+    except (KeyError, TypeError) as exc:
+        raise ValueError("skillsbench_acquisition_import_invalid") from exc
+    if expected != recorded:
+        raise ValueError("skillsbench_acquisition_import_exposure_changed")
+    return {
+        "status": "MEASURED",
+        "document_unit": "source_document",
+        "flags": list(ACQUISITION_FLAGS),
+        "stages": {name: {"status": "MEASURED", **value} for name, value in expected.items()},
+        "provenance": {
+            "kind": "imported_acquisition",
+            **{
+                key: imported[key]
+                for key in ("catalog_hash", "entry_hash", "source_catalog", "producer")
+            },
+        },
+        "calls_performed_here": dict(imported["calls_performed_here"]),
+    }
+
+
 def acquisition_payload_exposure(root: Path, base: Any, journal: Any) -> dict[str, Any]:
     """Load and measure the pool bound by this cell's retrieval contract."""
     if not journal.completed("retrieval-corpus-contract"):
@@ -392,6 +538,13 @@ def acquisition_payload_exposure(root: Path, base: Any, journal: Any) -> dict[st
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ValueError("skillsbench_acquisition_manifest_invalid") from exc
     pages = manifest.get("pages") if isinstance(manifest, Mapping) else None
+    whole_documents = (
+        _acquisition_whole_documents(manifest) if isinstance(manifest, Mapping) else False
+    )
+    payload_count = "payload_document_count" if whole_documents else "payload_chunk_count"
+    full_payload_count = (
+        "full_payload_document_count" if whole_documents else "full_payload_chunk_count"
+    )
     if (
         not isinstance(manifest, Mapping)
         or _sha256(raw_manifest) != retrieval.get("pool_manifest_sha256")
@@ -401,8 +554,20 @@ def acquisition_payload_exposure(root: Path, base: Any, journal: Any) -> dict[st
         or not isinstance(pages, list)
         or type(retrieval.get("page_count")) is not int
         or len(pages) != retrieval["page_count"]
-        or type(retrieval.get("payload_chunk_count")) is not int
-        or type(retrieval.get("full_payload_chunk_count")) is not int
+        or type(retrieval.get(payload_count)) is not int
+        or type(retrieval.get(full_payload_count)) is not int
+        or (
+            whole_documents
+            and (
+                retrieval.get("document_unit") != "source_document"
+                or retrieval.get("chunking") is not False
+                or type(retrieval.get("source_documents")) is not int
+                or retrieval["source_documents"] != len(pages)
+                or type(manifest.get("source_documents")) is not int
+                or manifest["source_documents"] != len(pages)
+            )
+        )
+        or (not whole_documents and retrieval.get("document_unit") == "source_document")
     ):
         raise ValueError("skillsbench_acquisition_manifest_changed")
     condition_id = bound_condition.get("condition_id")
@@ -414,15 +579,19 @@ def acquisition_payload_exposure(root: Path, base: Any, journal: Any) -> dict[st
             injection.get(field) != bound_condition.get(field)
             for field in ("condition_id", "profile", "level", "target_document_ids")
         )
-    if condition_changed:
+    if condition_changed or (whole_documents and manifest.get("condition_id") != condition_id):
         raise ValueError("skillsbench_acquisition_condition_pool_mismatch")
     loaded = load_acquisition_pages(manifest, directory, verify=True)
-    if retrieval["payload_chunk_count"] != sum(
+    if retrieval[payload_count] != sum(
         acquisition_page_flag(page, "payload_present") for page in loaded.values()
-    ) or retrieval["full_payload_chunk_count"] != sum(
+    ) or retrieval[full_payload_count] != sum(
         acquisition_page_flag(page, "full_payload_present") for page in loaded.values()
     ):
         raise ValueError("skillsbench_acquisition_manifest_changed")
+    if journal.completed("import-acquisition"):
+        if not whole_documents:
+            raise ValueError("skillsbench_acquisition_import_invalid")
+        return _imported_acquisition_exposure(base, journal, loaded, binding)
     trace = collect_acquisition_exposure(base, journal, loaded)
     available = {
         "corpus": True,
@@ -448,6 +617,8 @@ def acquisition_payload_exposure(root: Path, base: Any, journal: Any) -> dict[st
     }
     if not all(available.values()):
         result["reason"] = "acquisition_incomplete"
+    if whole_documents:
+        result = {"document_unit": "source_document", **source_document_metrics(result)}
     return result
 
 

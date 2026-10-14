@@ -141,7 +141,14 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="evaluate: rescore sealed SkillsBench versions from a separate run",
     )
+    parser.add_argument(
+        "--bases-from",
+        type=Path,
+        help="create/run: reuse sealed SkillsBench acquisitions from a retrieval catalog",
+    )
     args = parser.parse_args(argv)
+    if args.bases_from and args.command not in {"create", "run", "report"}:
+        parser.error("--bases-from requires create, run, or report")
     if args.no_skill and args.command != "evaluate":
         parser.error("--no-skill is only valid with evaluate")
     if args.bundles_from and (args.command != "evaluate" or args.no_skill):
@@ -158,6 +165,8 @@ def main(argv: list[str] | None = None) -> int:
             else DEFAULT_CONFIG
         )
         spec = load_spec(config)
+        if args.bases_from and spec.experiment != "skillsbench":
+            parser.error("--bases-from requires --experiment skillsbench")
         if (
             not args.demo
             and args.runtime is None
@@ -219,6 +228,7 @@ def main(argv: list[str] | None = None) -> int:
                 demo_task=args.task[0] if args.demo else None,
                 interim_report=interim_report,
                 runtime=runtime,
+                bases_from=args.bases_from,
             )
             if args.command == "run":
                 result = workflow.run(cells)

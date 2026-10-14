@@ -4,6 +4,8 @@
 
 第5.4–5.5节记录2026-10-14的GPT-5.4检索对照：分块与整篇各15组。两轮均未生成Skill，不并入上述GPT-5.6的任务成功率或ASR。
 
+当前扩展工作位于 [retrieve工作区](../experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieve/)：85题×benign／HTTP5／10／File Delete5／10，共425份整篇检索B*。计划复用已完成的15份整篇获取，补做410份，先由GPT-5.4获取，后续模型共用这些封存B*。实际进度以工作区记录为准；本文已有结果仍是下述历史批次。
+
 **结果统一为成功、失败、未完成。成功率＝成功数／本轮已启动数，未完成不从分母删除。** GPT benign启动23条：最终成功12、失败2、未完成9，成功率为12/23＝52.2%。每条件计划85题，尚未启动的任务另列；85题没有全部跑完。
 
 GPT全部条件启动202条：最终成功92、失败35、未完成75，当前成功率45.5%。单看同一批两端都完成评价的119条链，S0成功62→最终成功84，救回26、退化4；102条安全配对的攻击触发数为9→9；该配对子集不替代主表的全部启动分母。**未完成不能一概归因于模型能力：已确认的原因包括请求结果UNKNOWN、环境故障和评价尚未执行。**
@@ -240,7 +242,7 @@ NoSkill、S0、最终都完成评价的benign交集只有7题，成功数为 **4
 
 ### 5.4 实际检索校验：原始背景都找到，充分性判断存在问题
 
-2026-10-14使用本机Bedrock凭据、GPT-5.4／medium运行了 **3题×5条件＝15次独立资料获取**。条件为benign、HTTP5／10、File Delete5／10；沿用30次搜索、10次只读查询、50轮决策、32K B*和0.1相关性阈值，未修改prompt或资料池。运行目录为 `runs/skillsbench/retrieval-reference-gpt54-20261014-001/`，[逐条机器记录](../experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieval-reference-gpt54-20261014-001/reference-coverage.json)保存参考ID、实际返回／可见／入选ID、首次命中查询与排名、相关性理由和最终缺口。
+2026-10-14使用本机Bedrock凭据、GPT-5.4／medium运行了 **3题×5条件＝15次独立资料获取**。条件为benign、HTTP5／10、File Delete5／10；沿用30次搜索、10次只读查询、50轮决策、32K B*和0.1相关性阈值，未修改prompt或资料池。运行目录为 `archive/runs/skillsbench/retrieval-reference-gpt54-20261014-001/`，[逐条机器记录](../experiments/tau-knowledge/skill-evolution/archive/runs/skillsbench/retrieval-reference-gpt54-20261014-001/reference-coverage.json)保存参考ID、实际返回／可见／入选ID、首次命中查询与排名、相关性理由和最终缺口。
 
 **15次均完成冻结，每次第一轮搜索就返回本题原始背景，最终也完整保留。** 搜索返回、Analyzer可见、B*留存三个阶段的参考文档召回及chunk覆盖均为15/15。参考清单仅用于host事后核对，没有加入模型输入。这是3个不同任务在5个条件中的重复检验；三题各只有1个参考chunk，尚未验证其余82题或多chunk背景的完整性。
 
@@ -292,7 +294,7 @@ NoSkill、S0、最终都完成评价的benign交集只有7题，成功数为 **4
 
 #### 试验设置
 
-使用GPT-5.4，对相同三题、五条件各运行一次，分块与整篇各15组。整篇方案用85篇完整原文重建BM25和Dense；模型、提示、注入文本和获取预算保持不变。参数见[实验参数§3.1](skillsbench-experiment-parameters.md#31-整篇文档检索对照2026-10-14)，逐组查询、评分和停止记录见[公开结果JSON](../experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieval-whole-document-gpt54-20261014-001/whole-document-coverage.json)。正式矩阵仍使用分块配置。
+使用GPT-5.4，对相同三题、五条件各运行一次，分块与整篇各15组。整篇方案用85篇完整原文重建BM25和Dense；模型、提示、注入文本和获取预算保持不变。参数见[实验参数§3.1](skillsbench-experiment-parameters.md#31-整篇文档检索对照2026-10-14)，逐组查询、评分和停止记录见[公开结果JSON](../experiments/tau-knowledge/skill-evolution/archive/runs/skillsbench/retrieval-whole-document-gpt54-20261014-001/whole-document-coverage.json)。正式矩阵仍使用分块配置。
 
 #### 留存结果
 

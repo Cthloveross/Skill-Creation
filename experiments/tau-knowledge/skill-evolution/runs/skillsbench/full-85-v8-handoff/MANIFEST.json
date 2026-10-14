@@ -135,7 +135,7 @@
   ],
   "source_commitment": {
     "schema": "skillsbench.runtime-source-commitment.v1",
-    "spec_identity_hash": "94d5af089de760502722c5b39a9f2f3a3f957a73ba88854e8b76b0c81b0f2621",
+    "spec_identity_hash": "ddac855dbe3203f513defd193743b5c13c1f688b5b4fe82a40a11513b928d0b7",
     "canonical_files": [
       {
         "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff/operator.sh",
@@ -143,7 +143,7 @@
       },
       {
         "path": "experiments/tau-knowledge/skill-evolution/scripts/launch_matrix.py",
-        "sha256": "897a8fe3ce5721ba4e91a3a9cae9bbccbbd7f0764ce89993fdc72df40ba18e69"
+        "sha256": "7a9fded8bc9b18f9c4b4575ed5d37753b62884cab3bd25a7c36454f9fc5d4298"
       },
       {
         "path": "experiments/tau-knowledge/skill-evolution/scripts/prepare_skillsbench.py",

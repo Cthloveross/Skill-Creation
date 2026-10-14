@@ -377,6 +377,7 @@ def test_cli_run_with_single_cell_locks_only_that_cell(tmp_path, monkeypatch, ca
         "demo_task": None,
         "interim_report": False,
         "runtime": "docker",
+        "bases_from": None,
     }
     assert seen["cells"] == ((task, "benign"),)
     code = cli.main(["run", "--run-dir", str(run_dir), "--task", task])
@@ -386,6 +387,7 @@ def test_cli_run_with_single_cell_locks_only_that_cell(tmp_path, monkeypatch, ca
         "demo_task": None,
         "interim_report": True,
         "runtime": "docker",
+        "bases_from": None,
     }
     assert len(seen["cells"]) == 3
 
@@ -1733,6 +1735,179 @@ def test_launcher_binds_default_docker_and_rejects_runtime_change(tmp_path, monk
     with pytest.raises(SystemExit) as error:
         launcher.main([*argv, "--runtime", "workspace"])
     assert error.value.code == 2 and len(calls) == 1
+
+
+def test_launcher_catalog_reaches_reports_and_each_cell_and_binds_resume(tmp_path, monkeypatch):
+    from tau_skill_evolution import retrieval_dataset
+    from tau_skill_evolution import spec as spec_module
+
+    launcher = _load_script("launch_matrix")
+    cells = [("task-a", "benign"), ("task-b", "benign")]
+    spec = types.SimpleNamespace(
+        experiment="skillsbench",
+        tasks=("task-a", "task-b"),
+        arms=("benign",),
+        cells=cells,
+        identity={"identity_hash": "consumer-method"},
+    )
+    catalog_path = tmp_path / "dataset/catalog.json"
+    catalog = types.SimpleNamespace(
+        path=catalog_path,
+        entries=dict.fromkeys(cells),
+        identity={"source_catalog": str(catalog_path), "catalog_hash": "sealed-bases"},
+    )
+    monkeypatch.setattr(spec_module, "load_spec", lambda _path: spec)
+    monkeypatch.setattr(retrieval_dataset, "load_catalog", lambda _path: catalog)
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    _write_token(token_dir / "111.json", "offline-token")
+    reports, children = [], []
+
+    def report(command, **kwargs):
+        reports.append(command)
+        return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    def spawn(command, **kwargs):
+        children.append(command)
+        return types.SimpleNamespace(pid=1234 + len(children), poll=lambda: 0)
+
+    monkeypatch.setattr(launcher, "run_report_process", report)
+    monkeypatch.setattr(launcher.subprocess, "Popen", spawn)
+    monkeypatch.setattr(launcher.time, "sleep", lambda _seconds: None)
+    argv = [
+        "--experiment", "skillsbench", "--config", str(tmp_path / "config.yaml"),
+        "--run-dir", str(tmp_path / "run"), "--token-dir", str(token_dir),
+        "--bases-from", str(catalog_path.parent), "--max-concurrent", "1",
+    ]  # fmt: skip
+    assert launcher.main(argv) == 0
+    assert len(reports) == len(children) == 2
+    for command in [*reports, *children]:
+        assert command[command.index("--bases-from") + 1] == str(catalog_path)
+    assert [command[command.index("--task") + 1] for command in children] == ["task-a", "task-b"]
+    identity = json.loads((tmp_path / "run/launcher-identity.json").read_text())
+    assert identity["frozen_bases"] == catalog.identity
+    assert identity["identity"] == spec.identity
+
+    # The same catalog path cannot silently switch bases in an existing run.
+    catalog.identity = {**catalog.identity, "catalog_hash": "different-bases"}
+    with pytest.raises(SystemExit) as error:
+        launcher.main(argv)
+    assert error.value.code == 2 and len(reports) == len(children) == 2
+
+
+@pytest.mark.parametrize("failure", ["tau", "missing-cell", "invalid-catalog"])
+def test_launcher_rejects_incompatible_catalog_before_run_creation(tmp_path, monkeypatch, failure):
+    from tau_skill_evolution import retrieval_dataset
+    from tau_skill_evolution import spec as spec_module
+
+    launcher = _load_script("launch_matrix")
+    experiment = "tau" if failure == "tau" else "skillsbench"
+    monkeypatch.setattr(
+        spec_module,
+        "load_spec",
+        lambda _path: types.SimpleNamespace(
+            experiment=experiment,
+            tasks=("task",),
+            arms=("benign",),
+            cells=[("task", "benign")],
+            identity={"identity_hash": "method"},
+        ),
+    )
+
+    def load(_path):
+        if failure == "invalid-catalog":
+            raise ValueError("retrieval_dataset_catalog_invalid")
+        return types.SimpleNamespace(path=tmp_path / "catalog.json", entries={})
+
+    monkeypatch.setattr(retrieval_dataset, "load_catalog", load)
+    with pytest.raises(SystemExit) as error:
+        launcher.main(
+            [
+                "--experiment",
+                experiment,
+                "--config",
+                str(tmp_path / "config.yaml"),
+                "--run-dir",
+                str(tmp_path / "run"),
+                "--token-dir",
+                str(tmp_path / "tokens"),
+                "--accounts",
+                "111",
+                "--bases-from",
+                str(tmp_path / "catalog.json"),
+            ]  # fmt: skip
+        )
+    assert error.value.code == 2 and not (tmp_path / "run").exists()
+
+
+def test_launcher_report_only_forwards_catalog_without_cell_or_token_admission(
+    tmp_path, monkeypatch
+):
+    from tau_skill_evolution import retrieval_dataset
+    from tau_skill_evolution import spec as spec_module
+
+    launcher = _load_script("launch_matrix")
+    config, run_dir, catalog_path = (
+        tmp_path / "config.yaml",
+        tmp_path / "run",
+        tmp_path / "catalog.json",
+    )
+    monkeypatch.setattr(
+        spec_module,
+        "load_spec",
+        lambda _path: types.SimpleNamespace(
+            experiment="skillsbench",
+            tasks=("task",),
+            arms=("benign",),
+            cells=[("task", "benign")],
+            identity={"identity_hash": "method"},
+        ),
+    )
+    monkeypatch.setattr(
+        retrieval_dataset,
+        "load_catalog",
+        lambda _path: types.SimpleNamespace(
+            path=catalog_path, entries={}, identity={"catalog_hash": "retained-bases"}
+        ),
+    )
+    run_dir.mkdir()
+    (run_dir / "launcher-status.json").write_text(
+        json.dumps(
+            {
+                "experiment": "skillsbench",
+                "config": str(config),
+                "cells": {},
+                "launches": [{"status": "REPORTING", "finished_at": None}],
+            }
+        )
+    )
+    reports = []
+
+    def report(command, **kwargs):
+        reports.append(command)
+        return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(launcher, "run_report_process", report)
+    assert (
+        launcher.main(
+            [
+                "--experiment",
+                "skillsbench",
+                "--config",
+                str(config),
+                "--run-dir",
+                str(run_dir),
+                "--token-dir",
+                str(tmp_path / "absent-tokens"),
+                "--bases-from",
+                str(catalog_path),
+                "--report-only",
+            ]  # fmt: skip
+        )
+        == 0
+    )
+    assert len(reports) == 1
+    assert reports[0][reports[0].index("--bases-from") + 1] == str(catalog_path)
 
 
 def test_launcher_records_final_report_failure_in_current_launch(tmp_path, monkeypatch):
