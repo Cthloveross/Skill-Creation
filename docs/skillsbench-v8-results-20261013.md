@@ -173,6 +173,10 @@ NoSkill、S0、最终都完成评价的benign交集只有7题，成功数为 **4
 
 85篇原文中，52篇各1块、29篇各2块、4篇各3块，合计122块。表中的B* chunks表示保留了多少文本片段；两块可能来自同一篇原文的不同部分，也可能来自两篇文章。检索的“返回全文”指返回该chunk的完整正文；长文的其余块仍需要检索和保留。原始背景是否完整保留，要核对本题参考原文的全部chunk覆盖；块数本身只衡量材料数量。本次15条pilot的本题原文各只有1块，因此保留该参考块才可解释为整篇关联背景已保留。
 
+**参数依据与限制：** 2,048／128是本地新增检索阶段采用的工程默认值，未经本数据集的整篇检索／分块检索对照验证，也不是CoEvo作者指定的参数。分块检索有研究先例，例如[DPR](https://aclanthology.org/2020.emnlp-main.550.pdf)将Wikipedia文章划成100词的检索片段；该先例不能证明当前块大小、重叠或片段返回优于整篇返回。
+
+2026-10-14用固定Qwen tokenizer离线统计benign的85篇完整原文，按当前Dense的“标题＋正文＋special tokens”格式，只有3篇超过项目配置的4,096-token输入限制，最长4,970 tokens。[固定版本Qwen模型卡](https://huggingface.co/Qwen/Qwen3-Embedding-4B/blob/5cf2132abc99cad020ac570b19d031efec650f2b/README.md)标明模型支持32K，因此4,096是本项目限制。直接整篇索引／返回在方法上可行，但需调整服务和校验、重建索引及验收；另一方案是内部片段召回后按源文档去重、展开对应注入条件的完整原文。两方案尚未实施或比较；本轮三题本来已经整篇返回，改变检索粒度不能补出它们缺失的DOT规范或STL单位约定。
+
 本轮每条链的获取上限为30次搜索、10次只读观察、50轮Analyzer决策，B*容量32,768tokens，相关性阈值0.1；没有规定必须保留几篇文档。
 
 | Condition | Runs started | Bases frozen | Acquisition unfinished | Judged sufficient | Budget / context stop | Mean search calls | Mean retained chunks | Median B* tokens |

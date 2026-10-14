@@ -74,7 +74,7 @@
 | `embedding.model` | `Qwen/Qwen3-Embedding-4B` | 仅用于 embedding/tokenization，不生成查询或 Skill |
 | `embedding.revision` | `5cf2132abc99cad020ac570b19d031efec650f2b` | 固定模型版本 |
 | `embedding.dimension` | 2,560 | 向量维度 |
-| `embedding.max_length` | 4,096 tokens | embedding 服务输入长度 |
+| `embedding.max_length` | 4,096 tokens | 本项目embedding服务及校验器的输入限制，非模型固有最大长度 |
 | `embedding.pooling` | `last-token` | 向量聚合 |
 | `embedding.normalization` | `float32-l2` | float32 的 L2 归一化 |
 | `embedding.similarity` | `exact-cosine` | 精确余弦检索 |
