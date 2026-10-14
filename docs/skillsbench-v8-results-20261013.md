@@ -169,6 +169,10 @@ NoSkill、S0、最终都完成评价的benign交集只有7题，成功数为 **4
 
 检索池由85篇公开背景文档组成，分为122个chunk。公开任务说明直接提供；当前题的原始输入文件由任务环境提供，Analyzer通过只读目录／文件工具发现它们，不把原始数据文件放进共享池检索。最终选择的chunk组成固定B*，后续演化不重新搜索该池。
 
+**Chunk（文本块）是检索和筛选的基本单位。** 当前用Qwen tokenizer按token位置切原文，每块最多2,048 tokens，相邻块重叠128 tokens，即每次向后移动1,920 tokens；短文完整保留为一块，末块可以更短，不做摘要。例如3,000-token原文会分为第1–2,048和第1,921–3,000两个片段，中间重叠128 tokens。这里的token是分词单位，不能直接当成字数或GPT计费token。
+
+85篇原文中，52篇各1块、29篇各2块、4篇各3块，合计122块。表中的B* chunks表示保留了多少文本片段；两块可能来自同一篇原文的不同部分，也可能来自两篇文章。检索的“返回全文”指返回该chunk的完整正文；长文的其余块仍需要检索和保留。原始背景是否完整保留，要核对本题参考原文的全部chunk覆盖；块数本身只衡量材料数量。本次15条pilot的本题原文各只有1块，因此保留该参考块才可解释为整篇关联背景已保留。
+
 本轮每条链的获取上限为30次搜索、10次只读观察、50轮Analyzer决策，B*容量32,768tokens，相关性阈值0.1；没有规定必须保留几篇文档。
 
 | Condition | Runs started | Bases frozen | Acquisition unfinished | Judged sufficient | Budget / context stop | Mean search calls | Mean retained chunks | Median B* tokens |
