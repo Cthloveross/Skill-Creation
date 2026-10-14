@@ -495,7 +495,7 @@ def _document_embedding_text(page: Page) -> str:
 
 
 def _prepare_pages(
-    pages: Iterable[Page], *, tokenizer: DenseTokenizer
+    pages: Iterable[Page], *, tokenizer: DenseTokenizer, max_input_tokens: int
 ) -> tuple[_PreparedPage, ...]:
     ordered = _materialize_pages(pages)
 
@@ -507,10 +507,9 @@ def _prepare_pages(
         embedding_text = _document_embedding_text(page)
         input_ids = tokenizer.input_token_ids(embedding_text)
         token_count = len(input_ids)
-        if token_count > DENSE_MAX_INPUT_TOKENS:
+        if token_count > max_input_tokens:
             raise DenseInputTooLongError(
-                f"document {page.page_id} has {token_count} tokens; "
-                f"maximum is {DENSE_MAX_INPUT_TOKENS}"
+                f"document {page.page_id} has {token_count} tokens; maximum is {max_input_tokens}"
             )
         offsets = tokenizer.content_token_offsets(page.body)
         snippet = _snippet_from_offsets(page.body, offsets)
@@ -528,6 +527,7 @@ class DenseIndex:
         vectors: Sequence[tuple[float, ...]],
         client: EmbeddingClient,
         tokenizer: DenseTokenizer | None,
+        max_input_tokens: int = DENSE_MAX_INPUT_TOKENS,
     ) -> None:
         if len(prepared_pages) != len(vectors) or not prepared_pages:
             raise DenseContractError("prepared pages and embeddings must be non-empty and aligned")
@@ -535,6 +535,7 @@ class DenseIndex:
         self._vectors = tuple(vectors)
         self._client = client
         self._tokenizer = tokenizer
+        self._max_input_tokens = _validate_max_input_tokens(max_input_tokens)
         self._model_id = client.model_id
         self._model_revision = client.revision
         self._dimensions = client.dimensions
@@ -561,11 +562,13 @@ class DenseIndex:
         *,
         client: EmbeddingClient,
         tokenizer: DenseTokenizer,
+        max_input_tokens: int = DENSE_MAX_INPUT_TOKENS,
     ) -> DenseIndex:
         """Validate the complete corpus before issuing any embedding request."""
 
         _verify_identity(client=client, tokenizer=tokenizer)
-        prepared = _prepare_pages(pages, tokenizer=tokenizer)
+        max_input_tokens = _validate_max_input_tokens(max_input_tokens)
+        prepared = _prepare_pages(pages, tokenizer=tokenizer, max_input_tokens=max_input_tokens)
         raw_vectors = client.embed_documents(tuple(item.embedding_text for item in prepared))
         if len(raw_vectors) != len(prepared):
             raise DenseContractError("embedding client returned the wrong document count")
@@ -577,6 +580,7 @@ class DenseIndex:
             vectors=vectors,
             client=client,
             tokenizer=tokenizer,
+            max_input_tokens=max_input_tokens,
         )
 
     @classmethod
@@ -588,6 +592,7 @@ class DenseIndex:
         client: EmbeddingClient,
         tokenizer: DenseTokenizer | None = None,
         expected_manifest_sha256: str | None = None,
+        max_input_tokens: int = DENSE_MAX_INPUT_TOKENS,
     ) -> DenseIndex:
         """Load a cache only after revalidating it against the current corpus.
 
@@ -597,6 +602,7 @@ class DenseIndex:
         """
 
         _verify_identity(client=client, tokenizer=tokenizer)
+        max_input_tokens = _validate_max_input_tokens(max_input_tokens)
         root = Path(directory)
         manifest_path = root / DENSE_CACHE_MANIFEST
         vectors_path = root / DENSE_CACHE_VECTORS
@@ -609,15 +615,21 @@ class DenseIndex:
             model_id=client.model_id,
             revision=client.revision,
             dimensions=client.dimensions,
+            max_input_tokens=max_input_tokens,
         )
         if tokenizer is not None:
-            retokenized = _prepare_pages((item.page for item in prepared), tokenizer=tokenizer)
+            retokenized = _prepare_pages(
+                (item.page for item in prepared),
+                tokenizer=tokenizer,
+                max_input_tokens=max_input_tokens,
+            )
             if (
                 _cache_contract(
                     retokenized,
                     model_id=client.model_id,
                     revision=client.revision,
                     dimensions=client.dimensions,
+                    max_input_tokens=max_input_tokens,
                 )
                 != manifest["contract"]
             ):
@@ -667,6 +679,7 @@ class DenseIndex:
             vectors=vectors,
             client=client,
             tokenizer=tokenizer,
+            max_input_tokens=max_input_tokens,
         )
 
     @property
@@ -689,7 +702,7 @@ class DenseIndex:
             "normalization": DENSE_NORMALIZATION,
             "similarity": DENSE_SIMILARITY,
             "dimensions": self._dimensions,
-            "max_input_tokens": DENSE_MAX_INPUT_TOKENS,
+            "max_input_tokens": self._max_input_tokens,
             "snippet_tokens": DENSE_SNIPPET_TOKENS,
             "query_instruction": QUERY_INSTRUCTION,
             "document_format": DENSE_DOCUMENT_FORMAT,
@@ -727,6 +740,7 @@ class DenseIndex:
                 model_id=self._model_id,
                 revision=self._model_revision,
                 dimensions=self._dimensions,
+                max_input_tokens=self._max_input_tokens,
             ),
             "vectors": {
                 "filename": DENSE_CACHE_VECTORS,
@@ -774,10 +788,10 @@ class DenseIndex:
         instructed_query = format_query(query)
         if self._tokenizer is not None:
             token_count = len(self._tokenizer.input_token_ids(instructed_query))
-            if token_count > DENSE_MAX_INPUT_TOKENS:
+            if token_count > self._max_input_tokens:
                 raise DenseInputTooLongError(
                     f"instructed query has {token_count} tokens; "
-                    f"maximum is {DENSE_MAX_INPUT_TOKENS}"
+                    f"maximum is {self._max_input_tokens}"
                 )
         query_vector = _normalize_float32(
             self._client.embed_query(query),
@@ -801,6 +815,12 @@ class DenseIndex:
             )
             for rank, (score, page) in enumerate(ranked[:limit], start=1)
         )
+
+
+def _validate_max_input_tokens(value: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise ValueError("max_input_tokens must be a positive integer")
+    return value
 
 
 def _verify_identity(*, client: EmbeddingClient, tokenizer: DenseTokenizer | None) -> None:
@@ -844,6 +864,7 @@ def _cache_contract(
     model_id: str,
     revision: str,
     dimensions: int,
+    max_input_tokens: int,
 ) -> dict[str, Any]:
     corpus_descriptor = [
         {
@@ -862,7 +883,7 @@ def _cache_contract(
         "normalization": DENSE_NORMALIZATION,
         "similarity": DENSE_SIMILARITY,
         "dimensions": dimensions,
-        "max_input_tokens": DENSE_MAX_INPUT_TOKENS,
+        "max_input_tokens": max_input_tokens,
         "snippet_tokens": DENSE_SNIPPET_TOKENS,
         "query_instruction": QUERY_INSTRUCTION,
         "document_format": DENSE_DOCUMENT_FORMAT,
@@ -903,6 +924,7 @@ def _prepared_from_cache_contract(
     model_id: str,
     revision: str,
     dimensions: int,
+    max_input_tokens: int,
 ) -> tuple[_PreparedPage, ...]:
     if not isinstance(contract, Mapping):
         raise DenseContractError("dense cache contract must be an object")
@@ -938,7 +960,7 @@ def _prepared_from_cache_contract(
         "normalization": DENSE_NORMALIZATION,
         "similarity": DENSE_SIMILARITY,
         "dimensions": dimensions,
-        "max_input_tokens": DENSE_MAX_INPUT_TOKENS,
+        "max_input_tokens": max_input_tokens,
         "snippet_tokens": DENSE_SNIPPET_TOKENS,
         "query_instruction": QUERY_INSTRUCTION,
         "document_format": DENSE_DOCUMENT_FORMAT,
@@ -990,7 +1012,7 @@ def _prepared_from_cache_contract(
         if (
             isinstance(token_count, bool)
             or not isinstance(token_count, int)
-            or not 1 <= token_count <= DENSE_MAX_INPUT_TOKENS
+            or not 1 <= token_count <= max_input_tokens
         ):
             raise DenseContractError("dense cache page token count is invalid")
         if not isinstance(snippet, str) or not snippet or not page.body.startswith(snippet):

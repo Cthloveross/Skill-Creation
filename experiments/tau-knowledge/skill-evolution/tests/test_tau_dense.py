@@ -131,6 +131,40 @@ def test_build_embeds_exact_titles_and_whole_bodies_and_records_pinned_manifest(
     assert index.manifest["approximate_index"] is False
 
 
+def test_explicit_input_limit_embeds_long_document_without_truncation() -> None:
+    body = " ".join("token" for _ in range(4970 - 2))
+    pages = _pages(body)
+    client = _Client()
+
+    with pytest.raises(DenseInputTooLongError, match="doc-0 has 4970 tokens"):
+        DenseIndex.build(pages, client=client, tokenizer=_Tokenizer())
+    index = DenseIndex.build(pages, client=client, tokenizer=_Tokenizer(), max_input_tokens=8192)
+
+    assert client.document_calls == [(f"Title 0\n\n{body}",)]
+    assert index.get_page("doc-0").body == body
+    assert index.manifest["max_input_tokens"] == 8192
+    assert index.manifest["document_token_counts"] == {"doc-0": 4970}
+    over_limit = " ".join("token" for _ in range(8193 - 2))
+    with pytest.raises(DenseInputTooLongError, match="maximum is 8192"):
+        DenseIndex.build(
+            _pages(over_limit), client=client, tokenizer=_Tokenizer(), max_input_tokens=8192
+        )
+    assert len(client.document_calls) == 1
+
+
+@pytest.mark.parametrize("max_input_tokens", [0, -1, True, 8192.0, "8192"])
+def test_invalid_input_limit_rejected_before_embeddings(max_input_tokens) -> None:
+    client = _Client()
+    with pytest.raises(ValueError, match="max_input_tokens must be a positive integer"):
+        DenseIndex.build(
+            _pages("body"),
+            client=client,
+            tokenizer=_Tokenizer(),
+            max_input_tokens=max_input_tokens,
+        )
+    assert client.document_calls == []
+
+
 def test_snippet_is_exact_original_prefix_through_qwen_token_256() -> None:
     body = "  " + " \n ".join(f"token-{index:03d}" for index in range(300)) + "  tail-space"
     index = DenseIndex.build(_pages(body), client=_Client(), tokenizer=_Tokenizer())
@@ -204,6 +238,45 @@ def test_query_length_is_checked_before_query_embedding_request() -> None:
         index.search(long_query)
 
     assert client.query_calls == []
+
+
+def test_query_limit_uses_instance_contract_including_loaded_cache(tmp_path) -> None:
+    client = _Client()
+    index = DenseIndex.build(
+        _pages("body"), client=client, tokenizer=_Tokenizer(), max_input_tokens=8192
+    )
+    query = " ".join("query" for _ in range(4970))
+    index.search(query)
+    index.save_cache(tmp_path / "cache")
+    loaded = DenseIndex.load_cache(
+        tmp_path / "cache",
+        _pages("body"),
+        client=client,
+        tokenizer=_Tokenizer(),
+        max_input_tokens=8192,
+    )
+    loaded.search(query)
+    with pytest.raises(DenseInputTooLongError, match="maximum is 8192"):
+        loaded.search(" ".join("query" for _ in range(8192)))
+    assert client.query_calls == [query, query]
+
+
+@pytest.mark.parametrize("stored_limit,requested_limit", [(4096, 8192), (8192, 4096)])
+def test_cache_cannot_change_input_limit_contract(tmp_path, stored_limit, requested_limit) -> None:
+    pages = _pages("body")
+    index = DenseIndex.build(
+        pages, client=_Client(), tokenizer=_Tokenizer(), max_input_tokens=stored_limit
+    )
+    manifest = index.save_cache(tmp_path / "cache")
+    assert manifest["contract"]["max_input_tokens"] == stored_limit
+    with pytest.raises(DenseContractError, match="different retrieval contract"):
+        DenseIndex.load_cache(
+            tmp_path / "cache", pages, client=_Client(), max_input_tokens=requested_limit
+        )
+    loaded = DenseIndex.load_cache(
+        tmp_path / "cache", pages, client=_Client(), max_input_tokens=stored_limit
+    )
+    assert loaded.manifest["max_input_tokens"] == stored_limit
 
 
 def test_canonical_cache_load_skips_document_embedding_and_supports_no_tokenizer(

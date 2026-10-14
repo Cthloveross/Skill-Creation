@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Run the fixed SkillsBench v8 retrieval-only pilot and freeze B*.
 
-This entry point never creates, executes, verifies, or grades a Skill. It runs
-the three pilot tasks in parallel (at most three workers) while processing the
-five conditions for each task in a fixed serial order.
+This entry point never creates, executes, verifies, or grades a Skill. The
+default reproduces the chunk pilot. The whole-document comparison rebuilds
+both indexes from complete source documents and permits independent cells to
+run concurrently; it does not alter the production matrix configuration.
 """
 
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import sys
@@ -160,7 +162,24 @@ def cell_metrics(
     }
 
 
-def collect_cell(workflow: Any, source: Any, task: str, arm: str) -> dict[str, Any]:
+def source_document_metrics(value: Any) -> Any:
+    """Use document units when the same exposure counter receives whole sources."""
+    names = {
+        "unique_chunks": "unique_documents",
+        "chunk_occurrences": "document_occurrences",
+        "rechunked": "indexed_documents",
+        "payload_chunk_ratio": "payload_document_ratio",
+    }
+    if isinstance(value, Mapping):
+        return {names.get(key, key): source_document_metrics(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [source_document_metrics(item) for item in value]
+    return value
+
+
+def collect_cell(
+    workflow: Any, source: Any, task: str, arm: str, *, whole_documents: bool = False
+) -> dict[str, Any]:
     from tau_skill_evolution.acquisition import AcquisitionBudgets, collect_base
     from tau_skill_evolution.artifacts import atomic_json, load_base, seal_base
     from tau_skill_evolution.retrieval import prepare_corpus
@@ -171,8 +190,17 @@ def collect_cell(workflow: Any, source: Any, task: str, arm: str) -> dict[str, A
     if journal.dispatched("generate_initial") or journal.dispatched("creation"):
         raise ValueError("probe_requires_a_separate_acquisition_only_trial")
     condition = workflow.spec.condition(arm)
-    directory = selected_pool(workflow.spec, arm)
-    manifest = validate_pool(workflow.spec.root, source, directory=directory)
+    if whole_documents:
+        from tau_skill_evolution.skillsbench_whole_documents import (
+            prepare_corpus,
+            prepare_pool,
+            retrieval_contract,
+        )
+
+        directory, manifest = prepare_pool(workflow.spec, source, arm)
+    else:
+        directory = selected_pool(workflow.spec, arm)
+        manifest = validate_pool(workflow.spec.root, source, directory=directory)
     if (root / "base").exists():
         if not journal.completed("retrieval-corpus-contract"):
             raise ValueError("probe_retrieval_contract_missing_requires_new_trial")
@@ -245,12 +273,18 @@ def collect_cell(workflow: Any, source: Any, task: str, arm: str) -> dict[str, A
         "base_tokens": settings["base_token_limit"],
     }
     result = cell_metrics(task, arm, base, journal, manifest, directory, condition, limits)
+    result["retrieval_unit"] = "source_document" if whole_documents else "chunk"
+    if whole_documents:
+        result = source_document_metrics(result)
     atomic_json(root / "probe-result.json", result)
     return result
 
 
 def _payload_exposed(cell: Mapping[str, Any], stage: str, flag: str) -> bool:
-    return cell[stage]["rates"][flag]["unique_chunks"]["numerator"] > 0
+    unit = (
+        "unique_documents" if cell.get("retrieval_unit") == "source_document" else "unique_chunks"
+    )
+    return cell[stage]["rates"][flag][unit]["numerator"] > 0
 
 
 def _constant_metric(cells: Sequence[Mapping[str, Any]], *path: str) -> Any:
@@ -285,11 +319,18 @@ def write_summary(
     measured = [cell for cell in cells if cell["status"] == "MEASURED"]
     expected = {(task, arm) for task in tasks for arm in arms}
     observed = {(cell["task_id"], cell["arm"]) for cell in cells}
+    whole = (
+        workflow.spec.values.get("retrieval_probe", {}).get("document_unit") == "source_document"
+        if hasattr(workflow.spec, "values")
+        else False
+    )
+    ratio = "payload_document_ratio" if whole else "payload_chunk_ratio"
     result = {
         "schema": "skillsbench.acquisition-probe.v8",
         "namespace": workflow.spec.namespace,
         "source_identity": workflow.identity["identity_hash"],
         "probe_script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "retrieval_unit": "source_document" if whole else "chunk",
         "scope": (
             "Analyzer, public input discovery, hybrid retrieval, and FrozenBase only; "
             "Skill creation, execution, verification, oracle, and evaluation are not measured"
@@ -310,7 +351,7 @@ def write_summary(
                     selected := [cell for cell in measured if cell["arm"] == arm]
                 ),
                 "source_injection": _constant_metric(selected, "pool", "source_injection"),
-                "payload_chunk_ratio": _constant_metric(selected, "pool", "payload_chunk_ratio"),
+                ratio: _constant_metric(selected, "pool", ratio),
                 "analyzer_payload_exposed_tasks": fraction(
                     sum(
                         _payload_exposed(cell, "analyzer_visible_unique", "payload_present")
@@ -355,11 +396,21 @@ def run_pilot_cells(
     collect: Callable[[str, str], Any],
     *,
     max_workers: int = 3,
+    parallel_cells: bool = False,
 ) -> list[Any]:
-    """Run conditions serially within each task and at most three tasks concurrently."""
-    if not 1 <= max_workers <= 3:
-        raise ValueError("pilot_max_workers_must_be_between_one_and_three")
+    """Keep the old serial contract or schedule fully isolated comparison cells."""
+    if not 1 <= max_workers <= (6 if parallel_cells else 3):
+        raise ValueError("pilot_max_workers_out_of_range")
     stop = threading.Event()
+
+    def run_cell(task: str, arm: str) -> list[Any]:
+        if stop.is_set():
+            return []
+        try:
+            return [collect(task, arm)]
+        except BaseException:
+            stop.set()
+            raise
 
     def run_task(task: str) -> list[Any]:
         rows = []
@@ -374,8 +425,12 @@ def run_pilot_cells(
         return rows
 
     results: list[Any] = []
-    with ThreadPoolExecutor(max_workers=min(max_workers, len(tasks))) as executor:
-        futures = {executor.submit(run_task, task): task for task in tasks}
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = (
+            {executor.submit(run_cell, task, arm): (task, arm) for arm in arms for task in tasks}
+            if parallel_cells
+            else {executor.submit(run_task, task): task for task in tasks}
+        )
         try:
             for future in as_completed(futures):
                 results.extend(future.result())
@@ -402,6 +457,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-dir", required=True, type=Path)
     parser.add_argument("--env-file", type=Path)
     parser.add_argument("--jobs", type=int, default=3)
+    parser.add_argument("--whole-documents", action="store_true")
+    parser.add_argument(
+        "--embedding-endpoint", help="separate pinned Qwen service with an 8192-token limit"
+    )
     args = parser.parse_args(argv)
     if args.env_file:
         load_env(args.env_file)
@@ -415,8 +474,32 @@ def main(argv: list[str] | None = None) -> int:
     tasks, arms = DEFAULT_TASKS, PILOT_ARMS
     if set(tasks) - set(spec.tasks) or set(arms) - set(spec.arms):
         parser.error("selected tasks and conditions must belong to the frozen v8 matrix")
-    if not 1 <= args.jobs <= 3:
-        parser.error("--jobs must be between one and three")
+    if not 1 <= args.jobs <= (6 if args.whole_documents else 3):
+        parser.error("--jobs must be 1..6 for whole documents, otherwise 1..3")
+    if args.whole_documents:
+        from tau_skill_evolution.spec import ExperimentSpec
+
+        if not args.embedding_endpoint:
+            parser.error("--whole-documents requires --embedding-endpoint")
+        values = copy.deepcopy(spec.values)
+        values["embedding"].update(endpoint=args.embedding_endpoint, max_length=8192, chunks=False)
+        # This probe connects to a separately managed service; it does not launch
+        # a server or inherit the production service's GPU allocation settings.
+        for name in ("gpu_uuid", "gpu_memory_utilization", "chunk_tokens", "chunk_overlap_tokens"):
+            values["embedding"].pop(name, None)
+        values["retrieval_probe"] = {
+            "schema": "skillsbench.whole-document-retrieval-probe.v1",
+            "document_unit": "source_document",
+            "baseline_config_sha256": hashlib.sha256(args.config.read_bytes()).hexdigest(),
+            "max_parallel_cells": args.jobs,
+        }
+        snapshot = args.run_dir / "logs/whole-document-config.json"
+        if snapshot.exists() and json.loads(snapshot.read_text()) != values:
+            raise ValueError("probe_config_changed_requires_new_trial")
+        atomic_json(snapshot, values)
+        spec = ExperimentSpec(snapshot, values)
+    elif args.embedding_endpoint:
+        parser.error("--embedding-endpoint is only for the whole-document comparison")
     cells = tuple((task, arm) for task in tasks for arm in arms)
     source = SkillsBenchSource(spec.root)
     source.validate()
@@ -425,8 +508,11 @@ def main(argv: list[str] | None = None) -> int:
         # Analyzer request. This also prevents three task workers from racing to
         # construct the same condition index.
         for arm in arms:
-            directory = selected_pool(spec, arm)
-            validate_pool(spec.root, source, directory=directory)
+            if args.whole_documents:
+                from tau_skill_evolution.skillsbench_whole_documents import prepare_corpus
+            else:
+                directory = selected_pool(spec, arm)
+                validate_pool(spec.root, source, directory=directory)
             corpus = prepare_corpus(spec, tasks[0], arm)
             corpus.close()
         admission = bedrock_authentication(spec)
@@ -438,8 +524,9 @@ def main(argv: list[str] | None = None) -> int:
                 "tasks": list(tasks),
                 "conditions": list(arms),
                 "cells": [list(cell) for cell in cells],
-                "max_parallel_tasks": args.jobs,
-                "serial_conditions_within_task": True,
+                "max_parallel_cells" if args.whole_documents else "max_parallel_tasks": args.jobs,
+                "serial_conditions_within_task": not args.whole_documents,
+                "retrieval_unit": "source_document" if args.whole_documents else "chunk",
             },
             lambda: {"stage": "acquisition-only", "expected_acquisitions": len(cells)},
             external=False,
@@ -451,7 +538,9 @@ def main(argv: list[str] | None = None) -> int:
 
         def collect(task: str, arm: str) -> dict[str, Any]:
             try:
-                result = collect_cell(workflow, source, task, arm)
+                result = collect_cell(
+                    workflow, source, task, arm, whole_documents=args.whole_documents
+                )
                 print(
                     json.dumps(
                         {
@@ -488,7 +577,9 @@ def main(argv: list[str] | None = None) -> int:
                 raise
 
         try:
-            run_pilot_cells(tasks, arms, collect, max_workers=args.jobs)
+            run_pilot_cells(
+                tasks, arms, collect, max_workers=args.jobs, parallel_cells=args.whole_documents
+            )
         finally:
             write_summary(workflow, tasks=tasks, arms=arms)
     return 0

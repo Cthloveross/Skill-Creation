@@ -1,6 +1,6 @@
 # SkillsBench 实验参数
 
-本文集中记录 **SkillsBench v8 当前主实验的参数、计数单位、可调范围与实际生效位置**，供运行和分析时查阅。核对日期：2026-10-12。它不是历史 runs 的统一配置：具体结果以该 run 封存的配置、源码、环境及 usage 为准。
+本文集中记录 **SkillsBench v8 当前主实验的参数、计数单位、可调范围与实际生效位置**，供运行和分析时查阅。核对日期：2026-10-14。它不是历史 runs 的统一配置：具体结果以该 run 封存的配置、源码、环境及 usage 为准。
 
 参数主要来自 [skillsbench.yaml](../experiments/tau-knowledge/skill-evolution/configs/skillsbench.yaml)，部分由固定作者代码或本地运行代码决定。方法见 [通用方法论](skill-evolution-method.md)，攻击设计见 [注入设计](skillsbench-injection-design.md)，执行命令见 [全量 HANDOFF](../experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff/HANDOFF.md)。本文不改变任何实验设置。
 
@@ -70,7 +70,7 @@
 | 返回集合 | 两路 top10 的去重并集，最多20个 chunk | 按 RRF 排序；不是每次固定10篇或20篇 |
 | `retrieval.full_text` | `true` | 返回完整 chunk；不截断 chunk 正文 |
 | `retrieval.fail_closed` | `true` | 任一路检索失效均失败，不偷偷改用单路 |
-| `retrieval.wire_token_limit` | 65,536 | 一条 acquisition 中检索返回 JSON 的累计 token 上限；重复返回也计入此预算 |
+| `retrieval.wire_token_limit` | 65,536 | 单次完整检索响应 JSON 的原子上限；累计返回 token 另行记录，不作为此上限 |
 | `embedding.model` | `Qwen/Qwen3-Embedding-4B` | 仅用于 embedding/tokenization，不生成查询或 Skill |
 | `embedding.revision` | `5cf2132abc99cad020ac570b19d031efec650f2b` | 固定模型版本 |
 | `embedding.dimension` | 2,560 | 向量维度 |
@@ -87,9 +87,30 @@
 | `gpu_memory_utilization` | 0.1 | vLLM 的 GPU 内存比例设置 |
 | 并行参数 | tensor=1、pipeline=1、`max-num-seqs=32` | 由 `retrieval.embedding_argv()` 构造 |
 
-检索预算、Analyzer 上下文预算和 B* 容量是三个不同限制。即使还有搜索次数、B* 未满，也可能先达到累计检索返回上限；一次返回不能完整容纳时不会只交付前几个结果。
+检索响应上限、Analyzer 上下文预算和 B* 容量是三个不同限制。即使还有搜索次数、B* 未满，也可能先达到完整模型输入限制；单次检索响应超过65,536时整次拒绝，不只交付前几个结果。累计检索返回量是审计计数，不是65,536的停止门限。
 
 配置中的 GPU UUID 是参考机器值。本机 bootstrap 会按 `GPU=0` 或指定 UUID 生成本机配置，不改参考 YAML。endpoint、GPU、工具缓存路径属于运行部署；embedding 型号、分块或检索算法变更属于实验变更。
+
+### 3.1 整篇文档检索对照（2026-10-14）
+
+`retrieval-whole-document-gpt54-20261014-001` 是独立的 retrieval-only trial，不替换主实验的分块配置，也不续接旧 checkpoint。它与 `retrieval-reference-gpt54-20261014-001` 使用相同三题、五条件、原始背景与投毒文本、模型、提示及获取预算。
+
+| 参数 | 原分块试验 | 整篇对照 |
+|---|---|---|
+| BM25／Dense 索引单位 | 122个 chunk | 85篇完整源文档，两路均重建 |
+| 返回及筛选单位 | 完整 chunk | 完整源文档，ID等于源文档ID |
+| 文档正文 | 2,048／128分块 | 不分块、不拼接、不截断；注入条件读取其已保存的修改后全文 |
+| Embedding 输入限制 | 4,096 | 8,192；同一固定Qwen权重、query instruction和归一化 |
+| 本机 embedding 服务 | `18140` | 独立 `18141`，vLLM `max-model-len=8192` |
+| 服务调度 | GPU比例0.1、32序列 | 第二块GPU，比例0.085、8序列；不停止旧服务 |
+| 并发调度 | 三题并行、同题条件串行 | 最多六个独立 `(task, condition)` 并行 |
+| 源文档／完整payload文档 | 85篇；含payload的chunk为0／4／9个 | 85篇；完整payload文档为0／4／9篇，即0%、4.71%、10.59% |
+| 搜索／只读／决策／B* | 30／10／50／32,768 | 保持相同 |
+| 相关性阈值／模型 | 0.1／GPT-5.4 | 保持相同 |
+
+整篇试验同时改变了索引与返回粒度，不能仅解释为命中chunk后的全文展开。并发和embedding服务部署也不同，墙钟加速不能全部归因于整篇检索。提示不变，因此其中对chunk的称呼仍存在；本轮实际传给模型的检索对象是完整源文档。
+
+报告分别给出本题关联背景的返回／可见／冻结覆盖，payload可见组数、B*留存组数，以及 `B*中完整payload文档数 ÷ Analyzer实际见过的完整payload文档数`。后者按每cell去重后汇总，同一源文档出现在不同条件时分别计数。分母为0时比率为空。以上均为检索暴露或留存指标，不是执行ASR；本轮不调用S0及其后阶段。
 
 ## 4. Analyzer 资料获取与冻结
 

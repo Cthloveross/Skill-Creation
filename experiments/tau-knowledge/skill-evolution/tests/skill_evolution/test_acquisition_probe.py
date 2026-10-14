@@ -601,3 +601,66 @@ def test_probe_condition_must_match_the_sealed_pool(tmp_path):
     changed = {**CONDITION, "target_document_ids": ["different"]}
     with pytest.raises(ValueError, match="condition_manifest_mismatch"):
         probe._condition(manifest, changed)
+
+
+def test_whole_document_metrics_do_not_reuse_chunk_denominators():
+    value = {
+        "pool": {"rechunked": {"unique_chunks": 85}, "payload_chunk_ratio": probe.fraction(4, 85)},
+        "analyzer_visible_unique": {
+            "rates": {"full_payload_present": {"unique_chunks": probe.fraction(2, 10)}},
+            "chunk_occurrences": 10,
+        },
+        "retrieval_unit": "source_document",
+    }
+    result = probe.source_document_metrics(value)
+    assert result["pool"]["indexed_documents"]["unique_documents"] == 85
+    assert result["pool"]["payload_document_ratio"] == probe.fraction(4, 85)
+    assert result["analyzer_visible_unique"]["document_occurrences"] == 10
+    assert probe._payload_exposed(result, "analyzer_visible_unique", "full_payload_present")
+    assert value["pool"]["rechunked"]["unique_chunks"] == 85
+
+
+def test_whole_document_schedule_runs_isolated_cells_at_the_requested_parallelism():
+    barrier = threading.Barrier(5)
+    lock = threading.Lock()
+    first, active, maximum = 0, 0, 0
+
+    def collect(task, arm):
+        nonlocal first, active, maximum
+        with lock:
+            first += 1
+            wait = first <= 5
+            active += 1
+            maximum = max(maximum, active)
+        if wait:
+            barrier.wait(timeout=2)
+        time.sleep(0.002)
+        with lock:
+            active -= 1
+        return task, arm
+
+    rows = probe.run_pilot_cells(
+        probe.DEFAULT_TASKS, probe.PILOT_ARMS, collect, max_workers=5, parallel_cells=True
+    )
+    assert set(rows) == {(task, arm) for task in probe.DEFAULT_TASKS for arm in probe.PILOT_ARMS}
+    assert len(rows) == 15 and maximum == 5
+
+
+def test_whole_document_summary_keeps_document_units(tmp_path):
+    row = probe.source_document_metrics(measured_row("a", ARM, visible=1, frozen=1))
+    row["retrieval_unit"] = "source_document"
+    row["pool"]["payload_document_ratio"] = probe.fraction(4, 85)
+    atomic_json(tmp_path / "cells/a" / ARM / "probe-result.json", row)
+    workflow = SimpleNamespace(
+        root=tmp_path,
+        identity={"identity_hash": "whole-source"},
+        spec=SimpleNamespace(
+            namespace="skillsbench.skill-evolution.v8",
+            cells=range(765),
+            values={"retrieval_probe": {"document_unit": "source_document"}},
+        ),
+    )
+    summary = probe.write_summary(workflow, tasks=("a",), arms=(ARM,))
+    assert summary["retrieval_unit"] == "source_document"
+    assert summary["conditions"][ARM]["payload_document_ratio"] == probe.fraction(4, 85)
+    assert summary["conditions"][ARM]["frozen_full_payload_tasks"] == probe.fraction(1, 1)
