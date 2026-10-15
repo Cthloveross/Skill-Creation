@@ -53,7 +53,9 @@ SB=experiments/tau-knowledge/skill-evolution
   --env-file key.env
 ```
 
-该命令恢复本机同一源码身份的未完成获取。已冻结结果不重复请求；NOT_SENT可首次派发，已派发且结果未知的UNKNOWN不自动重发。鉴权失败停止启动后续获取。更新key不能把旧UNKNOWN改为可重试。源码、提示、资料或预算改变后另开trial。
+该命令恢复本机同一源码身份、没有UNKNOWN阻塞的未完成获取。已冻结结果不重复请求；NOT_SENT可首次派发，已派发且结果未知的UNKNOWN不自动重发。鉴权失败停止启动后续获取。更新key不能把旧UNKNOWN改为可重试。源码、提示、资料或预算改变后另开trial。
+
+本次 `paper-anonymizer / benign` 的第37次Analyzer请求等待HTTP状态行超时，原操作为UNKNOWN，没有响应原文或B*。原记录保留；独立续采仅跳过这一格，复用已封存结果，并首次派发其他未启动格。续采脚本和操作记录保存在本机 `logs/` 与根Journal，不修改冻结源码。直接重跑上面的命令仍会在该UNKNOWN处停止，不能据此补测或覆盖。该格若需补测，必须另开独立trial，明确保留原UNKNOWN及补测来源。
 
 另一台机器没有本机私有journal，不能用同名目录假装恢复。Git提供的是公开catalog，可用于零检索复用；若需要重新测量获取，应指定新的 `--run-dir` 并去掉 `--reuse-from`，明确记为新trial。
 
