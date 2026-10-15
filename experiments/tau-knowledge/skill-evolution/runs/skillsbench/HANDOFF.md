@@ -19,9 +19,10 @@ canonical handoff's readiness.
 
 ## 1. Current state
 
-The active root contains only this `HANDOFF.md`, the preserved `full-85-v8-handoff/` package
-and `retrieve/`. The retrieval study plans 425 bases: retain the 15 completed whole-document
-acquisitions and obtain the other 410. Its run records provide actual progress.
+Cleanup retained this `HANDOFF.md`, the preserved `full-85-v8-handoff/` package and `retrieve/`.
+Future model runs go under `trials/<model>/{noskill,skills}`, separate from retrieval data.
+The retrieval study plans 425 bases: retain the 15 completed whole-document acquisitions and
+obtain the other 410. Its run records provide actual progress.
 
 Three older retrieval trials, three smoke directories, historical readiness and two preflight
 JSONs are now under [`archive/runs/skillsbench/`](../../archive/runs/skillsbench/). Their artifact
@@ -59,8 +60,10 @@ The 5% arms modify four of 85 source documents; the 10% arms modify nine, using 
 ## 3. GitHub handoff and local preparation
 
 Give the colleague the repository URL and
-[`full-85-v8-handoff/HANDOFF.md`](full-85-v8-handoff/HANDOFF.md). This is the complete operating
-procedure with active prompt copies and matrix snapshots. There is no recurring ZIP transfer.
+[`retrieve/HANDOFF.md`](retrieve/HANDOFF.md) for whole-document B* reuse and its five-condition
+downstream commands. [`full-85-v8-handoff/HANDOFF.md`](full-85-v8-handoff/HANDOFF.md) contains
+environment preparation and the separate nine-condition formal procedure, active prompt copies
+and matrix snapshots. There is no recurring ZIP transfer.
 The optional old transfer ZIP is kept locally at `artifacts/transfer/` inside the repository and
 is not the source of current runtime code.
 
@@ -80,7 +83,10 @@ in `data/skillsbench/setup/` under the experiment; committed reference locks are
 Preparation reports PREPARED and requires fresh preflight before any paid run.
 
 The default tool and model caches are `data/tools/` and `data/huggingface/` at repository root.
-Start the embedding service in a separate terminal and leave it running:
+The formal retrieval matrix and ordinary NoSkill CLI need the embedding service below.
+Imported-B* Skill runs use the cached fixed tokenizer without a running embedding service;
+their Docker and model admission still apply. For the formal matrix, start the service in a
+separate terminal and leave it running:
 
 ```bash
 ROOT="$PWD"
@@ -133,12 +139,14 @@ Keep the raw run private and review its sealed report and journals. The smoke ga
 
 Two attempts on 2026-10-10 are failed evidence and do not pass this gate:
 
-- [`smoke-payload-http-gpt54-20261010-001`](../../archive/runs/skillsbench/smoke-payload-http-gpt54-20261010-001/) selected two complete HTTP-payload documents into `B*`, created `S0`, and detected all four static anchors. It then exited 2 with `skillsbench_task_services_not_ready`; no learning execution or dynamic outcome was measured.
-- [`smoke-payload-delete-gpt54-20261010-001`](../../archive/runs/skillsbench/smoke-payload-delete-gpt54-20261010-001/) selected no complete delete payload into `B*`, created `S0`, and detected none of the two static anchors. It exited 2 at the same point.
+- `archive/runs/skillsbench/smoke-payload-http-gpt54-20261010-001/` selected two complete HTTP-payload documents into `B*`, created `S0`, and detected all four static anchors. It then exited 2 with `skillsbench_task_services_not_ready`; no learning execution or dynamic outcome was measured.
+- `archive/runs/skillsbench/smoke-payload-delete-gpt54-20261010-001/` selected no complete delete payload into `B*`, created `S0`, and detected none of the two static anchors. It exited 2 at the same point.
 
 Both stopped with `learning_environment_open_failed` because generated Compose files used relative bind sources that Compose resolved from the generation directory. Preserve these directories as failed evidence. After the bind-path fix, use a new run directory and repeat both the task preflight and the smoke.
 
-The archived post-fix run [`smoke-payload-http-gpt54-20261010-002`](../../archive/runs/skillsbench/smoke-payload-http-gpt54-20261010-002/) completed every stage and exited 0. Its acquisition path was:
+The archived post-fix run `archive/runs/skillsbench/smoke-payload-http-gpt54-20261010-002/`
+completed every stage and exited 0. These raw smoke directories remain local; their relocation
+records are in the [archive index](../../archive/index.json). The post-fix acquisition path was:
 
 - corpus: 4/122 chunks contained a complete payload, drawn from 4/85 modified source documents;
 - search/Analyzer-visible set: 3/16 returned chunks contained a complete payload;
@@ -170,6 +178,10 @@ Acquisition uses GPT-5.4 and the whole-document Qwen index; later model comparis
 bases. See [parameters §3.2](../../../../../docs/skillsbench-experiment-parameters.md#32-当前85题整篇检索阶段)
 and the workspace records for the bound configuration and progress. This scope is separate
 from the nine-condition formal matrix and its NoSkill and evolution stages.
+Use [`retrieve/HANDOFF.md`](retrieve/HANDOFF.md#3-后续实验直接使用这些资料) for bootstrap-derived
+configuration, cached-tokenizer and pinned-Codex setup, separate per-model NoSkill controls,
+the complete five-arm launcher command and immutable-catalog resume rules. The `matrix/resume`
+wrapper below operates on the separate formal nine-arm experiment.
 
 The archived three-task comparison remains available in
 [chunk results](../../archive/runs/skillsbench/retrieval-reference-gpt54-20261014-001/reference-coverage.json),
