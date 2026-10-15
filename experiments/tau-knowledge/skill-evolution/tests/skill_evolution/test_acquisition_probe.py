@@ -501,6 +501,9 @@ def measured_row(task, arm, visible=0, frozen=0):
     def stage(value):
         return {
             "rates": {
+                "source_poisoned": {
+                    "unique_chunks": probe.fraction(value, 1),
+                },
                 "payload_present": {
                     "unique_chunks": probe.fraction(value, 1),
                 },
@@ -706,6 +709,80 @@ def test_reference_coverage_distinguishes_returned_visible_and_retained():
     )
     assert result["retrieved"] == probe.fraction(1, 1)
     assert result["analyzer_visible"] == result["frozen"] == probe.fraction(0, 1)
+
+
+def test_all_task_documents_requires_every_original_background_id():
+    source = SimpleNamespace(
+        manifest={
+            "files": [
+                {"task_id": "a", "relative_path": "background/one.md", "document_id": "a::one"},
+                {"task_id": "a", "relative_path": "background/two.md", "document_id": "a::two"},
+                {"task_id": "a", "relative_path": "input.csv", "document_id": "a::input"},
+                {"task_id": "b", "relative_path": "background/x.md", "document_id": "b::other"},
+            ]
+        }
+    )
+    coverage = probe.reference_coverage(
+        source,
+        "a",
+        {
+            "searches": [
+                {
+                    "results": [
+                        {"document_id": identifier}
+                        for identifier in ("a::one", "a::one", "a::input", "b::other")
+                    ]
+                }
+            ],
+            "analyzer_requests": [],
+            "selected_document_ids": ["a::one", "b::other"],
+        },
+    )
+    assert coverage["reference_document_ids"] == ["a::one", "a::two"]
+    assert coverage["retrieved"] == coverage["frozen"] == probe.fraction(1, 2)
+    partial = {"reference_coverage": coverage}
+    complete = {"reference_coverage": {"retrieved": probe.fraction(1, 1)}}
+    assert probe._all_task_documents([partial, complete], "retrieved") == probe.fraction(1, 2)
+    assert probe._all_task_documents([partial], "frozen") == probe.fraction(0, 1)
+    coverage["frozen"] = probe.fraction(2, 2)
+    assert probe._all_task_documents([partial], "frozen") == probe.fraction(1, 1)
+    assert probe._all_task_documents([{}], "frozen") is None
+    assert (
+        probe._all_task_documents(
+            [{"reference_coverage": {"frozen": probe.fraction(0, 0)}}], "frozen"
+        )
+        is None
+    )
+
+
+def test_payload_in_base_counts_any_poisoned_document_without_payload_bytes(tmp_path):
+    row = measured_row("a", ARM, visible=1, frozen=1)
+    row["condition"] = {"target_document_ids": ["b::foreign"]}
+    row["selected_document_ids"] = ["b::foreign"]
+    for stage in ("analyzer_visible_unique", "frozen_base"):
+        for flag in ("payload_present", "full_payload_present"):
+            row[stage]["rates"][flag]["unique_chunks"] = probe.fraction(0, 1)
+    row["reference_coverage"] = {
+        stage: probe.fraction(1, 2) for stage in ("retrieved", "analyzer_visible", "frozen")
+    }
+    atomic_json(tmp_path / "cells/a" / ARM / "probe-result.json", row)
+    workflow = SimpleNamespace(
+        root=tmp_path,
+        identity={"identity_hash": "x"},
+        spec=SimpleNamespace(namespace="skillsbench.skill-evolution.v8", cells=range(765)),
+    )
+    summary = probe.write_summary(workflow, tasks=("a",), arms=(ARM,))
+    result = summary["conditions"][ARM]
+    assert result["all_task_documents_retrieved"] == probe.fraction(0, 1)
+    assert result["all_task_documents_in_base"] == probe.fraction(0, 1)
+    assert result["poisoned_document_seen_tasks"] == probe.fraction(1, 1)
+    assert result["payload_in_base_tasks"] == probe.fraction(1, 1)
+    assert (
+        result["frozen_payload_tasks"]
+        == result["frozen_full_payload_tasks"]
+        == probe.fraction(0, 1)
+    )
+    assert "judged_sufficient" not in result
 
 
 def test_reuse_seals_same_base_without_copying_or_dispatching_old_requests(tmp_path, monkeypatch):
