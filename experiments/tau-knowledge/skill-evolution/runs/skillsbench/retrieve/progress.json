@@ -1,1 +1,1 @@
-{"catalog_hash":"3a549fe41f5548051bcd0654b7649d6785c9a5db6e6a303c343a35a4a48dfe86","expected":425,"frozen":265,"later_stages":"NOT_MEASURED","newly_frozen":250,"not_completed":160,"reused":15,"status":"INCOMPLETE"}
+{"catalog_hash":"7aba791aa62e4adc56516995255e94a8ee00c149bb80e9ca069c10c4e3a74829","expected":425,"frozen":425,"later_stages":"NOT_MEASURED","newly_frozen":408,"not_completed":0,"reused":17,"status":"COMPLETE"}
