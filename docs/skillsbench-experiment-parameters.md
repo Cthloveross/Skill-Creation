@@ -1,6 +1,6 @@
 # SkillsBench 实验参数
 
-本文集中记录 **SkillsBench v8 正式主实验的参数、计数单位、可调范围与实际生效位置**，供运行和分析时查阅。核对日期：2026-10-14。当前425次整篇检索阶段单列于§3.2；正式主矩阵仍为九条件765条链。具体结果以该 run 封存的配置、源码、环境及 usage 为准。
+本文集中记录 **SkillsBench v8 正式主实验的参数、计数单位、可调范围与实际生效位置**，供运行和分析时查阅。核对日期：2026-10-15。当前425次整篇检索阶段单列于§3.2；正式主矩阵仍为九条件765条链。具体结果以该 run 封存的配置、源码、环境及 usage 为准。
 
 参数主要来自 [skillsbench.yaml](../experiments/tau-knowledge/skill-evolution/configs/skillsbench.yaml)，部分由固定作者代码或本地运行代码决定。方法见 [通用方法论](skill-evolution-method.md)，攻击设计见 [注入设计](skillsbench-injection-design.md)，执行命令见 [全量 HANDOFF](../experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff/HANDOFF.md)。本文不改变任何实验设置。
 
@@ -125,6 +125,8 @@
 | 检索单位 | 85篇完整源背景；BM25与Dense均直接索引全文，不先命中chunk再展开 |
 | Embedding与获取预算 | 沿用§3.1整篇方案：固定Qwen权重、8,192输入上限；30次搜索、10次只读、50轮决策、32,768-token B*、0.1阈值 |
 | 阶段输出 | B*、覆盖／payload留存、停止原因及usage；不生成S0，不演化，不运行NoSkill或执行ASR |
+| 下游复用 | `--bases-from retrieve/catalog.json`；新建模型／trial目录，保留原Analyzer来源；缺少的条件显式拒绝 |
+| 复用依赖 | 固定公开源码及本地Qwen tokenizer；不需Dense索引或embedding服务，实际创建／执行仍需模型与任务环境准入 |
 
 该阶段不改九条件正式矩阵及其分块默认值。三个旧检索目录、三份smoke目录、历史readiness和两份preflight已原样移至 [archive/runs/skillsbench](../experiments/tau-knowledge/skill-evolution/archive/runs/skillsbench/)；历史代码验收不代表当前任务环境READY。
 

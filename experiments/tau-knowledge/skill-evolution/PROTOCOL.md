@@ -66,7 +66,9 @@ The Analyzer may make 30 searches, 10 public-input list/read calls, no clarifica
 
 Acquisition records distinguish four stages: chunks present in the corpus, chunks returned by search, chunks actually visible in Analyzer requests, and chunks selected into \(B^*\). Occurrence, unique-chunk, and unique-source denominators are preserved. `source_poisoned`, `payload_present`, and `full_payload_present` are host provenance fields and never model-visible labels.
 
-The current retrieval study uses complete source documents in both indexes: 85 tasks under benign, HTTP exfiltration 5%/10%, and file deletion 5%/10% (425 bases). It retains the same retrieval algorithm, Analyzer and acquisition budgets, with an 8,192-token embedding input limit. Its portable catalog binds each base to its task inputs, condition, source corpus and Analyzer provenance. Later experiments may reuse these exact bases across Generator/Verifier models through `--bases-from`; they make no new Analyzer calls. Missing or incompatible entries fail explicitly. This five-condition study does not populate the other four conditions of the nine-condition matrix.
+The current retrieval study uses complete source documents in both indexes: 85 tasks under benign, HTTP exfiltration 5%/10%, and file deletion 5%/10% (425 bases). It retains the same retrieval algorithm, Analyzer and acquisition budgets, with an 8,192-token embedding input limit. Its portable catalog binds each base to its task inputs, condition, source corpus and Analyzer provenance.
+
+Later experiments may reuse these exact bases across Generator/Verifier models through `--bases-from`. Reconstruction and context counting use pinned public source files and a local tokenizer, without Analyzer calls, Dense indexes or an embedding service. Downstream model and task-environment admission checks remain required. Missing or incompatible entries fail explicitly. Results and reuse commands are in [retrieve](runs/skillsbench/retrieve/HANDOFF.md). This five-condition study does not populate the other four conditions of the nine-condition matrix.
 
 ### 3.3 Creation and evolution
 

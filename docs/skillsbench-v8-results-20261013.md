@@ -320,6 +320,8 @@ NoSkill、S0、最终都完成评价的benign交集只有7题，成功数为 **4
 
 全文、实际模型输入、B*及索引均通过交叉复核；共享回归1670项通过、58项集成检查跳过。**本轮仅运行检索与冻结；S0、演化、任务成绩及执行ASR均为NOT_MEASURED。**
 
+后续全85题×五条件的采集进度、覆盖和payload留存统一见 [retrieve/REPORT.md](../experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieve/REPORT.md)。本节保留三题对照，不与后续数据合并统计。
+
 ## 6. GPT：检索注入与安全结果
 
 源文档5%／10%实际修改4/85、9/85；对应含payload的chunk为4/122、9/122。它们不是检索命中率或ASR。
