@@ -2,6 +2,8 @@
 
 这里是当前统一的资料获取目录。先看 [REPORT.md](REPORT.md) 的实际结果，再看 [progress.json](progress.json) 的进度；后续创建和演化通过 [catalog.json](catalog.json) 直接加载已冻结资料。
 
+425/425份B*已封存（历史15＋本轮410，其中2份来自独立补测）。原两次UNKNOWN保留；S0、演化、NoSkill、utility与执行ASR仍为`NOT_MEASURED`。
+
 ## 1. 本次做什么
 
 | 项目 | 设置 |
@@ -157,4 +159,4 @@ export TOKEN_DIR=/absolute/private/path/bedrock-tokens
 
 整理时保留这里、上层HANDOFF和全量交接包；后续运行写入同级 `trials/`。旧试跑与验收移至 `archive/runs/skillsbench/`，保持原始文件字节；旧执行checkpoint仅供审计，不恢复。
 
-离线回归、15份真实旧B*校验及只复制catalog的零网络重建用于验证复用接口。本轮没有生成或执行Skill，不能据此宣称utility、演化或执行ASR已测得。
+425份B*全部通过精确重建，过程禁用网络、模型和检索；合并后的完整共享回归为1735项通过、58项跳过，Ruff、编译、依赖锁和交接源码校验通过。本轮没有生成或执行Skill，不能据此宣称utility、演化、执行ASR或真实Docker任务边界已测得。

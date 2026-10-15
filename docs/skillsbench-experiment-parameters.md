@@ -116,6 +116,8 @@
 
 当前入口为 [runs/skillsbench/retrieve](../experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieve/)，实际进度与身份以该目录记录为准。
 
+425/425份B*已封存，包含历史15份和新增410份；覆盖、payload留存及补测来源见 [REPORT.md](../experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieve/REPORT.md)。本轮不测执行ASR。
+
 | 项目 | 本阶段设置 |
 |---|---|
 | 范围 | 全85题×5条件＝425次获取与B*冻结 |

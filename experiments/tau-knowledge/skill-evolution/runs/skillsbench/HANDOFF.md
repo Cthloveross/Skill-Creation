@@ -1,7 +1,7 @@
 # SkillsBench v8: retrieval workspace and operator handoff
 
-The current [retrieve workspace](retrieve/) covers 85 tasks × 5 conditions = 425 whole-document
-acquisitions and frozen bases. GPT-5.4 completes acquisition first; later models reuse the same
+The current [retrieve workspace](retrieve/) contains 85 tasks × 5 conditions = 425 sealed
+whole-document acquisitions. GPT-5.4 completed acquisition; later models reuse the same
 sealed B*. This stage has no Skill creation, evolution, NoSkill execution or execution ASR.
 
 The separate formal matrix for `skillsbench.skill-evolution.v8` remains fixed at 85 tasks ×
@@ -21,8 +21,9 @@ canonical handoff's readiness.
 
 Cleanup retained this `HANDOFF.md`, the preserved `full-85-v8-handoff/` package and `retrieve/`.
 Future model runs go under `trials/<model>/{noskill,skills}`, separate from retrieval data.
-The retrieval study plans 425 bases: retain the 15 completed whole-document acquisitions and
-obtain the other 410. Its run records provide actual progress.
+All 425 bases are sealed: 15 historical and 410 newly collected, including two independent
+supplements whose original UNKNOWN requests remain preserved. Results and reuse commands are
+in [`retrieve/REPORT.md`](retrieve/REPORT.md) and [`retrieve/HANDOFF.md`](retrieve/HANDOFF.md).
 
 Three older retrieval trials, three smoke directories, historical readiness and two preflight
 JSONs are now under [`archive/runs/skillsbench/`](../../archive/runs/skillsbench/). Their artifact
