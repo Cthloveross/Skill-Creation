@@ -188,6 +188,17 @@ def main(argv: list[str] | None = None) -> int:
         if args.arm and set(args.arm) - set(spec.arms):
             parser.error("--arm is not supported by this experiment")
         selected_tasks = tuple(args.task) if args.task else None
+        cells = tuple(
+            (task, arm)
+            for task, arm in spec.cells
+            if (not args.task or task in args.task) and (not args.arm or arm in args.arm)
+        )
+        from .retrieval_dataset import resolve_catalog
+
+        bases_from = resolve_catalog(args.bases_from, run_dir=args.run_dir)
+        if bases_from is not None and args.command != "report":
+            bases_from.validate(spec, cells)
+        reuse_admission = {"retrieval_required": False} if bases_from is not None else {}
         if args.command == "preflight":
             result = preflight(
                 spec,
@@ -195,6 +206,7 @@ def main(argv: list[str] | None = None) -> int:
                 authenticate=True,
                 task_ids=selected_tasks,
                 runtime=runtime,
+                **reuse_admission,
             )
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 0 if result["ready"] else 2
@@ -202,11 +214,6 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("--run-dir is required for this command")
         if args.demo and (not args.task or len(args.task) != 1 or args.arm != ["benign"]):
             parser.error("--demo requires exactly one --task and --arm benign")
-        cells = tuple(
-            (task, arm)
-            for task, arm in spec.cells
-            if (not args.task or task in args.task) and (not args.arm or arm in args.arm)
-        )
         if args.command != "report":
             admission = preflight(
                 spec,
@@ -214,6 +221,7 @@ def main(argv: list[str] | None = None) -> int:
                 authenticate=True,
                 task_ids=selected_tasks,
                 runtime=runtime,
+                **reuse_admission,
             )
             if not admission["ready"]:
                 print(json.dumps(admission, ensure_ascii=False, indent=2))
@@ -228,7 +236,7 @@ def main(argv: list[str] | None = None) -> int:
                 demo_task=args.task[0] if args.demo else None,
                 interim_report=interim_report,
                 runtime=runtime,
-                bases_from=args.bases_from,
+                bases_from=bases_from,
             )
             if args.command == "run":
                 result = workflow.run(cells)

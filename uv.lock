@@ -3304,6 +3304,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "pyyaml" },
+    { name = "tokenizers" },
 ]
 
 [package.optional-dependencies]
@@ -3325,6 +3326,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8,<9" },
     { name = "pyyaml", specifier = ">=6.0,<7" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8,<1" },
+    { name = "tokenizers", specifier = "==0.23.2" },
 ]
 provides-extras = ["codex", "dev"]
 

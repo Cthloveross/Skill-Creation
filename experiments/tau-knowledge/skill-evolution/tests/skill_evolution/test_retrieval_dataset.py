@@ -413,7 +413,7 @@ def test_resume_rejects_replaced_catalog_and_auto_recovers_original_binding(data
     value["status"] = "COMPLETE"
     value["catalog_hash"] = digest({k: v for k, v in value.items() if k != "catalog_hash"})
     atomic_json(dataset.producer.root / "catalog.json", value)
-    with pytest.raises(ValueError, match="identity differs"):
+    with pytest.raises(ValueError, match="retrieval_dataset_catalog_changed"):
         Workflow(dataset.spec("different-generator"), workflow.root, counter=len)
 
 

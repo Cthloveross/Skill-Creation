@@ -10,6 +10,7 @@ from tau_skill_evolution.generator import SKILL_BUNDLE_RESPONSE_FORMAT
 from tau_skill_evolution.model import (
     GenerationConfig,
     InputTokenBudgetExceeded,
+    LocalTextTokenCounter,
     ModelClientError,
     OpenAICompatibleClient,
     SerializedChatTokenCounter,
@@ -24,6 +25,25 @@ TOOL = {
         "parameters": {"type": "object", "properties": {}},
     },
 }
+
+
+def test_local_token_counter_preserves_full_input_without_padding_or_special_tokens():
+    tokenizers = pytest.importorskip("tokenizers")
+    tokenizer = tokenizers.Tokenizer(
+        tokenizers.models.WordLevel(
+            {"[UNK]": 0, "one": 1, "two": 2, "three": 3, "[CLS]": 4}, unk_token="[UNK]"
+        )
+    )
+    tokenizer.pre_tokenizer = tokenizers.pre_tokenizers.Whitespace()
+    tokenizer.post_processor = tokenizers.processors.TemplateProcessing(
+        single="[CLS] $A", special_tokens=[("[CLS]", 4)]
+    )
+    tokenizer.enable_truncation(max_length=2)
+    tokenizer.enable_padding(length=8)
+    counter = LocalTextTokenCounter(tokenizer)
+    assert counter("one two three") == 3
+    with pytest.raises(ModelClientError, match="no token count"):
+        counter("")
 
 
 def _response(output=None):

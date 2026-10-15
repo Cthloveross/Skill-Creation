@@ -15,7 +15,7 @@ from tau_skill_evolution.core import DeterministicBM25, FullDocumentHybridSessio
 from .data import load_documents
 from .dense import DenseIndex, OpenAICompatibleEmbeddingClient
 from .materialize import CorpusMaterializer
-from .model import VllmTextTokenCounter
+from .model import LocalTextTokenCounter, VllmTextTokenCounter
 from .spec import ExperimentSpec, digest
 
 
@@ -81,8 +81,23 @@ def embedding_argv(spec: ExperimentSpec) -> list[str]:
     ]
 
 
-def text_counter(spec: ExperimentSpec) -> VllmTextTokenCounter:
+def text_counter(
+    spec: ExperimentSpec, *, offline: bool = False
+) -> LocalTextTokenCounter | VllmTextTokenCounter:
     embedding = spec.values["embedding"]
+    if offline:
+        from .skillsbench_attack import _load_tokenizer
+
+        try:
+            tokenizer = _load_tokenizer(
+                {"tokenizer": embedding["model"], "revision": embedding["revision"]}
+            )
+        except Exception as exc:
+            raise ValueError(
+                "offline_context_tokenizer_unavailable: prepare the pinned Qwen tokenizer cache "
+                f"for {embedding['model']}@{embedding['revision']}"
+            ) from exc
+        return LocalTextTokenCounter(tokenizer)
     return VllmTextTokenCounter(
         embedding["endpoint"],
         model=embedding["model"],

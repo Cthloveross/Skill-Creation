@@ -83,12 +83,15 @@ def preflight(
     authenticate: bool = False,
     task_ids: tuple[str, ...] | None = None,
     runtime: str | None = None,
+    retrieval_required: bool = True,
 ) -> dict[str, Any]:
     runtime = runtime or ("bubblewrap-demo" if demo else "docker")
     if runtime not in {"docker", "workspace", "bubblewrap-demo"}:
         raise ValueError("unsupported runtime")
     if demo != (runtime == "bubblewrap-demo"):
         raise ValueError("demo and runtime differ")
+    if not retrieval_required and spec.experiment != "skillsbench":
+        raise ValueError("frozen acquisition reuse requires SkillsBench")
     checks: list[dict[str, Any]] = []
 
     def check(name: str, callback: Any) -> None:
@@ -277,7 +280,13 @@ def preflight(
         if runtime == "docker":
             check("docker_cli", docker_cli)
             check("docker_daemon", docker_info)
-        result = skillsbench_preflight(spec, demo=demo, task_ids=task_ids, runtime=runtime)
+        result = skillsbench_preflight(
+            spec,
+            demo=demo,
+            task_ids=task_ids,
+            runtime=runtime,
+            **({"retrieval_required": False} if not retrieval_required else {}),
+        )
         checks.extend(result["checks"])
     else:
         if runtime != "docker":
@@ -288,7 +297,12 @@ def preflight(
             check("docker_daemon", docker_info)
             check("docker_image", image)
             check("container_dependencies", container_dependencies)
-    check("embedding_service", embedding)
+    if retrieval_required:
+        check("embedding_service", embedding)
+    else:
+        from .retrieval import text_counter
+
+        check("local_context_tokenizer", lambda: text_counter(spec, offline=True).basis)
     ready = all(item["ok"] for item in checks)
     result = {
         "namespace": spec.namespace,

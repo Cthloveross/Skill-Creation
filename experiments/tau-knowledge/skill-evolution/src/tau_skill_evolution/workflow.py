@@ -92,20 +92,12 @@ class Workflow:
             raise ValueError("run directory has no compatible Skill evolution checkpoint identity")
         self.identity = spec.identity
         self.experiment_identity = dict(self.identity)
-        self.bases_from = None
-        identity_path = self.root / "journal/identity.json"
-        if bases_from is None and identity_path.is_file():
-            saved = json.loads(identity_path.read_text())["identity"].get("frozen_bases")
-            if saved is not None:
-                bases_from = saved["source_catalog"]
-        if bases_from is not None:
-            from .retrieval_dataset import RetrievalDataset, load_catalog
+        from .retrieval_dataset import resolve_catalog
 
+        self.bases_from = resolve_catalog(bases_from, run_dir=self.root)
+        if self.bases_from is not None:
             if spec.experiment != "skillsbench":
                 raise ValueError("--bases-from requires SkillsBench")
-            self.bases_from = (
-                bases_from if isinstance(bases_from, RetrievalDataset) else load_catalog(bases_from)
-            )
             self.identity = {
                 **self.identity,
                 "frozen_bases": self.bases_from.identity,
@@ -155,7 +147,9 @@ class Workflow:
         self.bank_factory = bank_factory
         self.model_factory = model_factory
         self.corpus_factory = corpus_factory
-        self.counter = counter or text_counter(spec)
+        self.counter = counter or (
+            text_counter(spec, offline=True) if self.bases_from is not None else text_counter(spec)
+        )
         self.runner = runner
         self._historical_authentication_failures = {
             (task, arm)

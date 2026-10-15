@@ -115,6 +115,25 @@ class ChatTokenCounter(Protocol):
     ) -> int: ...
 
 
+class LocalTextTokenCounter:
+    """Count with a pinned cached Rust tokenizer, without truncation or padding."""
+
+    basis = "local_text_tokenizer"
+
+    def __init__(self, tokenizer: Any) -> None:
+        tokenizer.no_truncation()
+        tokenizer.no_padding()
+        self.tokenizer = tokenizer
+
+    def __call__(self, text: str) -> int:
+        if not isinstance(text, str):
+            raise TypeError("text must be a string")
+        count = len(self.tokenizer.encode(text, add_special_tokens=False).ids)
+        if count <= 0:
+            raise ModelClientError("tokenize_invalid_response", "tokenizer returned no token count")
+        return count
+
+
 class VllmTextTokenCounter:
     """Count plain text with the same tokenizer served by the pinned vLLM model."""
 

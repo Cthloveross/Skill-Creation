@@ -2334,6 +2334,7 @@ def skillsbench_preflight(
     demo: bool,
     task_ids: Any,
     runtime: str | None = None,
+    retrieval_required: bool = True,
 ) -> dict[str, Any]:
     from .skillsbench_runtime import SkillsBenchRunner
 
@@ -2380,62 +2381,70 @@ def skillsbench_preflight(
                     "detail": str(exc),
                 }
             )
-    try:
-        manifest = validate_pool(spec.root, source)
-        checks.append(
-            {
-                "name": "skillsbench_public_pool",
-                "ok": True,
-                "detail": {"pages": len(manifest["pages"]), "corpus_hash": manifest["corpus_hash"]},
-            }
-        )
-        cache = spec.root / "data/skillsbench/dense" / manifest["corpus_hash"]
-        dense = json.loads((cache / "manifest.json").read_text())
-        vector = cache / "vectors.f32"
-        contract = dense["contract"]
-        expected = sorted(manifest["pages"], key=lambda x: x["page_id"])
-        descriptors = [{k: p[k] for k in ("page_id", "content_sha256")} for p in contract["pages"]]
-        if (
-            descriptors != [{k: p[k] for k in ("page_id", "content_sha256")} for p in expected]
-            or contract["model_id"] != spec.values["embedding"]["model"]
-            or contract["model_revision"] != spec.values["embedding"]["revision"]
-        ):
-            raise ValueError("skillsbench_dense_source_contract_invalid")
-        from .core._canonical import canonical_json_sha256
-
-        unsigned = {k: v for k, v in dense.items() if k != "manifest_payload_sha256"}
-        if (
-            dense["manifest_payload_sha256"] != canonical_json_sha256(unsigned)
-            or dense["vectors"]["shape"]
-            != [len(manifest["pages"]), spec.values["embedding"]["dimension"]]
-            or dense["vectors"]["sha256"] != _hash(vector)
-        ):
-            raise ValueError("skillsbench_dense_cache_invalid")
-        checks.append(
-            {
-                "name": "skillsbench_dense_index",
-                "ok": True,
-                "detail": {"vector_bytes": vector.stat().st_size},
-            }
-        )
-    except (OSError, ValueError, KeyError) as exc:
-        checks.append(
-            {"name": "skillsbench_public_pool_and_index", "ok": False, "detail": str(exc)}
-        )
-    if spec.namespace == "skillsbench.skill-evolution.v8":
+    if retrieval_required:
         try:
-            from .skillsbench_attack import validate_matrix_manifest
-
-            detail = validate_matrix_manifest(spec)
-            checks.append({"name": "skillsbench_injection_matrix", "ok": True, "detail": detail})
-        except (OSError, ValueError, RuntimeError, KeyError) as exc:
+            manifest = validate_pool(spec.root, source)
             checks.append(
                 {
-                    "name": "skillsbench_injection_matrix",
-                    "ok": False,
-                    "detail": str(exc),
+                    "name": "skillsbench_public_pool",
+                    "ok": True,
+                    "detail": {
+                        "pages": len(manifest["pages"]),
+                        "corpus_hash": manifest["corpus_hash"],
+                    },
                 }
             )
+            cache = spec.root / "data/skillsbench/dense" / manifest["corpus_hash"]
+            dense = json.loads((cache / "manifest.json").read_text())
+            vector = cache / "vectors.f32"
+            contract = dense["contract"]
+            expected = sorted(manifest["pages"], key=lambda x: x["page_id"])
+            descriptors = [
+                {k: p[k] for k in ("page_id", "content_sha256")} for p in contract["pages"]
+            ]
+            if (
+                descriptors != [{k: p[k] for k in ("page_id", "content_sha256")} for p in expected]
+                or contract["model_id"] != spec.values["embedding"]["model"]
+                or contract["model_revision"] != spec.values["embedding"]["revision"]
+            ):
+                raise ValueError("skillsbench_dense_source_contract_invalid")
+            from .core._canonical import canonical_json_sha256
+
+            unsigned = {k: v for k, v in dense.items() if k != "manifest_payload_sha256"}
+            if (
+                dense["manifest_payload_sha256"] != canonical_json_sha256(unsigned)
+                or dense["vectors"]["shape"]
+                != [len(manifest["pages"]), spec.values["embedding"]["dimension"]]
+                or dense["vectors"]["sha256"] != _hash(vector)
+            ):
+                raise ValueError("skillsbench_dense_cache_invalid")
+            checks.append(
+                {
+                    "name": "skillsbench_dense_index",
+                    "ok": True,
+                    "detail": {"vector_bytes": vector.stat().st_size},
+                }
+            )
+        except (OSError, ValueError, KeyError) as exc:
+            checks.append(
+                {"name": "skillsbench_public_pool_and_index", "ok": False, "detail": str(exc)}
+            )
+        if spec.namespace == "skillsbench.skill-evolution.v8":
+            try:
+                from .skillsbench_attack import validate_matrix_manifest
+
+                detail = validate_matrix_manifest(spec)
+                checks.append(
+                    {"name": "skillsbench_injection_matrix", "ok": True, "detail": detail}
+                )
+            except (OSError, ValueError, RuntimeError, KeyError) as exc:
+                checks.append(
+                    {
+                        "name": "skillsbench_injection_matrix",
+                        "ok": False,
+                        "detail": str(exc),
+                    }
+                )
     for task in task_ids or (("3d-scan-calc",) if demo else source.manifest["tasks"]):
         try:
             result = SkillsBenchRunner(

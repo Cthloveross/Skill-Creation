@@ -497,3 +497,22 @@ def load_catalog(path: Path) -> RetrievalDataset:
         ):
             raise ValueError("retrieval_dataset_entry_invalid")
     return RetrievalDataset(path, value)
+
+
+def resolve_catalog(
+    path: Path | RetrievalDataset | None = None, *, run_dir: Path | None = None
+) -> RetrievalDataset | None:
+    """Resolve an explicit catalog or the immutable binding of an existing consumer."""
+    binding = None
+    if run_dir is not None:
+        identity_path = Path(run_dir) / "journal/identity.json"
+        if identity_path.is_file():
+            binding = _read(identity_path)["identity"].get("frozen_bases")
+    if path is None and binding is not None:
+        path = binding["source_catalog"]
+    if path is None:
+        return None
+    catalog = path if isinstance(path, RetrievalDataset) else load_catalog(path)
+    if binding is not None and catalog.identity != binding:
+        raise ValueError("retrieval_dataset_catalog_changed")
+    return catalog
