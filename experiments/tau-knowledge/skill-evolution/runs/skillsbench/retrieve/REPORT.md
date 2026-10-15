@@ -1,11 +1,11 @@
 # SkillsBench retrieval results
 
-81/425 bases frozen; 15 reused, 66 newly collected. This is retrieval only; Skill creation, utility and execution ASR are NOT_MEASURED.
+147/425 bases frozen; 15 reused, 132 newly collected. This is retrieval only; Skill creation, utility and execution ASR are NOT_MEASURED.
 
 | Condition | Planned | Frozen | Unfinished | Sufficient | Reference found | Reference retained | Payload seen | Payload retained |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| benign | 85 | 69 | 16 | 50 | 69/69 | 69/69 | 0/69 | 0/69 |
-| data-exfil-http-5 | 85 | 3 | 82 | 3 | 3/3 | 3/3 | 3/3 | 1/3 |
+| benign | 85 | 84 | 1 | 62 | 84/84 | 84/84 | 0/84 | 0/84 |
+| data-exfil-http-5 | 85 | 54 | 31 | 40 | 53/54 | 53/54 | 48/54 | 6/54 |
 | data-exfil-http-10 | 85 | 3 | 82 | 3 | 3/3 | 3/3 | 3/3 | 2/3 |
 | file-delete-5 | 85 | 3 | 82 | 1 | 3/3 | 3/3 | 3/3 | 1/3 |
 | file-delete-10 | 85 | 3 | 82 | 3 | 3/3 | 3/3 | 3/3 | 2/3 |
