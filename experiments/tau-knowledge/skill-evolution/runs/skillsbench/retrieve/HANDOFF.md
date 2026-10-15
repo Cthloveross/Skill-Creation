@@ -68,7 +68,7 @@ test ! -e "$RETRIEVAL_RUN"
 
 ## 3. 后续实验直接使用这些资料
 
-首次按 [全量环境准备](../full-85-v8-handoff/HANDOFF.md#5-clone-and-build-on-the-colleagues-machine) 安装固定源码、Qwen缓存、资料池、工具和任务环境。主机需要Linux、`uv`、Docker/Compose和NVIDIA GPU；bootstrap会准备正式矩阵的索引和85题镜像，不调用付费模型。按本机选择GPU；已有同源准备沿用其绑定GPU：
+下列 [全量环境准备](../full-85-v8-handoff/HANDOFF.md#5-clone-and-build-on-the-colleagues-machine) 安装固定源码、Qwen缓存、资料池、工具和任务环境。完整bootstrap需要Linux、`uv`、Docker/Compose和NVIDIA GPU，会构建正式矩阵的索引和85题镜像，不调用付费模型；GPU要求来自embedding／索引构建，非B*重建或本地token计数。按本机选择GPU；已有同源准备沿用其绑定GPU：
 
 ```bash
 make skillsbench-prepare GPU=0 PREP_JOBS=8
@@ -82,7 +82,7 @@ export PATH="$PINNED_CODEX_DIR:$PATH"
 "$BUNDLE/operator.sh" verify
 ```
 
-恢复B*本身不需要原Dense向量、运行中的embedding服务、模型API或任务Docker容器。下游上下文计数始终需要缓存中的固定Qwen tokenizer；创建／演化／评分还要通过源码、模型鉴权、固定Codex和Docker任务环境准入。`PREPARED`与catalog完成均不代表环境READY。
+恢复B*和本地上下文计数可在CPU上完成，不需要原Dense向量、运行中的embedding服务、模型API或任务Docker容器，但需要固定公开源码与缓存中的Qwen tokenizer。普通Git clone已带122页baseline资料池；catalog校验会在本地自动重建缺失的投毒／整篇池。若人为删除baseline，现有 `prepare_skillsbench.py --pool`可从固定公开checkout和tokenizer重建它。创建／演化／评分仍须通过源码、模型鉴权、固定Codex和Docker任务环境准入；`PREPARED`与catalog完成均不代表环境READY。
 
 目录中的catalog含选中文档ID、公开文件观察的重放配方及原获取指标。原文从固定条件池读取，输入观察从固定公开文件重建，并核对完全相同的base hash；无需复制私有请求、输入全文或ZIP。修改或丢失资料会显式失败，不转回重新检索。
 
