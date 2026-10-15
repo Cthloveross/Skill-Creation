@@ -20,15 +20,15 @@
 
 参考文档召回、模型可见暴露、B*留存分别统计。找回作者关联背景不代表全部任务要求已有充分证据。判断不充分但已合法冻结的 B* 仍保留并可复用；UNKNOWN等获取故障不算完成。不根据后续 utility 重选资料。
 
-## 2. 继续或复现资料获取
+## 2. 用新trial复现资料获取
 
-本节只用于继续同源本机获取或另开获取trial；复用catalog直接看§3。新机器先完成§3的bootstrap。从仓库根目录运行，并在服务终端和获取终端都设置缓存路径：
+原获取run绑定其生产时的源码身份。消费者修复改变了源码身份；原 `retrieve/` 完成封存后只读，不能用本交接源码续跑或覆盖旧Journal。本节仅在需要重新测量时另开获取trial；复用catalog直接看§3。新机器先完成§3的bootstrap。从仓库根目录运行，并在服务终端和获取终端都设置缓存路径：
 
 ```bash
 export HF_HOME="$PWD/data/huggingface"
 ```
 
-本机全文embedding服务为 `127.0.0.1:18141`，必须使用固定Qwen权重和8192-token配置。凭据只放本机 `key.env`。下面的获取命令保留原trial的canonical配置；已有trial不能改绑bootstrap生成的另一份配置。
+本机全文embedding服务为 `127.0.0.1:18141`，必须使用固定Qwen权重和8192-token配置。凭据只放本机 `key.env`。下面以当前canonical配置开启独立获取，不复用本机旧获取checkpoint。
 
 若服务未启动，在单独终端运行下面命令。先按本机空闲GPU设置 `GPU` 和显存比例 `GPU_MEMORY`；本机实测为GPU 1、0.085。它只启动embedding，不读取模型API key。
 
@@ -50,20 +50,21 @@ PY
 
 ```bash
 SB=experiments/tau-knowledge/skill-evolution
+RETRIEVAL_RUN="$SB/runs/skillsbench/trials/gpt54-NEW/retrieval"
+test ! -e "$RETRIEVAL_RUN"
 .venv/bin/python "$SB/scripts/probe_skillsbench_acquisition.py" \
   --config "$SB/configs/skillsbench.yaml" \
-  --run-dir "$SB/runs/skillsbench/retrieve" \
+  --run-dir "$RETRIEVAL_RUN" \
   --all-tasks --whole-documents --jobs 6 \
   --embedding-endpoint http://127.0.0.1:18141/v1 \
-  --reuse-from "$SB/archive/runs/skillsbench/retrieval-whole-document-gpt54-20261014-001" \
   --env-file key.env
 ```
 
-该命令恢复本机同一源码身份、没有UNKNOWN阻塞的未完成获取。已冻结结果不重复请求；NOT_SENT可首次派发，已派发且结果未知的UNKNOWN不自动重发。鉴权失败停止启动后续获取。更新key不能把旧UNKNOWN改为可重试。源码、提示、资料或预算改变后另开trial。
+该命令重新测量425次获取，并调用Analyzer，结果与原15份复用＋410份新获取的数据集分开报告。只有这个新trial自身的源码／配置身份未变时，才可沿用其目录继续：已完成操作复用，NOT_SENT可首次派发，UNKNOWN不重发。鉴权失败停止后续启动；更新key不改变UNKNOWN状态。再次修改源码、提示、资料或预算时另开trial。
 
 遇到UNKNOWN时保留原操作和未完成状态；若需补测，另开独立trial，并在最终catalog保留其来源。不能覆盖原Journal、重置计数，或把独立补测称为同一操作的恢复。
 
-另一台机器没有本机私有journal，不能用同名目录假装恢复。Git提供的是公开catalog，可用于零检索复用；若需要重新测量获取，应指定新的 `--run-dir` 并去掉 `--reuse-from`，明确记为新trial。
+另一台机器没有本机私有Journal，不能用同名目录假装恢复。Git提供的公开catalog用于零检索复用；上面的新trial命令不需要历史私有Journal或 `--reuse-from`。
 
 ## 3. 后续实验直接使用这些资料
 
