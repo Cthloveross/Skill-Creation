@@ -135,7 +135,7 @@
   ],
   "source_commitment": {
     "schema": "skillsbench.runtime-source-commitment.v1",
-    "spec_identity_hash": "ddac855dbe3203f513defd193743b5c13c1f688b5b4fe82a40a11513b928d0b7",
+    "spec_identity_hash": "79f42c75522874944e6a6f79e7f937309ab069c9397a0b1905efe8c819067760",
     "canonical_files": [
       {
         "path": "experiments/tau-knowledge/skill-evolution/runs/skillsbench/full-85-v8-handoff/operator.sh",
@@ -179,11 +179,11 @@
       },
       {
         "path": "pyproject.toml",
-        "sha256": "2d8b2ec9d025f20611f1fe4d0880caf2da17d3c084a45029d85e3136f80b9ae5"
+        "sha256": "c7d06ccce0636e0eb8c879967a6c81cefbe6b5299d3db56dc3d4484ac50c85a4"
       },
       {
         "path": "uv.lock",
-        "sha256": "a3360fbf3a4f262f43c43999131a47ffc149f8fc01572f02ba1349a38e6d9eb3"
+        "sha256": "55f19b6f7bdf0885de729611f0e62669428eb5c13d1469a559b4d6d3bfbb8027"
       },
       {
         "path": "Makefile",
