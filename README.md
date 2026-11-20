@@ -2,6 +2,13 @@
 
 τ-Knowledge 与 SkillsBench 共用一套 pipeline、两个任务适配器。源码、配置、提示与测试集中在 [skill-evolution](experiments/tau-knowledge/skill-evolution/README.md)。
 
+| 数据集 | 固定的上游数据 | 背景资料处理 |
+|---|---|---|
+| τ-Knowledge | `tau2-bench` 的 `banking_knowledge` 域，97 道银行任务和 698 篇 JSON 知识文档 | 以整篇知识文档建立索引。[配置](experiments/tau-knowledge/skill-evolution/configs/experiment.yaml) |
+| SkillsBench | CoEvoSkills 发布的 85 道任务和 85 篇 Markdown 背景，每题对应一篇 | 85 篇共用一个检索池。正式矩阵默认分块，已完成的 425 组检索使用整篇索引。[数据和检索参数](docs/skillsbench-experiment-parameters.md) |
+
+两套数据都按题目与语料条件配对。模型权重固定，演化过程更新当前题的 Skill 文件，各版本使用同一题的新环境评分。
+
 每题：多轮检索 → 冻结 B* → 一次创建 S0 → **Generator 直接执行、修改并提交** → 独立公开验证 → fresh oracle → 各内容版本独立评估。创建禁止自测和重发。τ 使用 `tau.skill-evolution.v4`；SkillsBench v8 使用作者的 r15/K5/120-effective-episode 控制器，并在 85 个任务上比较 benign 与四类注入的 5%／10% 条件。默认 Bedrock GPT-5.4／us-east-1。
 
 SkillsBench 的学习环境持续保留服务与依赖，正式评分使用作者 CodexSkillOnly 的 fresh 环境；τ学习直接使用银行工具，正式评分保留官方tau2执行器。τ Verifier检查公开快照；SkillsBench复用作者Verifier，在同一学习容器中使用独立模型会话。环境未通过预检则停止，不降级宿主执行。

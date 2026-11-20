@@ -141,6 +141,18 @@
 
 当前每题对应一篇背景，未来多篇时必须全部命中才算找齐。输入文件由当前题环境提供，不计入背景检索清单。Analyzer自评是否充分不再作为报告指标，原始停止原因仍保留。
 
+作者提供的题目与背景对应关系用于核对检索召回和冻结覆盖。Analyzer 根据题目与公开输入在全部 85 篇背景中搜索，也可以保留其他题目中对当前任务有用的方法。每次成功搜索将 BM25 和向量检索各自的前 10 篇合并去重，按 RRF 排序后返回全文，理论范围为 10–20 篇。
+
+按 [425 组封存记录](../experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieve/catalog.json) 的文档 ID 统计，每组搜索次数的中位数为 6 次。跨轮累计时按文档 ID 去重。
+
+| 统计单位 | 文档数中位数 | 平均文档数 | 实测范围 |
+|---|---:|---:|---:|
+| 单次搜索返回（5,488 次） | 17 | 16.8 | 11–20 |
+| 每个题目与条件累计搜到 | 33 | 35.0 | 0–69 |
+| 每个题目与条件最终保留到 `B*` | 1 | 1.7 | 0–6 |
+
+425 组中有 243 组恰好保留一篇，420 组保留了本题对应的背景，181 组保留了至少一篇别题背景。
+
 该阶段不改九条件正式矩阵及其分块默认值。三个旧检索目录、三份smoke目录、历史readiness和两份preflight已原样移至 [archive/runs/skillsbench](../experiments/tau-knowledge/skill-evolution/archive/runs/skillsbench/)；历史代码验收不代表当前任务环境READY。
 
 ## 4. Analyzer 资料获取与冻结
@@ -157,7 +169,9 @@
 | `read_input_file` | 每次最多8,192 bytes | 支持 offset 分段，二进制返回 base64，使用只读预算 |
 | 固定文档篇数 | 无 | 不要求5篇、7篇或任何固定篇数 |
 
-Analyzer 先理解任务、发现输入，再围绕方法或规则缺口组织查询。每个新呈现的全文 chunk 都应给出 confidence 和 reason；旧评分持久化。Host 保留达到阈值的候选，容量不足时先装支持必要证据的整块，再按分数降序、ID 处理平分；放不下的块跳过，继续尝试较小块。
+Analyzer 先理解任务、发现输入，再围绕方法或规则缺口组织查询。它按正文对当前任务的用途给每份新资料打 0–1 分并说明理由，考虑核心方法、工具用法、参数、前置条件和可行的备选方案。控制器在每轮评分后保留所有达到阈值且放得下的候选。容量不足时优先放入被引用为任务证据的资料，再按分数降序，同分按文档 ID 排序。放不下的整份跳过，继续尝试后面的候选。整篇检索以整篇为单位，分块检索以块为单位。获取结束后将最近一次有效选择冻结为 `B*`，供 Generator 创建初版 Skill。[评分提示词](../experiments/tau-knowledge/skill-evolution/prompts/analyzer-skillsbench.md#2-score-every-returned-document) · [选择实现](../experiments/tau-knowledge/skill-evolution/src/tau_skill_evolution/acquisition.py#L110)
+
+例如，干净语料下的 `dynamic-object-aware-egomotion` 搜了 9 次，累计得到 35 篇不同文档。它保留了本题介绍核心运动估计算法的背景（0.99 分），以及两篇分别支持视频元数据读取（0.46 分）和按顺序抽帧（0.20 分）的跨题背景。[实际评分记录](../experiments/tau-knowledge/skill-evolution/runs/skillsbench/retrieve/catalog.json)
 
 充分停止要求：选中 base 非空，必要要求由公开输入、工具说明或入选背景支持，缺口与冲突为空，已经返回的材料没有待审阅结果。非法 `sufficient` 且预算还有余量时继续收集；预留最后批次审阅。耗尽预算则冻结最近合法选择，记录 `budget_exhausted_incomplete` 和具体预算原因，仍进入一次创建。`sufficient` 只是知识准备判断，不保证官方成功。
 
